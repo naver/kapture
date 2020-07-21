@@ -112,21 +112,21 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 |===
 | Format                    | <- ->  | cam  | rig  | img  | trj  | gps  | kpt  | dsc  | gft  | p3D  | obs  | mch
 
-.2+| colmap                 | import |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
-                            | export |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
-.2+| openmvg                | import |  ✓   |  --  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
-                            | export |  ✓   |  --  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
-.2+| OpenSfM                | import |  ✓   |  ⨉   |  ✓   |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  ✓   |  ⨉   |  ✓
-                            | export |  ✓   |  ⨉   |  ✓   |  ✓   |  ⨉   |  ✓   |  --  |  ✓   |  --  |  ⨉   |  ✓
-| bundler                   | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  ✓   |  --  |  --  |  ✓   |  ✓   |  --
-| image_folder              | import |  --  |  --  |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --  |  --
-| image_list                | import |  ✓   |  --  |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --  |  --
-| nvm                       | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  ✓   |  --  |  --  |  ✓   |  ✓   |  --
-| IDL_dataset_cvpr17        | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
-| RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  ✓   |  ?   |  --  |  ✓   |  ✓   |  ?
-| ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
-| SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
-| virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
+.2+| colmap                 | import |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  ✓   |  ✓   | (✓)
+                            | export |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  ✓   |  ✓   | (✓)
+.2+| openmvg                | import |  ✓   |  —   |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
+                            | export |  ✓   |  —   |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
+.2+| OpenSfM                | import |  ✓   |  ⨉   |  ✓   |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  ⨉   |  ✓
+                            | export |  ✓   |  ⨉   |  ✓   |  ✓   |  ⨉   |  ✓   |  —   |  ✓   |  —   |  ⨉   |  ✓
+| bundler                   | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  — 
+| image_folder              | import |  —   |  —   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| image_list                | import |  ✓   |  —   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| nvm                       | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  — 
+| IDL_dataset_cvpr17        | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  ?   |  —   |  ✓   |  ✓   |  ?
+| ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
+| SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 |===
 
 :Notes:
