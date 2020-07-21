@@ -1,0 +1,15 @@
+[
+    {
+        "cameras": [
+            {
+                "camera_id": 1,
+                "image_prefix": "leftraw/"
+            },
+            {
+                "camera_id": 2,
+                "image_prefix": "rightraw/"
+            }
+        ],
+        "ref_camera_id": 1
+    }
+]

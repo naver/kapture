@@ -1,0 +1,17 @@
+{
+    "make": "Apple",
+    "model": "iPhone 4S back camera 4.28mm f/2.4",
+    "width": 3264,
+    "height": 2448,
+    "projection_type": "perspective",
+    "focal_ratio": 0.9722222222222222,
+    "orientation": 1,
+    "capture_time": 0.0,
+    "gps": {
+        "latitude": 52.518924999999996,
+        "longitude": 13.40038888888889,
+        "altitude": 30.0,
+        "dop": 5.0
+    },
+    "camera": "v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722"
+}

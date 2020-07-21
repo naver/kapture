@@ -1,0 +1,850 @@
+= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  data format v1.0
+:sectnums:
+:sectnumlevels: 1
+:toc:
+:toclevels: 2
+
+This document defines the __kapture__ pivot file format, used to describe SfM (Structure From Motion) and more generally sensor-acquired data.
+This format aims to be as simple as possible, and thus relies on text and binary files.
+
+== Overview
+
+This document defines the __kapture__ pivot file format, used to describe Structure From Motion data (SfM).
+This format aims to be as simple as possible, and thus relies on text and binary files.
+
+The files are split in 2, raw sensor data on one side, and result of computation (reconstruction) on the other side.
+Except `sensors.txt`, every files are optionals, and their presence depends of the acquisition plateform and the processing
+
+==== sensors
+The `sensors` part of __kapture__ data contains the acquired data as well as the sensors characteristics.
+The sensors can be cameras but also lidars, wifi, magnetic, pressure or any other sensor.
+In the case of cameras, the acquired data are the images, and the sensor characteristics are the
+poses (a.k.a extrinsics) and the intrinsic parameters of the cameras.
+
+
+==== reconstruction
+The `reconstruction` part of __kapture__ data contains the result of processing on the sensor data.
+It can be:
+
+- keypoints in images,
+- keypoints matching,
+- image global feature,
+- 3d reconstruction.
+
+== File Structure
+
+[source,txt]
+----
+my_dataset                          # Data root path
+├─ sensors/                         # Sensor data root path
+│  ├─ sensors.txt                   # list of all sensors with their specifications (required)
+│  ├─ rigs.txt                      # rigid geometric relationship between sensors
+│  ├─ trajectories.txt              # extrinsics (timestamp, sensor, pose)
+│  ├─ records_camera.txt            # recording of 'camera' (timestamp, sensor id and path to image)
+│  ├─ records_gnss.txt              # recording of 'GNSS' (timestamp, sensor id, location and ...)
+│  ├─ records_lidar.txt             # recording of 'lidar' (timestamp, sensor id and path to lidar data)
+│  ├─ records_wifi.txt              # recording of 'wifi' (timestamp, sensor id and wifi measurements)
+│  ├─ records_SENSOR_TYPE.txt       # SENSOR_TYPE is replaced with custom type. (eg. 'magnetic', 'pressure' ...)
+│  └─ records_data/                 # image and lidar data root path
+│     ├─ map/cam_01/00001.jpg       # example of image path used in records_camera.txt
+│     ├─ map/cam_01/00002.jpg
+│     ├─ map/lidar_01/0001.pcd      # example of lidar data path used in records_lidar.txt
+│     ├─ query/query001.jpg         # example of image path used in records_camera.txt
+│     ├─ ...
+├─ reconstruction/
+│  ├─ keypoints/                    # 2D keypoints files
+│  │  ├─ keypoints.txt              # type of keypoint
+│  │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
+│  │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
+│  │  ├─ ...
+│  ├─ descriptors/                  # keypoint descriptors files
+│  │  ├─ descriptors.txt            # type of descriptor
+│  │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
+│  │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
+│  │  ├─ ...
+│  ├─ global_features/              # global feature files
+│  │  ├─ global_features.txt        # type of global feature
+│  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+│  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+│  │  ├─ ...
+│  ├─ points3d.txt                  # 3D points of the reconstruction
+│  ├─ observations.txt              # 2D/3D points corespondences
+│  ├─ matches/                      # matches root path.
+│  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example of matching file.
+│  │  ├─ ...
+----
+
+==== Text files (`.txt`):
+
+Text files must comply the following:
+
+ - utf-8 files (except keypoints and descriptor files),
+ - comma separated values (CSV), spaces around comma are ignored,
+ - as a consequence, values (eg. path) **must not contains `,` (comma)**,
+ - each line starting with `#` (comments), as well as lines containing only blank characters are ignored.
+
+==== Binary files
+
+Text files must comply the following:
+
+ - with extensions `.kpt`, `.desc`, `.gfeat`, `.matches`,
+ - the actual data type is described in the corresponding text file (eg. `keypoints.txt`)
+ - raw binary dump (eg. raw dump of floats),
+ - little-endian.
+
+== `├ sensors/`
+
+This folder contains sensor data. Meaning the acquired data as well as the sensors characteristics.
+The sensors can be cameras but also lidars, wifi, magnetic, pressure or any other sensor.
+In the case of cameras, the acquired data are the images, and the sensor characteristics are the
+poses (a.k.a extrinsics) and the intrinsic parameters of the cameras.
+
+=== `│ ├─ sensors.txt`
+
+This file lists all sensors that have records in the dataset, using one line per physical sensor.
+It can also contain the intrinsic parameters of sensors. This file is required.
+
+==== syntax
+
+Each line of the file is composed of :
+[source,txt]
+----
+sensor_device_id, name, sensor_type, [sensor_params]+
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+| sensor_device_id | string | The unique identifier of sensor.
+|             name | string | the name of the sensor (eg. Hero7). Can be empty.
+|      sensor_type | string | The type of sensor type : `camera`, `gnss`, lidar`, `wifi`, `magnetic` or `pressure`
+| [sensor_params]+ | list   | The sensor parameters. It depends on sensor_type.
+                              See below for the different types of records and their parameters.
+|===
+
+==== camera
+
+In the case of `sensor_type` is `camera`, `[sensor_params]` contains :
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|            model | string |  the name of the sensors model used, usually a camera projection (same as in https://github.com/colmap/colmap/blob/dev/scripts/python/read_write_model.py#L56[colmap]):
+                                SIMPLE_PINHOLE, PINHOLE, SIMPLE_RADIAL, RADIAL, OPENCV, OPENCV_FISHEYE, FULL_OPENCV, FOV, SIMPLE_RADIAL_FISHEYE, RADIAL_FISHEYE, THIN_PRISM_FISHEYE, UNKNOWN_CAMERA
+|     model_params | list of floats | parameters of the projection model, usually starts with image size, but depends of the model. (see https://github.com/colmap/colmap/blob/dev/src/base/camera_models.h#L275[colmap] and examples below).
+|===
+
+
+[cols=">1m,4m",options="header"]
+|===
+| model          | parameters
+| UNKNOWN_CAMERA | w, h
+| SIMPLE_PINHOLE | w, h, f, cx, cy
+| SIMPLE_RADIAL  | w, h, f, cx, cy, k
+| RADIAL         | w, h, f, cx, cy, k1, k2
+| PINHOLE        | w, h, fx, fy, cx, cy
+| OPENCV         | w, h, fx, fy, cx, cy, k1, k2, p1, p2
+| FULL_OPENCV    | w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
+|===
+
+with `w` and `h` standing for image with and height. See source conde for other parameters.
+
+WARNING: point to our code instead when available
+
+==== gnss (a.k.a GPS)
+
+In the case of `sensor_type` is `gnss`, `[sensor_params]` contains :
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|             EPSG | string | Coordinates system used. If empty, assumed `EPSG:4326` for standard WGS84 GPS coordinates.
+|===
+
+==== lidar
+
+TODO
+
+==== wifi
+
+TODO
+
+==== Other sensors
+
+Currently, there is no specific parameters for the other sensors supported.
+
+==== example
+
+.sensors/sensors.txt
+[source,txt]
+----
+# sensor_device_id, name, sensor_type, [sensor_params]+
+cam01, Hero7, camera, FULL_OPENCV, 800, 600, 600, 600, 300, 300, 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.
+phone0, gs9, camera, SIMPLE_RADIAL, 2988, 5312, 2770, 1494, 2656, -0.035
+phone01wifi, , wifi
+lidar0, , lidar
+lidar1, , lidar
+gps1, , gnss, EPSG:4326
+----
+
+=== `│ ├─ rigs.txt`
+
+It contains the geometric relationship between sensors.
+When multiple sensors are mounted on the same rig, their relative position is fixed and thus never changes.
+
+This can be leveraged by some algorithms like bundle adjustment.
+
+==== syntax
+
+Each line of the file is composed of :
+[source,txt]
+----
+rig_device_id, sensor_device_id, qw, qx, qy, qz, tx, ty, tz
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|    rig_device_id | string | Unique identifier of the rig. This `device_id` *must not* be in `sensors.txt`.
+| sensor_device_id | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|   qw, qx, qy, qz | float (x4)| The rotation quaternion from rig to sensor.
+|       tx, ty, tz | float (x3)| The translation vector from rig to sensor.
+|===
+
+==== example
+
+.sensors/rigs.txt
+[source,txt]
+----
+# rig_device_id, sensor_device_id, qw, qx, qy, qz, tx, ty, tz
+rig, cam01, 1, 0, 0, 0, 0, 0, 0
+rig, cam02, 1, 0, 0, 0, 10, 0, 0
+rig, phone01wifi, 1, 0, 0, 0, -10, 0, 0
+----
+
+=== `│ ├─ trajectories.txt`
+
+This file contains the pose of all devices (sensor or rig) in the dataset using one line per (timestamp, device_id).
+This file is optional. However, it is required by many algorithms, so if it is missing,
+only a subset of the tools will be useful.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|        timestamp | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id | string | Unique identifier of the sensor or rig.
+|   qw, qx, qy, qz | float (x4)| The rotation quaternion from world to device (same as in colmap).
+|       tx, ty, tz | float (x3)| The translation vector from world to device (same as in colmap).
+|===
+
+==== example
+
+.sensors/trajectories.txt
+[source,txt]
+----
+# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
+0000, cam01, 1, 0, 0, 0, 0, 0, 0
+0000, cam02, 1, 0, 0, 0, 0, 0, 0
+0001, cam01, 1, 0, 0, 0, 1, 0, 0
+0001, cam02, 1, 0, 0, 0, 1, 0, 0
+----
+
+=== `│ ├─ records_camera.txt`
+
+This file contains the images in the dataset using one line per snapshot.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, image_path
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|        timestamp | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|       image_path | path   | Path to the image file. The path is relative to `sensors/records_data/`.
+|===
+
+==== example
+
+.sensors/records_camera.txt
+[source,txt]
+----
+# timestamp, device_id, image_path
+0000, cam01, map/cam_01/00001.jpg
+0000, cam02, map/cam_02/00001.jpg
+0001, cam01, map/cam_01/00003.jpg
+0001, cam02, query/query003.jpg
+----
+
+=== `│ ├─ records_gnss.txt`
+
+This file defines the GNSS (a.k.a. GPS) in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, x, y, z, utc, dop
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp in same time referential as other sensors (not GNSS clock).
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|          x, y, z  | float  | Coordinates. If `EPSG` in `sensors.txt` is set to `EPSG:4326`, coordinates are
+                                longitude (x) in degrees, latitude (y) in degrees, altitude (z) in meters.
+|              utc  | uint32 | The UTC timestamp provided by GNSS clock in Unix format. `0` if not available.
+|              dop  | float  | The dilution of precision given by GNSS device. `0` if not available.
+|===
+
+=== `│ ├─ records_lidar.txt`
+
+This file defines the lidar point clouds in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, point_cloud_path
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|  point_cloud_path | path   | Path to the point cloud file. The path is relative to `sensors/records_data/`.
+|===
+
+=== `│ ├─ records_wifi.txt`
+WARNING: todo, and more sensors (pressure, BT, etc.)
+
+==== example
+
+.sensors/records_wifi.txt
+[source,txt]
+----
+# timestamp (ScanEndTime), device_id, BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME
+----
+
+=== `│  ├─ records_SENSOR_TYPE.txt`
+
+These files contain records for all sensors. They are grouped by SENSOR_TYPE. So for instance, all 'camera' sensors data will be stored in the `records_camera.txt` file, while all 'wifi' data will be in `records_wifi.txt`.
+
+==== syntax
+
+All files have the same structure, where each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, data
+----
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|        timestamp | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.|        device_id | string | Unique identifier of the sensor or rig.
+|             data | path / list of parameters | Depends of each sensor type: either a path to data files or parameters.
+|===
+
+==== example
+
+.records_SENSOR_TYPE.txt
+[source,txt]
+----
+# timestamp, device_id, data_or_filepath
+0, 0, my_custom_sensor/0000.dat
+1, 0, my_custom_sensor/0001.dat
+----
+
+For cameras and lidars, it is not possible to store the record (image or point cloud) in the records file, so it is stored in the `sensors/records_data/` subdirectory, and the records file only contains a relative path to the actual data file.
+
+
+=== `│ └─ records_data/`
+
+Root path of sensing data files (eg. images and lidar point clouds). There are no constraints on the structure of the subfolders.
+
+This flexibility allows usage of existing data hierarchies (e.g. academic datasets) without having to copy all the files into a specific structure.
+
+For instance, it is possible to group data files per sensor, or to create distinct hierarchies for map data (or train data) and query data (or test data).
+
+.records_data/ example
+----
+├─ sensors/                         # Sensor data root path
+│  └─ records_data/                 # image and lidar data root path
+│     ├─ map
+│     │  ├─ cam_01/
+│     │  │  ├─ 00001.jpg
+│     │  │  ├─ 00002.jpg
+│     │  ├─ cam_02/
+│     │  │  ├─ 00001.jpg
+│     │  │  └─ 00002.jpg
+│     │  ├─ lidar_01/
+│     │  │  ├─ 0000001.pcd
+│     │  │  ├─ 0000002.pcd
+│     ├─ query
+│     │  ├─ query001.jpg
+│     │  ├─ query002.jpg
+│     │  └─ query003.jpg
+│     ...
+----
+
+
+== `├─ reconstruction/`
+
+The `reconstruction` part of __kapture__ contains the result of processing.
+
+=== `│ ├─ keypoints/`
+
+This directory contains image key-points related files.
+
+==== structure
+
+This directory is organised as follow:
+
+ - `keypoints.txt` files describes the type of key-points,
+ - a set of binary `.kpt` files describes key-points of images.
+   There is one key-points file per image, and the file tree must
+  *strictly follow the same path and naming* as `sensors/records_data/`.
+
+==== example
+
+.reconstruction/keypoints/
+----
+├─ reconstruction/
+│  ├─ keypoints/                    # 2D keypoints files
+│  │  ├─ keypoints.txt              # type of keypoint
+│  │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
+│  │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
+│  │  ├─ ...
+----
+
+=== `│ │ ├─ keypoints.txt`
+
+This text file describes the type of key-points.
+
+==== syntax
+
+The file contains a single line, following this syntax:
+
+[source,txt]
+----
+name, dtype, dsize
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|             name | string | The name of the detector, for information only.
+|            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
+|            dsize | int    | number of data per key-point.
+|===
+
+It may also optionally contains some comments (lines starting with `#`) or blank lines.
+
+==== example
+
+.reconstruction/keypoints/keypoints.txt
+[source,txt]
+----
+# name, dtype, dsize
+SIFT, float32, 6
+----
+
+=== `│ │ └─ *.kpt`
+
+Contains all key-points of a single image using one line per key-point.
+
+==== syntax
+
+A `.kpt` file is an array formatted as binary.
+The data type of the array is specified by `dtype` in `keypoints.txt`.
+The array contains as many lines as there are key-points.
+The length of a key-point (a line) is specified by `dsize` in `keypoints.txt`.
+Each line of the array starts with the `[x, y]` pixel coordinates of the key-point (`[0, 0]` is the upper left corner),
+then optionally (and according to `dsize`) followed by other values.
+The meaning of those values depends on the key-point type (e.g. scale and orientation for sift, affine matrix).
+
+==== example
+
+.reconstruction/keypoints/map/cam_01/image000.jpg.kpt (in binary format)
+[source,txt]
+----
+#  x,   y, scale, orient.
+[100, 100, 0, 0,
+ ...
+ 640, 480, 1, 2]
+----
+
+=== `│ ├─ descriptors/`
+
+This directory contains key-points descriptors related files.
+
+==== structure
+
+This directory is organised as follow:
+
+- `descriptors.txt` files describes the type of descriptors,
+ - a set of binary `.desc` files describes key-point descriptors of images.
+   There is one descriptors file per image, and the file tree must
+  *strictly follow the same path and naming* as `sensors/records_data/`.
+
+==== Example
+
+.reconstruction/descriptors/
+----
+├─ reconstruction/
+│  ├─ descriptors/                  # keypoint descriptors files
+│  │  ├─ descriptors.txt            # type of descriptor
+│  │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
+│  │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
+│  │  ├─ ...
+----
+
+=== `│ │ ├─ descriptors.txt`
+
+This text file describes the type of descriptors.
+
+==== syntax
+
+The file contains a single line, following this syntax:
+
+[source,txt]
+----
+name, dtype, dsize
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|             name | string | The name of the descriptor, for information only.
+|            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
+|            dsize | int    | size of a descriptor.
+|===
+
+It may also optionally contains some comments (lines starting with `#`) or blank lines.
+
+==== example
+
+`reconstruction/descriptors/descriptors.txt`:
+[source,txt]
+----
+# name, dtype, dsize
+SIFT, uint8, 128
+----
+
+=== `│ │ └─ *.desc`
+
+Contains all key-points descriptors of a single image using one line per descriptor.
+Descriptors must be stored in same order than their corresponding key-points.
+
+==== syntax
+
+A `.desc` file is an array formatted as binary.
+The data type of the array is specified by `dtype` in `descriptors.txt`.
+The array contains as many lines as there are key-points, and thus descriptors.
+The length of a descriptor (a line) is specified by `dsize` in `descriptors.txt`.
+Descriptors must be stored in same order than their corresponding key-points (`.kpt`) file.
+
+==== example
+
+.reconstruction/descriptors/map/cam_01/00001.jpg.desc (in binary format)
+[source,txt]
+----
+[5.9, 10.7, ...,  0.6, 30.0,
+ ...
+ 60.5, 0.48, ..., 1.3, 35.3]
+----
+
+=== `│ ├─ global_features/`
+
+This directory contains global image features related files.
+
+==== structure
+
+This directory is organised as follow:
+
+ - `global_features.txt` files describes the type of global features,
+ - a set of binary `.gfeat` files describes global feature of images.
+   There is one global feature file per image, and the file tree must
+  *strictly follow the same path and naming* as `sensors/records_data/`.
+
+==== example
+
+.reconstruction/global_features/
+----
+├─ reconstruction/
+│  ├─ global_features/              # global feature files
+│  │  ├─ global_features.txt        # type of global feature
+│  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+│  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+│  │  ├─ ...
+----
+
+=== `│ │ ├─ global_features.txt`
+
+This text file describes the type of global features.
+
+==== syntax
+
+The file contains a single line, following this syntax:
+
+[source,txt]
+----
+name, dtype, dsize
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|             name | string | The name of the global feature, for information only.
+|            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
+|            dsize | int    | length of a global feature.
+|===
+
+It may also optionally contains some comments (lines starting with `#`) or blank lines.
+
+==== example
+
+.reconstruction/global_features/global_features.txt
+[source,txt]
+----
+# Deep Image Retrieval - See: https://github.com/almazan/deep-image-retrieval
+# name, dtype, dsize
+dirtorch, float32, 2048
+----
+
+=== `│ │ └─ *.gfeat`
+
+Contains all global features of a single image.
+
+==== syntax
+
+A `.gfeat` file is an array formatted as binary.
+The data type of the array is specified by `dtype` in `global_features.txt`.
+The length of the array is specified by `dsize` in `global_features.txt`.
+
+==== example
+
+.reconstruction/global_features/map/cam_01/image01.jpg.gfeat (in binary format)
+[source,txt]
+----
+[100, 100, .... 0, 0]
+----
+
+=== `│ ├─ points3d.txt`
+
+This text file contains 3D points, using one line per point.
+
+==== syntax
+
+[source,txt]
+----
+X, Y, Z, [R, G, B]
+----
+
+Where:
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|          X, Y, Z | float (x3) | 3-D coordinates of the point.
+|          R, G, B | uint8  | The RGB color of the point (optional).
+|===
+
+==== example
+
+.reconstruction/points3d.txt
+[source,txt]
+----
+# X, Y, Z, [R, G, B]
+2.13521, 4.23587, 1.8745, 0, 0, 0
+2.14789, 6.21458, 1.4578, 133, 42, 255
+----
+
+
+=== `│ ├─ observations.txt`
+
+This file contains all 3D points observations, using one line per 3D-point.
+
+==== syntax
+
+[source,txt]
+----
+point3d_id, [image_path, feature_id]*
+----
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|       point3d_id | uint32 | Line number (0-based index) of the 3D point in the `points3d.txt` file.
+|       image_path | path   | Path to the image file. The path is relative to `sensors/records_data/`.
+|       feature_id | uint32 | Index (0-based) of the feature in the corresponding keypoints (.kpt) file.
+|===
+
+==== example
+
+.reconstruction/observations.txt
+[source,txt]
+----
+# point3d_id, [image_path, feature_id]*
+0, cam_01/00002.jpg, 152, cam_01/00005.jpg, 1564
+1, cam_01/00002.jpg, 4551, cam_02/00003.jpg, 5415
+----
+
+=== `│ ├─ matches/`
+
+This directory contains all 2D matches of all images, using one file per *image pair*.
+
+Note that matches are different than observations, since a match
+has not necessarily a 3-D consistency, and hence 3-D point.
+
+==== syntax
+
+TO BE COMPLETED
+
+==== example
+
+.reconstruction/matches/
+[source,txt]
+----
+├─ matches/             
+   ├─ map/
+   │  ├─ cam_01/
+   │  │  ├─ 00001.jpg.overlapping/
+   │  │  │  ├─ map/
+   │  │  │  │  ├─ cam_01/
+   │  │  │  │  │  ├─ 00002.jpg.matches 
+   │  │  │  │  │  └─ 00003.jpg.matches 
+   │  │  │  │  └─ cam_02/
+   │  │  │  │     ├─ 00001.jpg.matches 
+   │  │  │  │     └─ 00002.jpg.matches 
+   │  │  │  └─ query/
+   │  │  │     ├─ query001.jpg.matches
+...
+----
+
+
+=== `│ | └─ \*.overlapping/*.matches`
+
+==== syntax
+
+The path of the `.matches` files meet the following pattern:
+
+[source,txt]
+----
+<image_path1>.overlapping/<image_path2>.matches
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|      image_path1 | path   | Path to the image 1 file. The path is relative to `sensors/records_data/`.
+|      image_path2 | path   | Path to the image 2 file. The path is relative to `sensors/records_data/`.
+|===
+
+NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparator).
+
+==== example
+
+.cam1/img000.jpg.overlapping/cam1/img001.jpg.matches (binary dump)
+[source,txt]
+----
+TO BE COMPLETED
+----
+
+The `.matches` files are binary dump of numpy array of type `uint32` on 2 columns, where each row is a feature matching, first column is index of feature in first image, and second column is the index of the feature in the second image.
+
+WARNING: *Modification* to come : use a 3rd column to encode a quality score. (?)
+
+== Camera axis
+
+Concerning camera axis, __kapture__ follows the computer vision convention (see fig below).
+__Colmap__, __openmvg__, __ros-camera__ also use the same coordinate system.
+
+.camera axis kapture : X ⇒ Right, Y ⇒ Down, Z ⇒ Front
+image:assets/frame_cv.svg[camera axis kapture,width=500]
+
+=== other axis orientations
+
+Bundler uses the camera coordinate system usually found in *computer graphics* (see fig below).
+
+.camera axis bundler : X ⇒ Right, Y ⇒ Up, Z ⇒ Back
+image:assets/frame_cg.svg[camera axis bundler,width=500]
+
+
+Realsense-ros (t265) use the ros-body axis orientation (see fig below).
+For more details see https://www.ros.org/reps/rep-0103.html#axis-orientation.
+
+.camera axis ros-body : X ⇒ Front, Y ⇒ Left, Z ⇒ Up
+image:assets/frame_ros.svg[camera axis ros-body,width=500]
+
+For reference, librealsense (different from realsense-ros) uses a different axis orientation for each sensor (see below).
+
+.librealsense reference
+image:https://raw.githubusercontent.com/IntelRealSense/librealsense/master/doc/img/T265_sensor_extrinsics.png[camera axis librealsense,width=500]
+
+==== examples
+
+From the computer graphics (cg) coordinate system to kapture:
+
+[source,python]
+----
+q_cg_to_kapture = quaternion.quaternion(0, 1, 0, 0) # rotate by Pi around X
+matrix_cg_to_kapture = kapture.PoseTransform(r=q_cg_to_kapture)
+# matrix_cg_to_kapture.inverse() = matrix_cg_to_kapture (-Pi around X is the same as Pi around X)
+pose_kapture = kapture.PoseTransform.compose([matrix_cg_to_kapture, pose_cg, matrix_cg_to_kapture])
+----
+
+From the ros-body (ros) coordinate system to kapture:
+[source,python]
+----
+q_ros_to_kapture = quaternion.quaternion(0.5, 0.5, -0.5, 0.5)
+matrix_ros_to_kapture = kapture.PoseTransform(r=q_ros_to_kapture)
+pose_kapture = kapture.PoseTransform.compose([matrix_ros_to_kapture, pose_ros, matrix_ros_to_kapture.inverse()])
+----
+
+== Version History
+
+=== 1.0
+
+Initial version of the format

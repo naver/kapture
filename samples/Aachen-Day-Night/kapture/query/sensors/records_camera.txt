@@ -1,0 +1,6 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+0, sensor0, query/day/nexus4/IMG_20140520_182846.jpg
+1, sensor1, query/day/nexus4/IMG_20140520_211432.jpg
+2, sensor2, query/day/milestone/2011-12-17_14-28-15_257.jpg
+3, sensor3, query/day/milestone/2011-12-17_14-50-43_241.jpg

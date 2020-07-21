@@ -1,0 +1,12 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+1531487840875078949, bb2_left, bb2_left/frame_000000001.jpg
+1531487840875078949, bb2_right, bb2_right/frame_000000001.jpg
+1531487840935058925, bb2_left, bb2_left/frame_000000002.jpg
+1531487840935058925, bb2_right, bb2_right/frame_000000002.jpg
+1531487841011030605, bb2_left, bb2_left/frame_000000003.jpg
+1531487841011030605, bb2_right, bb2_right/frame_000000003.jpg
+1531487841072150160, bb2_left, bb2_left/frame_000000004.jpg
+1531487841072150160, bb2_right, bb2_right/frame_000000004.jpg
+1531487841142699040, bb2_left, bb2_left/frame_000000005.jpg
+1531487841142699040, bb2_right, bb2_right/frame_000000005.jpg

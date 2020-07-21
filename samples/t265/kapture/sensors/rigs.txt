@@ -1,0 +1,4 @@
+# kapture format: 1.0
+# rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz
+ rig0,   001,     ,     ,     ,     ,     ,     ,     
+ rig0,   002,     ,     ,     ,     ,     ,     ,     

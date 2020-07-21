@@ -1,0 +1,7 @@
+# kapture format: 1.0
+# point3d_id, [image_path, feature_id]*
+0, db/4446.jpg, 0, db/1045.jpg, 0, db/1045.jpg, 1, db/1045.jpg, 2
+1, db/4446.jpg, 1, db/4446.jpg, 2, db/1045.jpg, 3, db/1045.jpg, 4
+2, db/1045.jpg, 5, db/4446.jpg, 3, db/1045.jpg, 6
+3, db/1135.jpg, 0, db/1135.jpg, 1, db/1135.jpg, 2
+4, db/1135.jpg, 3, db/1135.jpg, 4, db/1135.jpg, 5, db/1135.jpg, 6, db/1135.jpg, 7, db/1135.jpg, 8, db/1135.jpg, 9, db/1135.jpg, 10, db/1135.jpg, 11, db/1135.jpg, 12, db/1135.jpg, 13, db/1135.jpg, 14, db/1135.jpg, 15

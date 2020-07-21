@@ -1,0 +1,146 @@
+image::assets/kapture_logo.svg["KAPTURE", width=64px] 
+
+= kapture:  data format
+:sectnums:
+:sectnumlevels: 1
+:toc:
+:toclevels: 2
+
+== Overview
+
+Kapture is a pivot file format, based on text and binary files, used to describe SfM (Structure From Motion) and more generally sensor-acquired data.
+
+It can be used to store sensor parameters and raw sensor data:
+- cameras
+- images
+- lidar and other sensor data
+
+As well as computed data:
+
+- 2d features
+- 3d reconstruction
+
+== Specifications
+The format specification is detailed in the link:kapture_format.adoc[kapture format specifications document].
+
+== Example File Structure
+
+This is an example file structure of a dataset in the kapture format.
+
+[source,txt]
+----
+my_dataset                 # Dataset root path
+├─ sensors/                # Sensor data root path
+│  ├─ sensors.txt          # list of all sensors with their specifications (e.g. camera intrinsics)
+│  ├─ rigs.txt             # geometric relationship between sensors (optional)
+│  ├─ trajectories.txt     # extrinsics (timestamp, sensor, pose)
+│  ├─ records_camera.txt   # all records of type 'camera' (timestamp, sensor and path to image)
+│  ├─ records_SENSOR_TYPE.txt # all records of type SENSOR_TYPE (other sensors, eg: 'magnetic', 'pressure'...)
+│  └─ records_data/            # image and lidar data path
+│     ├─ map/cam_01/00001.jpg  # image path used in records_camera.txt (example)
+│     ├─ map/cam_01/00002.jpg
+│     ├─ map/lidar_01/0001.pcd # lidar data path used in records_lidar.txt
+│     ├─ query/query001.jpg    # image path used in records_camera.txt
+│     ├─ ...
+├─ reconstruction/
+│  ├─ keypoints/                    # 2D keypoints files
+│  │  ├─ keypoints.txt              # type of keypoint
+│  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+│  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+│  │  ├─ ...
+│  ├─ descriptors/                  # keypoint descriptors files
+│  │  ├─ descriptors.txt            # type of descriptor
+│  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
+│  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
+│  │  ├─ ...
+│  ├─ ...
+│  ├─ points3d.txt                  # 3D points of the reconstruction
+│  ├─ observations.txt              # 2D/3D points corespondences
+│  ├─ matches/                      # matches files.
+│  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
+│  │  ├─ ...
+----
+
+== Software
+
+The kapture format is provided with a Python library, as well as several conversion tools.
+
+=== install
+
+=== using docker
+
+Build the docker image:
+
+[source,bash]
+.build
+----
+# build the docker image
+docker build . -t kapture
+# run unit tests
+docker run -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
+----
+
+
+You can bind directories between the host and the container using `--volume` or `--mount` option
+in order to access to any files and directories on a host machine from the container.
+(See the docker documentation.)
+
+[source,bash]
+.run
+----
+docker run -it \
+    --rm \ # Automatically remove the container when it exits \
+    --volume /path/to/dataset/:/dataset:ro \ #read only
+    kapture
+----
+
+=== kapture library
+
+=== kapture tools
+
+In this repository, you will find a set of *conversion tools* to or from kapture format.
+Import results to kapture format, and conversely, export converts kapture data to other formats.
+Depending of the format, some data might not be converted, either because the other format does not support it (`—`)
+or because its was not implemented (`⨉`). Here is a table summarizing the conversion capabilities:
+
+.conversion capabilities
+|===
+| Format                    | <- ->  | cam  | rig  | img  | traj | gps  | kpt  | desc | gfeat| p3D  | obs  | mch
+
+.2+| colmap                 | import |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
+                            | export |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
+.2+| openmvg                | import |  ✓   |  --  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
+                            | export |  ✓   |  --  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
+.2+| OpenSfM                | import |  ✓   |  ⨉   |  ✓   |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  ✓   |  ⨉   |  ✓
+                            | export |  ✓   |  ⨉   |  ✓   |  ✓   |  ⨉   |  ✓   |  --  |  ✓   |  --  |  ⨉   |  ✓
+| bundler                   | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  ✓   |  --  |  --  |  ✓   |  ✓   |  --
+| image_folder              | import |  --  |  --  |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --  |  --
+| image_list                | import |  ✓   |  --  |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --  |  --
+| nvm                       | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  ✓   |  --  |  --  |  ✓   |  ✓   |  --
+| IDL_dataset_cvpr17        | import |  ✓   |  --  |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
+| RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  ✓   |  ?   |  --  |  ✓   |  ✓   |  ?
+| ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  --  |  --  |  --  |  --  |  --  |  --
+| SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
+| virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  --  |  --  |  --  |  --  |  --  |  --  |  --
+|===
+
+:Notes:
+ - `✓`: supported, `(✓)` partially supported, `⨉`: not implemented, `—`: not supported by format.
+ - `cams`: handle camera parameters, eg. intrisics
+ - `rig`: handle rig structure.
+ - `img`: handle the path to images.
+ - `traj`: handle trajectories, eg. poses.
+ - `kpt`: handle image keypoints locations.
+ - `desc`: handle image keypoints descriptors.
+ - `gfeat`: handle global image feature descriptors.
+ - `p3D`: handle 3D point clouds.
+ - `obs`: handle observations, ie. 3D-points / 2D keypoints correspondences.
+ - `mch`: handle keypoints matches.
+
+
+== Contributing
+If you wish to contribute, please refer to the  link:CONTRIBUTING.adoc[CONTRIBUTING] page.
+
+== License
+Software license is detailed in the link:LICENSE[LICENSE] file.
+

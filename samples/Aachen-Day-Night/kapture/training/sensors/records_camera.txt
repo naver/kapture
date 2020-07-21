@@ -1,0 +1,5 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+0, sensor0, db/1045.jpg
+1, sensor1, db/4446.jpg
+2, sensor2, db/1135.jpg

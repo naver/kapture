@@ -1,0 +1,3 @@
+# kapture format: 1.0
+# name, dtype, dsize
+r2d2, float32, 3

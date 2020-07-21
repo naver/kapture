@@ -1,0 +1,8 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+0, 001, leftraw/frame_000000001.jpg
+0, 002, rightraw/frame_000000001.jpg
+1, 001, leftraw/frame_000000002.jpg
+1, 002, rightraw/frame_000000002.jpg
+2, 001, leftraw/frame_000000003.jpg
+2, 002, rightraw/frame_000000003.jpg

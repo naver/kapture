@@ -1,0 +1,5 @@
+- [ ] update github URL in doc/install.adoc
+- [ ] update the list of kapture datasets URL in dataset/kapture_dataset_index.yaml
+- [x] update the default repository URL in tools/kapture_dataset_download.py
+- [ ] parse anf check all TODOs in code
+- [ ] check licensing of samples/ (eg. aarchen, berlin, chess, utbm, ...)

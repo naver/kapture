@@ -1,0 +1,99 @@
+= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  Contributing
+:sectnums:
+:sectnumlevels: 1
+:toc:
+:toclevels: 2
+
+== Overview
+
+There are several ways to contribue to the kapture project:
+
+* submit bug reports in the project bug tracker
+* implement a feature or bug-fix for an outstanding issue
+* propose a new feature and implement it
+
+And of course, it is possible to discuss new features or other aspects of the project.
+
+
+== Install kapture
+
+
+To develop kapture on your machine, here are some installation tips:
+
+* Clone a copy of kapture from source:
+[source,txt]
+----
+git clone https://github.com/naver/kapture.git
+----
+
+* Please note that kapture requires python version 3.6 or higher
+
+* install dependencies
+
+[source,txt]
+----
+pip install -r requirements.txt
+----
+
+== Codebase structure
+[source,txt]
+----
+kapture                  # Repository root path
+├─ assets/               # Various files (images) used in the project (e.g. for documentation)
+├─ kapture/              # kapture library source code
+│  ├─ algo/              # Algorithmic related files
+│  ├─ converters/        # Converters libraries
+│  ├─ core/              # Core kapture objects
+│  ├─ io/                # I/O related files
+│  └─ utils/             # Various generic utilities
+├─ samples/              # data samples (kapture and other formats). Used by tests.
+├─ tests/                # Unit and functional tests
+└─ tools/                # kapture tools scripts (importers, exporters, utilities)
+----
+
+== Coding guidelines
+
+.Style Guide
+kapture code follows Python's link:https://www.python.org/dev/peps/pep-0008/[PEP-8 guidelines] with a few differences:
+
+* Maximum Line Length is 120 characters
+* function arguments types should be specified
+* return types of functions should be specified
+
+Docstrings are written in the `sphinx` format.
+
+.Conventions
+
+* Variable names shoud be explicit (e.g. avoid acronyms)
+* private member variables should start with an `_` (underscore)
+
+.File headers
+All kapture source code files should start with this line:
+[source,txt]
+----
+#!/usr/bin/env python3
+​# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+----
+
+.Loggers
+The library and the clients should use different loggers.
+
+.Documentation
+
+All API functions should be properly documented using docstrings
+
+== Unit testing
+
+kapture's testing is located under test/. Run the entire test suite with
+
+[source,txt]
+----
+python test/run_test.py
+----
+
+or run individual test files, like `python test/test_nn.py`, for individual test suites.
+
+== License
+
+Contributions will be provided under the same license as kapture, that is the 3-Clause BSD license (see LICENSE for details).
+

@@ -1,0 +1,13 @@
+numpy
+numpy-quaternion
+numba
+matplotlib
+scipy
+tqdm
+Pillow==7.2.0
+requests
+pyyaml
+wcmatch
+
+# Issues with torch 1.5.0
+torch==1.4.0

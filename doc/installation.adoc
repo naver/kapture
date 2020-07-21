@@ -1,0 +1,143 @@
+= kapture / installation
+
+:sectnums:
+:sectnumlevels: 1
+:toc:
+:toclevels: 2
+
+You can either install the package using pip or from the source code manually.
+We also provide a docker file.
+
+== pip: the simple way
+
+Requirements:
+
+ - python 3.6 + python3-pip
+ - colmap (optional)
+
+=== linux (Ubuntu 18.04 LTS)
+
+In a terminal (e.g. __bash__), run:
+
+[source,bash]
+----
+# install requirements
+sudo apt-get install -y python3.6 python3-pip colmap
+# install kapture
+pip3 install kapture
+----
+
+=== Windows and MacOS
+
+.Requirements
+
+Download and install the latest 3.6 release from https://www.python.org/downloads/ for your machine.
+
+NOTE: **For windows user**: when running the installer, tick `Add Python 3.6 to PATH`,
+then `customize`, make sure __pip__, __Python test suite__ and __py launcher__ are installed.
+
+Get the latest __colmap__ binaries from https://github.com/colmap/colmap/releases.
+
+Finally, in a terminal (e.g. __powershell__), run:
+[source,bash]
+----
+pip3 install kapture
+----
+
+NOTE: **For windows user**: __kapture__ uses symlinks to optimize transfer operations. But symbolic links are not fully
+supported on __windows__ platform, and may lead to permission errors. If you encounter that kind of errors,
+please consider using __copy__ or __skip__ as transfer mode.
+
+== from source: for developers
+
+In addition to <<pre-built package>> requirements, you need to install:
+
+ - __git__.
+
+Optionally, for documentation, you will also need to install
+
+- __pandoc__,
+- __asciidoctor__.
+
+=== linux (Ubuntu 18.04 LTS)
+
+In a terminal, do:
+
+[source,bash]
+----
+# install requirements
+sudo apt-get install -y git python3.6 python3-pip colmap
+# install optionnal requirements
+sudo apt-get install -y pandoc asciidoctor
+# clone source repository
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture/ -b master
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+cd kapture
+# check everything is fine
+python3 -m unittest discover -s tests
+# install
+python3 setup.py build install
+----
+
+
+=== Windows and MacOS
+
+Download and install :
+
+ - __git__ from https://git-scm.com/download/[git-scm.com].
+
+Optionally, for documentation, download and install
+
+ - __pandoc__ from https://github.com/jgm/pandoc/releases/tag/2.9.2.1[github.com/jgm/pandoc],
+ - __asciidoctor__ from https://asciidoctor.org/[asciidoctor.org].
+
+Then, in a command prompt (cmd or powershell) run:
+
+[source,bash]
+----
+# clone source repository
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture/ -b master
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+cd kapture
+# check everything is fine
+python -m unittest discover -s tests
+# install
+python setup.py build install
+----
+
+== using docker: for
+
+=== Build
+Build the docker image:
+
+[source,bash]
+----
+# clone source repository
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture/ -b master
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+cd kapture
+# build the docker image
+docker build . -t kapture
+# run unit tests
+docker run -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
+----
+
+=== Run
+
+[source,bash]
+----
+docker run -it \
+    --rm \ # Automatically remove the container when it exits \
+    --volume /path/to/dataset/:/dataset:ro \ #read only
+    kapture
+----
+
+NOTE: You can bind directories between the host and the container using `--volume` or `--mount` option
+in order to access to any files and directories on a host machine from the container.
+(See the docker documentation.)
