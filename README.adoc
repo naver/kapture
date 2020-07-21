@@ -77,7 +77,6 @@ or see link:doc/installation.adoc[installation] for more detailed instructions.
 Build the docker image:
 
 [source,bash]
-.build
 ----
 # build the docker image
 docker build . -t kapture
@@ -85,13 +84,11 @@ docker build . -t kapture
 docker run -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
 ----
 
-
-You can bind directories between the host and the container using `--volume` or `--mount` option
-in order to access to any files and directories on a host machine from the container.
-(See the docker documentation.)
+If you want to process your own data, you can bind directories between the host and the container using
+`--volume` or `--mount` option (See the https://docs.docker.com/storage/bind-mounts/[docker documentation]).
+The following example mounts `/path/to/dataset/` from the host to `/dataset` inside the docker.
 
 [source,bash]
-.run
 ----
 docker run -it \
     --rm \ # Automatically remove the container when it exits \
