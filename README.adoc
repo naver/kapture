@@ -110,7 +110,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 
 .conversion capabilities
 |===
-| Format                    | <- ->  | cam  | rig  | img  | traj | gps  | kpt  | desc | gfeat| p3D  | obs  | mch
+| Format                    | <- ->  | cam  | rig  | img  | trj  | gps  | kpt  | dsc  | gft  | p3D  | obs  | mch
 
 .2+| colmap                 | import |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
                             | export |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  --  |  ✓   |  ✓   | (✓)
@@ -131,13 +131,13 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 
 :Notes:
  - `✓`: supported, `(✓)` partially supported, `⨉`: not implemented, `—`: not supported by format.
- - `cams`: handle camera parameters, eg. intrisics
+ - `cam`: handle camera parameters, eg. intrisics
  - `rig`: handle rig structure.
  - `img`: handle the path to images.
- - `traj`: handle trajectories, eg. poses.
+ - `trj`: handle trajectories, eg. poses.
  - `kpt`: handle image keypoints locations.
- - `desc`: handle image keypoints descriptors.
- - `gfeat`: handle global image feature descriptors.
+ - `dsc`: handle image keypoints descriptors.
+ - `gft`: handle global image feature descriptors.
  - `p3D`: handle 3D point clouds.
  - `obs`: handle observations, ie. 3D-points / 2D keypoints correspondences.
  - `mch`: handle keypoints matches.
