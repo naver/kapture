@@ -25,7 +25,7 @@ logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
 
 INDEX_FILENAME = 'kapture_dataset_index.yaml'
 DEFAULT_DATASET_PATH = path.normpath(path.abspath('.'))
-DEFAULT_REPOSITORY_URL = 'http://download.europe.naverlabs.com/kapture/'
+DEFAULT_REPOSITORY_URL = 'https://github.com/naver/kapture/raw/master/dataset'
 
 datasets = {}
 

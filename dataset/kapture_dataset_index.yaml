@@ -1,13 +1,3 @@
-vkitti2_instanceSegmentation:
-  sub_path: virtual_kitti_2.0.3
-  url: http://download.europe.naverlabs.com/virtual_kitti_2.0.3/vkitti_2.0.3_instanceSegmentation.tar
-  sha256sum: fae9d25fd68341f64d857c55f5488fe40df5b962a0088a0bce8ddd2ecb89d40a
-
-vkitti2_classSegmentation:
-  sub_path: virtual_kitti_2.0.3
-  url: http://download.europe.naverlabs.com/virtual_kitti_2.0.3/vkitti_2.0.3_classSegmentation.tar
-  sha256sum: 045943405371706b85fdad2806fe4ccb9ca97fa73f681f9a4f710617e37fb59f
-
 robotcar_seasons_02:
   url: http://download.europe.naverlabs.com/kapture/robotcar_seasons_02.tar
   sha256sum: 542ef47c00d5e387cfb0dcadb2459ae2fb17d59010cc51bae0c49403b4fa6a18
