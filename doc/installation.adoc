@@ -70,10 +70,7 @@ sudo apt-get install -y git python3.6 python3-pip colmap
 # install optionnal requirements
 sudo apt-get install -y pandoc asciidoctor
 # clone source repository
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-git clone https://github.com/naver/kapture/ -b master
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture.git
 cd kapture
 # check everything is fine
 python3 -m unittest discover -s tests
@@ -98,10 +95,7 @@ Then, in a command prompt (cmd or powershell) run:
 [source,bash]
 ----
 # clone source repository
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-git clone https://github.com/naver/kapture/ -b master
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture.git
 cd kapture
 # check everything is fine
 python -m unittest discover -s tests
@@ -109,7 +103,7 @@ python -m unittest discover -s tests
 python setup.py build install
 ----
 
-== using docker: for
+== using docker
 
 === Build
 Build the docker image:
@@ -117,10 +111,7 @@ Build the docker image:
 [source,bash]
 ----
 # clone source repository
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# TODO: CHECK for the public URL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-git clone https://github.com/naver/kapture/ -b master
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+git clone https://github.com/naver/kapture.git
 cd kapture
 # build the docker image
 docker build . -t kapture
