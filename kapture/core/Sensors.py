@@ -17,7 +17,7 @@ class Sensor:
         assert name is None or isinstance(name, str)
         self.name = name
         self._sensor_type = sensor_type
-        self.sensor_params = sensor_params or []  # TODO: enforce its strings
+        self.sensor_params = sensor_params or []
 
     @property
     def sensor_type(self):
