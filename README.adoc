@@ -81,7 +81,7 @@ Build the docker image:
 # build the docker image
 docker build . -t kapture
 # run unit tests
-docker run -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
+docker run -it --rm kapture python3 -m unittest discover -s /opt/source/kapture/tests
 ----
 
 If you want to process your own data, you can bind directories between the host and the container using
