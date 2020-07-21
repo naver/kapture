@@ -41,7 +41,7 @@ long_description = read_doc(readme_filepath)
 setuptools.setup(
     # description
     name='kapture',
-    version="0.0.10",
+    version="1.0.0",
     author="naverlabs",
     author_email="kapture@naverlabs.com",
     description="kapture: file format for SfM",
