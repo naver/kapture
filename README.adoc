@@ -65,9 +65,14 @@ my_dataset                 # Dataset root path
 
 The kapture format is provided with a Python library, as well as several conversion tools.
 
-=== install
+=== Install
 
-=== using docker
+[source,bash]
+pip install kapture
+
+or see link:doc/installation.adoc[installation] for more detailed instructions.
+
+=== Using docker
 
 Build the docker image:
 
@@ -137,6 +142,14 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
  - `obs`: handle observations, ie. 3D-points / 2D keypoints correspondences.
  - `mch`: handle keypoints matches.
 
+
+== Tutorial
+
+See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
+
+ - conversion tools
+ - dataset download
+ - localization pipelines
 
 == Contributing
 If you wish to contribute, please refer to the  link:CONTRIBUTING.adoc[CONTRIBUTING] page.
