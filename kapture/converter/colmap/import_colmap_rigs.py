@@ -49,7 +49,7 @@ def import_colmap_rig_json(rigs_colmap: list,
             camera_id_colmap = cam_colmap['camera_id']
             camera_id_kapture = get_camera_kapture_id_from_colmap_id(camera_id_colmap)
             camera_prefixes[camera_id_kapture] = cam_colmap['image_prefix']
-            # TODO: Check colmap does not store rig geometry, but only the fact there is one.
+            # colmap does not store rig geometry, but only the fact there is one.
             pose_unknown = kapture.PoseTransform(r=None, t=None)
             rigs_kapture[rig_id_kapture, camera_id_kapture] = pose_unknown
 
