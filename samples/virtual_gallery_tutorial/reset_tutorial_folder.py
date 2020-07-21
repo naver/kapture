@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 import os.path as path
 import shutil
 
