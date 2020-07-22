@@ -99,7 +99,7 @@ kapture_colmap_build_map.py -v info -i ./mapping --pairsfile-path ./tutorial/map
 
 To visualise the map, you can use __colmap__ gui, as follow:
 [source,bash]
-colmap gui --database_path ./mapping_colmap/colmap.db --image_path ../mapping/sensors/records_data
+colmap gui --database_path ./tutorial/mapping_colmap/colmap.db --image_path ./mapping/sensors/records_data
 
 NOTE: For windows user, replace "colmap" with the full path to "colmap.bat" file.
 
