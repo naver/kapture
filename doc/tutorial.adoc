@@ -103,7 +103,7 @@ colmap gui --database_path ./tutorial/mapping_colmap/colmap.db --image_path ./ma
 
 NOTE: For windows user, replace "colmap" with the full path to "colmap.bat" file.
 
-Once __colmap__ window appears, click menu `file` > `import model` and browse to `mapping_colmap/reconstruction`.
+Once __colmap__ window appears, click menu `file` > `import model` and browse to `tutorial/mapping_colmap/reconstruction`.
 Click `yes` and `save` to the following dialogs. As show in Fig. <<fig_reconstruct>>, the 3-D interface of __colmap__
 shows the 3-D points and the cameras in the scene. If you double-click on a camera, you'll see the image, and the 3-D
 points seen from it will be highlighted.
