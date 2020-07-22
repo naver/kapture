@@ -6,13 +6,23 @@
 :toclevels: 2
 
 
-== install kapture
-
+== install
 [source,bash]
 pip install kapture
 
-or see link:installation.adoc[installation] for more detailed instructions.
+NOTE: For this tutorial, you also must have colmap version >=3.6.
+On ubuntu 18.04, apt you will install colmap 3.4.
+In this case, you will have to compile colmap from source instead.
 
+Or you can use the ready-to-use docker image:
+[source,bash]
+----
+docker build . -t kapture
+docker run -it --rm  --volume /path/to/dataset/:/dataset kapture   #  <1>
+----
+(1) replace `/path/to/dataset/` with the path on the host.
+
+See link:installation.adoc[installation] for detailed instructions.
 
 == download a dataset
 
@@ -42,7 +52,7 @@ And finally, you will evaluate the precision of the obtained localization agains
 In this tutorial we will use `virtual_gallery_tutorial` dataset, you will find in `samples/` folder.
 You can easily reproduce the procedure for any dataset split in mapping/query.
 
-For this tutorial, you must have colmap version >=3.6.
+For this tutorial, you must have colmap version >=3.6. see <<install>>
 
 === custom local features and matching based on image retrieval
 First, you need to extract your local and global features for each image.
