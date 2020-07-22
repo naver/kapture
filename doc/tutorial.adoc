@@ -90,7 +90,7 @@ kapture_compute_matches.py -v info -i ./mapping --pairsfile-path ./tutorial/mapp
 ----
 # triangulate matches
 # if the colmap executable is not available from your PATH,
-# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.bat
+# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/colmap.bat
 # in kapture_colmap_build_map.py, every unknown parameter is passed down to colmap point_triangulator.
 # In this example point_triangulator will take
 # --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
@@ -128,7 +128,7 @@ kapture_compute_matches.py -v info -i ./tutorial/mapping_query --pairsfile-path 
 [source,bash]
 ----
 # if the colmap executable is not available from your PATH,
-# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.bat
+# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/colmap.bat
 # in kapture_colmap_localize.py, every unknown parameter is passed down to colmap image_registrator, in this example image_triangulator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 kapture_colmap_localize.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt -db ./tutorial/mapping_colmap/colmap.db -txt ./tutorial/mapping_colmap/reconstruction -o ./tutorial/localized_colmap --use-colmap-matches-importer --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
