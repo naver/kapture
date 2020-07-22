@@ -10,9 +10,9 @@
 [source,bash]
 pip install kapture
 
-NOTE: For this tutorial, you also must have colmap version >=3.6.
-On ubuntu 18.04, apt you will install colmap 3.4.
-In this case, you will have to compile colmap from source instead.
+NOTE: For this tutorial, you also must have __colmap__ version >=3.6.
+On ubuntu 18.04, apt you will install __colmap__ 3.4.
+In this case, you will have to compile__colmap__from source instead.
 
 Or you can use the ready-to-use docker image:
 [source,bash]
@@ -52,7 +52,7 @@ And finally, you will evaluate the precision of the obtained localization agains
 In this tutorial we will use `virtual_gallery_tutorial` dataset, you will find in `samples/` folder.
 You can easily reproduce the procedure for any dataset split in mapping/query.
 
-For this tutorial, you must have colmap version >=3.6. see <<install>>
+For this tutorial, you must have__colmap__version >=3.6. see <<install>>
 
 === custom local features and matching based on image retrieval
 First, you need to extract your local and global features for each image.
@@ -61,46 +61,77 @@ We provide precomputed __R2D2__ (only 500 keypoints per image) and __AP-GeM__ fe
 If you want to process your own dataset, you will have to convert yours to the correct format
 (see kapture_format.adoc#4--reconstruction).
 
-First, you run the image retrieval code:
+
+0) Make sure, you start the tutorial cleaned from unwanted files (eg. previous experiments).
+
 [source,bash]
 ----
 cd samples/virtual_gallery_tutorial # or your own dataset
-# if you use samples/virtual_gallery_tutorial, clear the tutorial folder of unwanted files
 python ./reset_tutorial_folder.py
+----
+
+1) First step, proceed the image retrieval:
+
+[source,bash]
+----
 # for each image, retrieve the 5 most similar images (including self)
 # this will create a list of pairs of images
 kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./mapping -o ./tutorial/mapping_pairs.txt --topk 5
 kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./query -o ./tutorial/query_pairs.txt --topk 5
 ----
 
-Next, you have to compute the 2D-2D matches using the local features and the list of
-pairs and then build the map using colmap.
+2) Next, you have to compute the 2D-2D matches using the local features and the list of
+pairs.
+[source,bash]
+kapture_compute_matches.py -v info -i ./mapping --pairsfile-path ./tutorial/mapping_pairs.txt
+
+3) Then build the map using colmap.
 [source,bash]
 ----
-kapture_compute_matches.py -v info -i ./mapping --pairsfile-path ./tutorial/mapping_pairs.txt
 # triangulate matches
 # if the colmap executable is not available from your PATH,
 # set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.exe
-# in kapture_colmap_build_map.py, every unknown parameter is passed down to colmap point_triangulator, in this example point_triangulator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
+# in kapture_colmap_build_map.py, every unknown parameter is passed down to colmap point_triangulator.
+# In this example point_triangulator will take
+# --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 kapture_colmap_build_map.py -v info -i ./mapping --pairsfile-path ./tutorial/mapping_pairs.txt -o ./tutorial/mapping_colmap --use-colmap-matches-importer --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-In order to run the localization scripts, you need to have the **mapping** and **query** data in the same kapture
-(for the matches). Once they are merged, it's straightforward.
+To visualise the map, you can use __colmap__ gui, as follow:
+[source,bash]
+colmap gui --database_path ./mapping_colmap/colmap.db --image_path ../mapping/sensors/records_data
+
+Once __colmap__ window appears, click menu `file` > `import model` and browse to `mapping_colmap/reconstruction`.
+Click `yes` and `save` to the following dialogs. As show in Fig. <<fig_reconstruct>>, the 3-D interface of __colmap__
+shows the 3-D points and the cameras in the scene. If you double-click on a camera, you'll see the image, and the 3-D
+points seen from it will be highlighted.
+
+NOTE: If you are using docker, you can simply use __colmap__ GUI from host, even if the version is < 3.6.
+
+.map reconstruction in __colmap__.
+[[fig_reconstruct]]
+image::colmap_mapping.jpg[reconstruction]
+
+4) Merge: in order to run the localization scripts, you need to have the `mapping` and `query` data in the same kapture
+(for the matches).
 [source,bash]
 ----
 # merge mapping and query. ignore global_features, they are not needed anymore
 kapture_merge.py -v info -i ./mapping ./query -o ./tutorial/mapping_query -s global_features
 # run the matching again, but with the query to mapping pairfile
 kapture_compute_matches.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt
-# localize
+----
+
+5) Localize: Once `mapping` and `query` are merged to a single `mapping_query`, it's straightforward.
+[source,bash]
+----
 # if the colmap executable is not available from your PATH,
 # set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.exe
 # in kapture_colmap_localize.py, every unknown parameter is passed down to colmap image_registrator, in this example image_triangulator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 kapture_colmap_localize.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt -db ./tutorial/mapping_colmap/colmap.db -txt ./tutorial/mapping_colmap/reconstruction -o ./tutorial/localized_colmap --use-colmap-matches-importer --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-Finally, import the results to kapture and evaluate your results.
+6) Evaluate: finally, import the results to kapture and evaluate your results.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_colmap/colmap.db -txt ./tutorial/localized_colmap/reconstruction -o ./tutorial/localized_colmap/imported --skip_reconstruction
@@ -110,7 +141,7 @@ kapture_evaluate.py -v info -i ./tutorial/localized_colmap/imported --labels tut
 ----
 
 In `./tutorial/localized_colmap/eval/stats.txt`, you will find something similar to:
-[source,bash]
+[source,ini]
 ----
 Model: tutorial_localization
 
@@ -125,6 +156,7 @@ Max: 0.0183m; 0.3394 deg
 (0.015m, 0.3 deg): 75.00%
 (0.2m, 0.5 deg): 100.00%
 ----
+
 
 === using SIFT local features and Vocabulary Tree matching (standard colmap pipeline)
 
