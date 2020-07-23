@@ -1,8 +1,3 @@
-# Tutorial byproduct
-samples/virtual_gallery_tutorial/tutorial
-samples/virtual_gallery_tutorial/mapping/reconstruction/matches/
-samples/virtual_gallery_tutorial/vocab_trees/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
