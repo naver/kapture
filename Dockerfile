@@ -12,6 +12,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git \
     wget\
+    curl \
     python3.6 python3-pip \
     pandoc asciidoctor \
     cmake \
