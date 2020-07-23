@@ -52,7 +52,12 @@ And finally, you will evaluate the precision of the obtained localization agains
 In this tutorial we will use `virtual_gallery_tutorial` dataset, you will find in `samples/` folder.
 You can easily reproduce the procedure for any dataset split in mapping/query.
 
-For this tutorial, you must have__colmap__version >=3.6. see <<install>>
+.Colmap
+For this tutorial, you must have __colmap__ version >=3.6. see <<install>>.
+
+For __windows__ users, you must use `colmap.bat`. If the __colmap__ path is not available from your `%PATH%`
+environment variable, you must provide it to kapture tools through the parameter `-colmap`,
+e.g. `-colmap C:/Workspace/dev/colmap/colmap.bat`.
 
 === custom local features and matching based on image retrieval
 First, you need to extract your local and global features for each image.
