@@ -116,14 +116,14 @@ cd kapture
 # build the docker image
 docker build . -t kapture
 # run unit tests
-docker run -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
+docker run --runtime=nvidia -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
 ----
 
 === Run
 
 [source,bash]
 ----
-docker run -it \
+docker run --runtime=nvidia -it \
     --rm \ # Automatically remove the container when it exits \
     --volume /path/to/dataset/:/dataset:ro \ #read only
     kapture

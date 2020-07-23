@@ -18,7 +18,7 @@ Or you can use the ready-to-use docker image:
 [source,bash]
 ----
 docker build . -t kapture
-docker run -it --rm  --volume /path/to/dataset/:/dataset kapture   #  <1>
+docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture   #  <1>
 ----
 (1) replace `/path/to/dataset/` with the path on the host.
 
