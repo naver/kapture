@@ -200,7 +200,6 @@ In this tutorial, we will use `vocab_tree_flickr100K_words32K.bin`.
 
 [source,bash]
 ----
-mkdir vocab_trees
 # Windows 10 includes curl.exe
 curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
 ----
