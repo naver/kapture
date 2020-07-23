@@ -202,7 +202,7 @@ In this tutorial, we will use `vocab_tree_flickr100K_words32K.bin`.
 ----
 mkdir vocab_trees
 # Windows 10 includes curl.exe
-curl -C - --output ./vocab_trees/vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
+curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
 ----
 
 1) build the map with colmap.
@@ -212,7 +212,7 @@ curl -C - --output ./vocab_trees/vocab_tree_flickr100K_words32K.bin --url https:
 # if the colmap executable is not available from your PATH,
 # set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.bat
 # in kapture_colmap_build_sift_map.py, every unknown parameter is passed down to colmap point_triangulator, in this example point_triangulator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
-kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift_colmap -voc ./vocab_trees/vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
+kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
 2) localize with colmap
@@ -224,7 +224,7 @@ kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift
 # in kapture_colmap_localize_sift.py, every unknown parameter is passed down to colmap image_registrator,
 # in this example image_registrator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0
 # --Mapper.ba_refine_extra_params 0
-kapture_colmap_localize_sift.py -v info -i ./query -db ./tutorial/mapping_sift_colmap/colmap.db -txt ./tutorial/mapping_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap -voc ./vocab_trees/vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
+kapture_colmap_localize_sift.py -v info -i ./query -db ./tutorial/mapping_sift_colmap/colmap.db -txt ./tutorial/mapping_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
 3) Finally, import the results to kapture and evaluate your results.
