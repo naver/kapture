@@ -13,11 +13,11 @@ from PIL.ExifTags import TAGS, GPSTAGS
 # kapture
 import path_to_kapture  # enables import kapture
 import kapture
-from kapture.io.records import images_to_filepaths
+from kapture.io.records import images_to_filepaths, get_image_fullpath
 from kapture.converter.exif.import_exif import *
 from kapture.converter.exif.export_exif import *
 
-from kapture.algo.compare import equal_kapture
+from kapture.algo.compare import equal_kapture, equal_records_gnss
 
 
 class TestImportExif(unittest.TestCase):
@@ -96,27 +96,34 @@ class TestImportExif(unittest.TestCase):
         self.assertEqual(set(expected_exif.keys()), set(actual_exif.keys()))
         self.assertDictEqual(expected_exif['GPS'], actual_exif['GPS'])
 
+    def test_clear_exif(self):
+        image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
+        image_filepath_temp = path.join(self._tempdir.name, 'image.jpg')
+        shutil.copy(image_filepath_w_exif, image_filepath_temp)
+        clear_exif(image_filepath_temp)
+        exif_data = read_exif(image_filepath_temp)
+        self.assertIsNone(exif_data)
+
     def test_export(self):
         temp_kapture_dirpath = path.join(self._tempdir.name, 'kapture')
         shutil.copytree(self._kapture_dirpath, temp_kapture_dirpath)
         kapture_data = kapture.io.csv.kapture_from_dir(temp_kapture_dirpath)
-        # remove all EXIF from images
-        # images_dirpath = path.join(temp_kapture_dirpath, 'sensors', 'records_data')
-        # images_filepaths = [path.join(dp, fn) for dp, _, fs in os.walk(images_dirpath) for fn in fs]
         images_filepaths = images_to_filepaths(kapture_data.records_camera, temp_kapture_dirpath)
+        # make sure there is no EXIF in images
         for image_filepath in images_filepaths.values():
-            break
-            # to clear all EXIF data, create a new image, copying only the image data.
-            image = Image.open(image_filepath)
-            image_clean = Image.new(image.mode, image.size)
-            image_clean.putdata(list(image.getdata()))
-            image.close()
-            image_clean.save(image_filepath)
-            image_clean.close()
+            clear_exif(image_filepath)
 
-        #
+        # insert gps to exif
         export_gps_to_exif(kapture_data=kapture_data,
                            kapture_dirpath=temp_kapture_dirpath)
+
+        rebuilt_records = kapture.RecordsGnss()
+        for timestamp, cam_id, image_name in kapture.flatten(kapture_data.records_camera):
+            image_filepath = get_image_fullpath(temp_kapture_dirpath, image_name)
+            exif_data = read_exif(image_filepath)
+            rebuilt_records[timestamp, 'GPS_' + cam_id] = convert_gps_to_kapture_record(exif_data)
+
+        self.assertTrue(equal_records_gnss(kapture_data.records_gnss, rebuilt_records))
 
 
 if __name__ == '__main__':

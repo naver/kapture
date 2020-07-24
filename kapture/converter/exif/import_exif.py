@@ -51,36 +51,36 @@ def read_exif(
     return exif_data
 
 
-def convert_single_sexagesimal_to_decimal(
+def convert_rational_to_float(
         rational_num: Tuple[float]
 ) -> float:
     assert isinstance(rational_num, tuple)
     return float(rational_num[0] / rational_num[1])
 
 
-def convert_coordinates_sexagesimal_to_decimal(
-        sexagesimal: Tuple[Tuple[float]],
+def convert_dms_to_float(
+        dms: Tuple[Tuple[float]],
         reference: Optional[str] = None
 ) -> float:
     """
-    Convert the sexagesimal representation coordinate (degree, minute, seconds) to single float.
+    Convert the degree, minute, seconds + ref representation to single float.
 
-    :param sexagesimal: Is a triplet (tuple) of IFDRational.
+    :param dms: Is a triplet (tuple) of IFDRational.
     :param reference:
     :return:
     """
     # sanity check
-    assert isinstance(sexagesimal, tuple)
-    assert len(sexagesimal) == 3
-    if any(not isinstance(v, tuple) for v in sexagesimal):
+    assert isinstance(dms, tuple)
+    assert len(dms) == 3
+    if any(not isinstance(v, tuple) for v in dms):
         # Pillow 3.1 uses IFDRational, but piexif tuple[float].
         warn('Make sure you have installed piexif==1.1.3')
         raise TypeError('Expect Tuple[Tuplep[float] for sexagesimal. Make sure you have installed piexif==1.1.3')
 
-    assert all(isinstance(v, tuple) for v in sexagesimal)
-    decimal = convert_single_sexagesimal_to_decimal(sexagesimal[0]) + \
-              convert_single_sexagesimal_to_decimal(sexagesimal[1]) / 60 + \
-              convert_single_sexagesimal_to_decimal(sexagesimal[2]) / 3600
+    assert all(isinstance(v, tuple) for v in dms)
+    decimal = convert_rational_to_float(dms[0]) + \
+              convert_rational_to_float(dms[1]) / 60 + \
+              convert_rational_to_float(dms[2]) / 3600
     # handle South or west coordinates.
     if reference is not None and reference.upper() in ['S', 'W']:
         decimal *= -1
@@ -111,17 +111,17 @@ def convert_gps_to_kapture_record(
 
     gps_info = exif_data['GPS']
     position = dict()
-    position['x'] = convert_coordinates_sexagesimal_to_decimal(
-        sexagesimal=gps_info[piexif.GPSIFD.GPSLongitude],
+    position['x'] = convert_dms_to_float(
+        dms=gps_info[piexif.GPSIFD.GPSLongitude],
         reference=gps_info.get(piexif.GPSIFD.GPSLongitudeRef)
     )
-    position['y'] = convert_coordinates_sexagesimal_to_decimal(
-        sexagesimal=gps_info[piexif.GPSIFD.GPSLatitude],
+    position['y'] = convert_dms_to_float(
+        dms=gps_info[piexif.GPSIFD.GPSLatitude],
         reference=gps_info.get(piexif.GPSIFD.GPSLatitudeRef)
     )
-    position['z'] = convert_single_sexagesimal_to_decimal(
+    position['z'] = convert_rational_to_float(
         rational_num=gps_info.get(piexif.GPSIFD.GPSAltitude, 0.0))
-    position['dop'] = convert_single_sexagesimal_to_decimal(
+    position['dop'] = convert_rational_to_float(
         rational_num=gps_info.get(piexif.GPSIFD.GPSDOP, 0.0))
     position['utc'] = 0.
 
