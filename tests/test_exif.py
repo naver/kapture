@@ -3,15 +3,21 @@
 
 import os.path as path
 import tempfile
+import os
 import shutil
 import unittest
 from PIL import Image
+from PIL.TiffImagePlugin import IFDRational
+from PIL.ExifTags import TAGS, GPSTAGS
 
 # kapture
 import path_to_kapture  # enables import kapture
 import kapture
-import kapture.converter.exif.import_exif as exif
-from kapture.algo.compare import equal_kapture
+from kapture.io.records import images_to_filepaths, get_image_fullpath
+from kapture.converter.exif.import_exif import *
+from kapture.converter.exif.export_exif import *
+
+from kapture.algo.compare import equal_kapture, equal_records_gnss
 
 
 class TestImportExif(unittest.TestCase):
@@ -27,35 +33,28 @@ class TestImportExif(unittest.TestCase):
 
     def test_read_exif_invalid(self):
         invalid_image_filepath = path.join(self._samples_folder, 'chess/7scenes/frame-000000.color.jpg')
-        invalid_image = Image.open(invalid_image_filepath)
-        exif_data = exif.read_exif(invalid_image)
+        exif_data = read_exif(invalid_image_filepath)
         self.assertIsNone(exif_data)
-        invalid_image.close()
 
     def test_read_exif(self):
-        image_filepaths = kapture.io.records.images_to_filepaths(self._kapture_data.records_camera,
-                                                                 self._kapture_dirpath)
-        image = Image.open(image_filepaths['01.jpg'])
-        exif_data = exif.read_exif(image)
+        image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
+        exif_data = read_exif(image_filepath_w_exif)
         self.assertIsInstance(exif_data, dict)
-        self.assertIn('ExifVersion', exif_data)
-        self.assertEqual(35, len(exif_data))
-        image.close()
+        self.assertEqual(6, len(exif_data))
+        self.assertIn('GPS', exif_data)
 
     def test_read_exif_gps(self):
-        image_filepaths = kapture.io.records.images_to_filepaths(self._kapture_data.records_camera,
-                                                                 self._kapture_dirpath)
-        image = Image.open(image_filepaths['01.jpg'])
-        exif_data = exif.read_exif(image)
-        self.assertIn('GPSInfo', exif_data)
-        self.assertIsInstance(exif_data['GPSInfo'], dict)
-        self.assertEqual(6, len(exif_data['GPSInfo']))
-        self.assertIn('GPSLatitude', exif_data['GPSInfo'])
-        image.close()
+        image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
+        exif_data = read_exif(image_filepath_w_exif)
+        self.assertIn('GPS', exif_data)
+        gps_data = exif_data['GPS']
+        self.assertIsInstance(gps_data, dict)
+        self.assertEqual(6, len(gps_data))
+        self.assertIn(piexif.GPSIFD.GPSLatitude, gps_data)
 
     def test_extract(self):
-        sensors_gnss, records_gnss = exif.extract_gps_from_exif(kapture_data=self._kapture_data,
-                                                                kapture_dirpath=self._kapture_dirpath)
+        sensors_gnss, records_gnss = extract_gps_from_exif(kapture_data=self._kapture_data,
+                                                           kapture_dirpath=self._kapture_dirpath)
         # check sensors
         gps_id = 'GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722'
         self.assertEqual(1, len(sensors_gnss))
@@ -80,10 +79,51 @@ class TestImportExif(unittest.TestCase):
             del temp_kapture_data.sensors[gps_id]
         kapture.io.csv.kapture_to_dir(temp_kapture_dirpath, temp_kapture_data)
         # do the import
-        exif.import_gps_from_exif(temp_kapture_dirpath)
+        import_gps_from_exif(temp_kapture_dirpath)
         # reload
         temp_kapture_data = kapture.io.csv.kapture_from_dir(temp_kapture_dirpath)
         self.assertTrue(equal_kapture(temp_kapture_data, self._kapture_data))
+
+    def test_write_exif(self):
+        image_filepath_wo_exif = path.join(self._samples_folder, 'chess/7scenes/frame-000000.color.jpg')
+        image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
+        image_filepath_temp = path.join(self._tempdir.name, 'frame-000000.color.jpg')
+        shutil.copy(image_filepath_wo_exif, image_filepath_temp)
+        expected_exif = read_exif(image_filepath_w_exif)
+        write_exif(image_filepath_temp, expected_exif)
+        actual_exif = read_exif(image_filepath_temp)
+        # self.assertEqual(len(expected_exif), len(actual_exif))
+        self.assertEqual(set(expected_exif.keys()), set(actual_exif.keys()))
+        self.assertDictEqual(expected_exif['GPS'], actual_exif['GPS'])
+
+    def test_clear_exif(self):
+        image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
+        image_filepath_temp = path.join(self._tempdir.name, 'image.jpg')
+        shutil.copy(image_filepath_w_exif, image_filepath_temp)
+        clear_exif(image_filepath_temp)
+        exif_data = read_exif(image_filepath_temp)
+        self.assertIsNone(exif_data)
+
+    def test_export(self):
+        temp_kapture_dirpath = path.join(self._tempdir.name, 'kapture')
+        shutil.copytree(self._kapture_dirpath, temp_kapture_dirpath)
+        kapture_data = kapture.io.csv.kapture_from_dir(temp_kapture_dirpath)
+        images_filepaths = images_to_filepaths(kapture_data.records_camera, temp_kapture_dirpath)
+        # make sure there is no EXIF in images
+        for image_filepath in images_filepaths.values():
+            clear_exif(image_filepath)
+
+        # insert gps to exif
+        export_gps_to_exif(kapture_data=kapture_data,
+                           kapture_dirpath=temp_kapture_dirpath)
+
+        rebuilt_records = kapture.RecordsGnss()
+        for timestamp, cam_id, image_name in kapture.flatten(kapture_data.records_camera):
+            image_filepath = get_image_fullpath(temp_kapture_dirpath, image_name)
+            exif_data = read_exif(image_filepath)
+            rebuilt_records[timestamp, 'GPS_' + cam_id] = convert_gps_to_kapture_record(exif_data)
+
+        self.assertTrue(equal_records_gnss(kapture_data.records_gnss, rebuilt_records))
 
 
 if __name__ == '__main__':

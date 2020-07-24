@@ -64,6 +64,7 @@ setuptools.setup(
         'scipy',
         'tqdm',
         'Pillow==7.2.0',
+        'piexif==1.1.3',
         'requests',
         'pyyaml',
         'wcmatch',
