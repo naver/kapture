@@ -5,8 +5,7 @@ Extract GPS from EXIF
 """
 from typing import Optional
 from PIL import Image
-from PIL.TiffImagePlugin import IFDRational
-from PIL.ExifTags import TAGS, GPSTAGS
+import piexif
 import logging
 from typing import Tuple, Dict
 from tqdm import tqdm
@@ -16,7 +15,6 @@ from kapture.io.records import images_to_filepaths
 from warnings import warn
 
 
-GPSTAGS_INV = {value: key for key, value in GPSTAGS.items()}
 
 logger = logging.getLogger('exif')
 
@@ -38,31 +36,30 @@ def replace_exif_id_by_names(exif_dict: dict,
 
 
 def read_exif(
-        image: Image
+        image_filepath: str
 ) -> Dict:
     """
-    Reads the EXIF metatdata from PIL image and substitute known TAG_ID with strings.
+    Reads the EXIF metatdata from image file using piexif.
 
-    :param image:
+    :param image_filepath:
     :return:
     """
-    exif_data = image._getexif()
-    if exif_data is not None:
-        exif_data = replace_exif_id_by_names(exif_data, TAGS)
-        if 'GPSInfo' in exif_data:
-            exif_data['GPSInfo'] = replace_exif_id_by_names(exif_data['GPSInfo'], GPSTAGS)
+    with Image.open(image_filepath) as image:
+        if 'exif' not in image.info:
+            return None
+        exif_data = piexif.load(image.info['exif'])
     return exif_data
 
 
 def convert_single_sexagesimal_to_decimal(
-        sexagesimal: IFDRational
+        rational_num: Tuple[float]
 ) -> float:
-    assert isinstance(sexagesimal, IFDRational)
-    return float(sexagesimal)
+    assert isinstance(rational_num, tuple)
+    return float(rational_num[0] / rational_num[1])
 
 
 def convert_coordinates_sexagesimal_to_decimal(
-        sexagesimal: Tuple[IFDRational],
+        sexagesimal: Tuple[Tuple[float]],
         reference: Optional[str] = None
 ) -> float:
     """
@@ -75,12 +72,12 @@ def convert_coordinates_sexagesimal_to_decimal(
     # sanity check
     assert isinstance(sexagesimal, tuple)
     assert len(sexagesimal) == 3
-    if any(not isinstance(v, IFDRational) for v in sexagesimal):
-        # from Pillow 3.1, any single item tuples have been unwrapped and return a bare element.
-        warn('Make sure you have installed Pillow>3.1')
-        raise TypeError('Expect Type[IFDRational] for sexagesimal. Make sure you have installed Pillow>3.1')
+    if any(not isinstance(v, tuple) for v in sexagesimal):
+        # Pillow 3.1 uses IFDRational, but piexif tuple[float].
+        warn('Make sure you have installed piexif==1.1.3')
+        raise TypeError('Expect Tuple[Tuplep[float] for sexagesimal. Make sure you have installed piexif==1.1.3')
 
-    assert all(isinstance(v, IFDRational) for v in sexagesimal)
+    assert all(isinstance(v, tuple) for v in sexagesimal)
     decimal = convert_single_sexagesimal_to_decimal(sexagesimal[0]) + \
               convert_single_sexagesimal_to_decimal(sexagesimal[1]) / 60 + \
               convert_single_sexagesimal_to_decimal(sexagesimal[2]) / 3600
@@ -97,29 +94,35 @@ def convert_gps_to_kapture_record(
     Converts exif_data to kapture single RecordGnss.
 
     :param exif_data: input exif_data in EXIF format with tag nam (as given by read_exif).
-        exif_data['GPSInfo'] = {
-            'GPSLatitudeRef': 'N',
-            'GPSLatitude': ((52, 1), (31, 1), (810, 100)),
-            'GPSLongitudeRef': 'E',
-            'GPSLongitude': ((13, 1), (24, 1), (106, 100)),
-            'GPSAltitude': (27, 1),
-            'GPSDOP': (5, 1)
+        exif_data['GPS'] = {
+            'piexif.GPSIFD.GPSLatitudeRef': 'N',
+            'piexif.GPSIFD.GPSLatitude': ((52, 1), (31, 1), (810, 100)),
+            'piexif.GPSIFD.GPSLongitudeRef': 'E',
+            'piexif.GPSIFD.GPSLongitude': ((13, 1), (24, 1), (106, 100)),
+            'piexif.GPSIFD.GPSAltitude': (27, 1),
+            'piexif.GPSIFD.GPSDOP': (5, 1)
         }
 
     :return:
     """
 
-    if 'GPSInfo' not in exif_data:
+    if 'GPS' not in exif_data:
         return kapture.RecordGnss()
 
-    gps_info = exif_data['GPSInfo']
-    position = {
-        axis: convert_coordinates_sexagesimal_to_decimal(
-            sexagesimal=gps_info['GPS' + axis_name], reference=gps_info.get('GPS' + axis_name + 'Ref'))
-        for axis, axis_name in [('y', 'Latitude'), ('x', 'Longitude')]
-    }
-    position['z'] = convert_single_sexagesimal_to_decimal(gps_info['GPSAltitude']) if 'GPSAltitude' in gps_info else 0.
-    position['dop'] = convert_single_sexagesimal_to_decimal(gps_info['GPSDOP']) if 'GPSDOP' in gps_info else 0.0
+    gps_info = exif_data['GPS']
+    position = dict()
+    position['x'] = convert_coordinates_sexagesimal_to_decimal(
+        sexagesimal=gps_info[piexif.GPSIFD.GPSLongitude],
+        reference=gps_info.get(piexif.GPSIFD.GPSLongitudeRef)
+    )
+    position['y'] = convert_coordinates_sexagesimal_to_decimal(
+        sexagesimal=gps_info[piexif.GPSIFD.GPSLatitude],
+        reference=gps_info.get(piexif.GPSIFD.GPSLatitudeRef)
+    )
+    position['z'] = convert_single_sexagesimal_to_decimal(
+        rational_num=gps_info.get(piexif.GPSIFD.GPSAltitude, 0.0))
+    position['dop'] = convert_single_sexagesimal_to_decimal(
+        rational_num=gps_info.get(piexif.GPSIFD.GPSDOP, 0.0))
     position['utc'] = 0.
 
     return kapture.RecordGnss(**position)
@@ -161,9 +164,8 @@ def extract_gps_from_exif(
     for timestamp, cam_id, image_name in tqdm(kapture.flatten(kapture_data.records_camera), disable=disable_tqdm):
         image_filepath = image_filepaths[image_name]
         logger.debug(f'extracting GPS tags from {image_filepath}')
-        with Image.open(image_filepath) as image:
-            gps_id = cam_to_gps_id[cam_id]
-            exif_data = read_exif(image)
+        gps_id = cam_to_gps_id[cam_id]
+        exif_data = read_exif(image_filepath)
         gps_record = convert_gps_to_kapture_record(exif_data)
         records_gnss[timestamp, gps_id] = gps_record
 
