@@ -221,7 +221,7 @@ def import_extended_cmu_seasons(cmu_path: str,
         query_gt_list = [os.path.join(query_gt_path, f) for f in os.listdir(query_gt_path)]
 
         # Import training images
-        kapture_training_path = path.join(top_kaptures_path, f'slice{slice_n}', "training")
+        kapture_training_path = path.join(top_kaptures_path, f'slice{slice_n}', "mapping")
         delete_existing_kapture_files(kapture_training_path, force_overwrite_existing)
         training_records_camera, training_trajectories = import_extended_cmu_seasons_images(gt_trajectories_path)
         training_kapture = kapture.Kapture(sensors=cameras,
