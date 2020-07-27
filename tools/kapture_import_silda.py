@@ -105,13 +105,11 @@ def import_silda(silda_dirpath: str,
         assert shot_info is not None
         shot_info = shot_info.groupdict()
         shot_info['timestamp'] = int(shot_info['timestamp'])  # To avoid warnings about type of the value
-        # eg. file_info = {'corpus': 'query ', 'filename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
-        # original_image_filepath = 'silda-images/1445_0.png'
+        # eg. file_info = {'filename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
         # create a path of the image into NLE dir
         if do_split_cams:
             # re-organise images with subfolders per corpus/camera/timestamp.png
-            kapture_image_filename = path.join(shot_info['corpus'],
-                                               shot_info['cam_id'],
+            kapture_image_filename = path.join(shot_info['cam_id'],
                                                '{:04d}.png'.format(shot_info['timestamp']))
         else:
             # keep the original file hierarchy

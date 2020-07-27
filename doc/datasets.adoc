@@ -233,7 +233,7 @@ rm im1 im2 silda-images.tgz
 
 # Downloading camera intrinsics
 wget -O camera-intrinsics.tar.xz -L https://imperialcollegelondon.box.com/shared/static/pug92l2sw2n375eqrqo92j63p5qm5dqo.xz
-tar xf camera-intrinsics.tar.xz
+tar xvf camera-intrinsics.tar.xz
 mv camera-intrinsics ./data/SILDa/
 rm camera-intrinsics.tar.xz
 
@@ -247,7 +247,7 @@ wget -O query_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/hf
 mv train_imgs.txt query_imgs.txt ./data/SILDa/
 ----
 
-You should end up with:
+You should have:
 
 ----
 ./data/SILDa/
@@ -262,12 +262,16 @@ You should end up with:
 
 [source,bash]
 ----
-# mapping+query part
+# mapping query
 kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
 kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
+# optionally both
+kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
 # then [optionally] clean original
 rm -rf ./data/SILDa
 ----
+
+NOTE: using the `--` option, you can tel the importer to reorganise image files using `<cam_id>/<timest
 
 You should end up with:
 
@@ -288,3 +292,9 @@ You should end up with:
         ├── sensors.txt
         └── trajectories.txt
 ----
+
+With additional options, you can:
+
+- `--cam_model`, choose the camera model (`FOV` or `OPENCV_FISHEYE`)
+- `--split_cams` tells the importer to reorganise image files using `<cam_id>/<timestamp:04d>.jpg` template,
+- `--rig_collapse` replaces camera poses with rig poses.
