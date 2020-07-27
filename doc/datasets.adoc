@@ -240,49 +240,51 @@ rm camera-intrinsics.tar.xz
 # Download camera poses for the train images
 wget -O silda-train-poses.txt -L https://imperialcollegelondon.box.com/shared/static/jr67j3uw8sz97j4vw8la3j3vbhzfwpnz.txt
 mv silda-train-poses.txt ./data/SILDa/
+
+# Download train and test images split
+wget -O train_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/m71jx5h09heygzttn85v96z6ouz03dbv.txt
+wget -O query_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/hfa2l5lw86asskjv6efp8lvoipc8elc8.txt
+mv train_imgs.txt query_imgs.txt ./data/SILDa/
 ----
 
-You should end up with
+You should end up with:
 
 ----
 ./data/SILDa/
-├── camera-intrinsics
+├── camera-intrinsics/
 ├── query_imgs.txt
-├── silda-images
+├── silda-images/
 ├── silda-train-poses.txt
-├── train_imgs.txt
-└── ...
+└── train_imgs.txt
 ----
 
 2) import into kapture format
 
 [source,bash]
 ----
-# mapping part
-kapture_import_silda.py -v info --corpus train -i ./data/SILDa -o ./kapture/SILDa/mapping --image_transfer copy
-# query part
-kapture_import_silda.py -v info --corpus query -i ./data/SILDa -o ./kapture/SILDa/query --image_transfer copy
+# mapping+query part
+kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
+kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
 # then [optionally] clean original
 rm -rf ./data/SILDa
 ----
 
-You should end up with
+You should end up with:
 
 ----
 ./kapture
-└── SILDa
-    ├── mapping
-    │   └── sensors
-    │       ├── records_camera.txt
-    │       ├── records_data
-    │       ├── rigs.txt
-    │       ├── sensors.txt
-    │       └── trajectories.txt
-    └── query
-        └── sensors
-            ├── records_camera.txt
-            ├── records_data
-            ├── rigs.txt
-            ├── sensors.txt
-            └── trajectories.txt
+├── mapping
+│   └── sensors
+│       ├── records_camera.txt
+│       ├── records_data/
+│       ├── rigs.txt
+│       ├── sensors.txt
+│       └── trajectories.txt
+└── query
+    └── sensors
+        ├── records_camera.txt
+        ├── records_data/
+        ├── rigs.txt
+        ├── sensors.txt
+        └── trajectories.txt
 ----

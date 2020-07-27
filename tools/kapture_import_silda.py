@@ -15,7 +15,7 @@ import os
 import os.path as path
 import numpy as np
 import quaternion
-from typing import Dict, List, Union
+from typing import Dict, Optional, Union
 from tqdm import tqdm
 import path_to_kapture
 import kapture
@@ -27,18 +27,21 @@ from kapture.utils.paths import path_secure
 import kapture.io.features
 
 logger = logging.getLogger('silda')
+SILDA_IMAGE_NAME_PATTERN = re.compile(r'(?P<filename>(?P<timestamp>\d+)_(?P<cam_id>\d+)\.png)')
 
-SILDA_IMAGE_NAME_PATTERN = re.compile(
-    r'(?P<corpus>(train)|(query))/(?P<basename>(?P<timestamp>\d+)_(?P<cam_id>\d+)\.png)')
 SILDA_IMAGE_SIZE = np.array([1024, 1024])
 SILDA_CALIB_IMAGE_SIZE = np.array([2496, 2496])
+SILDA_CORPUS_SPLIT_FILENAMES = {
+    'mapping': 'train_imgs.txt',
+    'query': 'query_imgs.txt',
+}
 
 
 def import_silda(silda_dirpath: str,
                  destination_kapture_dirpath: str,
                  fallback_cam_model: str = 'FOV',
                  do_split_cams: bool = False,
-                 corpus: List[str] = ['train', 'query'],
+                 corpus: Optional[str] = None,
                  replace_pose_rig: bool = False,
                  force_overwrite_existing: bool = False,
                  images_import_strategy: TransferAction = TransferAction.link_absolute) -> None:
@@ -49,13 +52,15 @@ def import_silda(silda_dirpath: str,
     :param destination_kapture_dirpath: input path to kapture directory.
     :param fallback_cam_model: camera model to fallback when necessary
     :param do_split_cams: If true, re-organises and renames the image files to split apart cameras.
-    :param corpus: the list of corpus to be imported, among 'train', 'query'.
+    :param corpus: the list of corpus to be imported, among 'mapping', 'query'.
     :param replace_pose_rig: if True, replaces poses of individual cameras with poses of the rig.
     :param force_overwrite_existing: if true, Silently overwrite kapture files if already exists.
     :param images_import_strategy: how to copy image files.
     """
 
     # sanity check
+    silda_dirpath = path_secure(path.abspath(silda_dirpath))
+    destination_kapture_dirpath = path_secure(path.abspath(destination_kapture_dirpath))
     if TransferAction.root_link == images_import_strategy and do_split_cams:
         raise ValueError('impossible to only link images directory and applying split cam.')
     hide_progress_bars = logger.getEffectiveLevel() >= logging.INFO
@@ -67,54 +72,56 @@ def import_silda(silda_dirpath: str,
     # images ###########################################################################################################
     logger.info('Processing images ...')
     # silda-images
-    # ├── query
-    # └── train
-    #       ...
-    #       ├── 1445_0.png
-    #       ├── 1445_1.png
-    #       ...
+    #   ...
+    #   ├── 1445_0.png
+    #   ├── 1445_1.png
+    #   ...
     silda_images_root_path = path.join(silda_dirpath, 'silda-images')
     # list all png files (its PNG in silda) using a generator.
-    silda_images_crawler = (path_secure(path.join(dirpath, filename))
-                            for dirpath, sd, fs in os.walk(silda_images_root_path)
-                            for filename in fs
-                            if filename.endswith('.png'))
-
-    # restrain to requested corpus only (query and/or train)
-    if len(corpus) == 2:  # ['train', 'query'] == None
-        corpus = None
-
-    # if corpus specified, filter by those which directory name match corpus.
-    if corpus:
+    if corpus is not None:
+        assert corpus in SILDA_CORPUS_SPLIT_FILENAMES
+        # if corpus specified, filter by those which directory name match corpus.
         logger.debug(f'only importing {corpus} part.')
-        silda_images_crawler = (filepath for filepath in silda_images_crawler
-                                if path.basename(path.dirname(filepath)) in corpus)
+        coprus_filepath = path.join(silda_dirpath, SILDA_CORPUS_SPLIT_FILENAMES[corpus])
+        with open(coprus_filepath, 'rt') as corpus_file:
+            corpus_filenames = corpus_file.readlines()
+            image_filenames_original = sorted(
+                filename.strip()
+                for filename in corpus_filenames
+            )
+    else:
+        image_filenames_original = sorted(
+            filename
+            for dirpath, sd, fs in os.walk(silda_images_root_path)
+            for filename in fs
+            if filename.endswith('.png'))
 
-    silda_image_filenames, kapture_image_filenames = [], []
+    image_filenames_kapture = []
     snapshots = kapture.RecordsCamera()
-    silda_name_to_ids = {}
-    for original_image_filepath in tqdm(silda_images_crawler, disable=hide_progress_bars):
+    image_name_to_ids = {}  # '1445_0.png' -> (1445, 0)
+    for image_filename_original in tqdm(image_filenames_original, disable=hide_progress_bars):
         # retrieve info from image filename
-        file_info: Dict[str, Union[int, str]]  # To avoid warnings about type of the value
-        file_info = SILDA_IMAGE_NAME_PATTERN.search(original_image_filepath).groupdict()
-        file_info['timestamp'] = int(file_info['timestamp'])
-        silda_image_filename = path.join(file_info['corpus'], file_info['basename'])
-        # original_image_filepath = 'silda-images/query/1445_0.png'
-        # info = {'corpus': 'query ', 'basename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
+        shot_info = SILDA_IMAGE_NAME_PATTERN.match(image_filename_original)
+        assert shot_info is not None
+        shot_info = shot_info.groupdict()
+        shot_info['timestamp'] = int(shot_info['timestamp'])  # To avoid warnings about type of the value
+        # eg. file_info = {'corpus': 'query ', 'filename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
+        # original_image_filepath = 'silda-images/1445_0.png'
         # create a path of the image into NLE dir
         if do_split_cams:
             # re-organise images with subfolders per corpus/camera/timestamp.png
-            kapture_image_filename = path.join(file_info['corpus'],
-                                               file_info['cam_id'],
-                                               '{:04d}.png'.format(file_info['timestamp']))
+            kapture_image_filename = path.join(shot_info['corpus'],
+                                               shot_info['cam_id'],
+                                               '{:04d}.png'.format(shot_info['timestamp']))
         else:
             # keep the original file hierarchy
-            kapture_image_filename = silda_image_filename
-        silda_image_filenames.append(silda_image_filename)
-        kapture_image_filenames.append(kapture_image_filename)
-        snapshots[file_info['timestamp'], file_info['cam_id']] = kapture_image_filename
-        silda_name_to_ids[file_info['basename']] = (file_info['timestamp'], file_info['cam_id'])
+            kapture_image_filename = image_filename_original
 
+        image_filenames_kapture.append(kapture_image_filename)
+        snapshots[shot_info['timestamp'], shot_info['cam_id']] = kapture_image_filename
+        image_name_to_ids[shot_info['filename']] = (shot_info['timestamp'], shot_info['cam_id'])
+
+    assert len(image_filenames_kapture) == len(image_filenames_original)
     # intrinsics #######################################################################################################
     logger.info('Processing sensors ...')
     cameras = kapture.Sensors()
@@ -172,11 +179,11 @@ def import_silda(silda_dirpath: str,
         # and the translation vector. The order needs to be:
         # qw,qx,qy,qz,tx,ty,tz
         # The parameters should be described in terms of camera to world transformations
-        if silda_image_name not in silda_name_to_ids:
+        if silda_image_name not in image_name_to_ids:
             # if this is not referenced: means its part of the corpus to be ignored.
             continue
         pose = kapture.PoseTransform(pose_params[0:4], pose_params[4:7]).inverse()
-        timestamp, cam_id = silda_name_to_ids[silda_image_name]
+        timestamp, cam_id = image_name_to_ids[silda_image_name]
         trajectories[timestamp, cam_id] = pose
 
     # rigs
@@ -202,18 +209,17 @@ def import_silda(silda_dirpath: str,
     kapture.io.csv.kapture_to_dir(destination_kapture_dirpath, kapture_data)
 
     # finally import images
-    logger.info('importing image files  ...')
     if images_import_strategy != TransferAction.skip:
         # importing image files
-        logger.info(f'importing {len(silda_image_filenames)} images ...')
-        assert len(silda_image_filenames) == len(kapture_image_filenames)
-        silda_image_filepaths = (
-            path.join(silda_images_root_path, record_filename)
-            for record_filename in silda_image_filenames)
-        kapture_image_filepaths = (
-            get_image_fullpath(destination_kapture_dirpath, record_filename)
-            for record_filename in kapture_image_filenames)
-        transfer_files_from_dir(silda_image_filepaths, kapture_image_filepaths, images_import_strategy)
+        logger.info(f'importing {len(image_filenames_original)} images ...')
+        assert len(image_filenames_original) == len(image_filenames_kapture)
+        image_filepaths_original = [
+            path.join(silda_images_root_path, image_filename_kapture)
+            for image_filename_kapture in image_filenames_original]
+        image_filepaths_kapture = [
+            get_image_fullpath(destination_kapture_dirpath, image_filename_kapture)
+            for image_filename_kapture in image_filenames_kapture]
+        transfer_files_from_dir(image_filepaths_original, image_filepaths_kapture, images_import_strategy)
     logger.info('done.')
 
 
@@ -242,8 +248,8 @@ def import_silda_command_line():
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
                         help=f'How to import images [link_absolute], '
                              f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('--corpus', choices=['train', 'query'], nargs='+', default=['train', 'query'],
-                        help='restrain (or not) do only train or query.')
+    parser.add_argument('--corpus', choices=['mapping', 'query'],
+                        help='restrain (or not) do only mapping or query images.')
     parser.add_argument('--cam_model', choices=['OPENCV_FISHEYE', 'FOV'], default='FOV',
                         help='camera model to be used.')
     parser.add_argument('--rig_collapse', action='store_true', default=False,
