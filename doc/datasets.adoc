@@ -22,12 +22,12 @@ We imported all mapping and query images as well as the provided reference poses
 
 Aachen-Day-Night-v1.1 is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/Aachen-Day-Night/
 
-1. Download the following data from the original source:
+1) Download the following data from the original source:
 - images/database_and_query_images.zip
 - aachen_v1_1.zip
 - queries/day_time_queries_with_intrinsics.txt
 
-2. Prepare data
+2) Prepare data
 
 - Extract the two archives.
 - Create a folder named 'aachenv11' and prepare (move/copy the just downloaded data) the following folder structure:
@@ -59,7 +59,7 @@ aachenv11
 |-- kapture
 ----
 
-3. Create the kaptures for the query images
+3) Create the kaptures for the query images
 
 Call this from aachenv11:
 
@@ -79,7 +79,7 @@ Now you have separate kaptures for day-time and night-time queries. If you would
 kapture_merge.py -v debug -i kapture/query_day kapture/query_night -o kapture/query
 ----
 
-4. Create the kapture for the mapping images
+4) Create the kapture for the mapping images
 
 - Convert the COLMAP reconstructions from .bin to .txt. Call this from aachenv11:
 [source,bash]
