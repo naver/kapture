@@ -16,11 +16,91 @@ TODO: A word about the choices we made.
 
 == Aachen-Day-Night-v1.1
 
-TODO: A word about the choices we made.
+We imported all mapping and query images as well as the provided reference poses from the original dataset. Note that v1.1 is based on the original version. More information about that can be found on the dataset owners' webpage.
 
 === convert from original dataset
 
+Aachen-Day-Night-v1.1 is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/Aachen-Day-Night/
+
+1. Download the following data from the original source:
+- images/database_and_query_images.zip
+- aachen_v1_1.zip
+- queries/day_time_queries_with_intrinsics.txt
+
+2. Prepare data
+
+- Extract the two archives.
+- Create a folder named 'aachenv11' and prepare (move/copy the just downloaded data) the following folder structure:
+
+[source,txt]
+----
+aachenv11
+|-- images
+|   |-- db                                      (from images/database_and_query_images.zip)
+|   |-- sequences                               (from aachen_v1_1.zip)
+|   |   |-- gopro3_undistorted
+|   |   |-- nexus4_sequences
+|   |   |   |-- sequence_1
+|   |   |   |-- ...
+|   |   |   |-- sequence_8
+|   |-- query
+|   |   |-- day                                 (from images/database_and_query_images.zip)
+|   |   |   |-- milestone
+|   |   |   |-- nexus4
+|   |   |   |-- nexus5x
+|   |   |-- night
+|   |   |   |-- milestone                       (from images/database_and_query_images.zip)
+|   |   |   |-- nexus5x                         (from images/database_and_query_images.zip)
+|   |   |   |-- nexus5x_additional_night        (from aachen_v1_1.zip)
+|-- day_time_queries_with_intrinsics.txt
+|-- night_time_queries_with_intrinsics.txt  (from aachen_v1_1.zip)
+|-- 3D-models                               (from aachen_v1_1.zip)
+|   |-- aachen_v1_1
+|-- kapture
+----
+
+3. Create the kaptures for the query images
+
+Call this from aachenv11:
+
+[source,bash]
+----
+# note: on windows, this requires admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_image_list.py -v debug -i day_time_queries_with_intrinsics.txt -o kapture/query_day -im images
+kapture_import_image_list.py -v debug -i night_time_queries_with_intrinsics.txt -o kapture/query_night -im images
+
+# if you can't use symlinks, add this to the two commands: --image_transfer copy
+----
+
+Now you have separate kaptures for day-time and night-time queries. If you would like to have one single kapture, run from aachenv11:
+[source,bash]
+----
+kapture_merge.py -v debug -i kapture/query_day kapture/query_night -o kapture/query
+----
+
+4. Create the kapture for the mapping images
+
+- Convert the COLMAP reconstructions from .bin to .txt. Call this from aachenv11:
+[source,bash]
+----
+colmap model_converter --input_path 3D-models/aachen_v_1_1 --output_path 3D-models/aachen_v_1_1 --output_type TXT
+----
+
+- Convert COLMAP model to kapture. Call this from aachenv11:
+[source,bash]
+----
+# note: on windows, this requires admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_colmap.py -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kapture/mapping --skip_reconstruction
+
+# if you can't use symlinks, add this to the command: --image_transfer copy
+----
+
+
 === download precomputed kapture data
+
+wip
 
 == baidu
 
@@ -83,7 +163,7 @@ Extended-CMU-Seasons
 To import Extended-CMU-Seasons to kapture, run:
 [source,bash]
 ----
-# note: on windows, this require admin rights for symlinks
+# note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
 kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
 
