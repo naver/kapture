@@ -209,6 +209,7 @@ mkdir -p ./data/SILDa
 # Downloading full spherical images
 wget -O im1 -L https://imperialcollegelondon.box.com/shared/static/ce2kkt0j4uir9tpzcxx55lhfr05bbjx9
 wget -O im2 -L https://imperialcollegelondon.box.com/shared/static/j4rx03ymwajz98wsfgbocrurwjq4l68h
+cat im* > silda-images.tgz
 tar xvzf silda-images.tgz
 mv silda-images ./data/SILDa/
 rm im1 im2 silda-images.tgz
