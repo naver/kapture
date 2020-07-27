@@ -188,6 +188,23 @@ TODO: A word about the choices we made.
 
 == SILDa
 
+For the conversion to kapture, we used the provided images as well as the camera poses.
+
+.fisheye cameras
+Cameras used for SILDA are fisheye cameras, with a wide field of view.
+The creator of the dataset defines their own camera model suited for fisheye and
+the associated parameters. Nevertheless, we are not able to convert this custom camera model
+into kapture. Consequently, we choose to use standard camera model (FOV) fitting
+the SILDA's fisheyes. We also provides the re-estimated parameters for the FOV model.
+
+.Rig
+The SILDA camera is a 2-lens rig, and is converted ensuring timestamps of both
+camera are identical for images taken simultaneously. A theoretical rig configuration
+is also provided in rigs.txt. But the rig constraint is not used is the pose estimation.
+
+
+=== convert from original dataset
+
 1) download the original dataset
 
 The authors provide a bash script `download.sh` to download all the available data for SILDa.
