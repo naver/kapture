@@ -116,8 +116,6 @@ TODO: A word about the choices we made.
 
 === convert from original dataset
 
-=== download precomputed kapture data
-
 == Extended-CMU-Seasons
 
 We imported the poses from the text files. The same sliced structure is replicated.
@@ -168,7 +166,7 @@ To import Extended-CMU-Seasons to kapture, run:
 kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
 
 # if you can't use symlinks, run
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
+kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
 ----
 
 === download precomputed kapture data
@@ -189,8 +187,83 @@ TODO: A word about the choices we made.
 
 == SILDa
 
-TODO: A word about the choices we made.
+1) download the original dataset
 
-=== convert from original dataset
+The authors provide a bash script `download.sh` to download all the available data for SILDa.
+See the https://github.com/abmmusa/silda for more details.
 
-=== download precomputed kapture data
+[source,bash]
+----
+cd /your/working/dataset/directory  # replace the path
+curl -L https://github.com/abmmusa/silda/raw/master/download.sh -o download.sh
+chmod +x download.sh
+./download.sh  # <  total of around 60GB data will be downloaded
+----
+
+or you can download only data relevant to kapture, applying the following command in bash terminal:
+
+[source,bash]
+----
+mkdir -p ./data/SILDa
+# Downloading full spherical images
+wget -O im1 -L https://imperialcollegelondon.box.com/shared/static/ce2kkt0j4uir9tpzcxx55lhfr05bbjx9
+wget -O im2 -L https://imperialcollegelondon.box.com/shared/static/j4rx03ymwajz98wsfgbocrurwjq4l68h
+tar xvzf silda-images.tgz
+mv silda-images ./data/SILDa/
+rm im1 im2 silda-images.tgz
+
+# Downloading camera intrinsics
+wget -O camera-intrinsics.tar.xz -L https://imperialcollegelondon.box.com/shared/static/pug92l2sw2n375eqrqo92j63p5qm5dqo.xz
+tar xf camera-intrinsics.tar.xz
+mv camera-intrinsics ./data/SILDa/
+rm camera-intrinsics.tar.xz
+
+# Download camera poses for the train images
+wget -O silda-train-poses.txt -L https://imperialcollegelondon.box.com/shared/static/jr67j3uw8sz97j4vw8la3j3vbhzfwpnz.txt
+mv silda-train-poses.txt ./data/SILDa/
+----
+
+You should end up with
+
+----
+./data/SILDa/
+├── camera-intrinsics
+├── query_imgs.txt
+├── silda-images
+├── silda-train-poses.txt
+├── train_imgs.txt
+└── ...
+----
+
+2) import into kapture format
+
+[source,bash]
+----
+# mapping part
+kapture_import_silda.py -v info --corpus train -i ./data/SILDa -o ./kapture/SILDa/mapping --image_transfer copy
+# query part
+kapture_import_silda.py -v info --corpus query -i ./data/SILDa -o ./kapture/SILDa/query --image_transfer copy
+# then [optionally] clean original
+rm -rf ./data/SILDa
+----
+
+You should end up with
+
+----
+./kapture
+└── SILDa
+    ├── mapping
+    │   └── sensors
+    │       ├── records_camera.txt
+    │       ├── records_data
+    │       ├── rigs.txt
+    │       ├── sensors.txt
+    │       └── trajectories.txt
+    └── query
+        └── sensors
+            ├── records_camera.txt
+            ├── records_data
+            ├── rigs.txt
+            ├── sensors.txt
+            └── trajectories.txt
+----
