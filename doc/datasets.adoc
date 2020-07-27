@@ -36,6 +36,77 @@ TODO: A word about the choices we made.
 
 === convert from original dataset
 
+== Extended-CMU-Seasons
+
+We imported the poses from the text files. The same sliced structure is replicated.
+In the precomputed kapture data, we decided to import all images, even if they are not listed in the text files (they do not have a pose).
+In kapture_import_Extended_CMU_Seasons.py, it corresponds to the option --all-files.
+
+=== convert from original dataset
+
+Extended-CMU-Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/Extended-CMU-Seasons/
+
+Once downloaded, and all tar files extracted, your Extended-CMU-Seasons directory is like this:
+
+[source,txt]
+----
+Extended-CMU-Seasons
+├─ README_Extended-CMU-Seasons.md
+├─ export_sift_features.py
+├─ intrinsics.txt
+├─ slice2/
+│  ├─ camera-poses/
+│  │  ├─ slice-2-gt-query-images-20100901.txt
+│  │  ├─ ...
+│  ├─ database/
+│  │  ├─ img_00119_c0_1303398474779439us.jpg
+│  │  ├─ ...
+│  ├─ database2.db
+│  ├─ ground-truth-database-images-slice2.txt
+│  ├─ query/
+│  │  ├─ img_00273_c1_1287503834101037us.jpg
+│  │  ├─ ...
+│  ├─ query2.db
+│  ├─ sparse/
+│  │  ├─ cameras.bin
+│  │  ├─ images.bin
+│  │  └─ points3D.bin
+│  └─ test-images-slice2.txt
+├─ slice2/
+├─ slice3/
+├─ ...
+└─ slice25/
+----
+
+To import Extended-CMU-Seasons to kapture, run:
+[source,bash]
+----
+# note: on windows, this require admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
+
+# if you can't use symlinks, run
+kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
+----
+
+=== download precomputed kapture data
+
+== InLoc
+
+TODO: A word about the choices we made.
+
+=== download precomputed kapture data
+
+== RobotCar_Seasons-v2
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== SILDa
+
 1) download the original dataset
 
 The authors provide a bash script `download.sh` to download all the available data for SILDa.
@@ -116,81 +187,3 @@ You should end up with
             ├── sensors.txt
             └── trajectories.txt
 ----
-
-=== download precomputed kapture data
-== Extended-CMU-Seasons
-
-We imported the poses from the text files. The same sliced structure is replicated.
-In the precomputed kapture data, we decided to import all images, even if they are not listed in the text files (they do not have a pose).
-In kapture_import_Extended_CMU_Seasons.py, it corresponds to the option --all-files.
-
-=== convert from original dataset
-
-Extended-CMU-Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/Extended-CMU-Seasons/
-
-Once downloaded, and all tar files extracted, your Extended-CMU-Seasons directory is like this:
-
-[source,txt]
-----
-Extended-CMU-Seasons
-├─ README_Extended-CMU-Seasons.md
-├─ export_sift_features.py
-├─ intrinsics.txt
-├─ slice2/
-│  ├─ camera-poses/
-│  │  ├─ slice-2-gt-query-images-20100901.txt
-│  │  ├─ ...
-│  ├─ database/
-│  │  ├─ img_00119_c0_1303398474779439us.jpg
-│  │  ├─ ...
-│  ├─ database2.db
-│  ├─ ground-truth-database-images-slice2.txt
-│  ├─ query/
-│  │  ├─ img_00273_c1_1287503834101037us.jpg
-│  │  ├─ ...
-│  ├─ query2.db
-│  ├─ sparse/
-│  │  ├─ cameras.bin
-│  │  ├─ images.bin
-│  │  └─ points3D.bin
-│  └─ test-images-slice2.txt
-├─ slice2/
-├─ slice3/
-├─ ...
-└─ slice25/
-----
-
-To import Extended-CMU-Seasons to kapture, run:
-[source,bash]
-----
-# note: on windows, this require admin rights for symlinks
-# see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
-
-# if you can't use symlinks, run
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
-----
-
-=== download precomputed kapture data
-
-== InLoc
-
-TODO: A word about the choices we made.
-
-=== download precomputed kapture data
-
-== RobotCar_Seasons-v2
-
-TODO: A word about the choices we made.
-
-=== convert from original dataset
-
-=== download precomputed kapture data
-
-== SILDa
-
-TODO: A word about the choices we made.
-
-=== convert from original dataset
-
-=== download precomputed kapture data
