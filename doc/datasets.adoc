@@ -54,8 +54,8 @@ aachenv11
 |   |   |   |-- nexus5x                         (from images/database_and_query_images.zip)
 |   |   |   |-- nexus5x_additional_night        (from aachen_v1_1.zip)
 |-- day_time_queries_with_intrinsics.txt
-|-- night_time_queries_with_intrinsics.txt  (from aachen_v1_1.zip)
-|-- 3D-models                               (from aachen_v1_1.zip)
+|-- night_time_queries_with_intrinsics.txt      (from aachen_v1_1.zip)
+|-- 3D-models                                   (from aachen_v1_1.zip)
 |   |-- aachen_v1_1
 |-- kapture
 ----
