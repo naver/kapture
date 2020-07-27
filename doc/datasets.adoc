@@ -1,0 +1,69 @@
+= kapture / datasets
+:sectnums:
+:sectnumlevels: 1
+:toc:
+:toclevels: 1
+
+This section explains how to convert datasets to kapture format.
+
+== 7-scenes
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== Aachen-Day-Night-v1.1
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== baidu
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== Cambridge_Landmarks
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== Extended-CMU-Seasons
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== InLoc
+
+TODO: A word about the choices we made.
+
+=== download precomputed kapture data
+
+== RobotCar_Seasons-v2
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
+
+== SILDa
+
+TODO: A word about the choices we made.
+
+=== convert from original dataset
+
+=== download precomputed kapture data
