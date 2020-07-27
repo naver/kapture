@@ -88,7 +88,7 @@ To import Extended-CMU-Seasons to kapture, run:
 kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
 
 # if you can't use symlinks, run
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
+kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
 ----
 
 === download precomputed kapture data
