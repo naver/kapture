@@ -265,13 +265,11 @@ You should have:
 # mapping query
 kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
 kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
-# optionally both
-kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
+# uncomment the following, if you want the both mapping and query in the same dataset
+# kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
 # then [optionally] clean original
 rm -rf ./data/SILDa
 ----
-
-NOTE: using the `--` option, you can tel the importer to reorganise image files using `<cam_id>/<timest
 
 You should end up with:
 
