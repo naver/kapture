@@ -355,7 +355,7 @@ def import_robotcar_seasons(robotcar_path: str,
 
     if import_feature_db:
         # Convert Colmap reference DB to kapture
-        kapture_train_dir = path.join(kapture_path, "train", "features")
+        kapture_train_dir = path.join(kapture_path, "mapping")
         if path.exists(path.join(robotcar_path, "3D-models/overcast-reference.db")):
             delete_existing_kapture_files(kapture_train_dir, force_erase=force_overwrite_existing)
             kapture_train_data = import_colmap(
@@ -403,7 +403,8 @@ def import_robotcar_seasons_command_line() -> None:
     parser.add_argument('--rig_collapse', action='store_true', default=False,
                         help='Replace camera poses with rig poses.')
     parser.add_argument('--use_colmap_intrinsics', action='store_true', default=False,
-                        help='For mapping images, use intrinsics from the db instead of the text files')
+                        help=('For mapping images, use intrinsics from the reconstruction (SIMPLE_RADIAL)'
+                              ' instead of the intrinsics text files (PINHOLE)'))
     parser.add_argument('--v1', action='store_true', default=False,
                         help='Export RobotCar_Seasons v1 instead of v2.')
     args = parser.parse_args()

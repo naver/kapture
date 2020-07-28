@@ -274,8 +274,14 @@ To import RobotCar-Seasons-v2 to kapture, run:
 kapture_import_RobotCar_Seasons.py -v debug -i ./RobotCar-Seasons -o ./kapture/RobotCar-Seasons-v2 --skip_reconstruction
 
 # if you can't use symlinks, add this to the command: --image_transfer copy
-# if you want to import v1 instead (deprecated), add this to the command: --v1
 ----
+
+With additional options, you can:
+
+- `--v1`, import RobotCar-Seasons-v1 (deprecated) instead of v2
+- `--rig_collapse` replaces camera poses with rig poses
+- `--use_colmap_intrinsics` replaces the individual mapping intrinsics with the SIMPLE_RADIAL model from the colmap reconstructions
+- `--import_feature_db` also imports `3D-models/overcast-reference.db` into one single `mapping` kapture folder
 
 === download precomputed kapture data
 
