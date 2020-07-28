@@ -48,19 +48,16 @@ class Dataset:
                  root_path: str):
         """
         :param name: name of the archive (dataset or part of a dataset)
-        :param url: input remote url of the dataset archive (tar).
         :param root_path: input absolute path to root directory where all datasets are installed.
-        :param sha256sum: sha256 sum of the archive file on remote server.
-        :param sub_path: input optional sub path where to install the dataset under root_path/sub_path.
-                         If not given, tar file is extracted directly to root_path
         """
         self._name = name
+
+        self._install_local_path = root_path
         self._archive_filepath = path.join(root_path, name + '.tar')
         self._dataset_index_filepath = path.join(root_path, 'kapture_dataset_index.yaml')
         # remore url of the archive
-        self._archive_url = None
-        self._install_local_path = None  # path.join(root_path, sub_path) if sub_path is not None else root_path
-        self._sha256sum_archive_remote = None
+        self._archive_url = None  # remote url of the dataset archive (tar).
+        self._sha256sum_archive_remote = None # sha256 sum of the archive file on remote server.
         self._status = 'unknown'
 
     def load_from_disk(self, datasets_yaml_cache=None):
@@ -80,7 +77,7 @@ class Dataset:
             raise ValueError(f'no dataset {self._name} in {self._dataset_index_filepath}')
         dataset_yaml = datasets_yaml[self._name]
         self._archive_url = dataset_yaml['url']
-        self._install_local_path = dataset_yaml.get('subpath', None)
+        dataset_yaml.get('subpath', '')
         self._sha256sum_archive_remote = dataset_yaml['sha256sum']
         self._status = dataset_yaml.get('status', 'unknown')
 
@@ -215,10 +212,6 @@ class Dataset:
         os.makedirs(self._install_local_path, exist_ok=True)
         with tarfile.open(self._archive_filepath, 'r:*') as archive:
             archive.extractall(self._install_local_path)
-        # creating success file
-        logger.debug(f'creating {self._success_filepath}')
-        with open(self._success_filepath, 'wt') as f:
-            f.write(f'installed on: {datetime.now()}\nfrom: {self._archive_url}')
         # cleaning tar
         logger.debug(f'cleaning {self._archive_filepath}')
         os.remove(self._archive_filepath)
@@ -226,15 +219,15 @@ class Dataset:
     def install(self, force_overwrite: bool = False):
         """ Install handle download and untar """
         # test the dataset presence
-        current_status = self.prob_status()
-        if current_status == 'installed' and not force_overwrite:
+        self.prob_status()  # make sure self._status is up to date.
+        if self._status == 'installed' and not force_overwrite:
             logger.info(f'{self._install_local_path} already exists: skipped')
             return
 
         # 1) download
-        if current_status != 'downloaded':
+        if self._status != 'downloaded':
             # check archive file integrity
-            if current_status == 'corrupted':
+            if self._status == 'corrupted':
                 # if corrupted: remove the archive and start over
                 os.remove(self._archive_filepath)
             self.download_archive_file()
@@ -246,6 +239,8 @@ class Dataset:
         # 3) possible post-untar script ?
 
         # done
+        self._status = 'installed'
+        self.save_to_disk()
         logger.info(f'done installing {self._name}')
 
     def clean(self):
@@ -347,12 +342,12 @@ def kapture_dataset_download_cli():
     parser_install.set_defaults(cmd='install')
     parser_install.add_argument('-f', '--force', action='store_true', default=False,
                                 help='Force installation even if dataset has already been installed.')
-    parser_install.add_argument('dataset', nargs='*', default=['+'],
+    parser_install.add_argument('dataset', nargs='*', default=[],
                                 help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
     parser_download = subparsers.add_parser('download', help='dowload dataset, without installing it')
     parser_download.set_defaults(cmd='download')
-    parser_download.add_argument('dataset', nargs='*', default=['+'],
+    parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
     parser_clean = subparsers.add_parser('clean', help='clean all')
