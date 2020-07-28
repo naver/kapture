@@ -74,6 +74,7 @@ def import_robotcar_cameras(intrinsics_dir_path: str) -> kapture.Sensors:
             (_, fy) = intrinsic_file.readline().split()
             (_, cx) = intrinsic_file.readline().split()
             (_, cy) = intrinsic_file.readline().split()
+            intrinsic_file.close()
             # w, h, fx, fy, cx, cy
             model = kapture.CameraType.PINHOLE
             model_params = [1024, 1024, fx, fy, cx, cy]
@@ -117,8 +118,7 @@ def import_robotcar_colmap_location(robotcar_path: str,
                                     colmap_reconstruction_fullpath: path,
                                     kapture_path: str,
                                     rigs: kapture.Rigs,
-                                    skip_reconstruction: bool,
-                                    rig_collapse: bool) -> kapture.Kapture:
+                                    skip_reconstruction: bool) -> kapture.Kapture:
     """
     Import robotcar data for one location from colmap reconstruction
 
@@ -127,7 +127,6 @@ def import_robotcar_colmap_location(robotcar_path: str,
     :param kapture_path: path to the kapture top directory
     :param rigs: kapture rigs to modify
     :param skip_reconstruction: if True, will not add the reconstruction
-    :param rig_collapse: if True, will collapse the rigs
     :return: a kapture object
     """
 
@@ -192,14 +191,30 @@ def import_robotcar_colmap_location(robotcar_path: str,
     # First recover timestamps and camera names
     for ts, sensor_id in sorted(kapture_data.trajectories.key_pairs()):
         new_trajectories[ts_mapping[ts], camera_mapping[sensor_id]] = kapture_data.trajectories[ts, sensor_id]
-    if rig_collapse:
-        logger.info('replacing camera poses with rig poses.')
-        kapture.rigs_recover_inplace(new_trajectories, rigs, 'rear')
 
     kapture_data.trajectories = new_trajectories
     kapture_data.rigs = rigs
 
     return kapture_data
+
+
+def read_robotcar_v2_train(robotcar_path: str):
+    with(open(path.join(robotcar_path, 'robotcar_v2_train.txt'), 'r')) as f:
+        lines = f.readlines()
+        # remove empty lines
+        lines = (l2 for l2 in lines if l2.strip())
+        # trim trailing EOL
+        lines = (l3.rstrip("\n\r") for l3 in lines)
+        # split space
+        lines = (l4.split() for l4 in lines)
+        lines = list(lines)
+        train_data = {table[0].replace(".png", ".jpg"):
+                      kapture.PoseTransform(r=quaternion.from_rotation_matrix([[float(v) for v in table[1:4]],
+                                                                               [float(v) for v in table[5:8]],
+                                                                               [float(v) for v in table[9:12]]]),
+                                            t=[float(v) for v in [table[4], table[8], table[12]]]).inverse()
+                      for table in lines}
+    return train_data
 
 
 def import_robotcar_seasons(robotcar_path: str,
@@ -208,7 +223,9 @@ def import_robotcar_seasons(robotcar_path: str,
                             images_import_method: TransferAction = TransferAction.skip,
                             import_feature_db: bool = False,
                             skip_reconstruction: bool = False,
-                            rig_collapse: bool = False) -> None:
+                            rig_collapse: bool = False,
+                            use_colmap_intrinsics: bool = False,
+                            import_v1: bool = False) -> None:
     """
     Read the RobotCar Seasons data, creates several kaptures with training and query data.
 
@@ -225,17 +242,12 @@ def import_robotcar_seasons(robotcar_path: str,
 
     cameras = import_robotcar_cameras(path.join(robotcar_path, 'intrinsics'))
     rigs = import_robotcar_rig(path.join(robotcar_path, 'extrinsics'))
-    kapture_training_dir = path.join(kapture_path, "training", "calib")
-    delete_existing_kapture_files(kapture_training_dir, force_erase=force_overwrite_existing)
-    # pack into kapture format
-    kapture_training = kapture.Kapture(sensors=cameras, rigs=rigs)
-    logger.info('writing sensor data...')
-    kapture_to_dir(kapture_training_dir, kapture_training)
 
     logger.info("Importing test data")
     # Test data
     image_pattern = re.compile(r'(?P<condition>.+)/(?P<camera>\w+)/(?P<timestamp>\d+)\.jpg')
     queries_path = path.join(robotcar_path, '3D-models', 'individual', 'queries_per_location')
+    kapture_imported_query = {}
     for root, dirs, files in os.walk(queries_path):
         for query_file in files:
             records_camera = kapture.RecordsCamera()
@@ -254,25 +266,17 @@ def import_robotcar_seasons(robotcar_path: str,
                     records_camera[timestamp, camera] = image_path
 
                 (query_name, _) = query_file.split('.')
-                logger.info(f'writing test data: {query_name}')
-                kapture_test_dir = path.join(kapture_path, "test", query_name)
                 kapture_test = kapture.Kapture(sensors=cameras, rigs=rigs, records_camera=records_camera)
-                kapture_to_dir(kapture_test_dir, kapture_test)
-                if images_import_method != TransferAction.skip:
-                    # Relative ink to centralized image directory
-                    try:  # on windows, symlink requires some privileges, and may crash if not
-                        os.symlink(path.join("..", "..", "..", "images"),
-                                   get_image_fullpath(kapture_test_dir))
-                    except OSError:
-                        logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
+                kapture_imported_query[int(query_name.split('_')[-1])] = kapture_test
 
     # Training data
     logger.info("Importing training data")
     colmap_reconstructions_path = path.join(robotcar_path, '3D-models', 'individual', 'colmap_reconstructions')
+    kapture_imported_training = {}
     for root, dirs, files in os.walk(colmap_reconstructions_path):
         for colmap_reconstruction in dirs:
             (loc_id, _) = colmap_reconstruction.split('_')
-            kapture_reconstruction_dir = path.join(kapture_path, "training", colmap_reconstruction)
+            kapture_reconstruction_dir = path.join(kapture_path, f"{int(loc_id):02d}", "mapping")
             delete_existing_kapture_files(kapture_reconstruction_dir, force_erase=force_overwrite_existing)
             logger.info(f'Converting reconstruction {loc_id} to kapture  ...')
             kapture_reconstruction_data = import_robotcar_colmap_location(
@@ -280,19 +284,81 @@ def import_robotcar_seasons(robotcar_path: str,
                 path.join(colmap_reconstructions_path, colmap_reconstruction),
                 kapture_reconstruction_dir,
                 rigs,
-                skip_reconstruction,
-                rig_collapse
+                skip_reconstruction
             )
-            logger.info(f'Saving reconstruction {loc_id}  ...')
-            kapture_to_dir(kapture_reconstruction_dir, kapture_reconstruction_data)
-            # finally import images now that they have a proper name in .jpg
-            if images_import_method != TransferAction.skip:
-                # Relative ink to centralized image directory
-                try:  # on windows, symlink requires some privileges, and may crash if not
-                    os.symlink(path.join("..", "..", "..", "images"),
-                               get_image_fullpath(kapture_reconstruction_dir))
-                except OSError:
-                    logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
+            # replace intrinsics with the ones found in the text files
+            if not use_colmap_intrinsics:
+                kapture_reconstruction_data.sensors = cameras
+            kapture_imported_training[int(loc_id)] = kapture_reconstruction_data
+
+    if not import_v1:
+        queries_per_location = {image_name: (ts, cam_id, loc_id)
+                                for loc_id, kdata_test in kapture_imported_query.items()
+                                for ts, cam_id, image_name in kapture.flatten(kdata_test.records_camera)}
+        # read robotcar_v2_train.txt
+        v2_train_data = read_robotcar_v2_train(robotcar_path)
+        for image_name, pose in v2_train_data.items():
+            ts, cam_id, loc_id = queries_per_location[image_name]
+            assert cam_id == 'rear'
+            kapture_imported_training[loc_id].records_camera[ts, cam_id] = image_name
+            kapture_imported_training[loc_id].trajectories[ts, cam_id] = pose
+            matches = image_pattern.match(image_name)
+            if not matches:
+                logger.warning(f"Error matching line in {image_name}")
+                continue
+            matches = matches.groupdict()
+            condition = str(matches['condition'])
+            timestamp = str(matches['timestamp'])
+            camera = str(matches['camera'])
+            # added left and right images in records_camera
+            left_image_name = condition + '/' + 'left' + '/' + timestamp + '.jpg'
+            right_image_name = condition + '/' + 'right' + '/' + timestamp + '.jpg'
+            kapture_imported_training[loc_id].records_camera[ts, 'left'] = left_image_name
+            kapture_imported_training[loc_id].records_camera[ts, 'right'] = right_image_name
+
+            # remove entries from query
+            del kapture_imported_query[loc_id].records_camera[ts][cam_id]
+            del kapture_imported_query[loc_id].records_camera[ts]['left']
+            del kapture_imported_query[loc_id].records_camera[ts]['right']
+            del kapture_imported_query[loc_id].records_camera[ts]
+
+        # all remaining query images are kept; reading robotcar_v2_test.txt is not necessary
+
+    # apply rig collapse
+    if rig_collapse:
+        logger.info('replacing camera poses with rig poses.')
+        for kdata_mapping in kapture_imported_training.values():
+            kapture.rigs_recover_inplace(kdata_mapping.trajectories, rigs, 'rear')
+
+    # IO operations
+    for loc_id, kdata_query in kapture_imported_query.items():
+        loc_id_str = f"{loc_id:02d}"
+        logger.info(f'writing test data: {loc_id_str}')
+        kapture_test_dir = path.join(kapture_path, loc_id_str, "query")
+        delete_existing_kapture_files(kapture_test_dir, force_erase=force_overwrite_existing)
+        if not kdata_query.records_camera:  # all images were removed
+            continue
+        kapture_to_dir(kapture_test_dir, kdata_query)
+        if images_import_method != TransferAction.skip:
+            # Relative ink to centralized image directory
+            try:  # on windows, symlink requires some privileges, and may crash if not
+                os.symlink(path.join("..", "..", "..", "images"),
+                           get_image_fullpath(kapture_test_dir))
+            except OSError:
+                logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
+    for loc_id, kdata_mapping in kapture_imported_training.items():
+        loc_id_str = f"{loc_id:02d}"
+        logger.info(f'writing mapping data: {loc_id_str}')
+        kapture_reconstruction_dir = path.join(kapture_path, f"{loc_id:02d}", "mapping")
+        kapture_to_dir(kapture_reconstruction_dir, kdata_mapping)
+        # finally import images now that they have a proper name in .jpg
+        if images_import_method != TransferAction.skip:
+            # Relative ink to centralized image directory
+            try:  # on windows, symlink requires some privileges, and may crash if not
+                os.symlink(path.join("..", "..", "..", "images"),
+                           get_image_fullpath(kapture_reconstruction_dir))
+            except OSError:
+                logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
 
     # Import image files to centralized image directory "images"
     if images_import_method == TransferAction.root_link:
@@ -344,7 +410,7 @@ def import_robotcar_seasons_command_line() -> None:
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete output if already exists.')
     # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to images folder')
+    parser.add_argument('-i', '--input', required=True, help='input path to RobotCar-Seasons root folder')
     parser.add_argument('-o', '--output', required=True, help='kapture output directory')
     parser.add_argument('--import_feature_db', required=False, action='store_true', default=False,
                         help='also convert colmap feature database to kapture format')
@@ -356,6 +422,10 @@ def import_robotcar_seasons_command_line() -> None:
                              f'{TransferAction.root_link.name}')
     parser.add_argument('--rig_collapse', action='store_true', default=False,
                         help='Replace camera poses with rig poses.')
+    parser.add_argument('--use_colmap_intrinsics', action='store_true', default=False,
+                        help='For mapping images, use intrinsics from the db instead of the text files')
+    parser.add_argument('--v1', action='store_true', default=False,
+                        help='Export RobotCar_Seasons v1 instead of v2.')
     args = parser.parse_args()
 
     logger.setLevel(args.verbose)
@@ -364,7 +434,8 @@ def import_robotcar_seasons_command_line() -> None:
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
     import_robotcar_seasons(args.input, args.output, args.force, args.image_transfer,
-                            args.import_feature_db, args.skip_reconstruction, args.rig_collapse)
+                            args.import_feature_db, args.skip_reconstruction, args.rig_collapse,
+                            args.use_colmap_intrinsics, args.v1)
 
 
 if __name__ == '__main__':
