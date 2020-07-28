@@ -331,6 +331,7 @@ def import_robotcar_seasons(robotcar_path: str,
             kapture.rigs_recover_inplace(kdata_mapping.trajectories, rigs, 'rear')
 
     # IO operations
+    robotcar_image_path = path.join(robotcar_path, "images")
     for loc_id, kdata_query in kapture_imported_query.items():
         loc_id_str = f"{loc_id:02d}"
         logger.info(f'writing test data: {loc_id_str}')
@@ -339,38 +340,18 @@ def import_robotcar_seasons(robotcar_path: str,
         if not kdata_query.records_camera:  # all images were removed
             continue
         kapture_to_dir(kapture_test_dir, kdata_query)
-        if images_import_method != TransferAction.skip:
-            # Relative ink to centralized image directory
-            try:  # on windows, symlink requires some privileges, and may crash if not
-                os.symlink(path.join("..", "..", "..", "images"),
-                           get_image_fullpath(kapture_test_dir))
-            except OSError:
-                logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
+        query_images = [f for _, _, f in kapture.flatten(kdata_query.records_camera)]
+        import_record_data_from_dir_auto(robotcar_image_path, kapture_test_dir,
+                                         query_images, images_import_method)
+
     for loc_id, kdata_mapping in kapture_imported_training.items():
         loc_id_str = f"{loc_id:02d}"
         logger.info(f'writing mapping data: {loc_id_str}')
         kapture_reconstruction_dir = path.join(kapture_path, f"{loc_id:02d}", "mapping")
         kapture_to_dir(kapture_reconstruction_dir, kdata_mapping)
-        # finally import images now that they have a proper name in .jpg
-        if images_import_method != TransferAction.skip:
-            # Relative ink to centralized image directory
-            try:  # on windows, symlink requires some privileges, and may crash if not
-                os.symlink(path.join("..", "..", "..", "images"),
-                           get_image_fullpath(kapture_reconstruction_dir))
-            except OSError:
-                logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
-
-    # Import image files to centralized image directory "images"
-    if images_import_method == TransferAction.root_link:
-        # Create link
-        try:  # on windows, symlink requires some privileges, and may crash if not
-            os.symlink(path.join(robotcar_path, "images"),
-                       path.join(kapture_path, "images"))
-        except OSError:
-            logger.warning(f'unable to create symlink on image directory, due to privilege restrictions.')
-    elif images_import_method == TransferAction.copy:
-        logger.info(f"Copy images")
-        shutil.copytree(path.join(robotcar_path, "images"), path.join(kapture_path, "images"))
+        mapping_images = [f for _, _, f in kapture.flatten(kdata_mapping.records_camera)]
+        import_record_data_from_dir_auto(robotcar_image_path, kapture_reconstruction_dir,
+                                         mapping_images, images_import_method)
 
     if import_feature_db:
         # Convert Colmap reference DB to kapture
@@ -417,9 +398,7 @@ def import_robotcar_seasons_command_line() -> None:
     parser.add_argument('--skip_reconstruction', required=False, action='store_true', default=False,
                         help='do not import reconstruction data (3d points, keypoints and observations')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.root_link,
-                        help=f'How to import images [root_link], '
-                             f'choose among: {TransferAction.skip.name}, {TransferAction.copy.name}, '
-                             f'{TransferAction.root_link.name}')
+                        help=f'How to import images [root_link]')
     parser.add_argument('--rig_collapse', action='store_true', default=False,
                         help='Replace camera poses with rig poses.')
     parser.add_argument('--use_colmap_intrinsics', action='store_true', default=False,

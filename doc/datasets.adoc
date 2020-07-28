@@ -273,9 +273,7 @@ To import RobotCar-Seasons-v2 to kapture, run:
 # see https://docs.python.org/3.6/library/os.html#os.symlink
 kapture_import_RobotCar_Seasons.py -v debug -i ./RobotCar-Seasons -o ./kapture/RobotCar-Seasons-v2 --skip_reconstruction
 
-# if you can't use symlinks, add this to the command: --image_transfer skip ; then run:
-kapture_copy_RobotCar_Seasons_images.py -v info --image-dir ./RobotCar-Seasons/images --target ./kapture/RobotCar-Seasons-v2
-
+# if you can't use symlinks, add this to the command: --image_transfer copy
 # if you want to import v1 instead (deprecated), add this to the command: --v1
 ----
 
