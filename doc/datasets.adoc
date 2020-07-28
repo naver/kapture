@@ -112,10 +112,61 @@ TODO: A word about the choices we made.
 === download precomputed kapture data
 
 == Cambridge_Landmarks
+The Cambridge Landmarks Dataset is available at http://mi.eng.cam.ac.uk/projects/relocalisation/.
+It is released for non-commercial research only.
+It is composed of 6 scenes: King's College, Street, Old Hospital, Shop Facade, St Mary's Church, Trinity Great Court
 
-TODO: A word about the choices we made.
+For each of these you can import the data in kapture from the provided nvm reconstruction. 
 
 === convert from original dataset
+
+This example will cover ShopFacade, the same commands can be run on any scene of the dataset.
+
+[source,txt]
+----
+ShopFacade
+├─ dataset_test.txt
+├─ dataset_train.txt
+├─ reconstruction.nvm
+├─ seq1  # image folder
+├─ seq2  # image folder
+├─ seq3  # image folder
+└─ videos # not used when importing to kapture
+----
+
+
+To import it to kapture, you have to replace all `.jpg` to `.png` inside reconstruction.nvm, and cut dataset_test.txt and dataset_train.txt into a simple list of image names.
+
+In bash:
+[source,bash]
+----
+sed 's/.jpg/.png/g' ./ShopFacade/reconstruction.nvm > ./ShopFacade/reconstruction_png.nvm
+tail -n +4 ./ShopFacade/dataset_train.txt > ./ShopFacade/dataset_train_cut.txt
+cut -d\  -f1 ./ShopFacade/dataset_train_cut.txt > ./ShopFacade/dataset_train_list.txt
+tail -n +4 ./ShopFacade/dataset_test.txt > ./ShopFacade/dataset_test_cut.txt
+cut -d\  -f1 ./ShopFacade/dataset_test_cut.txt > ./ShopFacade/dataset_test_list.txt
+----
+
+In powershell
+[source,pwsh]
+----
+Get-Content ./ShopFacade/reconstruction.nvm | %{$_ -replace ".jpg", ".png"} | Set-Content ./ShopFacade/reconstruction_png.nvm
+Get-Content ./ShopFacade/dataset_train.txt | Select-Object -Skip 3 | Set-Content ./ShopFacade/dataset_train_cut.txt
+Get-Content ./ShopFacade/dataset_train_cut.txt | %{ $_.Substring(0,$_.IndexOf(" "))} | Set-Content ./ShopFacade/dataset_train_list.txt
+Get-Content ./ShopFacade/dataset_test.txt | Select-Object -Skip 3 | Set-Content ./ShopFacade/dataset_test_cut.txt
+Get-Content ./ShopFacade/dataset_test_cut.txt | %{ $_.Substring(0,$_.IndexOf(" "))} | Set-Content ./ShopFacade/dataset_test_list.txt
+----
+
+Then run:
+[source,bash]
+----
+# note: on windows, this requires admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_nvm.py -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/mapping --filter-list ./ShopFacade/dataset_train_list.txt
+kapture_import_nvm.py -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/query --filter-list ./ShopFacade/dataset_test_list.txt
+
+# if you can't use symlinks, add this to the two kapture_import_nvm.py commands: --image_transfer copy
+----
 
 == Extended-CMU-Seasons
 
