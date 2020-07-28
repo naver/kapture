@@ -174,9 +174,49 @@ kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./k
 
 == InLoc
 
-TODO: A word about the choices we made.
+For the conversion to kapture, we used the provided (cutout) images as well as the camera poses. In detail, the kapture data consists of all cutout images from DUC1 and DUC2 as well as all query images. For now, we do not provide the other buildings (only DUC1 and DUC2 are used for the online benchmark).
+
+InLoc also provides 3D scans for each cutout image. These 3D files can be found in the same folder like the RGB images.
+
+e.g.: image name: DUC_cutout_000_120_30.jpg
+-> corresponding 3D file name: DUC_cutout_000_120_30.jpg.mat
 
 === download precomputed kapture data
+
+The original dataset description page can be found here: http://www.ok.sc.e.titech.ac.jp/INLOC/
+
+1) Download the precomputed kapture data from here: TODO url
+
+2a) Download the original database images (cutouts) and scans from here: http://www.ok.sc.e.titech.ac.jp/INLOC/materials/cutouts.tar.gz
+
+2b) Or download only the images (no scans) from here: http://www.ok.sc.e.titech.ac.jp/INLOC/materials/cutouts_imageonly.tar.bz2
+
+3) Download the query images from here: http://www.ok.sc.e.titech.ac.jp/INLOC/materials/iphone7.tar.gz
+
+4) Link, copy or move the database and query image folders (which also contain the scans if you downloaded them) to the previously downloaded kaptures (from step 1). Your InLoc folder should look like this:
+
+[source,txt]
+----
+InLoc
+|-- DUC1_alignment (contains some txt files)
+|-- DUC2_alignment (contains some txt files)
+|-- mapping
+|   |-- sensors
+|   |   |-- records_camera.txt
+|   |   |-- sensors.txt
+|   |   |-- trajectories.txt
+|   |   |-- records_data
+|   |   |   |-- DUC1                (from cutouts.tar.gz or cutouts_imageonly.tar.bz2)
+|   |   |   |-- DUC2                (from cutouts.tar.gz or cutouts_imageonly.tar.bz2)
+|-- query
+|   |-- sensors
+|   |   |-- records_camera.txt
+|   |   |-- sensors.txt
+|   |   |-- records_data
+|   |   |   |-- iphone7             (from iphone7.tar.gz)
+----
+
+5) If you would like to use the Inloc 3D scan data, please read the readme_kapture.txt file we provided with the dataset (from step 1).
 
 == RobotCar_Seasons-v2
 
