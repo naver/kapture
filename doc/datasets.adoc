@@ -279,9 +279,6 @@ kapture_copy_RobotCar_Seasons_images.py -v info --image-dir ./RobotCar-Seasons/i
 # if you want to import v1 instead (deprecated), add this to the command: --v1
 ----
 
-If you cannot use symlinks, use the following script to copy the images to the individual kapture folders
-
-
 === download precomputed kapture data
 
 == SILDa
