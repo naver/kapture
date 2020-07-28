@@ -398,7 +398,8 @@ def import_robotcar_seasons_command_line() -> None:
     parser.add_argument('--skip_reconstruction', required=False, action='store_true', default=False,
                         help='do not import reconstruction data (3d points, keypoints and observations')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.root_link,
-                        help=f'How to import images [root_link]')
+                        help=(f'How to import images [root_link], '
+                              f'choose among: {", ".join(a.name for a in TransferAction)}'))
     parser.add_argument('--rig_collapse', action='store_true', default=False,
                         help='Replace camera poses with rig poses.')
     parser.add_argument('--use_colmap_intrinsics', action='store_true', default=False,
