@@ -260,8 +260,8 @@ RobotCar-Seasons
 ├─ images/
 ├─ intrinsics/
 │  ├─ left_intrinsics.txt
-│  ├─ intrinsics.txt
-│  └─ intrinsics.txt
+│  ├─ rear_intrinsics.txt
+│  └─ right_intrinsics.txt	
 ├─ robotcar_v2_test.txt
 └─ robotcar_v2_train.txt
 ----
