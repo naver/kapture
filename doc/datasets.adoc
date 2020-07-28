@@ -153,8 +153,8 @@ Extended-CMU-Seasons
 │  │  ├─ images.bin
 │  │  └─ points3D.bin
 │  └─ test-images-slice2.txt
-├─ slice2/
 ├─ slice3/
+├─ slice4/
 ├─ ...
 └─ slice25/
 ----
