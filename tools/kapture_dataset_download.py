@@ -45,11 +45,7 @@ def ask_confirmation(question):
 class Dataset:
     def __init__(self,
                  name: str,
-                 url: str,
-                 root_path: str,
-                 sha256sum: str,
-                 sub_path: Optional[str] = None
-                 ):
+                 root_path: str):
         """
         :param name: name of the archive (dataset or part of a dataset)
         :param url: input remote url of the dataset archive (tar).
@@ -59,17 +55,49 @@ class Dataset:
                          If not given, tar file is extracted directly to root_path
         """
         self._name = name
-        # remore url of the archive
-        self._archive_url = url
-        # local absolute path to archive
         self._archive_filepath = path.join(root_path, name + '.tar')
-        # if _success_filepath is present, it means it as already been installed. It contains some debug info
-        self._success_filepath = path.join(root_path, name + '.txt')
-        # local absolute path where to the install the dataset (multiple dataset might be installed at same path).
-        self._install_local_path = path.join(root_path, sub_path) if sub_path is not None else root_path
-        self._sha256sum_archive_remote = sha256sum
+        self._dataset_index_filepath = path.join(root_path, 'kapture_dataset_index.yaml')
+        # remore url of the archive
+        self._archive_url = None
+        self._install_local_path = None  # path.join(root_path, sub_path) if sub_path is not None else root_path
+        self._sha256sum_archive_remote = None
+        self._status = 'unknown'
+
+    def load_from_disk(self, datasets_yaml_cache=None):
+        """
+        Loads dataset properties from disk (kapture_dataset_index.yaml)
+
+        :param datasets_yaml_cache: spare the read of the yaml file if already loaded before.
+        """
+        logger.debug(f'loading dataset {self._name} from disk.')
+        if datasets_yaml_cache is not None:
+            datasets_yaml = datasets_yaml_cache
+        else:
+            with open(self._dataset_index_filepath, 'rt') as f:
+                datasets_yaml = yaml.safe_load(f)
+        assert isinstance(datasets_yaml, dict)
+        if self._name not in datasets_yaml:
+            raise ValueError(f'no dataset {self._name} in {self._dataset_index_filepath}')
+        dataset_yaml = datasets_yaml[self._name]
+        self._archive_url = dataset_yaml['url']
+        self._install_local_path = dataset_yaml.get('subpath', None)
+        self._sha256sum_archive_remote = dataset_yaml['sha256sum']
+        self._status = dataset_yaml.get('status', 'unknown')
+
+    def save_to_disk(self):
+        logger.debug(f'saving dataset {self._name} to disk.')
+        # only change status
+        # load previous version
+        with open(self._dataset_index_filepath, 'rt') as f:
+            datasets_yaml = yaml.safe_load(f)
+        # update with current dataset status
+        datasets_yaml[self._name].update({'status': self._status})
+        # write updated version
+        with open(self._dataset_index_filepath, 'wt') as f:
+            yaml.dump(datasets_yaml, f)
 
     def is_archive_valid(self):
+        """ check sha256 of the archive against the expected sha256. Returns true if they are the same. """
         if not path.isfile(self._archive_filepath):
             return False
         # size is consistent, check sha256
@@ -94,33 +122,46 @@ class Dataset:
          - incomplete: means partially downloaded
          - corrupted: means that the downloaded archive is curropted (inconsistent size or sh256).
         """
-        if path.isfile(self._success_filepath):
-            return 'installed'
-        if not path.isfile(self._archive_filepath):
-            return 'online'
 
-        assert path.isfile(self._archive_filepath)
-        # file exists, check it has proper size
-        r = requests.head(self._archive_url)
-        size_archive_online = int(r.headers.get('content-length', 0))
-        size_archive_local = int(path.getsize(self._archive_filepath))
-        if size_archive_local < size_archive_online:
-            logger.debug(f'file_size_online={size_archive_online} != file_size_local={size_archive_local}')
-            return 'incomplete'
-        if size_archive_local > size_archive_online:
-            logger.critical(f'inconsistent file size ({size_archive_online} vs {size_archive_local})')
-            return 'corrupted'
+        probing_status = None
+        if self._status == 'installed':
+            # yaml file says its installed, trust it (no other choices).
+            probing_status = 'installed'
 
-        assert size_archive_local == size_archive_online
-        # size is consistent, check sha256
-        if not self.is_archive_valid():
-            return 'corrupted'
+        if probing_status is None and not path.isfile(self._archive_filepath):
+            # not installed, no archive there, its definitively online
+            probing_status = 'online'
 
-        # archive is there, but not installed
-        return 'downloaded'
+        # not installed, but archive there, check 1) its incomplete or 2) corrupted. If neither, is just downloaded.
+        if probing_status is None:
+            assert path.isfile(self._archive_filepath)
+            # 1) check its incomplete: has it proper size ?
+            r = requests.head(self._archive_url)
+            size_archive_online = int(r.headers.get('content-length', 0))
+            size_archive_local = int(path.getsize(self._archive_filepath))
+            if size_archive_local < size_archive_online:
+                logger.debug(f'file_size_online={size_archive_online} != file_size_local={size_archive_local}')
+                probing_status = 'incomplete'
+            elif size_archive_local > size_archive_online:
+                logger.critical(f'inconsistent file size ({size_archive_online} vs {size_archive_local})')
+                probing_status = 'corrupted'
+
+        if probing_status is None:
+            # 2) size is consistent, check sha256
+            assert size_archive_local == size_archive_online
+            if not self.is_archive_valid():
+                probing_status = 'corrupted'
+
+        if probing_status is None:
+            # archive is there, not installed, not incomplete, not corrupted, then it must be just downloaded
+            probing_status = 'downloaded'
+
+        self._status = probing_status
+        return probing_status
 
     def __repr__(self):
-        return f'{self._name:30} | {self.prob_status():10} | {self._archive_url}'
+        self.prob_status()
+        return f'{self._status:10} | {self._name:30} | {self._archive_url}'
 
     def download_archive_resume(self, resume_byte_pos: Optional[int] = None):
         """
@@ -190,6 +231,7 @@ class Dataset:
             logger.info(f'{self._install_local_path} already exists: skipped')
             return
 
+        # 1) download
         if current_status != 'downloaded':
             # check archive file integrity
             if current_status == 'corrupted':
@@ -197,11 +239,14 @@ class Dataset:
                 os.remove(self._archive_filepath)
             self.download_archive_file()
 
-        # install it
+        # 2) untar
         logger.info(f'installing {path.basename(self._archive_filepath)} to {self._install_local_path}')
         self.untar_archive_file()
+
+        # 3) possible post-untar script ?
+
         # done
-        logger.info(f'done isntalling {self._name}')
+        logger.info(f'done installing {self._name}')
 
     def clean(self):
         """
@@ -249,14 +294,22 @@ def load_index(
     if not path.isfile(index_filepath):
         raise FileNotFoundError('no index file: do an update.')
     with open(index_filepath, 'rt') as f:
-        dataset_yaml = yaml.safe_load(f)
-    if len(dataset_yaml) == 0:
-        raise FileNotFoundError('invalid index file: do an update.')
+        datasets_yaml = yaml.safe_load(f)
+    dataset_names = sorted(datasets_yaml.keys())
 
-    datasets = {
-        name: Dataset(name=name, root_path=root_path, **data) for name, data in dataset_yaml.items()
-        if filter_patterns is None or any(fnmatch.fnmatch(name, pattern) for pattern in filter_patterns)
-    }
+    if len(datasets_yaml) == 0:
+        raise FileNotFoundError('invalid index file: do an update.')
+    # filter only dataset matching filter_patterns
+    if filter_patterns:
+        dataset_names = [dataset_name
+                         for dataset_name in dataset_names
+                         if any(fnmatch.fnmatch(dataset_name, pattern) for pattern in filter_patterns)]
+
+    datasets = {}
+    logger.debug(f'will load {len(dataset_names)} datasets')
+    for dataset_name in dataset_names:
+        datasets[dataset_name] = Dataset(name=dataset_name, root_path=root_path)
+        datasets[dataset_name].load_from_disk(datasets_yaml_cache=datasets_yaml)
     return datasets
 
 
@@ -288,7 +341,7 @@ def kapture_dataset_download_cli():
     ####################################################################################################################
     parser_list = subparsers.add_parser('list', help='display dataset index')
     parser_list.set_defaults(cmd='list')
-    parser_list.add_argument('dataset', nargs='*', default=['*'])
+    parser_list.add_argument('dataset', nargs='*', default=[])
     ####################################################################################################################
     parser_install = subparsers.add_parser('install', help='install dataset')
     parser_install.set_defaults(cmd='install')
@@ -334,10 +387,10 @@ def kapture_dataset_download_cli():
 
         elif args.cmd == 'list':
             logger.info(f'listing dataset {index_filepath} ...')
-            dataset_index = load_index(index_filepath=index_filepath,
+            datasets = load_index(index_filepath=index_filepath,
                                        root_path=args.install_path,
                                        filter_patterns=args.dataset)
-            print('\n'.join(str(dataset) for dataset in dataset_index.values()))
+            print('\n'.join(str(dataset) for dataset in datasets.values()))
 
         elif args.cmd == 'install':
             logger.info(f'installing dataset {args.dataset} ...')
