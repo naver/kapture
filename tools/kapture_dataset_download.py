@@ -166,7 +166,7 @@ class Dataset:
             logger.info(f'start downloading {self._archive_filepath}.')
             self.download_archive_resume()
 
-    def install_archive(self):
+    def untar_archive_file(self):
         if not self.is_archive_valid():
             raise ValueError('Archive file not valid: cant install.')
         logger.debug(f'extracting\n\tfrom: {self._archive_filepath}\n\tto  : {self._install_local_path}')
@@ -182,7 +182,8 @@ class Dataset:
         logger.debug(f'cleaning {self._archive_filepath}')
         os.remove(self._archive_filepath)
 
-    def do_download_and_install(self, force_overwrite: bool = False):
+    def install(self, force_overwrite: bool = False):
+        """ Install handle download and untar """
         # test the dataset presence
         current_status = self.prob_status()
         if current_status == 'installed' and not force_overwrite:
@@ -198,7 +199,7 @@ class Dataset:
 
         # install it
         logger.info(f'installing {path.basename(self._archive_filepath)} to {self._install_local_path}')
-        self.install_archive()
+        self.untar_archive_file()
         # done
         logger.info(f'done isntalling {self._name}')
 
@@ -348,7 +349,7 @@ def kapture_dataset_download_cli():
             logger.info(f'{len(dataset_index)} dataset will be installed.')
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
-                dataset.do_download_and_install(force_overwrite=args.force)
+                dataset.install(force_overwrite=args.force)
 
         elif args.cmd == 'download':
             logger.info(f'downloading dataset {args.dataset} ...')
