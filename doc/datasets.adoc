@@ -319,8 +319,9 @@ kapture.rigs_recover_inplace(kdata_mapping.trajectories, kdata_mapping.rigs, 're
 ----
 
 === convert from original dataset
- RobotCar_Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/RobotCar-Seasons/
- To import it into kapture, you'll need these files:
+
+RobotCar_Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/RobotCar-Seasons/
+To import it into kapture, you'll need these files
 [source,txt]
 ----
 RobotCar-Seasons
