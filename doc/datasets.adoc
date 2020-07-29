@@ -105,9 +105,47 @@ wip
 
 == baidu
 
-TODO: A word about the choices we made.
+The Baidu image-based localization dataset, "A Dataset for Benchmarking Image based Localization" by Xun Sun, Yuanfan Xie, Pei Luo and Liang Wang: https://sites.google.com/site/xunsunhomepage/
+
+For this dataset, kapture_import_IDL_dataset_cvpr17.py creates one sensor per image
 
 === convert from original dataset
+
+Once downloaded, you have the following files:
+
+[source,txt]
+----
+IDL_dataset_cvpr17_3852
+├─ query_gt/
+│  ├─ cdm_20150523_101338.camera
+│  ├─ ...
+│  └─ xyf_IMG_4097.camera
+├─ query_images_undistort/
+│  ├─ cdm_20150523_101338.jpg
+│  ├─ ...
+│  └─ xyf_IMG_4097.jpg
+├─ training_gt/
+│  ├─ nikon5300a_undistor_DSC_0036.camera
+│  ├─ ...
+│  └─ nikon5300b_undistor_DSC_0391.camera
+├─ training_images_undistort/
+│  ├─ nikon5300a_undistor_DSC_0036.jpg
+│  ├─ ...
+│  └─ nikon5300b_undistor_DSC_0391.jpg
+├─ mall.pcd # not used when importing to kapture
+└─ readme.txt
+----
+
+Run
+[source,bash]
+----
+# note: on windows, this requires admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/training_images_undistort -gt ./IDL_dataset_cvpr17_3852/training_gt -o ./kapture/IDL_dataset_cvpr17_3852/mapping
+kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/query_images_undistort -gt ./IDL_dataset_cvpr17_3852/query_gt -o ./kapture/IDL_dataset_cvpr17_3852/query
+
+# if you can't use symlinks, add this to the commands: --image_transfer copy
+----
 
 === download precomputed kapture data
 
