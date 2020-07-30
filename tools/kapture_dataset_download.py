@@ -132,8 +132,12 @@ class Dataset:
             probing_status = 'installed'
 
         if probing_status is None and not path.isfile(self._archive_filepath):
-            # not installed, no archive there, its definitively online
-            probing_status = 'online'
+            # not installed, no archive there, check its online
+            request = requests.head(self._archive_url)
+            if request.status_code == 200:
+                probing_status = 'online'
+            else:
+                probing_status = 'not found'
 
         # not installed, but archive there, check 1) its incomplete or 2) corrupted. If neither, is just downloaded.
         if probing_status is None:
