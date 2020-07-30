@@ -43,54 +43,58 @@ def ask_confirmation(question):
 
 
 class Dataset:
-    def __init__(self,
-                 name: str,
-                 root_path: str):
+    def __init__(
+            self,
+            name: str,
+            install_dirpath: str,
+            archive_url: str,
+            archive_sha256sum: str
+    ):
         """
         :param name: name of the archive (dataset or part of a dataset)
-        :param root_path: input absolute path to root directory where all datasets are installed.
+        :param install_dirpath: input absolute path to root directory where all datasets are installed.
+        :param archive_url: remote url of the dataset archive (tar).
+        :param archive_sha256sum: expected sha256 sum of the archive file.
         """
         self._name = name
 
-        self._install_local_path = root_path
-        self._archive_filepath = path.join(root_path, name + '.tar')
-        self._dataset_index_filepath = path.join(root_path, 'kapture_dataset_index.yaml')
-        # remore url of the archive
-        self._archive_url = None  # remote url of the dataset archive (tar).
-        self._sha256sum_archive_remote = None # sha256 sum of the archive file on remote server.
+        self._install_local_path = install_dirpath
+        self._archive_filepath = path.join(install_dirpath, name + '.tar')
+        self._dataset_index_filepath = path.join(install_dirpath, 'kapture_dataset_index.yaml')
+        self._dataset_status_filepath = path.join(install_dirpath, 'kapture_dataset_status.yaml')
+        self._archive_url = archive_url
+        self._archive_sha256sum_remote = archive_sha256sum
         self._status = 'unknown'
 
-    def load_from_disk(self, datasets_yaml_cache=None):
+    def load_status_from_disk(self, index_status_yaml_cache=None):
         """
-        Loads dataset properties from disk (kapture_dataset_index.yaml)
-
-        :param datasets_yaml_cache: spare the read of the yaml file if already loaded before.
+        :param index_status_yaml_cache: spare the read of the yaml file if already loaded before.
         """
-        logger.debug(f'loading dataset {self._name} from disk.')
-        if datasets_yaml_cache is not None:
-            datasets_yaml = datasets_yaml_cache
+        logger.debug(f'loading status {self._name} from disk.')
+        if index_status_yaml_cache is not None:
+            status_yaml = index_status_yaml_cache
+        elif path.isfile(self._dataset_status_filepath):
+            with open(self._dataset_status_filepath, 'rt') as f:
+                status_yaml = yaml.safe_load(f)
         else:
-            with open(self._dataset_index_filepath, 'rt') as f:
-                datasets_yaml = yaml.safe_load(f)
-        assert isinstance(datasets_yaml, dict)
-        if self._name not in datasets_yaml:
-            raise ValueError(f'no dataset {self._name} in {self._dataset_index_filepath}')
-        dataset_yaml = datasets_yaml[self._name]
-        self._archive_url = dataset_yaml['url']
-        dataset_yaml.get('subpath', '')
-        self._sha256sum_archive_remote = dataset_yaml['sha256sum']
-        self._status = dataset_yaml.get('status', 'unknown')
+            status_yaml = {}
 
-    def save_to_disk(self):
+        assert isinstance(status_yaml, dict)
+        self._status = status_yaml.get(self._name, 'unknown')
+
+    def save_status_to_disk(self):
         logger.debug(f'saving dataset {self._name} to disk.')
         # only change status
         # load previous version
-        with open(self._dataset_index_filepath, 'rt') as f:
-            datasets_yaml = yaml.safe_load(f)
+        if path.isfile(self._dataset_status_filepath):
+            with open(self._dataset_status_filepath, 'rt') as f:
+                datasets_yaml = yaml.safe_load(f)
+        else:
+            datasets_yaml = {}
         # update with current dataset status
-        datasets_yaml[self._name].update({'status': self._status})
+        datasets_yaml[self._name] = self._status
         # write updated version
-        with open(self._dataset_index_filepath, 'wt') as f:
+        with open(self._dataset_status_filepath, 'wt') as f:
             yaml.dump(datasets_yaml, f)
 
     def is_archive_valid(self):
@@ -105,7 +109,7 @@ class Dataset:
                 sha256_hash.update(byte_block)
         sha256sum_archive_local = sha256_hash.hexdigest()
         logger.debug(f'sha256sum {self._archive_filepath} :\n\t{sha256sum_archive_local}')
-        if sha256sum_archive_local != self._sha256sum_archive_remote:
+        if sha256sum_archive_local != self._archive_sha256sum_remote:
             return False
 
         return True
@@ -118,6 +122,8 @@ class Dataset:
          - downloaded: means has been downloaded (tar) but not installed (extracted) yet.
          - incomplete: means partially downloaded
          - corrupted: means that the downloaded archive is curropted (inconsistent size or sh256).
+         - not found: means is not found on server side
+         - unknown: should not happen
         """
 
         probing_status = None
@@ -154,6 +160,7 @@ class Dataset:
             probing_status = 'downloaded'
 
         self._status = probing_status
+        self.save_status_to_disk()
         return probing_status
 
     def __repr__(self):
@@ -240,7 +247,7 @@ class Dataset:
 
         # done
         self._status = 'installed'
-        self.save_to_disk()
+        self.save_status_to_disk()
         logger.info(f'done installing {self._name}')
 
     def clean(self):
@@ -266,9 +273,9 @@ class Dataset:
             rmtree(self._install_local_path)
 
 
-def load_index(
+def load_datasets_from_index(
         index_filepath: str,
-        root_path: str,
+        install_path: str,
         filter_patterns: Optional[List[str]] = None
 ) -> Dict[str, Dataset]:
     """
@@ -276,13 +283,12 @@ def load_index(
     the yaml file looks like :
     ----
     robotcar_seasons_02:
-      sub_path: robotcar_seasons
       url: http://download.europe.naverlabs.com//kapture/robotcar_seasons_02.tar
       sha256sum: 542ef47c00d5e387cfb0dcadb2459ae2fb17d59010cc51bae0c49403b4fa6a18
     ----
 
     :param index_filepath: input absolute path to index file
-    :param root_path: input absolute path to install directory
+    :param install_path: input absolute path to install directory
     :param filter_patterns: optional input list of unix-like patterns (e.g. SiLDa*) to filter datasets
     :return: dict name -> [url, sub_path, sha256sum]
     """
@@ -290,21 +296,30 @@ def load_index(
         raise FileNotFoundError('no index file: do an update.')
     with open(index_filepath, 'rt') as f:
         datasets_yaml = yaml.safe_load(f)
-    dataset_names = sorted(datasets_yaml.keys())
+
+    status_filepath = path.join(install_path, 'kapture_dataset_status.yaml')
+    if not path.isfile(status_filepath):
+        status_index = {}
+    else:
+        with open(status_filepath, 'rt') as f:
+            status_index = yaml.safe_load(f)
 
     if len(datasets_yaml) == 0:
         raise FileNotFoundError('invalid index file: do an update.')
     # filter only dataset matching filter_patterns
     if filter_patterns:
-        dataset_names = [dataset_name
-                         for dataset_name in dataset_names
-                         if any(fnmatch.fnmatch(dataset_name, pattern) for pattern in filter_patterns)]
+        datasets_yaml = {dataset_name: data_yaml
+                         for dataset_name, data_yaml in datasets_yaml.items()
+                         if any(fnmatch.fnmatch(dataset_name, pattern) for pattern in filter_patterns)}
 
     datasets = {}
-    logger.debug(f'will load {len(dataset_names)} datasets')
-    for dataset_name in dataset_names:
-        datasets[dataset_name] = Dataset(name=dataset_name, root_path=root_path)
-        datasets[dataset_name].load_from_disk(datasets_yaml_cache=datasets_yaml)
+    logger.debug(f'will load {len(datasets_yaml)} datasets')
+    for dataset_name, data_yaml in datasets_yaml.items():
+        datasets[dataset_name] = Dataset(name=dataset_name,
+                                         install_dirpath=install_path,
+                                         archive_url=data_yaml['url'],
+                                         archive_sha256sum=data_yaml['sha256sum'])
+        datasets[dataset_name].load_status_from_disk(index_status_yaml_cache=status_index)
     return datasets
 
 
@@ -382,16 +397,16 @@ def kapture_dataset_download_cli():
 
         elif args.cmd == 'list':
             logger.info(f'listing dataset {index_filepath} ...')
-            datasets = load_index(index_filepath=index_filepath,
-                                       root_path=args.install_path,
-                                       filter_patterns=args.dataset)
+            datasets = load_datasets_from_index(index_filepath=index_filepath,
+                                                install_path=args.install_path,
+                                                filter_patterns=args.dataset)
             print('\n'.join(str(dataset) for dataset in datasets.values()))
 
         elif args.cmd == 'install':
             logger.info(f'installing dataset {args.dataset} ...')
-            dataset_index = load_index(index_filepath=index_filepath,
-                                       root_path=args.install_path,
-                                       filter_patterns=args.dataset)
+            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                     install_path=args.install_path,
+                                                     filter_patterns=args.dataset)
             if len(dataset_index) == 0:
                 raise ValueError('no matching dataset')
             logger.info(f'{len(dataset_index)} dataset will be installed.')
@@ -401,9 +416,9 @@ def kapture_dataset_download_cli():
 
         elif args.cmd == 'download':
             logger.info(f'downloading dataset {args.dataset} ...')
-            dataset_index = load_index(index_filepath=index_filepath,
-                                       root_path=args.install_path,
-                                       filter_patterns=args.dataset)
+            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                     install_path=args.install_path,
+                                                     filter_patterns=args.dataset)
             if len(dataset_index) == 0:
                 raise ValueError('no matching dataset')
             logger.info(f'{len(dataset_index)} dataset will be downloaded.')
@@ -414,8 +429,8 @@ def kapture_dataset_download_cli():
         elif args.cmd == 'clean':
             logger.info(f'cleaning all dataset ...')
             # since we'll remove everything, ask user confirmation
-            dataset_index = load_index(index_filepath=index_filepath,
-                                       root_path=args.install_path)
+            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                     install_path=args.install_path)
             # just for info, enumerate installed or partially installed = not online
             nb_dataset_isntalled_index = len([d for d in dataset_index.values()
                                               if d.prob_status() is not 'online'])
@@ -432,6 +447,7 @@ def kapture_dataset_download_cli():
             raise ValueError(f'unknown command {args.cmd}')
 
     except Exception as e:
+        raise e
         logger.critical(e)
 
 
