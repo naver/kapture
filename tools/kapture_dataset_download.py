@@ -18,6 +18,7 @@ from tqdm import tqdm
 import tarfile
 import hashlib
 from shutil import rmtree
+from subprocess import call
 import path_to_kapture
 # import kapture
 import kapture.utils.logging
@@ -261,28 +262,6 @@ class Dataset:
         self.save_status_to_disk()
         logger.info(f'done installing {self._name}')
 
-    def clean(self):
-        """
-        Remove all files (installed, archive, ..)
-        warning: this may clean also other intricate installation
-
-        :return:
-        """
-        # clean archive if any
-        if path.isfile(self._archive_filepath):
-            logger.debug(f'deleting {self._archive_filepath}')
-            os.remove(self._archive_filepath)
-        # clean success files if any
-        if path.isfile(self._success_filepath):
-            logger.debug(f'deleting {self._success_filepath}')
-            os.remove(self._success_filepath)
-        # clean installation if any
-        if path.isdir(self._install_local_path):
-            # warning: this may clean also other intricate installation
-            logger.debug(f'deleting {self._install_local_path}/')
-            # TODO: check symlink attack: https://bugs.python.org/issue4489
-            rmtree(self._install_local_path)
-
 
 def load_datasets_from_index(
         index_filepath: str,
@@ -374,11 +353,6 @@ def kapture_dataset_download_cli():
     parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
-    parser_clean = subparsers.add_parser('clean', help='clean all')
-    parser_clean.set_defaults(cmd='clean')
-    parser_clean.add_argument('-f', '--force', action='store_true', default=False,
-                              help='Do not ask for user confirmation.')
-    ####################################################################################################################
     args = parser.parse_args()
 
     logger.setLevel(args.verbose or logging.INFO)
@@ -434,23 +408,6 @@ def kapture_dataset_download_cli():
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
                 dataset.download_archive_file()
-
-        elif args.cmd == 'clean':
-            logger.info(f'cleaning all dataset ...')
-            # since we'll remove everything, ask user confirmation
-            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                     install_path=args.install_path)
-            # just for info, enumerate installed or partially installed = not online
-            nb_dataset_isntalled_index = len([d for d in dataset_index.values()
-                                              if d.prob_status() is not 'online'])
-            logger.info(f'all ({nb_dataset_isntalled_index}) datasets will be erased .')
-            if not args.force and not ask_confirmation(
-                    f'Are you sure you want to delete ALL {len(dataset_index)} datasets '):
-                logger.info('cleaning canceled by user')
-            else:
-                for name, dataset in dataset_index.items():
-                    logger.info(f'cleaning {name} ...')
-                    dataset.clean()
 
         else:
             raise ValueError(f'unknown command {args.cmd}')
