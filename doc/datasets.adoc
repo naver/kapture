@@ -287,8 +287,6 @@ The original dataset description page can be found here: http://www.ok.sc.e.tite
 [source,txt]
 ----
 InLoc
-|-- DUC1_alignment (contains some txt files)
-|-- DUC2_alignment (contains some txt files)
 |-- mapping
 |   |-- sensors
 |   |   |-- records_camera.txt
@@ -297,6 +295,8 @@ InLoc
 |   |   |-- records_data
 |   |   |   |-- DUC1                (from cutouts.tar.gz or cutouts_imageonly.tar.bz2)
 |   |   |   |-- DUC2                (from cutouts.tar.gz or cutouts_imageonly.tar.bz2)
+|   |-- DUC1_alignment (contains some txt files)
+|   |-- DUC2_alignment (contains some txt files)
 |-- query
 |   |-- sensors
 |   |   |-- records_camera.txt
