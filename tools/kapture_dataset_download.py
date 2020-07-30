@@ -18,7 +18,10 @@ from tqdm import tqdm
 import tarfile
 import hashlib
 from shutil import rmtree
-from datetime import datetime
+import path_to_kapture
+# import kapture
+import kapture.utils.logging
+
 
 logger = logging.getLogger('download')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
@@ -108,7 +111,9 @@ class Dataset:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         sha256sum_archive_local = sha256_hash.hexdigest()
-        logger.debug(f'sha256sum {self._archive_filepath} :\n\t{sha256sum_archive_local}')
+        logger.debug(f'sha256sum {self._archive_filepath} :\n'
+                     f'\tlocal :{sha256sum_archive_local}\n'
+                     f'\tremote:{self._archive_sha256sum_remote}')
         if sha256sum_archive_local != self._archive_sha256sum_remote:
             return False
 
@@ -239,6 +244,8 @@ class Dataset:
         if self._status != 'downloaded':
             # check archive file integrity
             if self._status == 'corrupted':
+                logger.warning(f'archive {path.basename(self._archive_filepath)} is corrupted. '
+                               f'It will be downloaded again.')
                 # if corrupted: remove the archive and start over
                 os.remove(self._archive_filepath)
             self.download_archive_file()
@@ -333,15 +340,13 @@ def kapture_dataset_download_cli():
     """
     parser = argparse.ArgumentParser(description='download kapture datasets.')
     parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument('-v', '--verbose', action='store_const',
-                                  dest='verbose', const=logging.INFO,
-                                  help='display info messages [True].')
-    parser_verbosity.add_argument('-q', '--silent', '--quiet', action='store_const',
-                                  dest='verbose', const=logging.CRITICAL,
-                                  help='silence all messages.')
-    parser_verbosity.add_argument('-d', '--debug', action='store_const',
-                                  dest='verbose', const=logging.DEBUG,
-                                  help='display info and debug messages.')
+    parser_verbosity = parser.add_mutually_exclusive_group()
+    parser_verbosity.add_argument(
+        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
+        action=kapture.utils.logging.VerbosityParser,
+        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
+    parser_verbosity.add_argument(
+        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
     parser.add_argument('--install_path', default=path.normpath(path.join(DEFAULT_DATASET_PATH)),
                         help=f'path to index files listing all datasets'
                              f' [{path.normpath(path.join(DEFAULT_DATASET_PATH))}]')
