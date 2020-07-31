@@ -41,6 +41,8 @@ kapture_dataset_download.py install "silda*"  # <1>
 
 == convert
 
+see https://github.com/naver/kapture/blob/master/doc/datasets.adoc
+
 == visualize
 
 == localization pipelines
