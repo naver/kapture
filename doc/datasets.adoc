@@ -8,11 +8,7 @@ This section explains how to convert datasets to kapture format.
 
 == 7-scenes
 
-TODO: A word about the choices we made.
-
-=== convert from original dataset
-
-=== download precomputed kapture data
+TODO
 
 == Aachen-Day-Night-v1.1
 
@@ -99,10 +95,6 @@ kapture_import_colmap.py -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kap
 ----
 
 
-=== download precomputed kapture data
-
-wip
-
 == baidu
 
 The Baidu image-based localization dataset, "A Dataset for Benchmarking Image based Localization" by Xun Sun, Yuanfan Xie, Pei Luo and Liang Wang: https://sites.google.com/site/xunsunhomepage/
@@ -147,7 +139,6 @@ kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/query_
 # if you can't use symlinks, add this to the commands: --image_transfer copy
 ----
 
-=== download precomputed kapture data
 
 == Cambridge_Landmarks
 The Cambridge Landmarks Dataset is available at http://mi.eng.cam.ac.uk/projects/relocalisation/.
@@ -259,7 +250,6 @@ kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./k
 kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
 ----
 
-=== download precomputed kapture data
 
 == InLoc
 
@@ -376,7 +366,6 @@ With additional options, you can:
 - `--use_colmap_intrinsics` replaces the individual mapping intrinsics with the SIMPLE_RADIAL model from the colmap reconstructions
 - `--import_feature_db` also imports `3D-models/overcast-reference.db` into one single `mapping` kapture folder
 
-=== download precomputed kapture data
 
 == SILDa
 
