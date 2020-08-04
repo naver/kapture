@@ -22,6 +22,9 @@ from subprocess import call
 import path_to_kapture
 # import kapture
 import kapture.utils.logging
+from kapture.converter.downloader.download import download_file
+from kapture.converter.downloader.archives import untar_file
+
 
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
@@ -187,66 +190,6 @@ class Dataset:
     def __repr__(self):
         return f'{self.status:10} | {self._name:30} | {self._archive_url}'
 
-    def download_archive_resume(self, resume_byte_pos: Optional[int] = None):
-        """
-        resume (or start if no pos given) the dataset download.
-        :param resume_byte_pos: input position in bytes where to resume the Download
-        """
-        self.set_status()
-        r = requests.head(self._archive_url)
-        file_size_online = int(r.headers.get('content-length', 0))
-        # Append information to resume download at specific byte position to header
-        resume_header = ({'Range': f'bytes={resume_byte_pos}-'}
-                         if resume_byte_pos else None)
-        # Establish connection
-        r = requests.get(self._archive_url, stream=True, headers=resume_header)
-        # Set configuration
-        block_size = 1024
-        initial_pos = resume_byte_pos if resume_byte_pos else 0
-        mode = 'ab' if resume_byte_pos else 'wb'
-        with open(self._archive_filepath, mode) as f:
-            with tqdm(total=file_size_online, unit='B',
-                      unit_scale=True, unit_divisor=block_size,
-                      desc=self._archive_filepath, initial=initial_pos,
-                      ascii=True, miniters=1,
-                      disable=logger.getEffectiveLevel() >= logging.CRITICAL) as pbar:
-                for chunk in r.iter_content(32 * block_size):
-                    f.write(chunk)
-                    pbar.update(len(chunk))
-
-    def download_archive_file(self):
-        """ Starts or resumes the download if already started. """
-        logger.debug(f'downloading {self._archive_filepath}')
-        self.set_status()
-        r = requests.head(self._archive_url)
-        if path.isfile(self._archive_filepath):
-            logger.debug('file is already (partially) there.')
-            # file already there (at least partially)
-            file_size_online = int(r.headers.get('content-length', 0))
-            file_size_local = int(path.getsize(self._archive_filepath))
-            if file_size_online == file_size_local:
-                logger.info(f'file {self._archive_filepath} already downloaded.')
-            else:
-                logger.info(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
-                self.download_archive_resume(file_size_local)
-        else:
-            logger.info(f'start downloading {self._archive_filepath}.')
-            self.download_archive_resume()
-        self.set_status('downloaded')
-
-    def untar_archive_file(self):
-        self.set_status()
-        if not self.is_archive_valid():
-            raise ValueError('Archive file not valid: cant install.')
-        logger.debug(f'extracting\n\tfrom: {self._archive_filepath}\n\tto  : {self._install_local_path}')
-        # make sure directory exists
-        os.makedirs(self._install_local_path, exist_ok=True)
-        with tarfile.open(self._archive_filepath, 'r:*') as archive:
-            archive.extractall(self._install_local_path)
-        # cleaning tar
-        logger.debug(f'cleaning {self._archive_filepath}')
-        os.remove(self._archive_filepath)
-
     def install(self, force_overwrite: bool = False):
         """ Install handle download and untar """
         # test the dataset presence
@@ -264,11 +207,12 @@ class Dataset:
                                f'It will be downloaded again.')
                 # if corrupted: remove the archive and start over
                 os.remove(self._archive_filepath)
-            self.download_archive_file()
+            download_file(self._archive_url, self._archive_filepath)
+            self.set_status('downloaded')
 
         # 2) untar
         logger.info(f'deflating {path.basename(self._archive_filepath)} to {self._install_local_path}')
-        self.untar_archive_file()
+        untar_file(self._archive_filepath, self._install_local_path)
 
         # 3) possible post-untar script ?
         logger.debug(f'checking for installation script in {self._install_script_filename}')
