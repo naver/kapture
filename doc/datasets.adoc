@@ -468,12 +468,12 @@ You should end up with:
 ----
 ./kapture
 ├── mapping
-│   └── sensors
-│       ├── records_camera.txt
-│       ├── records_data/
-│       ├── rigs.txt
-│       ├── sensors.txt
-│       └── trajectories.txt
+│   └── sensors
+│       ├── records_camera.txt
+│       ├── records_data/
+│       ├── rigs.txt
+│       ├── sensors.txt
+│       └── trajectories.txt
 └── query
     └── sensors
         ├── records_camera.txt
