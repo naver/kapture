@@ -76,14 +76,14 @@ class Dataset:
         # load previous version
         if path.isfile(self._dataset_install_list_filepath):
             with open(self._dataset_install_list_filepath, 'rt') as f:
-                datasets_list = yaml.safe_load(f)
+                datasets_list = set(yaml.safe_load(f))
         else:
-            datasets_list = []
-        datasets_list.append(self._name)
+            datasets_list = set()
+        datasets_list.add(self._name)
         # update with current dataset status
         # write updated version
         with open(self._dataset_install_list_filepath, 'wt') as f:
-            yaml.dump(datasets_list, f)
+            yaml.dump(list(datasets_list), f)
 
     def is_installed(self, installation_list_cache=None):
         """
