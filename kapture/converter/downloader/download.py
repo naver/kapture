@@ -1,4 +1,5 @@
 import requests
+import os
 import os.path as path
 from tqdm import tqdm
 from typing import Optional
@@ -61,4 +62,5 @@ def download_file(url, filepath):
             download_file_resume(url, filepath, file_size_local)
     else:
         logger.info(f'start downloading {filepath}.')
+        os.makedirs(path.dirname(filepath), exist_ok=True)
         download_file_resume(url, filepath)
