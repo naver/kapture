@@ -12,7 +12,7 @@ pip install kapture
 
 NOTE: For this tutorial, you also must have __colmap__ version >=3.6.
 On ubuntu 18.04, apt you will install __colmap__ 3.4.
-In this case, you will have to compile__colmap__from source instead.
+In this case, you will have to compile __colmap__ from source instead.
 
 Or you can use the ready-to-use docker image:
 [source,bash]
