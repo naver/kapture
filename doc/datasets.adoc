@@ -8,7 +8,50 @@ This section explains how to convert datasets to kapture format.
 
 == 7-scenes
 
-TODO
+We imported all sequences from all from all scenes split between mapping or query for every scene.
+The color images and the provided poses are imported.
+The complete dataset information is available at:
+https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/
+
+=== convert from original dataset
+If you download one scene, you can convert every sequence into a kapture model using the kapture_import_7scenes.py script.
+
+1) Download one scene from the original source:
+
+- the link to the scenes are at the bottom of https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/
+- save into /<mydatasets>/7-scenes/<scene>
+- each scene has the following tree structure:
+[source,txt]
+----
+<scene>
+|--<scene>.png
+|--mean_image.npy
+|--seq-01
+|  |--frame-000000.color.png
+|  |--frame-000000.depth.png
+|  |--frame-000000.pose.txt
+|  |--frame-000001.color.png
+|  |--frame-000001.depth.png
+|  |--frame-000001.pose.txt
+|  |--frame-000<XXX>.color.png
+|  |--frame-000<XXX>.depth.png
+|  |--frame-000<XXX>.pose.txt
+|  |--frame-000999.color.png
+|  |--frame-000999.depth.png
+|  |--frame-000999.pose.txt
+|--....
+|---seq-nm
+|--TestSplit.txt
+|--TrainSplit.txt
+
+----
+- Note that sequences contain either 1000 frames or 500 frames (ending at frame-0004999 in that case).
+- The test and train split files contain the sequence names that can be used differently.
+- for every sequence, you can run the kapture import script:
+[source,bash]
+----
+kapture_import_7scenes.py -i /<mydatasets>/7-scenes/<scene>/<sequence> -o /<mykaptures>/7-scenes/<scene>/<sequence>
+----
 
 == Aachen-Day-Night-v1.1
 
