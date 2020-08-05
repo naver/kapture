@@ -12,7 +12,9 @@ Here,  `name` corresponds to the filename of the image, without any directory na
 
 """
 import logging
+import os
 import os.path as path
+import pathlib
 import argparse
 from tqdm import tqdm
 
@@ -58,6 +60,8 @@ def export_ltvl(kapture_dirpath: str,
     # write the files
     image_poses = {image_filename: pose
                    for image_filename, pose in image_poses}
+    p = pathlib.Path(ltvl_filepath)
+    os.makedirs(str(p.parent.resolve()), exist_ok=True)
     with open(ltvl_filepath, 'wt') as f:
         for image_filename, pose in tqdm(image_poses.items(), disable=logger.getEffectiveLevel() > logging.INFO):
             line = [image_filename] + pose.r_raw + pose.t_raw
