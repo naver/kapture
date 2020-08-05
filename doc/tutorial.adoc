@@ -1,5 +1,4 @@
 = kapture / quick start
-
 :sectnums:
 :sectnumlevels: 1
 :toc:
