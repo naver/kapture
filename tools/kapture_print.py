@@ -114,9 +114,9 @@ def print_command_line() -> None:
             nb_record = None if record is None else len(list(kapture.flatten(record)))
             if not args.detail:
                 print_key_value(f'nb {record_name} records', nb_record, file=output_stream, show_none=args.all)
-            else:
+            elif record is not None or args.all:
                 print_title(f'{record_name}', file=output_stream)
-                if nb_record is not None:
+                if record is not None:
                     timestamp_min, timestamp_max = min(record), max(record)
                     nb_sensors = len(set(s_id for _, s_id, _ in kapture.flatten(record)))
                     print_key_value(f' ├─ timestamp range', f'{timestamp_min}:{timestamp_max}', file=output_stream,
@@ -130,7 +130,7 @@ def print_command_line() -> None:
             nb_feature = None if feature is None else len(list(feature))
             if not args.detail:
                 print_key_value(f'nb {feature_name}', nb_feature, file=output_stream, show_none=args.all)
-            else:
+            elif feature is not None or args.all:
                 print_title(feature_name, file=output_stream)
                 if feature is not None:
                     print_key_value(' ├─ kind ', feature.type_name, file=output_stream, show_none=args.all)
@@ -142,7 +142,7 @@ def print_command_line() -> None:
         nb_matches = None if kapture_data.matches is None else len(list(kapture_data.matches))
         if not args.detail:
             print_key_value(f'nb matching pairs', nb_matches, file=output_stream, show_none=args.all)
-        else:
+        elif kapture_data.matches is not None or args.all:
             print_title('matches', file=output_stream)
             print_key_value(f' └─ nb pairs', nb_matches, file=output_stream, show_none=args.all)
 
@@ -150,7 +150,7 @@ def print_command_line() -> None:
         nb_points3d = None if kapture_data.points3d is None else len(list(kapture_data.points3d))
         if not args.detail:
             print_key_value(f'nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
-        else:
+        elif kapture_data.points3d is not None or args.all:
             print_title('points 3-D', file=output_stream)
             print_key_value(f' └─ nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
 
@@ -158,9 +158,9 @@ def print_command_line() -> None:
         nb_observations = None if kapture_data.observations is None else len(list(kapture_data.observations))
         if not args.detail:
             print_key_value(f'nb observations', nb_points3d, file=output_stream, show_none=args.all)
-        else:
+        elif kapture_data.observations is not None or args.all:
             print_title('Observations', file=output_stream)
-            if nb_observations is not None:
+            if kapture_data.observations is not None:
                 nb_observations_3d = len(kapture_data.observations)
                 print_key_value(f' ├─ nb points 3-D', nb_observations_3d, file=output_stream, show_none=args.all)
             print_key_value(f' └─ nb observations', nb_observations, file=output_stream, show_none=args.all)
