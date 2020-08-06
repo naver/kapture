@@ -20,7 +20,6 @@ import shutil
 from tqdm import tqdm
 
 # kapture
-import path_to_kapture
 import kapture
 from kapture.io.records import get_image_fullpath
 
