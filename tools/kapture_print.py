@@ -157,15 +157,18 @@ def print_command_line() -> None:
             print_key_value(f' └─ nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
 
         # observations
-        nb_observations = None if kapture_data.observations is None else len(list(kapture_data.observations))
+        nb_observations_3d = len(kapture_data.observations) if kapture_data.observations is not None else None
+        nb_observations_2d = len([feat
+                                  for feats in kapture_data.observations.values()
+                                  for feat in feats]) if kapture_data.observations is not None else None
         if not args.detail:
-            print_key_value(f'nb observations', nb_points3d, file=output_stream, show_none=args.all)
+            print_key_value(f'nb observed 3-D points', nb_observations_3d, file=output_stream, show_none=args.all)
+            print_key_value(f'nb observation 2-D points', nb_observations_2d, file=output_stream, show_none=args.all)
         elif kapture_data.observations is not None or args.all:
             print_title('Observations', file=output_stream)
             if kapture_data.observations is not None:
-                nb_observations_3d = len(kapture_data.observations)
-                print_key_value(f' ├─ nb points 3-D', nb_observations_3d, file=output_stream, show_none=args.all)
-            print_key_value(f' └─ nb observations', nb_observations, file=output_stream, show_none=args.all)
+                print_key_value(f' ├─ nb observed 3-D', nb_observations_3d, file=output_stream, show_none=args.all)
+            print_key_value(f' └─ nb observations 2-D', nb_observations_2d, file=output_stream, show_none=args.all)
 
 
 if __name__ == '__main__':
