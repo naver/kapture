@@ -183,6 +183,9 @@ def import_silda(silda_dirpath: str,
         pose = kapture.PoseTransform(pose_params[0:4], pose_params[4:7]).inverse()
         timestamp, cam_id = image_name_to_ids[silda_image_name]
         trajectories[timestamp, cam_id] = pose
+    # if query, trajectories is empty, so juste do not save it
+    if len(trajectories) == 0:
+        trajectories = None
 
     # rigs
     logger.info('Making up a rig ...')
