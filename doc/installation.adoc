@@ -132,3 +132,26 @@ docker run --runtime=nvidia -it \
 NOTE: You can bind directories between the host and the container using `--volume` or `--mount` option
 in order to access to any files and directories on a host machine from the container.
 (See the docker documentation.)
+
+== test your installation
+
+[source,bash]
+----
+cd kapture # use path of your cloned repository
+cd tools
+python ./kapture_print.py -i ../samples/Aachen-Day-Night/kapture/training
+# add -v 10 for more output
+----
+
+You should get something like this:
+
+[source,bash]
+----
+nb sensors               : 3
+nb trajectories records  : 3
+nb records_camera records: 3
+nb keypoints             : 3
+nb points 3-D            : 5
+nb observed 3-D points   : 5
+nb observation 2-D points: 27
+----
