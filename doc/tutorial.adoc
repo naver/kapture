@@ -42,7 +42,96 @@ kapture_dataset_download.py install "silda*"  # <1>
 
 see https://github.com/naver/kapture/blob/master/doc/datasets.adoc
 
-== visualize
+== Using kapture in your code
+
+__kapture__ is also a python library, that you can use in your code.
+
+=== import
+
+To be able to `import kapture`, you should either :
+
+ - install the kapture package (see <<install>>) or
+ - add __kapture__  to the python path (eg. see below).
+
+[source,python]
+----
+import sys
+REPO_ROOT_PATH = '../..'  # change with the path to path to root directory
+sys.path.insert(0, REPO_ROOT_PATH)
+import kapture
+----
+
+=== example
+
+In this example, we will print out the positions of the devices registered in `trajectories.txt`.
+
+First, load a dataset:
+
+[source,python]
+----
+import kapture
+import kapture.io.csv as csv
+
+kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
+----
+
+Then, loop over registered positions, and print them:
+
+[source,python]
+----
+# loop over the nested trajectories [timestamp][device_id] = pose -> position
+for timestamps, poses in kapture_data.trajectories.items():
+    print(f'timestamp: {timestamps:05d}')
+    for sensor_id, pose in poses.items():
+        print(f' └─ [{sensor_id}] = {pose.inverse().t.flatten()}')
+----
+
+NOTE: In trajectories, `pose` are transforms from world to device.
+To obtain the position of the device (from device to world) you need to inverse the pose.
+
+outputs :
+
+----
+timestamp: 00000
+ └─ [training_camera_0] = [-2.00292055 -1.65       -2.53706475]
+ └─ [training_camera_1] = [-1.9039761  -1.65       -2.55155863]
+ └─ [training_camera_2] = [-1.86705559 -1.65       -2.64449356]
+ └─ [training_camera_3] = [-1.92907956 -1.65       -2.72293503]
+ └─ [training_camera_4] = [-2.02802352 -1.65       -2.70844152]
+ └─ [training_camera_5] = [-2.06494409 -1.65       -2.61550737]
+timestamp: 00001
+ └─ [training_camera_0] = [-2.06899583 -1.65       -2.3578293 ]
+ └─ [training_camera_1] = [-1.97085445 -1.65       -2.37702379]
+...
+----
+
+More simply, you can flatten the nested timestamps / device_id like :
+
+[source,python]
+----
+import kapture
+import kapture.io.csv as csv
+
+kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
+
+for timestamp, sensor_id, pose in kapture.flatten(kapture_data.trajectories, is_sorted=True):
+    print(f'[{timestamp:05d}, {sensor_id}] = {pose.inverse().t.flatten()}')
+----
+
+outputs :
+
+----
+[00000, training_camera_0] = [-2.00292055 -1.65       -2.53706475]
+[00000, training_camera_1] = [-1.9039761  -1.65       -2.55155863]
+[00000, training_camera_2] = [-1.86705559 -1.65       -2.64449356]
+[00000, training_camera_3] = [-1.92907956 -1.65       -2.72293503]
+[00000, training_camera_4] = [-2.02802352 -1.65       -2.70844152]
+[00000, training_camera_5] = [-2.06494409 -1.65       -2.61550737]
+[00001, training_camera_0] = [-2.06899583 -1.65       -2.3578293 ]
+[00001, training_camera_1] = [-1.97085445 -1.65       -2.37702379]
+...
+----
+
 
 == localization pipelines
 
