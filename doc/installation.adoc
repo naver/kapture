@@ -139,6 +139,9 @@ in order to access to any files and directories on a host machine from the conta
 ----
 cd kapture # use path of your cloned repository
 cd tools
+# On linux
+python3 ./kapture_print.py -i ../samples/Aachen-Day-Night/kapture/training
+# On Windows and MacOS
 python ./kapture_print.py -i ../samples/Aachen-Day-Night/kapture/training
 # add -v 10 for more output
 ----
