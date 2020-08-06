@@ -99,14 +99,16 @@ def print_command_line() -> None:
             print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=args.all)
 
         # for rigs, count the number of different rigs ids (not sensors in it).
+        nb_rigs = len(kapture_data.rigs) if kapture_data.rigs is not None else None
         if not args.detail:
-            print_key_value('nb rigs', len(kapture_data.rigs), file=output_stream, show_none=args.all)
+            print_key_value('nb rigs', nb_rigs, file=output_stream, show_none=args.all)
         else:
             print_title(f'rigs', file=output_stream)
-            for rig_id in kapture_data.rigs:
-                s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
-                print_key_value(f' ├─ nb sensors in rig "{rig_id}"', len(s_ids), file=output_stream, show_none=args.all)
-            print_key_value(' └─ nb rigs total', len(kapture_data.rigs), file=output_stream, show_none=args.all)
+            if kapture_data.rigs is not None:
+                for rig_id in kapture_data.rigs:
+                    s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
+                    print_key_value(f' ├─ nb sensors in rig "{rig_id}"', len(s_ids), file=output_stream, show_none=args.all)
+            print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=args.all)
 
         # records (+trajectories)
         for record_name in ['trajectories', 'records_camera', 'records_lidar', 'records_wifi', 'records_gnss']:
