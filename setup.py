@@ -41,13 +41,13 @@ long_description = read_doc(readme_filepath)
 setuptools.setup(
     # description
     name='kapture',
-    version="1.0.1",
+    version="1.0.2",
     author="naverlabs",
     author_email="kapture@naverlabs.com",
     description="kapture: file format for SfM",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    # url="https://github.com/pypa/sampleproject",
+    url="https://github.com/naver/kapture/",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",
