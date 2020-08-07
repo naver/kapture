@@ -145,6 +145,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
 
  - conversion tools
+ - using kapture in your code
  - dataset download
  - localization pipelines
 
