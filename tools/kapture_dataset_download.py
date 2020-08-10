@@ -276,12 +276,9 @@ class Dataset:
             install_script_filepath = path.join(self._install_local_path, self._install_script_filename)
             logger.info(f'applying installation script {install_script_filepath}')
             ret = os.system(install_script_filepath)
-            # print(ret);
-            # exit()
-            # os.remove(install_script_filepath)
 
         # done
-        # self.set_status('installed')
+        self.set_status('installed')
         logger.info(f'done installing {self._name}')
 
 
