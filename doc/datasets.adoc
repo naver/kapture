@@ -520,3 +520,54 @@ With additional options, you can:
 - `--cam_model`, choose the camera model (`FOV` or `OPENCV_FISHEYE`)
 - `--split_cams` tells the importer to reorganise image files using `<cam_id>/<timestamp:04d>.jpg` template,
 - `--rig_collapse` replaces camera poses with rig poses.
+
+
+== Virtual Gallery
+
+The Virtual Gallery dataset is a synthetic dataset that targets multiple challenges such as varying lighting conditions and different occlusion.
+It is available at https://europe.naverlabs.com/research/3d-vision/virtual-gallery-dataset/ under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License.
+
+=== convert from original dataset
+
+Once downloaded and untared; the dataset is:
+----
+virtual_gallery # input_root
+├── training
+│   └── gallery_lightX_loopY
+│       └── extrinsic.txt # extrinsics for each image
+│       └── intrinsic.txt # intrinsics for each image, always the same
+│       └── frames
+│               └── rgb
+│                   └── camera_Z
+│                       └── rgb_00229.jpg  # images
+└── testing/
+    └── gallery_lightX_occlusionW
+        └── extrinsic.txt # extrinsics for each image
+        └── intrinsic.txt # intrinsics for each image, always the same
+        └── frames
+                └── rgb
+                    └── camera_0
+                        └── rgb_00229.jpg  # images
+
+where X ∈ [1, 6] and represent one of 6 different lighting condition.
+Y ∈ [1, 5] and represent one of 5 different camera trajectories (loop).
+Z ∈ [1, 6] and represent one of 6 different cameras (viewpoint).
+----
+
+To import Virtual Gallery to kapture, run:
+[source,bash]
+----
+# note: on windows, this requires admin rights for symlinks
+# see https://docs.python.org/3.6/library/os.html#os.symlink
+kapture_import_virtual_gallery.py -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/mapping -c training --as-rig --image_transfer link_absolute
+kapture_import_virtual_gallery.py -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/query -c testing --image_transfer link_absolute
+
+# if you can't use symlinks, resplace --image_transfer link_absolute with --image_transfer copy in both commands
+----
+
+With additional options, you can:
+
+- `--light-range` list of lighting condition to import
+- `--loop-range` list of training loops to import
+- `--camera-range` list of training cameras to import
+- `--occlusion-range` list of testing occlusion levels to import
