@@ -48,7 +48,7 @@ def download_file(url, filepath):
     :param url: input full url of the file to be downloaded.
     :param filepath: input full path where to save the file.
      """
-    logger.debug(f'downloading {filepath}')
+    logger.debug(f'checking "{url}"')
     response = requests.head(url)
     if path.isfile(filepath):
         logger.debug('file is already (partially) there.')
@@ -61,6 +61,6 @@ def download_file(url, filepath):
             logger.info(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
             download_file_resume(url, filepath, file_size_local)
     else:
-        logger.info(f'start downloading {filepath}.')
+        logger.info(f'start downloading "{filepath}"\n\tfrom: "{url}".')
         os.makedirs(path.dirname(filepath), exist_ok=True)
         download_file_resume(url, filepath)

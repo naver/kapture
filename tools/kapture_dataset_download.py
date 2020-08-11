@@ -135,16 +135,18 @@ class Dataset:
             if new_status == 'installed':
                 self.save_as_installed()
 
-    def prob_status(self):
+    def prob_status(self, check_online=False):
         """
         gives the actual dataset status
          - online: means not downloaded, and not installed (extracted).
+         - not found: means is not found on server side
          - installed: means has been downloaded and installed (extracted).
          - downloaded: means has been downloaded (tar) but not installed (extracted) yet.
          - incomplete: means partially downloaded
          - corrupted: means that the downloaded archive is curropted (inconsistent size or sh256).
-         - not found: means is not found on server side
          - unknown: should not happen
+
+        :param check_online: If true, will ping the url to check its actually online
         """
 
         probing_status = None
@@ -154,8 +156,7 @@ class Dataset:
 
         if probing_status is None and not path.isfile(self._archive_filepath):
             # not installed, no archive there, check its online
-            request = requests.head(self._archive_url)
-            if request.status_code == 200:
+            if not check_online or requests.head(self._archive_url).status_code == 200:
                 probing_status = 'online'
             else:
                 probing_status = 'not found'
