@@ -337,10 +337,12 @@ e.g.: image name: DUC_cutout_000_120_30.jpg
 
 The original dataset description page can be found here: http://www.ok.sc.e.titech.ac.jp/INLOC/
 
-1) Download the precomputed kapture data from here: 
+1a) Download the precomputed kapture data from here: 
 
 - mapping: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_mapping.tar.gz
 - query: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_query.tar.gz
+
+1b) or use the kapture dataset link:tutorial.adoc#download-a-dataset[downloader].
 
 2a) Download the original database images (cutouts) and scans from here: http://www.ok.sc.e.titech.ac.jp/INLOC/materials/cutouts.tar.gz
 
