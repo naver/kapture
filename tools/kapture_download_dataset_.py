@@ -67,7 +67,7 @@ class Dataset:
         self._name = name
 
         self._install_local_path = install_dirpath
-        self._archive_filepath = path.join(install_dirpath, name + '.tar')
+        self._archive_filepath = path.join(install_dirpath, name + '.tar.gz')
         self._dataset_index_filepath = path.join(install_dirpath, 'kapture_dataset_index.yaml')
         self._dataset_install_list_filepath = path.join(install_dirpath, 'kapture_dataset_installed.yaml')
         self._archive_url = archive_url
