@@ -280,9 +280,9 @@ def load_datasets_from_index(
     return datasets
 
 
-def kapture_dataset_download_cli():
+def kapture_download_dataset_cli():
     """
-    Parse the kapture_dataset_download command line .
+    Parse the kapture_download_dataset command line .
     """
     parser = argparse.ArgumentParser(description='download kapture datasets.')
     parser_verbosity = parser.add_mutually_exclusive_group()
@@ -385,4 +385,4 @@ def kapture_dataset_download_cli():
 
 
 if __name__ == '__main__':
-    kapture_dataset_download_cli()
+    kapture_download_dataset_cli()

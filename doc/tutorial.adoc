@@ -29,11 +29,11 @@ See link:installation.adoc[installation] for detailed instructions.
 ----
 cd WHEREVER/YOU/WANT/THE/DATASESTS
 # update the list from repositories
-kapture_dataset_download.py update
+kapture_download_dataset.py update
 # display the list dataset
-kapture_dataset_download.py list
+kapture_download_dataset.py list
 # install all variants of silda dataset
-kapture_dataset_download.py install "silda*"  # <1>
+kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"  # <1>
 ----
 
 <1> uses double quotes (`"`) to make sure the wildcard (`*`) is not catch by bash.
