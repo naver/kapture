@@ -42,7 +42,7 @@ kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"  # <1>
 
 see https://github.com/naver/kapture/blob/master/doc/datasets.adoc
 
-== Using kapture in your code
+== using kapture in your code
 
 __kapture__ is also a python library, that you can use in your code.
 
@@ -132,14 +132,14 @@ outputs :
 
 == localization pipelines
 
-In this tutorial, you will learn how localize query images on a map.
-You will first see how to build the map through structure-from-motion technique, using known poses.
+In this tutorial, you will learn how to localize query images within a map.
+You will first see how to build the map using structure-from-motion using known poses.
 Then, you will localize query images.
 And finally, you will evaluate the precision of the obtained localization against the ground truth.
-In this tutorial we will use `virtual_gallery_tutorial` dataset, you will find in `samples/` folder.
-You can easily reproduce the procedure for any dataset split in mapping/query.
+In this tutorial we will use the `virtual_gallery_tutorial` dataset, which you will find in the `samples/` folder.
+You can easily reproduce the procedure for any dataset split into mapping/query.
 
-.Colmap
+.COLMAP
 For this tutorial, you must have __colmap__ version >=3.6.
 
 For __windows__ users, you must use `colmap.bat`. If the __colmap__ path is not available from your `%PATH%`
@@ -291,7 +291,7 @@ In this tutorial, we will use `vocab_tree_flickr100K_words32K.bin`.
 curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
 ----
 
-1) build the map with colmap.
+1) build the map with colmap
 
 [source,bash]
 ----
