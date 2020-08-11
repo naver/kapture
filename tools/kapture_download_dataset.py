@@ -25,7 +25,6 @@ import kapture.utils.logging
 from kapture.converter.downloader.download import download_file
 from kapture.converter.downloader.archives import untar_file
 
-
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
 
@@ -55,7 +54,7 @@ class Dataset:
             install_dirpath: str,
             archive_url: str,
             archive_sha256sum: str,
-            install_script_filename: Optional[str]=None
+            install_script_filename: Optional[str] = None
     ):
         """
         :param name: name of the archive (dataset or part of a dataset)
@@ -129,6 +128,10 @@ class Dataset:
         else:
             return self._status
 
+    @property
+    def url(self):
+        return self._archive_url
+
     def set_status(self, new_status=None):
         if self._status != new_status:
             self._status = new_status
@@ -138,8 +141,9 @@ class Dataset:
     def prob_status(self, check_online=False):
         """
         gives the actual dataset status
-         - online: means not downloaded, and not installed (extracted).
-         - not found: means is not found on server side
+         - not installed: means is not installed (wo info about the server)
+         - online: means not installed, not downloaded, but reachable.
+         - not reachable: means not installed, not downloaded, but NOT reachable.
          - installed: means has been downloaded and installed (extracted).
          - downloaded: means has been downloaded (tar) but not installed (extracted) yet.
          - incomplete: means partially downloaded
@@ -156,10 +160,12 @@ class Dataset:
 
         if probing_status is None and not path.isfile(self._archive_filepath):
             # not installed, no archive there, check its online
-            if not check_online or requests.head(self._archive_url).status_code == 200:
+            if not check_online:
+                probing_status = 'not installed'
+            elif requests.head(self._archive_url).status_code == 200:
                 probing_status = 'online'
             else:
-                probing_status = 'not found'
+                probing_status = 'not reachable'
 
         # not installed, but archive there, check 1) its incomplete or 2) corrupted. If neither, is just downloaded.
         if probing_status is None:
@@ -307,6 +313,8 @@ def kapture_download_dataset_cli():
     parser_list = subparsers.add_parser('list', help='display dataset index')
     parser_list.set_defaults(cmd='list')
     parser_list.add_argument('dataset', nargs='*', default=[])
+    parser_list.add_argument('--check', action='store_true', default=False,
+                             help='Check the online version is reachable.')
     ####################################################################################################################
     parser_install = subparsers.add_parser('install', help='install dataset')
     parser_install.set_defaults(cmd='install')
@@ -352,8 +360,8 @@ def kapture_download_dataset_cli():
             datasets = load_datasets_from_index(index_filepath=index_filepath,
                                                 install_path=args.install_path,
                                                 filter_patterns=args.dataset)
-            hide_progress = logger.getEffectiveLevel() > logging.INFO
-            print('\n'.join(str(dataset) for dataset in tqdm(datasets.values(), disable=hide_progress)))
+            for name, dataset in datasets.items():
+                print(f'{dataset.prob_status(check_online=args.check):^10}| {name:40} | {dataset.url}')
 
         if args.cmd == 'install':
             logger.info(f'installing dataset {args.dataset} ...')
