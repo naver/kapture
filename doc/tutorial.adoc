@@ -61,7 +61,7 @@ sys.path.insert(0, REPO_ROOT_PATH)
 import kapture
 ----
 
-=== example
+=== load a dataset
 
 In this example, we will print out the positions of the devices registered in `trajectories.txt`.
 
@@ -74,6 +74,8 @@ import kapture.io.csv as csv
 
 kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
 ----
+
+=== poses
 
 Then, loop over registered positions, and print them:
 
@@ -109,11 +111,6 @@ More simply, you can flatten the nested timestamps / device_id like :
 
 [source,python]
 ----
-import kapture
-import kapture.io.csv as csv
-
-kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
-
 for timestamp, sensor_id, pose in kapture.flatten(kapture_data.trajectories, is_sorted=True):
     print(f'[{timestamp:05d}, {sensor_id}] = {pose.inverse().t.flatten()}')
 ----
