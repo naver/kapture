@@ -191,6 +191,11 @@ class Dataset:
     def __repr__(self):
         return f'{self.status:10} | {self._name:30} | {self._archive_url}'
 
+    def download(self):
+        if self.status != 'downloaded':
+            download_file(self._archive_url, self._archive_filepath)
+            self.set_status('downloaded')
+
     def install(self, force_overwrite: bool = False):
         """ Install handle download and untar """
         # test the dataset presence
@@ -372,10 +377,7 @@ def kapture_dataset_download_cli():
             logger.info(f'{len(dataset_index)} dataset will be downloaded.')
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
-                dataset.download_archive_file()
-
-        # else:
-        #     raise ValueError(f'unknown command {args.cmd}')
+                dataset.download()
 
     except Exception as e:
         raise e
