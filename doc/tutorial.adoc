@@ -32,7 +32,7 @@ cd WHEREVER/YOU/WANT/THE/DATASESTS
 kapture_download_dataset.py update
 # display the list dataset
 kapture_download_dataset.py list
-# install all variants of silda dataset
+# install mapping and query of Extended-CMU-Seasons_slice22
 kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"  # <1>
 ----
 
