@@ -32,7 +32,7 @@ class TestImportExif(unittest.TestCase):
         self._tempdir.cleanup()
 
     def test_read_exif_invalid(self):
-        invalid_image_filepath = path.join(self._samples_folder, 'chess/7scenes/frame-000000.color.jpg')
+        invalid_image_filepath = path.join(self._samples_folder, '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
         exif_data = read_exif(invalid_image_filepath)
         self.assertIsNone(exif_data)
 
@@ -85,7 +85,7 @@ class TestImportExif(unittest.TestCase):
         self.assertTrue(equal_kapture(temp_kapture_data, self._kapture_data))
 
     def test_write_exif(self):
-        image_filepath_wo_exif = path.join(self._samples_folder, 'chess/7scenes/frame-000000.color.jpg')
+        image_filepath_wo_exif = path.join(self._samples_folder, '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
         image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
         image_filepath_temp = path.join(self._tempdir.name, 'frame-000000.color.jpg')
         shutil.copy(image_filepath_wo_exif, image_filepath_temp)
