@@ -4,7 +4,9 @@
 :toc:
 :toclevels: 1
 
-This section explains how to convert datasets to kapture format.
+This section explains how to convert datasets to kapture format. 
+
+Note that there are already many datasets (including the ones from visuallocalization.net) directly available in kapture here (no need to manually convert them): https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset
 
 == 7-scenes
 
