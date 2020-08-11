@@ -263,7 +263,7 @@ class Dataset:
                 logger.warning(f'archive {path.basename(self._archive_filepath)} is corrupted. '
                                f'It will be downloaded again.')
                 # if corrupted: remove the archive and start over
-                # os.remove(self._archive_filepath)
+                os.remove(self._archive_filepath)
             self.download_archive_file()
 
         # 2) untar
