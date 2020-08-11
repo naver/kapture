@@ -25,7 +25,7 @@ def download_file_resume(url: str,
     resume_header = ({'Range': f'bytes={resume_byte_pos}-'}
                      if resume_byte_pos else None)
     # Establish connection
-    response = requests.get(url, stream=True, headers=resume_header)
+    response = requests.get(url, stream=True, headers=resume_header, allow_redirects=True)
     # Set configuration
     block_size = 1024  # 1Ko
     initial_pos = resume_byte_pos if resume_byte_pos else 0
@@ -49,7 +49,7 @@ def download_file(url, filepath):
     :param filepath: input full path where to save the file.
      """
     logger.debug(f'checking "{url}"')
-    response = requests.head(url)
+    response = requests.head(url, allow_redirects=True)
     if path.isfile(filepath):
         logger.debug('file is already (partially) there.')
         # file already there (at least partially)
