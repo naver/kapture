@@ -15,19 +15,55 @@ from tools.kapture_import_7scenes import import_7scenes
 class TestImport7scenes(unittest.TestCase):
 
     def setUp(self):
-        samples_folder = path.abspath(path.join(path.dirname(__file__),  '../samples/'))
-        self.d7s_gt_folder = path.join(samples_folder, 'chess', '7scenes')
-        self.kapture_gt_folder = path.join(samples_folder, 'chess', 'kapture')
+        d7scenes_sample_dirpath = path.abspath(path.join(path.dirname(__file__),  '../samples/7scenes'))
+        self.d7scenes_rootpath = path.join(d7scenes_sample_dirpath, 'microsoft', 'stairs')
+        self.kapture_gt_rootpath = path.join(d7scenes_sample_dirpath, 'kapture', 'stairs')
+        self._tempdir = tempfile.TemporaryDirectory()
 
-    def test_import(self):
-        expected_kdata = kapture_from_dir(self.kapture_gt_folder)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            import_7scenes(d7scenes_path=self.d7s_gt_folder,
-                           kapture_dir_path=tmpdirname,
-                           force_overwrite_existing=True)
+    def tearDown(self) -> None:
+        self._tempdir.cleanup()
 
-            imported_kdata = kapture_from_dir(tmpdirname)
-            self.assertTrue(equal_kapture(imported_kdata, expected_kdata))
+    def test_import_both(self):
+        kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'both')
+        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
+                       kapture_dir_path=self._tempdir.name,
+                       force_overwrite_existing=True)
+
+        imported_kdata = kapture_from_dir(self._tempdir.name)
+        expected_kdata = kapture_from_dir(kapture_gt_dirpath)
+        self.assertTrue(equal_kapture(imported_kdata, expected_kdata))
+
+    def test_import_mapping(self):
+        kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'mapping')
+        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
+                       kapture_dir_path=self._tempdir.name,
+                       force_overwrite_existing=True,
+                       partition='mapping')
+
+        imported_kdata = kapture_from_dir(self._tempdir.name)
+        expected_kdata = kapture_from_dir(kapture_gt_dirpath)
+        self.assertTrue(equal_kapture(imported_kdata, expected_kdata))
+
+    def test_import_query(self):
+        kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'query')
+        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
+                       kapture_dir_path=self._tempdir.name,
+                       force_overwrite_existing=True,
+                       partition='query')
+
+        imported_kdata = kapture_from_dir(self._tempdir.name)
+        expected_kdata = kapture_from_dir(kapture_gt_dirpath)
+        self.assertTrue(equal_kapture(imported_kdata, expected_kdata))
+
+    def test_import_sequence(self):
+        kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'seq-01')
+        import_7scenes(d7scenes_path=self.d7scenes_rootpath + '/seq-01',
+                       kapture_dir_path=self._tempdir.name,
+                       force_overwrite_existing=True)
+
+        imported_kdata = kapture_from_dir(self._tempdir.name)
+        expected_kdata = kapture_from_dir(kapture_gt_dirpath)
+        self.assertTrue(equal_kapture(imported_kdata, expected_kdata))
 
 
 if __name__ == '__main__':

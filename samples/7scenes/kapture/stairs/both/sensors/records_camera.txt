@@ -1,0 +1,20 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+0, kinect, seq-01/frame-000000.color.jpg
+1, kinect, seq-01/frame-000001.color.jpg
+2, kinect, seq-01/frame-000002.color.jpg
+3, kinect, seq-02/frame-000000.color.jpg
+4, kinect, seq-02/frame-000001.color.jpg
+5, kinect, seq-02/frame-000002.color.jpg
+6, kinect, seq-03/frame-000000.color.jpg
+7, kinect, seq-03/frame-000001.color.jpg
+8, kinect, seq-03/frame-000002.color.jpg
+9, kinect, seq-04/frame-000000.color.jpg
+10, kinect, seq-04/frame-000001.color.jpg
+11, kinect, seq-04/frame-000002.color.jpg
+12, kinect, seq-05/frame-000000.color.jpg
+13, kinect, seq-05/frame-000001.color.jpg
+14, kinect, seq-05/frame-000002.color.jpg
+15, kinect, seq-06/frame-000000.color.jpg
+16, kinect, seq-06/frame-000001.color.jpg
+17, kinect, seq-06/frame-000002.color.jpg

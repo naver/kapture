@@ -72,12 +72,18 @@ def import_7scenes(d7scenes_path: str,
 
     logger.info('populating 7-scenes files ...')
     d7s_filenames = {filename: d7s_filename_re.search(filename).groupdict()
-                     for timestamp, filename in enumerate(sorted(d7s_filenames))
+                     for filename in sorted(d7s_filenames)
                      if d7s_filename_re.search(filename)}
 
-    # fake timestamps: number may be duplicated if multiple sequences at once, so just use the index.
-    for timestamp, filename in enumerate(d7s_filenames):
-        d7s_filenames[filename]['timestamp'] = timestamp
+    # reorg as shot[seq, id] = {color: , pose: , ...}
+    shots = {}
+    for timestamp, (filename, file_attribs) in enumerate(d7s_filenames.items()):
+        shot_id = (file_attribs.get('sequence'), file_attribs['frame_id'])
+        shots.setdefault(shot_id, {})[file_attribs['suffix']] = filename
+
+    # fake timestamps
+    for timestamp, shot_id in enumerate(shots):
+        shots[shot_id]['timestamp'] = timestamp
 
     # if given, filter partition
     if partition is not None:
@@ -89,41 +95,34 @@ def import_7scenes(d7scenes_path: str,
             split_sequences = [f'seq-{int(seq.strip()[len("sequence"):]):02}' for seq in file.readlines()]
         assert len(split_sequences) > 0
         # filter out
-        d7s_filenames = {filename: attribs
-                         for filename, attribs in d7s_filenames.items()
-                         if attribs['sequence'] in split_sequences}
+        shots = {(seq, frame): shot
+                 for (seq, frame), shot in shots.items()
+                 if seq in split_sequences}
 
-    # d7s_filenames -> [sequence], frame_id, suffix, ext, timestamp
-    # print(d7s_filenames) ; exit()
-    if not d7s_filenames:
+    if len(shots) == 0:
         raise FileNotFoundError('no file found: make sure the path to 7scenes sequence is valid.')
+
+    # eg. shots['seq-01', '000000'] =
+    #       {'color': 'seq-01/frame-000000.color.jpg', 'pose': 'seq-01/frame-000000.pose.txt', 'timestamp': 0}
 
     # images
     logger.info('populating image files ...')
-    # eg. d7s_filenames['seq-01/frame-000000.color.png'] =
-    #   {'sequence': 'seq-01', 'frame_id': '000000', 'suffix': 'color', 'ext': 'png', 'timestamp': -1}
-    d7s_filenames_images = ((int(v['timestamp']), filename)
-                            for filename, v in d7s_filenames.items()
-                            if v['suffix'] == RGB_SUFFIX)
     snapshots = kapture.RecordsCamera()
-    for timestamp, image_filename in sorted(d7s_filenames_images):
-        snapshots[timestamp, CAMERA_ID] = image_filename
+    for shot in shots.values():
+        snapshots[shot['timestamp'], CAMERA_ID] = shot['color']
 
     # poses
     logger.info('import poses files ...')
-    d7s_filenames_poses = ((int(v['timestamp']), filename)
-                           for filename, v in d7s_filenames.items()
-                           if v['suffix'] == POSE_SUFFIX)
     trajectories = kapture.Trajectories()
-    for timestamp, pose_filename in d7s_filenames_poses:
-        pose_filepath = path.join(d7scenes_path, pose_filename)
+    for shot in shots.values():
+        pose_filepath = path.join(d7scenes_path, shot['pose'])
         pose_mat = np.loadtxt(pose_filepath)  # camera-to-world, 4×4 matrix in homogeneous coordinates
         rotation_mat = pose_mat[0:3, 0:3]
         position_vec = pose_mat[0:3, 3]
         rotation_quat = quaternion.from_rotation_matrix(rotation_mat)
         pose_world_from_cam = kapture.PoseTransform(r=rotation_quat, t=position_vec)
         pose_cam_from_world = pose_world_from_cam.inverse()
-        trajectories[timestamp, CAMERA_ID] = pose_cam_from_world
+        trajectories[shot['timestamp'], CAMERA_ID] = pose_cam_from_world
 
     # sensors
     """

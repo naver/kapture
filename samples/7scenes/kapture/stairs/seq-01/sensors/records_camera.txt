@@ -1,0 +1,5 @@
+# kapture format: 1.0
+# timestamp, device_id, image_path
+0, kinect, frame-000000.color.jpg
+1, kinect, frame-000001.color.jpg
+2, kinect, frame-000002.color.jpg
