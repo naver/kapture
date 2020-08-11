@@ -242,7 +242,7 @@ def load_datasets_from_index(
     the yaml file looks like :
     ----
     robotcar_seasons_02:
-      url: http://download.europe.naverlabs.com//kapture/robotcar_seasons_02.tar
+      url: http://download.europe.naverlabs.com//kapture/robotcar_seasons_02.tar.gz
       sha256sum: 542ef47c00d5e387cfb0dcadb2459ae2fb17d59010cc51bae0c49403b4fa6a18
     ----
 
