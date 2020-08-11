@@ -8,49 +8,77 @@ This section explains how to convert datasets to kapture format.
 
 == 7-scenes
 
-We imported all sequences from all from all scenes split between mapping or query for every scene.
-The color images and the provided poses are imported.
+Here we describes how to import a scene from 7-scenes into kapture format.
+The import process uses the images and poses.
+Other data (e.g. depth maps) are ignored.
+During importation, a scene is split into mapping and query.
+You can apply the conversion to all the 7 scenes.
+
 The complete dataset information is available at:
 https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/
 
 === convert from original dataset
 If you download one scene, you can convert every sequence into a kapture model using the kapture_import_7scenes.py script.
 
-1) Download one scene from the original source:
+1) Download the 7 scenes from the https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/[microsoft] website,
 
-- the link to the scenes are at the bottom of https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/
-- save into /<mydatasets>/7-scenes/<scene>
-- each scene has the following tree structure:
+[source,bash]
+----
+cd /<mydatasets>/7-scenes
+curl http://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/heads.zip -o heads.zip
+----
+
+2) unzip it all
+
+On ubuntu, use the following commands:
+
+[source,bash]
+----
+unzip heads.zip
+cd heads
+# unzip all inner zip files
+find . -iname "*.zip" -print0 | xargs -n1 -0 -I {} unzip {}
+rm *.zip ../heads.zip # optionally cleans all zip files
+----
+
+A scene has the following tree structure:
 [source,txt]
 ----
 <scene>
-|--<scene>.png
-|--mean_image.npy
-|--seq-01
-|  |--frame-000000.color.png
-|  |--frame-000000.depth.png
-|  |--frame-000000.pose.txt
-|  |--frame-000001.color.png
-|  |--frame-000001.depth.png
-|  |--frame-000001.pose.txt
-|  |--frame-000<XXX>.color.png
-|  |--frame-000<XXX>.depth.png
-|  |--frame-000<XXX>.pose.txt
-|  |--frame-000999.color.png
-|  |--frame-000999.depth.png
-|  |--frame-000999.pose.txt
-|--....
-|---seq-nm
-|--TestSplit.txt
-|--TrainSplit.txt
-
+├── <scene>.png
+├── <seq-##>
+│   ├── frame-000000.color.png
+│   ├── frame-000000.depth.png
+│   ├── frame-000000.pose.txt
+│   ├── frame-000001.color.png
+│   ├── frame-000001.depth.png
+│   ├── frame-000001.pose.txt
+│   ├── frame-000002.color.png
+..
+├── TestSplit.txt
+└── TrainSplit.txt
 ----
-- Note that sequences contain either 1000 frames or 500 frames (ending at frame-0004999 in that case).
-- The test and train split files contain the sequence names that can be used differently.
-- for every sequence, you can run the kapture import script:
+
+The `TestSplit.txt` and `TrainSplit.txt` files respectively contain the sequences to be used for query or mapping.
+
+3) Import to kapture
+
+I this section, we will see how to import the all scene, using mapping/query split.
+For every scene (`stairs` in this example), import mapping and query like:
+
 [source,bash]
 ----
-kapture_import_7scenes.py -i /<mydatasets>/7-scenes/<scene>/<sequence> -o /<mykaptures>/7-scenes/<scene>/<sequence>
+kapture_import_7scenes.py -i /<mydatasets>/7-scenes/stairs -o /<mykaptures>/7-scenes/stairs/mapping -p mapping
+----
+
+NOTE: You can also import without splitting mapping and query. In that case all data are merged into a single dataset.
+You can also import a single sequence passing directly the full path to it (e.g. `/<mydatasets>/7-scenes/stairs/seq-01`).
+
+You can easily process all scenes/split at once, using https://www.gnu.org/software/parallel/[gnu parallel]:
+----
+parallel \
+kapture_import_7scenes.py -v info -i /<mydatasets>/7-scenes/{1} /<mykaptures>/7-scenes/{1}/{2} -p {2} \
+::: chess fire heads office pumpkin redkitchen stairs ::: query mapping
 ----
 
 == Aachen-Day-Night-v1.1

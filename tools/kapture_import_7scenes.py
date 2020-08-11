@@ -20,7 +20,7 @@ import os.path as path
 import re
 import numpy as np
 import quaternion
-from PIL import Image
+from typing import Optional
 # kapture
 import path_to_kapture
 import kapture
@@ -33,11 +33,22 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 logger = logging.getLogger('7scenes')
 MODEL = kapture.CameraType.RADIAL
 
+POSE_SUFFIX = 'pose'
+RGB_SUFFIX = 'color'
+DEPTH_SUFFIX = 'depth'
+CAMERA_ID = 'kinect'
+PARTITION_FILENAMES = {
+    'mapping': 'TrainSplit.txt',
+    'query': 'TestSplit.txt'
+}
+
 
 def import_7scenes(d7scenes_path: str,
                    kapture_dir_path: str,
                    force_overwrite_existing: bool = False,
-                   images_import_method: TransferAction = TransferAction.skip) -> None:
+                   images_import_method: TransferAction = TransferAction.skip,
+                   partition: Optional[str] = None
+                   ) -> None:
     """
     Imports RGB-D Dataset 7-Scenes dataset and save them as kapture.
 
@@ -45,29 +56,52 @@ def import_7scenes(d7scenes_path: str,
     :param kapture_dir_path: path to kapture top directory
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     :param images_import_method: choose how to import actual image files.
+    :param partition: if specified = 'mapping' or 'query'. Requires d7scenes_path/TestSplit.txt or TrainSplit.txt
+                    to exists.
     """
     os.makedirs(kapture_dir_path, exist_ok=True)
     delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
 
     logger.info('loading all content ...')
-    POSE_SUFFIX = 'pose'
-    RGB_SUFFIX = 'color'
-    DEPTH_SUFFIX = 'depth'
-    CAMERA_ID = 'kinect'
-    d7s_filename_re = re.compile(r'frame-(?P<timestamp>\d{6})\.(?P<suffix>\w*)\.(?P<ext>\w*)')
 
-    # populate
-    d7s_filenames = (path.basename(path.join(dp, fn))
+    d7s_filename_re = re.compile(r'((?P<sequence>.+)/)?frame-(?P<frame_id>\d{6})\.(?P<suffix>\w*)\.(?P<ext>\w*)')
+
+    # populate all relevant files
+    d7s_filenames = (path.relpath(path.join(dp, fn), d7scenes_path)
                      for dp, _, fs in os.walk(d7scenes_path) for fn in fs)
-    d7s_filenames = {filename: d7s_filename_re.match(filename).groupdict()
-                     for filename in d7s_filenames
-                     if d7s_filename_re.match(filename)}
-    # d7s_filenames -> timestamp, suffix, ext
+
+    logger.info('populating 7-scenes files ...')
+    d7s_filenames = {filename: d7s_filename_re.search(filename).groupdict()
+                     for timestamp, filename in enumerate(sorted(d7s_filenames))
+                     if d7s_filename_re.search(filename)}
+
+    # fake timestamps: number may be duplicated if multiple sequences at once, so just use the index.
+    for timestamp, filename in enumerate(d7s_filenames):
+        d7s_filenames[filename]['timestamp'] = timestamp
+
+    # if given, filter partition
+    if partition is not None:
+        # read the authors split file
+        partition_filepath = path.join(d7scenes_path, PARTITION_FILENAMES[partition])
+        if not path.isfile(partition_filepath):
+            raise FileNotFoundError(f'partition file is missing: {partition_filepath}.')
+        with open(partition_filepath, 'rt') as file:
+            split_sequences = [f'seq-{int(seq.strip()[len("sequence"):]):02}' for seq in file.readlines()]
+        assert len(split_sequences) > 0
+        # filter out
+        d7s_filenames = {filename: attribs
+                         for filename, attribs in d7s_filenames.items()
+                         if attribs['sequence'] in split_sequences}
+
+    # d7s_filenames -> [sequence], frame_id, suffix, ext, timestamp
+    # print(d7s_filenames) ; exit()
     if not d7s_filenames:
-        raise ValueError('no pose file found: make sure the path to 7scenes sequence is valid.')
+        raise FileNotFoundError('no file found: make sure the path to 7scenes sequence is valid.')
 
     # images
     logger.info('populating image files ...')
+    # eg. d7s_filenames['seq-01/frame-000000.color.png'] =
+    #   {'sequence': 'seq-01', 'frame_id': '000000', 'suffix': 'color', 'ext': 'png', 'timestamp': -1}
     d7s_filenames_images = ((int(v['timestamp']), filename)
                             for filename, v in d7s_filenames.items()
                             if v['suffix'] == RGB_SUFFIX)
@@ -141,6 +175,8 @@ def import_7scenes_command_line() -> None:
                         help=f'How to import images [link_absolute], '
                              f'choose among: {", ".join(a.name for a in TransferAction)}')
     parser.add_argument('-o', '--output', required=True, help='output directory.')
+    parser.add_argument('-p', '--partition', default=None, choices=['mapping', 'query'],
+                        help='limit to mapping or query sequences only (using authors split files).')
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -152,7 +188,8 @@ def import_7scenes_command_line() -> None:
     import_7scenes(d7scenes_path=args.input,
                    kapture_dir_path=args.output,
                    force_overwrite_existing=args.force,
-                   images_import_method=args.image_transfer)
+                   images_import_method=args.image_transfer,
+                   partition=args.partition)
 
 
 if __name__ == '__main__':
