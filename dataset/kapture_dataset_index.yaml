@@ -370,6 +370,12 @@ InLoc_wo_images_mapping:
 InLoc_wo_images_query:
   sha256sum: 409ec8d7fee8a61211ee96e5ed29fa49bac68277b5f72839247539d1abaa2320
   url: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_query.tar.gz
+virtual_gallery_mapping:
+  sha256sum: cb97b42acc7e57ebac9721aeed06a37a50ac7f2ae259af73dfc6985156febad4
+  url: http://download.europe.naverlabs.com/kapture/virtual_gallery_mapping.tar.gz
+virtual_gallery_query:
+  sha256sum: 7e4906cbb76ef795553f49d37ab48b83d58b13aa0a7c99f3749977070f5d546c
+  url: http://download.europe.naverlabs.com/kapture/virtual_gallery_query.tar.gz
 SILDa_mapping:
   sha256sum: d696504402124ca252b463b3a8fd8e1d52c5ce447b26e1d2f7e712a1f8f74695
   url: https://imperialcollegelondon.box.com/shared/static/uj0mxs1oesex8upm5d1b8uw0bxcm8x7e.gz
