@@ -63,7 +63,7 @@ import kapture
 
 === load a dataset
 
-In this example, we will print out the positions of the devices registered in `trajectories.txt`.
+In this example, we will print out the positions of the devices stored in `trajectories.txt`.
 
 First, load a dataset:
 
@@ -76,7 +76,7 @@ kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training
 
 === poses
 
-Then, loop over registered positions, and print them:
+Then, loop over the stored positions, and print them:
 
 [source,python]
 ----
@@ -107,7 +107,7 @@ timestamp: 00001
 ...
 ----
 
-More simply, you can flatten the nested timestamps / device_id like :
+More simply, you can flatten the nested timestamps / device_id:
 
 [source,python]
 ----
@@ -115,7 +115,7 @@ for timestamp, sensor_id, pose in kapture.flatten(kapture_data.trajectories, is_
     print(f'[{timestamp:05d}, {sensor_id}] = {pose.inverse().t.flatten()}')
 ----
 
-outputs :
+outputs:
 
 [source,bash]
 ----
@@ -132,7 +132,7 @@ outputs :
 
 === reconstruction
 
-Lets have a look to the reconstruction part. First import more tools from kapture, and load another sample:
+Let's have a look at the reconstruction. First, import more tools from kapture and load another sample dataset:
 
 [source,python]
 ----
@@ -146,7 +146,7 @@ from tqdm import tqdm
 kapture_data = csv.kapture_from_dir('../samples/maupertuis/kapture/')
 ----
 
-Lets see what we have in __keypoints__, __descriptors__ and __matches__:
+Let's see what is stored in __keypoints__, __descriptors__ and __matches__:
 [source,python]
 ----
 print(f'keypoints       :  {kapture_data.keypoints}')
@@ -157,7 +157,7 @@ print(f'observations    :\n{kapture_data.observations}')
 print(f'points3d        :\n{kapture_data.points3d}')
 ----
 
-outputs:
+output:
 
 [source,bash]
 ----
@@ -203,7 +203,7 @@ points3d        :
 
 === keypoints
 
-Then, we loads the keypoints of the first image (`00.jpg`) as a numpy array, using `image_keypoints_from_file`:
+Then, we load the keypoints of the first image (`00.jpg`) as a numpy array using `image_keypoints_from_file`:
 
 [source,python]
 ----
@@ -219,7 +219,7 @@ print(f'keypoints of "{image_name}" as numpy array of {keypoints_data.dtype} and
 print(keypoints_data)
 ----
 
-outputs:
+output:
 
 [source,bash]
 ----
@@ -240,7 +240,7 @@ keypoints of "00.jpg" as numpy array of float32 and shape (6424, 6):
 ----
 
 There are similar functions for `descriptors`, `global_features` and `matches`.
-For convienence, __kapture__ also provides function `image_keypoints_to_image_file`,
+For convienence, __kapture__ also provides function the `image_keypoints_to_image_file`,
 to directly draw keypoints on top of an image:
 
 [source,python]
