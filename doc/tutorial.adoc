@@ -165,13 +165,15 @@ python ./reset_tutorial_folder.py
 ----
 
 1) First step, proceed the image retrieval from global features.
-The goal is to associates similar images in the mapping/mapping, and :
+The goal is to associates similar images within the mapping set (for the 3D model) and between mapping and query sets (for localization):  
 
 [source,bash]
 ----
 # for each image, retrieve the 5 most similar images (including self)
 # this will create a list of pairs of images
+# mapping - mapping for 3D reconstruction
 kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./mapping -o ./tutorial/mapping_pairs.txt --topk 5
+# mapping - query for localization
 kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./query -o ./tutorial/query_pairs.txt --topk 5
 ----
 
@@ -197,7 +199,7 @@ kapture_colmap_build_map.py -v info -i ./mapping --pairsfile-path ./tutorial/map
                             --Mapper.ba_refine_extra_params 0
 ----
 
-To visualise the map, you can use __colmap__ gui, as follow:
+To visualise the map, you can use __colmap__ gui, as follows:
 [source,bash]
 colmap gui --database_path ./tutorial/mapping_colmap/colmap.db --image_path ./mapping/sensors/records_data
 
@@ -233,7 +235,7 @@ kapture_compute_matches.py -v info -i ./tutorial/mapping_query --pairsfile-path 
 kapture_colmap_localize.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt -db ./tutorial/mapping_colmap/colmap.db -txt ./tutorial/mapping_colmap/reconstruction -o ./tutorial/localized_colmap --use-colmap-matches-importer --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-To visualise the queries in the map, you can use __colmap__ gui, as follow:
+To visualise the queries in the map, you can use __colmap__ gui, as follows:
 [source,bash]
 colmap gui --database_path tutorial/localized_colmap/colmap.db --image_path query/sensors/records_data
 
@@ -313,7 +315,7 @@ kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift
 kapture_colmap_localize_sift.py -v info -i ./query -db ./tutorial/mapping_sift_colmap/colmap.db -txt ./tutorial/mapping_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-3) Finally, import the results to kapture and evaluate your results.
+3) Finally, import the results to kapture and evaluate them.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_sift_colmap/colmap.db -txt ./tutorial/localized_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap/imported --skip_reconstruction
