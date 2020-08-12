@@ -58,9 +58,11 @@ class ImageFeaturesBase(Set[str]):
         return self._dsize
 
     def __repr__(self):
-        representation = f'{self.type_name}: {self.dsize} x {self.dtype.__name__}\n' + '\n'.join(
-            f'"{path}"' for path in self
-        )
+        representation = f'{self.type_name} ({self.dtype.__name__} x {self.dsize}) = '
+        if len(self) == 0:
+            representation += '[]'
+        else:
+            representation += '[\n' + ',\n'.join(f'\t{i}' for i in self) + '\n]'
         return representation
 
     def __copy__(self):

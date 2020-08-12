@@ -41,5 +41,10 @@ class Matches(Set[Tuple[str, str]]):
         self.update(temporary_set)
 
     def __repr__(self):
-        lines = '\n'.join(f'({image_path1} , {image_path2})' for (image_path1, image_path2) in self)
-        return lines
+        if len(self) == 0:
+            representation = 'no matches'
+        else:
+            representation = '[\n'
+            representation += ',\n'.join(f'\t({image_path1} , {image_path2})' for (image_path1, image_path2) in self)
+            representation += '\n]'
+        return representation
