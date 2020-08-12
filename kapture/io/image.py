@@ -13,13 +13,15 @@ from .features import image_keypoints_from_file
 def image_keypoints_to_image(
         image: Image,
         keypoints: np.array,
-        radius: int = 2) -> Image:
+        radius: int = 2,
+        filled: bool = True) -> Image:
     """
     Displays keypoints on top of the image.
 
     :param image: an image
     :param keypoints: the keypoints
     :param radius: radius of the drawn circles
+    :param filled: True: draw discs, False: draw circles
     :return: a new Image
     """
     draw = ImageDraw.Draw(image)
@@ -27,7 +29,7 @@ def image_keypoints_to_image(
         coords_tl = (coords - radius).astype(int)
         coords_br = (coords + radius).astype(int)
         color = tuple([randint(0, 255) for _ in range(3)])
-        draw.ellipse((coords_tl[0], coords_tl[1], coords_br[0], coords_br[1]), outline=color)
+        draw.ellipse((coords_tl[0], coords_tl[1], coords_br[0], coords_br[1]), outline=color, fill=color if filled else None)
     return image
 
 
