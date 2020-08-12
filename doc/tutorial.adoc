@@ -130,6 +130,8 @@ outputs :
 ...
 ----
 
+=== reconstruction
+
 Lets have a look to the reconstruction part. First import more tools from kapture, and load another sample:
 
 [source,python]
@@ -147,36 +149,59 @@ kapture_data = csv.kapture_from_dir('../samples/maupertuis/kapture/')
 Lets see what we have in __keypoints__, __descriptors__ and __matches__:
 [source,python]
 ----
-print(f'keypoints  :  {kapture_data.keypoints}')
-print(f'descriptors:  {kapture_data.descriptors}')
-print(f'matches    :  {kapture_data.matches}')
+print(f'keypoints       :  {kapture_data.keypoints}')
+print(f'descriptors     :  {kapture_data.descriptors}')
+print(f'global_features :  {kapture_data.global_features}')
+print(f'matches         :  {kapture_data.matches}')
+print(f'observations    :\n{kapture_data.observations}')
+print(f'points3d        :\n{kapture_data.points3d}')
 ----
 
 outputs:
 
 [source,bash]
 ----
-keypoints  :  SIFT (float32 x 6) = [
+keypoints       :  SIFT (float32 x 6) = [
 	00.jpg,
-	03.jpg,
+	02.jpg,
 	01.jpg,
-	02.jpg
+	03.jpg
 ]
-descriptors:  SIFT (uint8 x 128) = [
+descriptors     :  SIFT (uint8 x 128) = [
 	00.jpg,
-	03.jpg,
+	02.jpg,
 	01.jpg,
-	02.jpg
+	03.jpg
 ]
-matches    :  [
+global_features :  None
+matches         :  [
 	(01.jpg , 02.jpg),
-	(00.jpg , 01.jpg),
 	(01.jpg , 03.jpg),
+	(00.jpg , 03.jpg),
 	(00.jpg , 02.jpg),
 	(02.jpg , 03.jpg),
-	(00.jpg , 03.jpg)
+	(00.jpg , 01.jpg)
 ]
+observations    :
+[00000]: 	(01.jpg, 4561)	(02.jpg, 3389)	(00.jpg, 4975)	(03.jpg, 3472)
+[00001]: 	(01.jpg, 4557)	(02.jpg, 4128)	(00.jpg, 4970)
+[00002]: 	(01.jpg, 4554)	(02.jpg, 3466)	(00.jpg, 4958)	(03.jpg, 3556)
+....
+[01036]: 	(01.jpg, 2484)	(02.jpg, 3702)	(00.jpg, 2527)	(03.jpg, 3944)
+[01037]: 	(01.jpg, 2498)	(02.jpg, 2191)	(00.jpg, 2621)
+[01038]: 	(01.jpg, 2507)	(02.jpg, 1941)	(00.jpg, 2696)
+
+points3d        :
+[[ -2.39675   4.62278  13.2759   57.       57.       49.     ]
+ [ -2.34421   4.5307   13.3448   63.       65.       62.     ]
+ [ -1.1903    4.56941  13.7496  159.      161.      156.     ]
+ ...
+ [  1.82224   5.7889   17.4739  163.      165.      159.     ]
+ [ -0.41245   5.08333  13.8041  119.      124.      129.     ]
+ [ -1.54589   5.02867  13.463   100.       97.       89.     ]]
 ----
+
+=== keypoints
 
 Then, we loads the keypoints of the first image (`00.jpg`) as a numpy array, using `image_keypoints_from_file`:
 
