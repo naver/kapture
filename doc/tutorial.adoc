@@ -69,7 +69,6 @@ First, load a dataset:
 
 [source,python]
 ----
-import kapture
 import kapture.io.csv as csv
 
 kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
@@ -93,6 +92,7 @@ To obtain the position of the device (from device to world) you need to inverse 
 
 outputs :
 
+[source,bash]
 ----
 timestamp: 00000
  └─ [training_camera_0] = [-2.00292055 -1.65       -2.53706475]
@@ -117,6 +117,7 @@ for timestamp, sensor_id, pose in kapture.flatten(kapture_data.trajectories, is_
 
 outputs :
 
+[source,bash]
 ----
 [00000, training_camera_0] = [-2.00292055 -1.65       -2.53706475]
 [00000, training_camera_1] = [-1.9039761  -1.65       -2.55155863]
@@ -128,6 +129,119 @@ outputs :
 [00001, training_camera_1] = [-1.97085445 -1.65       -2.37702379]
 ...
 ----
+
+Lets have a look to the reconstruction part. First import more tools from kapture, and load another sample:
+
+[source,python]
+----
+# imports some additional tools
+from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file
+from kapture.io.records import images_to_filepaths
+from kapture.io.image import image_keypoints_to_image_file
+from PIL import Image
+from tqdm import tqdm
+# load another dataset with reconstruction
+kapture_data = csv.kapture_from_dir('../samples/maupertuis/kapture/')
+----
+
+Lets see what we have in __keypoints__, __descriptors__ and __matches__:
+[source,python]
+----
+print(f'keypoints  :  {kapture_data.keypoints}')
+print(f'descriptors:  {kapture_data.descriptors}')
+print(f'matches    :  {kapture_data.matches}')
+----
+
+outputs:
+
+[source,bash]
+----
+keypoints  :  SIFT (float32 x 6) = [
+	00.jpg,
+	03.jpg,
+	01.jpg,
+	02.jpg
+]
+descriptors:  SIFT (uint8 x 128) = [
+	00.jpg,
+	03.jpg,
+	01.jpg,
+	02.jpg
+]
+matches    :  [
+	(01.jpg , 02.jpg),
+	(00.jpg , 01.jpg),
+	(01.jpg , 03.jpg),
+	(00.jpg , 02.jpg),
+	(02.jpg , 03.jpg),
+	(00.jpg , 03.jpg)
+]
+----
+
+Then, we loads the keypoints of the first image (`00.jpg`) as a numpy array, using `image_keypoints_from_file`:
+
+[source,python]
+----
+image_name = '00.jpg'
+# keypoints_filepaths[image_name] -> keypoints file full path
+keypoints_filepaths = keypoints_to_filepaths(kapture_data.keypoints, kapture_dirpath)
+# for image_name in kapture_data.keypoints:
+keypoints_filepath = keypoints_filepaths[image_name]
+keypoints_data = image_keypoints_from_file(filepath=keypoints_filepath,
+                                           dsize=kapture_data.keypoints.dsize,
+                                           dtype=kapture_data.keypoints.dtype)
+print(f'keypoints of "{image_name}" as numpy array of {keypoints_data.dtype} and shape {keypoints_data.shape}:')
+print(keypoints_data)
+----
+
+outputs:
+
+[source,bash]
+----
+keypoints of "00.jpg" as numpy array of float32 and shape (6424, 6):
+[[ 1.2909084e+03  4.1563606e+00 -1.3475049e+00  1.4732410e+00
+  -1.4732410e+00 -1.3475049e+00]
+ [ 6.2747311e+01  4.7568941e+00  1.1128439e-01  1.7677375e+00
+  -1.7677375e+00  1.1128439e-01]
+ [ 2.1730029e+02  4.4497972e+00  4.6869200e-01  2.0487530e+00
+  -2.0487530e+00  4.6869200e-01]
+ ...
+ [ 3.5506705e+02  7.7944904e+02 -4.8760738e+01  4.1329781e+01
+  -4.1329781e+01 -4.8760738e+01]
+ [ 1.6452257e+03  6.0981189e+02  5.6920929e+01  5.7031525e+01
+  -5.7031525e+01  5.6920929e+01]
+ [ 1.3813167e+03  6.6880566e+02  5.9981022e+01  4.6423214e+01
+  -4.6423214e+01  5.9981022e+01]]
+----
+
+There are similar functions for `descriptors`, `global_features` and `matches`.
+For convienence, __kapture__ also provides function `image_keypoints_to_image_file`,
+to directly draw keypoints on top of an image:
+
+[source,python]
+----
+# images_filepaths[image_name] -> image file full path
+images_filepaths = images_to_filepaths(kapture_data.records_camera, kapture_dirpath)
+for image_name in tqdm(kapture_data.keypoints):
+    image_filepath = images_filepaths[image_name]
+    keypoints_filepath = keypoints_filepaths[image_name]
+    image_with_kp_filepath = keypoints_filepath + '_preview.jpg'
+    with Image.open(image_filepath) as image:
+        image_keypoints_to_image_file(
+            output_filepath=image_with_kp_filepath,
+            image_filepath=image_filepath,
+            keypoints_filepath=keypoints_filepath,
+            keypoint_dtype=kapture_data.keypoints.dtype,
+            keypoint_dsize=kapture_data.keypoints.dsize,
+            radius=6
+        )
+
+----
+
+Saved in `../samples/maupertuis/kapture/reconstruction/keypoints/00.jpg.kpt_preview.png`, you will find:
+
+.SIFT keypoints overlaid on top of the image.
+image::image_keypoints.jpg[]
 
 
 == localization pipelines
