@@ -160,7 +160,7 @@ class Dataset:
             else:
                 remote_file_size_in_bytes = get_remote_file_size(url=self._archive_url)
                 if remote_file_size_in_bytes is not None:
-                    probing_status = f'online ({remote_file_size_in_bytes/(1024*1024):6.1f} Mb)'
+                    probing_status = f'online {remote_file_size_in_bytes/(1024*1024):5.0f} MB '
                 else:
                     probing_status = 'not reachable'
 
@@ -325,7 +325,6 @@ def kapture_download_dataset_cli():
     """
     parser = argparse.ArgumentParser(description='download kapture datasets.')
     parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.INFO, const=logging.INFO,
         action=kapture.utils.logging.VerbosityParser,
@@ -335,7 +334,7 @@ def kapture_download_dataset_cli():
     parser.add_argument('--install_path', default=path.normpath(path.join(DEFAULT_DATASET_PATH)),
                         help=f'path to index files listing all datasets'
                              f' [{path.normpath(path.join(DEFAULT_DATASET_PATH))}]')
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help='sub-command help', dest='cmd')
     ####################################################################################################################
     # create the parser for the "update" command
     parser_update = subparsers.add_parser('update', help='update dataset index')
@@ -347,7 +346,7 @@ def kapture_download_dataset_cli():
     parser_list.set_defaults(cmd='list')
     parser_list.add_argument('dataset', nargs='*', default=[])
     parser_list.add_argument('--full', action='store_true', default=False,
-                             help='Display size of remote dataset.')
+                             help='Display status and size of remote dataset.')
     ####################################################################################################################
     parser_install = subparsers.add_parser('install', help='install dataset')
     parser_install.set_defaults(cmd='install')
@@ -365,6 +364,7 @@ def kapture_download_dataset_cli():
     parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
+
     args = parser.parse_args()
 
     logger.setLevel(args.verbose or logging.INFO)
@@ -374,6 +374,11 @@ def kapture_download_dataset_cli():
 
     try:
         index_filepath = path.join(args.install_path, INDEX_FILENAME)
+        if not args.cmd:
+            parser.print_help()
+            logger.critical(f'Choose command among [ {" | ".join(subparsers.choices)} ]')
+            exit(-1)
+
         if args.cmd == 'update':
             logger.info(f'updating dataset list from {args.repo} ...')
             index_remote_url = path.join(args.repo, INDEX_FILENAME)
@@ -387,7 +392,7 @@ def kapture_download_dataset_cli():
                                                 install_path=args.install_path)
             logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
 
-        if args.cmd == 'list':
+        elif args.cmd == 'list':
             logger.info(f'listing dataset {index_filepath} ...')
             datasets = load_datasets_from_index(index_filepath=index_filepath,
                                                 install_path=args.install_path,
@@ -395,7 +400,7 @@ def kapture_download_dataset_cli():
             for name, dataset in datasets.items():
                 print(f'{dataset.prob_status(check_online=args.full):^16}| {name:40} | {dataset.url}')
 
-        if args.cmd == 'install':
+        elif args.cmd == 'install':
             logger.debug(f'will install dataset: {args.dataset} ...')
             dataset_index = load_datasets_from_index(index_filepath=index_filepath,
                                                      install_path=args.install_path,
@@ -408,7 +413,7 @@ def kapture_download_dataset_cli():
                 status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
                 logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
 
-        if args.cmd == 'download':
+        elif args.cmd == 'download':
             logger.debug(f'will download dataset: {args.dataset} ...')
             dataset_index = load_datasets_from_index(index_filepath=index_filepath,
                                                      install_path=args.install_path,
@@ -419,6 +424,7 @@ def kapture_download_dataset_cli():
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
                 dataset.download(force_overwrite=args.force)
+
 
     except Exception as e:
         raise e
