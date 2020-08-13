@@ -23,7 +23,7 @@ import path_to_kapture
 # import kapture
 import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size
-from kapture.converter.downloader.archives import untar_file
+from kapture.converter.downloader.archives import untar_file, compute_sha256sum
 
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
@@ -107,12 +107,8 @@ class Dataset:
         if not path.isfile(self._archive_filepath):
             return False
         # size is consistent, check sha256
-        sha256_hash = hashlib.sha256()
-        with open(self._archive_filepath, 'rb') as f:
-            # Read and update hash string value in blocks of 4K
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-        sha256sum_archive_local = sha256_hash.hexdigest()
+        logger.info(f'checking sha256sum of {path.basename(self._archive_filepath)}, may take a while...')
+        sha256sum_archive_local = compute_sha256sum(self._archive_filepath)
         if sha256sum_archive_local != self._archive_sha256sum_remote:
             logger.warning(f'sha256sum discrepancy for {self._archive_filepath} :\n'
                            f'\tlocal :{sha256sum_archive_local}\n'
