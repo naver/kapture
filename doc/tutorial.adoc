@@ -5,7 +5,7 @@
 :toclevels: 2
 
 
-== install
+== Install
 [source,bash]
 pip install kapture
 
@@ -23,7 +23,7 @@ docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kaptur
 
 See link:installation.adoc[installation] for detailed instructions.
 
-== download a dataset
+== Download a dataset
 
 [source,bash]
 ----
@@ -33,22 +33,22 @@ kapture_download_dataset.py update
 # display the list dataset
 kapture_download_dataset.py list
 # install mapping and query of Extended-CMU-Seasons_slice22
-kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"      # <1>
+kapture_download_dataset.py install "RobotCar_Seasons-v2_49_*"      # <1>
 ----
 
 <1> uses double quotes (`"`) to make sure the wildcard (`*`) is not interpreted by bash.
 
-== convert a dataset to kapture
+== Convert a dataset to kapture
 
 While we provide many datasets in __kapture__ format, you may want to convert datasets you already downloaded.
 
 See https://github.com/naver/kapture/blob/master/doc/datasets.adoc for more details.
 
-== using kapture in your code
+== Using kapture in your code
 
 __kapture__ is also a python library, that you can use in your code.
 
-=== import
+=== Import package
 
 To be able to `import kapture`, you should either :
 
@@ -63,7 +63,7 @@ sys.path.insert(0, REPO_ROOT_PATH)
 import kapture
 ----
 
-=== load a dataset
+=== Load a dataset
 
 In this example, we will print out the positions of the devices stored in `trajectories.txt`.
 
@@ -76,7 +76,7 @@ import kapture.io.csv as csv
 kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
 ----
 
-=== poses
+=== Get poses
 
 Then, loop over the stored positions, and print them:
 
@@ -132,7 +132,7 @@ outputs:
 ...
 ----
 
-=== reconstruction
+=== Reconstruction
 
 Let's have a look at the reconstruction. First, import more tools from kapture and load another sample dataset:
 
@@ -203,7 +203,7 @@ points3d        :
  [ -1.54589   5.02867  13.463   100.       97.       89.     ]]
 ----
 
-=== keypoints
+=== Keypoints
 
 Then, we load the keypoints of the first image (`00.jpg`) as a numpy array using `image_keypoints_from_file`:
 
@@ -271,19 +271,20 @@ Saved in `../samples/maupertuis/kapture/reconstruction/keypoints/00.jpg.kpt_prev
 image::image_keypoints.jpg[]
 
 
-== Localization pipelines
+== Mapping and Localization pipelines
 
 In this tutorial, you will learn how to localize query images within a map.
 You will first see how to build the map using structure-from-motion using known poses.
 Then, you will localize query images.
 And finally, you will evaluate the precision of the obtained localization against the ground truth.
+
 In this tutorial we will use the `virtual_gallery_tutorial` dataset, which you will find in the `samples/` folder.
 You can easily reproduce the procedure for any dataset split into mapping/query.
 
 .COLMAP
-For this tutorial, you must have __colmap__ version >=3.6.
+For this tutorial, you *must* have __colmap__ version >=3.6.
 
-For __windows__ users, you must use `colmap.bat`. If the __colmap__ path is not available from your `%PATH%`
+For __Windows__ users, you must use `colmap.bat`. If the __colmap__ path is not available from your `%PATH%`
 environment variable, you must provide it to kapture tools through the parameter `-colmap`,
 e.g. `-colmap C:/Workspace/dev/colmap/colmap.bat`.
 
@@ -291,6 +292,7 @@ See <<install>> instruction for more details.
 
 === Custom local features and matching based on image retrieval
 First, you need to extract your local and global features for each image.
+
 In __kapture__, there isn't any code for this. However, you can extract __R2D2__ features using the
 https://github.com/naver/r2d2/blob/master/extract_kapture.py[tool] provided
 in the https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[R2D2 git repository]
@@ -300,7 +302,8 @@ If you want to process your own dataset, you will have to convert yours to the c
 (see kapture_format.adoc#4--reconstruction).
 
 
-0) Make sure, you start the tutorial cleaned from unwanted files (eg. previous experiments).
+==== 0) Cleanup
+Make sure, you start the tutorial cleaned from unwanted files (eg. previous experiments).
 
 [source,bash]
 ----
@@ -308,7 +311,7 @@ cd samples/virtual_gallery_tutorial # or your own dataset
 python ./reset_tutorial_folder.py
 ----
 
-1) First step, proceed the image retrieval from global features.
+==== 1) Run image retrieval from global features.
 The goal is to associates similar images within the mapping set (for the 3D model) and between mapping and query sets (for localization):  
 
 [source,bash]
@@ -321,13 +324,15 @@ kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./mapping -o 
 kapture_compute_image_pairs.py -v info --mapping ./mapping --query ./query -o ./tutorial/query_pairs.txt --topk 5
 ----
 
-2) Next, you have to compute the 2D-2D matches using the local features and the list of pairs.
+==== 2) Compute 2D-2D matches using local features and the list of pairs.
+
 [source,bash]
 ----
 kapture_compute_matches.py -v info -i ./mapping --pairsfile-path ./tutorial/mapping_pairs.txt
 ----
 
-3) Then build the map using colmap.
+==== 3) Build map using COLMAP
+
 [source,bash]
 ----
 # triangulate matches
@@ -347,12 +352,13 @@ To visualise the map, you can use __colmap__ gui, as follows:
 [source,bash]
 colmap gui --database_path ./tutorial/mapping_colmap/colmap.db --image_path ./mapping/sensors/records_data
 
-NOTE: For windows user, replace "colmap" with the full path to "colmap.bat" file.
+NOTE: For Windows user, replace "colmap" with the full path to "colmap.bat" file.
 
-Once __colmap__ window appears, click menu `file` > `import model` and browse to `tutorial/mapping_colmap/reconstruction`.
-Click `yes` and `save` to the following dialogs. As show in Fig. <<fig_reconstruct>>, the 3-D interface of __colmap__
-shows the 3-D points and the cameras in the scene. If you double-click on a camera, you'll see the image, and the 3-D
-points seen from it will be highlighted.
+Once the __COLMAP__ window appears, click on menu `file` > `import model` and browse to `tutorial/mapping_colmap/reconstruction`.
+Click `yes` and `save` to the following dialogs.
+As show in Fig. <<fig_reconstruct>>, the 3-D interface of __COLMAP__
+shows the 3-D points and the cameras in the scene.
+If you double-click on a camera, you'll see the image, and the 3-D points seen from it will be highlighted.
 
 NOTE: If you are using docker, you can simply use __colmap__ GUI from host, even if the version is < 3.6.
 
@@ -360,7 +366,9 @@ NOTE: If you are using docker, you can simply use __colmap__ GUI from host, even
 [[fig_reconstruct]]
 image::colmap_mapping.jpg[reconstruction]
 
-4) Merge: in order to run the localization scripts, you need to have the `mapping` and `query` data in the same kapture
+==== 4) Merge
+
+In order to run the localization scripts, you need to have the `mapping` and `query` data in the same kapture
 (for the matches).
 [source,bash]
 ----
@@ -370,16 +378,22 @@ kapture_merge.py -v info -i ./mapping ./query -o ./tutorial/mapping_query -s glo
 kapture_compute_matches.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt
 ----
 
-5) Localize: Once `mapping` and `query` are merged to a single `mapping_query`, it's straightforward.
+==== 5) Localize
+
+Once `mapping` and `query` are merged to a single `mapping_query`, it's straightforward:
 [source,bash]
 ----
-# if the colmap executable is not available from your PATH,
-# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/colmap.bat
-# in kapture_colmap_localize.py, every unknown parameter is passed down to colmap image_registrator, in this example image_triangulator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
+# If the colmap executable is not available from your PATH, set the parameter -colmap
+#   example: -colmap C:/Workspace/dev/colmap/colmap.bat
+# In kapture_colmap_localize.py, every unknown parameter is passed down to colmap image_registrator.
+# In this example image_triangulator will use:
+#   --Mapper.ba_refine_focal_length 0
+#   --Mapper.ba_refine_principal_point 0
+#   --Mapper.ba_refine_extra_params 0
 kapture_colmap_localize.py -v info -i ./tutorial/mapping_query --pairsfile-path ./tutorial/query_pairs.txt -db ./tutorial/mapping_colmap/colmap.db -txt ./tutorial/mapping_colmap/reconstruction -o ./tutorial/localized_colmap --use-colmap-matches-importer --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-To visualise the queries in the map, you can use __colmap__ gui, as follows:
+To visualise the queries in the map, you can use __COLMAP__ gui, as follows:
 [source,bash]
 colmap gui --database_path tutorial/localized_colmap/colmap.db --image_path query/sensors/records_data
 
@@ -389,8 +403,9 @@ And similarly to step 3), `import model` from `tutorial/localized_colmap/reconst
 [[fig_localized]]
 image::colmap_localized.jpg[localized]
 
+==== Evaluate
 
-6) Evaluate: finally, import the results to __kapture__ and evaluate your results.
+Finally, import the results to __kapture__ and evaluate your results.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_colmap/colmap.db -txt ./tutorial/localized_colmap/reconstruction -o ./tutorial/localized_colmap/imported --skip_reconstruction
@@ -417,9 +432,10 @@ Max: 0.0183m; 0.3394 deg
 ----
 
 
-=== using SIFT local features and Vocabulary Tree matching (standard colmap pipeline)
+=== Standard COLMAP pipeline: SIFT local features and Vocabulary Tree matching
 
-0) Make sure, you start the tutorial cleaned from unwanted files (eg. previous experiments).
+==== 0) Cleaning
+Make sure, you start the tutorial cleaned from unwanted files (eg. previous experiments).
 
 [source,bash]
 ----
@@ -437,7 +453,7 @@ In this tutorial, we will use `vocab_tree_flickr100K_words32K.bin`.
 curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
 ----
 
-1) build the map with colmap
+=== 1) build the map with colmap
 
 [source,bash]
 ----
@@ -447,19 +463,21 @@ curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/c
 kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-2) localize with colmap
+=== 2) localize with colmap
 
 [source,bash]
 ----
-# if the colmap executable is not available from your PATH,
-# set the parameter -colmap. example -colmap C:/Workspace/dev/colmap/bin/colmap.bat
-# in kapture_colmap_localize_sift.py, every unknown parameter is passed down to colmap image_registrator,
-# in this example image_registrator will take --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0
-# --Mapper.ba_refine_extra_params 0
+# if the colmap executable is not available from your PATH, set the parameter -colmap.
+#   example -colmap C:/Workspace/dev/colmap/bin/colmap.bat
+# In kapture_colmap_localize_sift.py, every unknown parameter is passed down to colmap image_registrator.
+#   In this example image_registrator will take:
+#     --Mapper.ba_refine_focal_length 0
+#     --Mapper.ba_refine_principal_point 0
+#     --Mapper.ba_refine_extra_params 0
 kapture_colmap_localize_sift.py -v info -i ./query -db ./tutorial/mapping_sift_colmap/colmap.db -txt ./tutorial/mapping_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-3) Finally, import the results to __kapture__ and evaluate them.
+==== 3) Import the results to __kapture__ and evaluate them.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_sift_colmap/colmap.db -txt ./tutorial/localized_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap/imported --skip_reconstruction

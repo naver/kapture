@@ -1,14 +1,18 @@
-= kapture / datasets
+= kapture datasets
 :sectnums:
 :sectnumlevels: 1
 :toc:
 :toclevels: 1
 
-This section explains how to convert datasets to __kapture__ format.
+This section explains how to convert some existing datasets to __kapture__ format.
 
 Note that there are already many datasets (including the ones from visuallocalization.net) directly available in kapture
 (no need to manually convert them).
 See : https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset
+
+Please also note that __kapture__ provides some generic importers and exporters for some formats
+(COLMAP, OpenMVG, OpenSfm, NVM, Bundler, ROSbag...).
+See: https://github.com/naver/kapture#kapture-tools[table of supported formats]
 
 == 7-scenes
 
@@ -170,13 +174,13 @@ kapture_import_colmap.py -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kap
 ----
 
 
-== baidu
+== Baidu
 
 The Baidu image-based localization dataset, "A Dataset for Benchmarking Image based Localization" by Xun Sun, Yuanfan Xie, Pei Luo and Liang Wang: https://sites.google.com/site/xunsunhomepage/
 
 For this dataset, kapture_import_IDL_dataset_cvpr17.py creates one sensor per image
 
-=== convert from original dataset
+=== Convert from original dataset
 
 Once downloaded, you have the following files:
 
@@ -215,14 +219,14 @@ kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/query_
 ----
 
 
-== Cambridge_Landmarks
+== Cambridge Landmarks
 The Cambridge Landmarks Dataset is available at http://mi.eng.cam.ac.uk/projects/relocalisation/.
 It is released for non-commercial research only.
 It is composed of 6 scenes: King's College, Street, Old Hospital, Shop Facade, St Mary's Church, Trinity Great Court
 
 For each of these you can import the data in kapture from the provided nvm reconstruction. 
 
-=== convert from original dataset
+=== Convert from original dataset
 
 This example will cover ShopFacade, the same commands can be run on any scene of the dataset.
 
@@ -278,7 +282,7 @@ We imported the poses from the text files. The same sliced structure is replicat
 In the precomputed kapture data, we decided to import all images, even if they are not listed in the text files (they do not have a pose).
 In kapture_import_Extended_CMU_Seasons.py, it corresponds to the option --all-files.
 
-=== convert from original dataset
+=== Convert from original dataset
 
 Extended-CMU-Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/Extended-CMU-Seasons/
 
@@ -335,7 +339,7 @@ InLoc also provides 3D scans for each cutout image. These 3D files can be found 
 e.g.: image name: DUC_cutout_000_120_30.jpg
 -> corresponding 3D file name: DUC_cutout_000_120_30.jpg.mat
 
-=== download precomputed kapture data
+=== Download precomputed kapture data
 
 The original dataset description page can be found here: http://www.ok.sc.e.titech.ac.jp/INLOC/
 
@@ -379,16 +383,18 @@ InLoc
 
 == RobotCar_Seasons-v2
 
-Each folder (from 01/ to 49/) contains a kapture dataset for the mapping data (mapping/), and some folders also contain one for the queries (query/). They are self-contained (include all data and images related to this location)
+Each folder (from 01/ to 49/) contains a kapture dataset for the mapping data (mapping/), and some folders also contain one for the queries (query/).
+They are self-contained (include all data and images related to this location).
 Intrinsics are read from the text files, not the reconstructions.
-For the new training images of v2, we only included the poses for the original data (poses for rear camera only). It is possible to get the poses for the other 2 cameras by leveraging the known rig configuration with the function
+For the new training images of v2, we only included the poses for the original data (poses for rear camera only).
+It is possible to get the poses for the other 2 cameras by leveraging the known rig configuration with the function:
 [source,python]
 ----
 # in https://github.com/naver/kapture/blob/master/kapture/core/Trajectories.py
 kapture.rigs_recover_inplace(kdata_mapping.trajectories, kdata_mapping.rigs, 'rear') 
 ----
 
-=== convert from original dataset
+=== Convert from original dataset
 
 RobotCar_Seasons is available here: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/RobotCar-Seasons/
 To import it into kapture, you'll need these files
@@ -439,16 +445,16 @@ kapture_import_RobotCar_Seasons.py -v debug -i ./RobotCar-Seasons -o ./kapture/R
 With additional options, you can:
 
 - `--v1`, import RobotCar-Seasons-v1 (deprecated) instead of v2
-- `--rig_collapse` replaces camera poses with rig poses
-- `--use_colmap_intrinsics` replaces the individual mapping intrinsics with the SIMPLE_RADIAL model from the colmap reconstructions
-- `--import_feature_db` also imports `3D-models/overcast-reference.db` into one single `mapping` kapture folder
+- `--rig_collapse` replace camera poses with rig poses
+- `--use_colmap_intrinsics` replace the individual mapping intrinsics with the SIMPLE_RADIAL model from the colmap reconstructions
+- `--import_feature_db` also import `3D-models/overcast-reference.db` into one single `mapping` kapture folder
 
 
 == SILDa
 
 For the conversion to kapture, we used the provided images as well as the camera poses.
 
-.fisheye cameras
+.Fisheye cameras
 Cameras used for SILDA are fisheye cameras, with a wide field of view.
 The creator of the dataset defines their own camera model suited for fisheye and
 the associated parameters. Nevertheless, we are not able to convert this custom camera model
@@ -461,9 +467,9 @@ camera are identical for images taken simultaneously. A theoretical rig configur
 is also provided in rigs.txt. But the rig constraint is not used is the pose estimation.
 
 
-=== convert from original dataset
+=== Convert from original dataset
 
-1) download the original dataset
+1) Download the original dataset
 
 The authors provide a bash script `download.sh` to download all the available data for SILDa.
 See the https://github.com/abmmusa/silda for more details.
@@ -516,7 +522,7 @@ You should have:
 └── train_imgs.txt
 ----
 
-2) import into kapture format
+2) Import into kapture format
 
 [source,bash]
 ----
@@ -552,8 +558,8 @@ You should end up with:
 With additional options, you can:
 
 - `--cam_model`, choose the camera model (`FOV` or `OPENCV_FISHEYE`)
-- `--split_cams` tells the importer to reorganise image files using `<cam_id>/<timestamp:04d>.jpg` template,
-- `--rig_collapse` replaces camera poses with rig poses.
+- `--split_cams` tell the importer to reorganise image files using `<cam_id>/<timestamp:04d>.jpg` template,
+- `--rig_collapse` replace camera poses with rig poses.
 
 
 == Virtual Gallery
@@ -561,7 +567,7 @@ With additional options, you can:
 The Virtual Gallery dataset is a synthetic dataset that targets multiple challenges such as varying lighting conditions and different occlusion.
 It is available at https://europe.naverlabs.com/research/3d-vision/virtual-gallery-dataset/ under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License.
 
-=== convert from original dataset
+=== Convert from original dataset
 
 Once downloaded and untared; the dataset is:
 ----
@@ -601,7 +607,7 @@ kapture_import_virtual_gallery.py -v debug -i ./virtual_gallery -o ./kapture/vir
 
 With additional options, you can:
 
-- `--light-range` list of lighting condition to import
-- `--loop-range` list of training loops to import
-- `--camera-range` list of training cameras to import
-- `--occlusion-range` list of testing occlusion levels to import
+- `--light-range` list lighting condition to import
+- `--loop-range` list training loops to import
+- `--camera-range` list training cameras to import
+- `--occlusion-range` list testing occlusion levels to import
