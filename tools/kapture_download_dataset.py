@@ -72,25 +72,36 @@ class Dataset:
         self._archive_url = archive_url
         self._archive_sha256sum_remote = archive_sha256sum
         self._install_script_filename = install_script_filename
-        self._status = None
+        self._is_installed = None
 
-    def save_as_installed(self):
+    def mark_as_installed(self, installed=True):
         # load previous version
         if path.isfile(self._dataset_install_list_filepath):
             with open(self._dataset_install_list_filepath, 'rt') as f:
                 datasets_list = set(yaml.safe_load(f))
         else:
             datasets_list = set()
-        datasets_list.add(self._name)
+
+        if installed:
+            datasets_list.add(self._name)
+        else:
+            datasets_list.discard(self._name)
+
         # update with current dataset status
         # write updated version
+        logger.debug(f'saving {"installed" if installed else "not installed"} in {self._dataset_install_list_filepath}')
         with open(self._dataset_install_list_filepath, 'wt') as f:
             yaml.dump(list(datasets_list), f)
 
-    def is_installed(self, installation_list_cache=None):
+        self._is_installed = installed
+
+    def is_installed(self, installation_list_cache=None) -> bool:
         """
         :param installation_list_cache: spare the read of the yaml file if already loaded before.
         """
+        if self._is_installed is not None:
+            return self._is_installed
+
         if installation_list_cache is not None:
             installation_list = installation_list_cache
         elif path.isfile(self._dataset_install_list_filepath):
@@ -100,41 +111,29 @@ class Dataset:
             installation_list = []
 
         assert isinstance(installation_list, list)
-        return self._name in installation_list
+        self._is_installed = self._name in installation_list
+        return self._is_installed
 
-    def is_archive_valid(self):
-        """ check sha256 of the archive against the expected sha256. Returns true if they are the same. """
+    def is_sha256_consistent(self) -> bool:
+        """ check sha256sum of the archive against the expected sha256. Returns true if they are the same. """
         if not path.isfile(self._archive_filepath):
             return False
         # size is consistent, check sha256
-        logger.info(f'checking sha256sum of {path.basename(self._archive_filepath)}, may take a while...')
+        logger.debug(f'checking sha256sum of {path.basename(self._archive_filepath)}, may take a while...')
         sha256sum_archive_local = compute_sha256sum(self._archive_filepath)
         if sha256sum_archive_local != self._archive_sha256sum_remote:
             logger.warning(f'sha256sum discrepancy for {self._archive_filepath} :\n'
                            f'\tlocal :{sha256sum_archive_local}\n'
                            f'\tremote:{self._archive_sha256sum_remote}')
             return False
-
+        logger.debug(f'{path.basename(self._archive_filepath)} is valid (sha256sum)')
         return True
 
     @property
-    def status(self):
-        if self._status is None:
-            return self.prob_status()
-        else:
-            return self._status
-
-    @property
-    def url(self):
+    def url(self) -> str:
         return self._archive_url
 
-    def set_status(self, new_status=None):
-        if self._status != new_status:
-            self._status = new_status
-            if new_status == 'installed':
-                self.save_as_installed()
-
-    def prob_status(self, check_online=False):
+    def prob_status(self, check_online=False) -> str:
         """
         gives the actual dataset status
          - not installed: means is not installed (wo info about the server)
@@ -183,58 +182,91 @@ class Dataset:
         if probing_status is None:
             # 2) size is consistent, check sha256
             assert size_archive_local == size_archive_online
-            if not self.is_archive_valid():
+            if not self.is_sha256_consistent():
                 probing_status = 'corrupted'
 
+        # archive is there, not installed, with valid sha256 then it must be just downloaded.
         if probing_status is None:
-            # archive is there, not installed, not incomplete, not corrupted, then it must be just downloaded
             probing_status = 'downloaded'
 
-        self.set_status(probing_status)
         return probing_status
 
-    def __repr__(self):
-        return f'{self.status:10} | {self._name:30} | {self._archive_url}'
+    def __repr__(self) -> str:
+        return f'{self.prob_status():10} | {self._name:30} | {self._archive_url}'
 
-    def download(self):
-        if self.status != 'downloaded':
-            download_file(self._archive_url, self._archive_filepath)
-            self.set_status('downloaded')
+    def download(self,
+                 force_overwrite: bool = False,
+                 nb_attempt: int = 2,
+                 previous_status=None) -> str:
+        status = previous_status or self.prob_status()
+        if force_overwrite and path.isfile(self._archive_filepath):
+            logger.debug(f'remove previously downloaded file and start from scratch.')
+            os.remove(self._archive_filepath)
+            status = self.prob_status()
 
-    def install(self, force_overwrite: bool = False):
-        """ Install handle download and untar """
-        # test the dataset presence
-        self.set_status()
-        # make sure self._status is up to date.
-        if self.status == 'installed' and not force_overwrite:
-            logger.info(f'{self._install_local_path} already exists: skipped')
-            return
+        if status == 'downloaded':
+            logger.info(f'{path.basename(self._archive_filepath)} is already downloaded.')
+            return status
 
-        # 1) download
-        if self.status != 'downloaded':
+        for attempt in range(nb_attempt):
+            if status == 'downloaded':
+                logger.debug(f'{path.basename(self._archive_filepath)} is downloaded')
+                break
             # check archive file integrity
-            if self._status == 'corrupted':
+            if status == 'corrupted':
                 logger.warning(f'archive {path.basename(self._archive_filepath)} is corrupted. '
                                f'It will be downloaded again.')
                 # if corrupted: remove the archive and start over
                 os.remove(self._archive_filepath)
+            logger.debug(f'downloading {path.basename(self._archive_filepath)} (attempt {attempt+1}/{nb_attempt})')
             download_file(self._archive_url, self._archive_filepath)
-            self.set_status('downloaded')
+            status = self.prob_status()
+        return status
 
-        # 2) untar
-        logger.info(f'deflating {path.basename(self._archive_filepath)} to {self._install_local_path}')
+    def install(self,
+                force_overwrite: bool = False,
+                no_cleaning: bool = False) -> str:
+        """
+        Install handles download and untar, and possibly tar remove and launch of an install script.
+
+        """
+        # make sure self._status is up to date.
+        if force_overwrite:
+            self.mark_as_installed(False)
+
+        status = self.prob_status()
+        if status == 'installed':
+            logger.info(f'{self._install_local_path} already exists: skipped')
+            return status
+
+        # download (lets try it twice
+        status = self.download(previous_status=status)
+
+        if status != 'downloaded':
+            # if still not downloaded, it means it failed to download
+            logger.critical(f'failed to download {self._name}')
+            return status
+
+        # deflating
+        logger.debug(f'deflating {path.basename(self._archive_filepath)} to {self._install_local_path}')
         untar_file(self._archive_filepath, self._install_local_path)
 
-        # 3) possible post-untar script ?
-        logger.debug(f'checking for installation script in {self._install_script_filename}')
+        # optionally: script ?
         if self._install_script_filename is not None:
+            logger.debug(f'installation script  {self._install_script_filename}')
             install_script_filepath = path.join(self._install_local_path, self._install_script_filename)
-            logger.info(f'applying installation script {install_script_filepath}')
+            logger.debug(f'applying installation script {install_script_filepath}')
             ret = os.system(install_script_filepath)
+        # optionally: clean tar.gz file
+        if not no_cleaning:
+            logger.debug(f'removing archive file {path.basename(self._archive_filepath)}')
+            os.remove(self._archive_filepath)
 
         # done
-        self.set_status('installed')
-        logger.info(f'done installing {self._name}')
+        self.mark_as_installed()
+        logger.debug(f'done installing {self._name}')
+        status = self.prob_status()
+        return status
 
 
 def load_datasets_from_index(
@@ -293,7 +325,7 @@ def kapture_download_dataset_cli():
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
+        '-v', '--verbose', nargs='?', default=logging.INFO, const=logging.INFO,
         action=kapture.utils.logging.VerbosityParser,
         help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
     parser_verbosity.add_argument(
@@ -319,11 +351,15 @@ def kapture_download_dataset_cli():
     parser_install.set_defaults(cmd='install')
     parser_install.add_argument('-f', '--force', action='store_true', default=False,
                                 help='Force installation even if dataset has already been installed.')
+    parser_install.add_argument('--no_cleaning', action='store_true', default=False,
+                                help='Do not delete downloaded tar.gz file.')
     parser_install.add_argument('dataset', nargs='*', default=[],
                                 help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
     parser_download = subparsers.add_parser('download', help='dowload dataset, without installing it')
     parser_download.set_defaults(cmd='download')
+    parser_download.add_argument('-f', '--force', action='store_true', default=False,
+                                help='Force installation even if dataset has already been installed.')
     parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
@@ -360,10 +396,10 @@ def kapture_download_dataset_cli():
                                                 install_path=args.install_path,
                                                 filter_patterns=args.dataset)
             for name, dataset in datasets.items():
-                print(f'{dataset.prob_status(check_online=args.check):^10}| {name:40} | {dataset.url}')
+                print(f'{dataset.prob_status(check_online=args.check):^16}| {name:40} | {dataset.url}')
 
         if args.cmd == 'install':
-            logger.info(f'installing dataset {args.dataset} ...')
+            logger.debug(f'will install dataset: {args.dataset} ...')
             dataset_index = load_datasets_from_index(index_filepath=index_filepath,
                                                      install_path=args.install_path,
                                                      filter_patterns=args.dataset)
@@ -371,11 +407,12 @@ def kapture_download_dataset_cli():
                 raise ValueError('no matching dataset')
             logger.info(f'{len(dataset_index)} dataset will be installed.')
             for name, dataset in dataset_index.items():
-                logger.info(f'downloading {name} ...')
-                dataset.install(force_overwrite=args.force)
+                logger.info(f'{name}: starting installation  ...')
+                status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
+                logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
 
         if args.cmd == 'download':
-            logger.info(f'downloading dataset {args.dataset} ...')
+            logger.debug(f'will download dataset: {args.dataset} ...')
             dataset_index = load_datasets_from_index(index_filepath=index_filepath,
                                                      install_path=args.install_path,
                                                      filter_patterns=args.dataset)
@@ -384,7 +421,7 @@ def kapture_download_dataset_cli():
             logger.info(f'{len(dataset_index)} dataset will be downloaded.')
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
-                dataset.download()
+                dataset.download(force_overwrite=args.force)
 
     except Exception as e:
         raise e

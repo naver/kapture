@@ -37,8 +37,7 @@ def download_file_resume(url: str,
     :param resume_byte_pos: input position in bytes where to resume the Download
     """
 
-    response = requests.head(url)
-    file_size_online = int(response.headers.get('content-length', 0))
+    file_size_online = get_remote_file_size(url)
     # Append information to resume download at specific byte position to header
     resume_header = ({'Range': f'bytes={resume_byte_pos}-'}
                      if resume_byte_pos else None)
@@ -48,12 +47,13 @@ def download_file_resume(url: str,
     block_size = 1024  # 1Ko
     initial_pos = resume_byte_pos if resume_byte_pos else 0
     mode = 'ab' if resume_byte_pos else 'wb'
+    hide_progress = logger.getEffectiveLevel() > logging.INFO
     with open(filepath, mode) as f:
         with tqdm(total=file_size_online, unit='B',
                   unit_scale=True, unit_divisor=block_size,
                   desc=filepath, initial=initial_pos,
                   ascii=True, miniters=1,
-                  disable=logger.getEffectiveLevel() >= logging.CRITICAL) as pbar:
+                  disable=hide_progress) as pbar:
             for chunk in response.iter_content(32 * block_size):
                 f.write(chunk)
                 pbar.update(len(chunk))
@@ -66,7 +66,6 @@ def download_file(url, filepath):
     :param url: input full url of the file to be downloaded.
     :param filepath: input full path where to save the file.
      """
-    logger.debug(f'checking "{url}"')
     resume_position = None
     if path.isfile(filepath):
         logger.debug('file is already (partially) there.')
@@ -77,12 +76,12 @@ def download_file(url, filepath):
             raise ValueError('Unable to retrieve file size on remote url.')
 
         if file_size_online == file_size_local:
-            logger.info(f'file {filepath} already downloaded.')
+            logger.debug(f'file {filepath} already downloaded.')
             return
 
-        logger.info(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
+        logger.debug(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
         resume_position = file_size_local
 
-    logger.info(f'start downloading "{filepath}"\n\tfrom: "{url}".')
+    logger.debug(f'start downloading "{filepath}"\n\tfrom: "{url}".')
     os.makedirs(path.dirname(filepath), exist_ok=True)
     download_file_resume(url, filepath, resume_position)
