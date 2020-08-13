@@ -8,6 +8,19 @@ import logging
 logger = logging.getLogger('downloader')
 
 
+def get_remote_file_size(url: str):
+    """
+    return the total file size on the remote url.
+
+    :param url: input full url of the file.
+    :return : int of file size in bytes, or None if unknown
+    """
+
+    response = requests.head(url)
+    size = int(response.headers.get('content-length'))
+    return size
+
+
 def download_file_resume(url: str,
                          filepath: str,
                          resume_byte_pos: Optional[int] = None):

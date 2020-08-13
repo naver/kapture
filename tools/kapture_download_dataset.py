@@ -22,7 +22,7 @@ from subprocess import call
 import path_to_kapture
 # import kapture
 import kapture.utils.logging
-from kapture.converter.downloader.download import download_file
+from kapture.converter.downloader.download import download_file, get_remote_file_size
 from kapture.converter.downloader.archives import untar_file
 
 logger = logging.getLogger('downloader')
@@ -171,8 +171,7 @@ class Dataset:
         if probing_status is None:
             assert path.isfile(self._archive_filepath)
             # 1) check its incomplete: has it proper size ?
-            r = requests.head(self._archive_url)
-            size_archive_online = int(r.headers.get('content-length', 0))
+            size_archive_online = get_remote_file_size(self._archive_url)
             size_archive_local = int(path.getsize(self._archive_filepath))
             if size_archive_local < size_archive_online:
                 logger.debug(f'file_size_online={size_archive_online} != file_size_local={size_archive_local}')
