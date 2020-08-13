@@ -11,6 +11,7 @@ image::assets/kapture_logo.svg["KAPTURE", width=64px]
 Kapture is a pivot file format, based on text and binary files, used to describe SfM (Structure From Motion) and more generally sensor-acquired data.
 
 It can be used to store sensor parameters and raw sensor data:
+
 - cameras
 - images
 - lidar and other sensor data
@@ -19,6 +20,9 @@ As well as computed data:
 
 - 2d features
 - 3d reconstruction
+
+In particular, it is possible to extract https://github.com/naver/r2d2[R2D2] keypoints in kapture format.
+See instructions in the https://github.com/naver/r2d2[R2D2 git repository].
 
 == Specifications
 The format specification is detailed in the link:kapture_format.adoc[kapture format specifications document].
@@ -96,7 +100,11 @@ docker run -it \
     kapture
 ----
 
-=== kapture library
+=== kapture Python library
+
+See the https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#using-kapture-in-your-code[tutorial]
+for some examples using the kapture Python library.
+
 
 === kapture tools
 

@@ -10,16 +10,16 @@
 pip install kapture
 
 NOTE: For this tutorial, you also must have __colmap__ version >=3.6.
-On ubuntu 18.04, apt you will install __colmap__ 3.4.
+On ubuntu 18.04, __apt__ will install __colmap__ 3.4.
 In this case, you will have to compile __colmap__ from source instead.
 
 Or you can use the ready-to-use docker image:
 [source,bash]
 ----
 docker build . -t kapture
-docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture   #  <1>
+docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture     # <1>
 ----
-(1) replace `/path/to/dataset/` with the path on the host.
+(1) replace `/path/to/dataset/` with the path where you (will) store datasets on the host.
 
 See link:installation.adoc[installation] for detailed instructions.
 
@@ -27,20 +27,22 @@ See link:installation.adoc[installation] for detailed instructions.
 
 [source,bash]
 ----
-cd WHEREVER/YOU/WANT/THE/DATASESTS
+cd /path/to/dataset
 # update the list from repositories
 kapture_download_dataset.py update
 # display the list dataset
 kapture_download_dataset.py list
 # install mapping and query of Extended-CMU-Seasons_slice22
-kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"  # <1>
+kapture_download_dataset.py install "Extended-CMU-Seasons_slice22_*"      # <1>
 ----
 
-<1> uses double quotes (`"`) to make sure the wildcard (`*`) is not catch by bash.
+<1> uses double quotes (`"`) to make sure the wildcard (`*`) is not interpreted by bash.
 
-== convert
+== convert a dataset to kapture
 
-see https://github.com/naver/kapture/blob/master/doc/datasets.adoc
+While we provide many datasets in __kapture__ format, you may want to convert datasets you already downloaded.
+
+See https://github.com/naver/kapture/blob/master/doc/datasets.adoc for more details.
 
 == using kapture in your code
 
@@ -269,7 +271,7 @@ Saved in `../samples/maupertuis/kapture/reconstruction/keypoints/00.jpg.kpt_prev
 image::image_keypoints.jpg[]
 
 
-== localization pipelines
+== Localization pipelines
 
 In this tutorial, you will learn how to localize query images within a map.
 You will first see how to build the map using structure-from-motion using known poses.
@@ -287,10 +289,13 @@ e.g. `-colmap C:/Workspace/dev/colmap/colmap.bat`.
 
 See <<install>> instruction for more details.
 
-=== custom local features and matching based on image retrieval
+=== Custom local features and matching based on image retrieval
 First, you need to extract your local and global features for each image.
-In kapture, there isn't any code for this.
-We provide precomputed __R2D2__ (only 500 keypoints per image) and __AP-GeM__ features but for `samples/virtual_gallery_tutorial`.
+In __kapture__, there isn't any code for this. However, you can extract __R2D2__ features using the
+https://github.com/naver/r2d2/blob/master/extract_kapture.py[tool] provided
+in the https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[R2D2 git repository]
+
+For this tutorial, we provide precomputed __R2D2__ (500 keypoints per image) and __AP-GeM__ features for `samples/virtual_gallery_tutorial`.
 If you want to process your own dataset, you will have to convert yours to the correct format
 (see kapture_format.adoc#4--reconstruction).
 
@@ -385,7 +390,7 @@ And similarly to step 3), `import model` from `tutorial/localized_colmap/reconst
 image::colmap_localized.jpg[localized]
 
 
-6) Evaluate: finally, import the results to kapture and evaluate your results.
+6) Evaluate: finally, import the results to __kapture__ and evaluate your results.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_colmap/colmap.db -txt ./tutorial/localized_colmap/reconstruction -o ./tutorial/localized_colmap/imported --skip_reconstruction
@@ -454,7 +459,7 @@ kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift
 kapture_colmap_localize_sift.py -v info -i ./query -db ./tutorial/mapping_sift_colmap/colmap.db -txt ./tutorial/mapping_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-3) Finally, import the results to kapture and evaluate them.
+3) Finally, import the results to __kapture__ and evaluate them.
 [source,bash]
 ----
 kapture_import_colmap.py -v info -db ./tutorial/localized_sift_colmap/colmap.db -txt ./tutorial/localized_sift_colmap/reconstruction -o ./tutorial/localized_sift_colmap/imported --skip_reconstruction
