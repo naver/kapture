@@ -157,10 +157,12 @@ class Dataset:
             # not installed, no archive there, check its online
             if not check_online:
                 probing_status = 'not installed'
-            elif requests.head(self._archive_url).status_code == 200:
-                probing_status = 'online'
             else:
-                probing_status = 'not reachable'
+                remote_file_size_in_bytes = get_remote_file_size(url=self._archive_url)
+                if remote_file_size_in_bytes is not None:
+                    probing_status = f'online ({remote_file_size_in_bytes/(1024*1024):6.1f} Mb)'
+                else:
+                    probing_status = 'not reachable'
 
         # not installed, but archive there, check 1) its incomplete or 2) corrupted. If neither, is just downloaded.
         if probing_status is None:
@@ -218,7 +220,7 @@ class Dataset:
                                f'It will be downloaded again.')
                 # if corrupted: remove the archive and start over
                 os.remove(self._archive_filepath)
-            logger.debug(f'downloading {path.basename(self._archive_filepath)} (attempt {attempt+1}/{nb_attempt})')
+            logger.debug(f'downloading {path.basename(self._archive_filepath)} (attempt {attempt + 1}/{nb_attempt})')
             download_file(self._archive_url, self._archive_filepath)
             status = self.prob_status()
         return status
@@ -344,8 +346,8 @@ def kapture_download_dataset_cli():
     parser_list = subparsers.add_parser('list', help='display dataset index')
     parser_list.set_defaults(cmd='list')
     parser_list.add_argument('dataset', nargs='*', default=[])
-    parser_list.add_argument('--check', action='store_true', default=False,
-                             help='Check the online version is reachable.')
+    parser_list.add_argument('--full', action='store_true', default=False,
+                             help='Display size of remote dataset.')
     ####################################################################################################################
     parser_install = subparsers.add_parser('install', help='install dataset')
     parser_install.set_defaults(cmd='install')
@@ -359,7 +361,7 @@ def kapture_download_dataset_cli():
     parser_download = subparsers.add_parser('download', help='dowload dataset, without installing it')
     parser_download.set_defaults(cmd='download')
     parser_download.add_argument('-f', '--force', action='store_true', default=False,
-                                help='Force installation even if dataset has already been installed.')
+                                 help='Force installation even if dataset has already been installed.')
     parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
@@ -391,7 +393,7 @@ def kapture_download_dataset_cli():
                                                 install_path=args.install_path,
                                                 filter_patterns=args.dataset)
             for name, dataset in datasets.items():
-                print(f'{dataset.prob_status(check_online=args.check):^16}| {name:40} | {dataset.url}')
+                print(f'{dataset.prob_status(check_online=args.full):^16}| {name:40} | {dataset.url}')
 
         if args.cmd == 'install':
             logger.debug(f'will install dataset: {args.dataset} ...')
