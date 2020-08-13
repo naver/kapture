@@ -372,11 +372,6 @@ def kapture_download_dataset_cli():
 
     try:
         index_filepath = path.join(args.install_path, INDEX_FILENAME)
-        if not hasattr(args, 'cmd'):
-            # check user did not forgot the command
-            logger.critical(f'Choose command among [ {" | ".join(subparsers.choices)} ]')
-            exit(-1)
-
         if args.cmd == 'update':
             logger.info(f'updating dataset list from {args.repo} ...')
             index_remote_url = path.join(args.repo, INDEX_FILENAME)
