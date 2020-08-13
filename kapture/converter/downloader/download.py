@@ -15,10 +15,15 @@ def get_remote_file_size(url: str):
     :param url: input full url of the file.
     :return : int of file size in bytes, or None if unknown
     """
-
-    response = requests.head(url)
-    size = int(response.headers.get('content-length'))
-    return size
+    # hack: use requests.get(range0-10) instead of requests.header. Header does not follow redirections in some cases.
+    headers = {"Range": "bytes=0-10"}  # only retrieve the first bytes,
+    response = requests.get(url, allow_redirects=True, headers=headers)
+    # content length is not relevant (always 11, since that is what was requested)
+    # lets look to Content-Range, that is formatted as 0-11/total
+    if 'Content-Range' not in response.headers or '/' not in response.headers['Content-Range']:
+        return None
+    nb_bytes_total = int(response.headers['Content-Range'].split('/')[1])
+    return nb_bytes_total
 
 
 def download_file_resume(url: str,
@@ -62,18 +67,22 @@ def download_file(url, filepath):
     :param filepath: input full path where to save the file.
      """
     logger.debug(f'checking "{url}"')
-    response = requests.head(url, allow_redirects=True)
+    resume_position = None
     if path.isfile(filepath):
         logger.debug('file is already (partially) there.')
         # file already there (at least partially)
-        file_size_online = int(response.headers.get('content-length', 0))
+        file_size_online = get_remote_file_size(url)
         file_size_local = int(path.getsize(filepath))
+        if file_size_online is None:
+            raise ValueError('Unable to retrieve file size on remote url.')
+
         if file_size_online == file_size_local:
             logger.info(f'file {filepath} already downloaded.')
-        else:
-            logger.info(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
-            download_file_resume(url, filepath, file_size_local)
-    else:
-        logger.info(f'start downloading "{filepath}"\n\tfrom: "{url}".')
-        os.makedirs(path.dirname(filepath), exist_ok=True)
-        download_file_resume(url, filepath)
+            return
+
+        logger.info(f'resume download from {file_size_local / file_size_online * 100.:4.1f}%')
+        resume_position = file_size_local
+
+    logger.info(f'start downloading "{filepath}"\n\tfrom: "{url}".')
+    os.makedirs(path.dirname(filepath), exist_ok=True)
+    download_file_resume(url, filepath, resume_position)

@@ -173,12 +173,16 @@ class Dataset:
             # 1) check its incomplete: has it proper size ?
             size_archive_online = get_remote_file_size(self._archive_url)
             size_archive_local = int(path.getsize(self._archive_filepath))
-            if size_archive_local < size_archive_online:
+            if size_archive_online is None:
+                logger.critical(f'impossible to retrieve remote file size.')
+                probing_status = 'corrupted'
+            elif size_archive_local > size_archive_online:
+                logger.critical(f'inconsistent file size, file is bigger than it is supposed to be'
+                                f' ({size_archive_online} vs {size_archive_local}).')
+                probing_status = 'corrupted'
+            elif size_archive_local < size_archive_online:
                 logger.debug(f'file_size_online={size_archive_online} != file_size_local={size_archive_local}')
                 probing_status = 'incomplete'
-            elif size_archive_local > size_archive_online:
-                logger.critical(f'inconsistent file size ({size_archive_online} vs {size_archive_local})')
-                probing_status = 'corrupted'
 
         if probing_status is None:
             # 2) size is consistent, check sha256
