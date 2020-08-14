@@ -21,8 +21,10 @@ As well as computed data:
 - 2d features
 - 3d reconstruction
 
-In particular, it is possible to extract https://github.com/naver/r2d2[R2D2] keypoints in kapture format.
+It can be used for data processing, in particular, it is possible to extract https://github.com/naver/r2d2[R2D2] keypoints in kapture format.
 See instructions in the https://github.com/naver/r2d2[R2D2 git repository].
+
+Finally, many popular datasets can directly be downloaded using the convenient https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset[downloader]!
 
 == Specifications
 The format specification is detailed in the link:kapture_format.adoc[kapture format specifications document].
