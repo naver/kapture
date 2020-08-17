@@ -66,7 +66,7 @@ setuptools.setup(
         'Pillow==7.2.0',
         'piexif==1.1.3',
         'requests',
-        'pyyaml',
+        'pyyaml>=5.1',
         'wcmatch',
         'torch==1.4.0',
     ],
