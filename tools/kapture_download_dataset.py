@@ -142,7 +142,7 @@ class Dataset:
          - installed: means has been downloaded and installed (extracted).
          - downloaded: means has been downloaded (tar) but not installed (extracted) yet.
          - incomplete: means partially downloaded
-         - corrupted: means that the downloaded archive is curropted (inconsistent size or sh256).
+         - corrupted: means that the downloaded archive is corrupted (inconsistent size or sh256).
          - unknown: should not happen
 
         :param check_online: If true, will ping the url to check its actually online
@@ -397,8 +397,15 @@ def kapture_download_dataset_cli():
             datasets = load_datasets_from_index(index_filepath=index_filepath,
                                                 install_path=args.install_path,
                                                 filter_patterns=args.dataset)
+            global_status = 0
             for name, dataset in datasets.items():
-                print(f'{dataset.prob_status(check_online=args.full):^16}| {name:40} | {dataset.url}')
+                status = dataset.prob_status(check_online=args.full)
+                if status == "not reachable" or status == "incomplete" or status == "corrupted":
+                    global_status = 1
+                print(f'{status:^16}| {name:40} | {dataset.url}')
+            if global_status != 0:
+                sys.exit(global_status)
+
 
         elif args.cmd == 'install':
             logger.debug(f'will install dataset: {args.dataset} ...')
