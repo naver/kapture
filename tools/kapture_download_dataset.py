@@ -391,6 +391,7 @@ def kapture_download_dataset_cli():
             datasets = load_datasets_from_index(index_filepath=index_filepath,
                                                 install_path=args.install_path)
             logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
+            return 0
 
         elif args.cmd == 'list':
             logger.info(f'listing dataset {index_filepath} ...')
@@ -404,8 +405,9 @@ def kapture_download_dataset_cli():
                     global_status = 1
                 print(f'{status:^16}| {name:40} | {dataset.url}')
             if global_status != 0:
-                sys.exit(global_status)
-
+                return global_status
+            else:
+                return 0
 
         elif args.cmd == 'install':
             logger.debug(f'will install dataset: {args.dataset} ...')
@@ -439,4 +441,4 @@ def kapture_download_dataset_cli():
 
 
 if __name__ == '__main__':
-    kapture_download_dataset_cli()
+    sys.exit(kapture_download_dataset_cli())
