@@ -1,10 +1,13 @@
-image::assets/kapture_logo.svg["KAPTURE", width=64px] 
-
 = kapture:  data format
 :sectnums:
 :sectnumlevels: 1
-:toc:
+:toc: macro
 :toclevels: 2
+
+image::assets/kapture_logo.svg["KAPTURE", width=64px]
+
+toc::[]
+
 
 == Overview
 
