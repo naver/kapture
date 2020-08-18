@@ -150,6 +150,23 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
  - `mch`: handle keypoints matches.
 
 
+== Datasets
+
+The kapture package provides conversion tools for several data formats and datasets used in the domain.
+But it also provides a tool to download datasets already converted to kapture.
+See the link:doc/tutorial.adoc[kapture tutorial] for instructions to use the dataset downloader.
+
+Here is a list of datasets you can directly download in kapture format with the downloader tool:
+
+* Datasets from the https://www.visuallocalization.net/datasets/[Long Term Visual Localization site]:
+** Aachen Day Night v1.1
+** Extended CMU-Seasons
+** RobotCar Seasons v2
+** InLoc (without images)
+** SILDa Weather and Time of Day
+* https://europe.naverlabs.com/research/3d-vision/virtual-gallery-dataset/[Virtual Gallery] dataset
+
+
 == Tutorial
 
 See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
