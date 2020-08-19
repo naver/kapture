@@ -231,8 +231,9 @@ class TestSensor(unittest.TestCase):
         self.assertIsInstance(sensor.__repr__(), str)
 
     def test_update(self):
-        sensor = kapture.Sensor('unknown', [])
+        pass
         # TODO
+        # sensor = kapture.Sensor('unknown', [])
         # sensor.name = 'toto'
 
 

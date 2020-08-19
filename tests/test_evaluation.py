@@ -104,7 +104,6 @@ class TestEvaluation(unittest.TestCase):
         kdata_gt.trajectories[(4, 'cam0')] = pose_gt
         kdata_gt.trajectories[(5, 'cam0')] = pose_gt
 
-        kdata_list = [kdata, kdata2, kdata_gt]
         intersection = {'a', 'b', 'c', 'd', 'e'}
 
         result1 = evaluate(kdata, kdata_gt, intersection)

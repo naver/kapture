@@ -485,7 +485,6 @@ class TestCsvKapture(unittest.TestCase):
         kdata_expected.trajectories = kapture.Trajectories()
         kdata_expected.rigs = kapture.Rigs()
         csv.kapture_to_dir(self._tempdir.name, kdata_expected)
-        kdata_actual = csv.kapture_from_dir(self._tempdir.name)
         # TODO: using samples
 
     def test_kapture_format_version_from_disk(self):

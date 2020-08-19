@@ -14,7 +14,8 @@ from kapture.io.features import image_keypoints_from_file, image_descriptors_fro
 from kapture.algo.compare import equal_poses
 from kapture.utils.paths import path_secure
 # tools
-from kapture.converter.colmap.import_colmap import import_colmap, import_colmap_database, import_colmap_from_reconstruction_files  # noqa: E402
+from kapture.converter.colmap.import_colmap import import_colmap, import_colmap_database, \
+    import_colmap_from_reconstruction_files  # noqa: E402
 from kapture.converter.colmap.export_colmap import export_colmap
 from kapture.converter.colmap.export_colmap_rigs import export_colmap_rig_json
 from kapture.converter.colmap.import_colmap_rigs import import_colmap_rig_json
@@ -159,8 +160,8 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertEqual((6424, 6), image_keypoints.shape)
         self.assertAlmostEqual([1290.908447265625, 4.156360626220703, -1.3475048542022705,
                                 1.4732409715652466, -1.4732409715652466, -1.3475048542022705],
-
                                image_keypoints[0].tolist())
+
         self.assertAlmostEqual([1381.316650390625, 668.8056640625, 59.981021881103516,
                                 46.423213958740234, -46.423213958740234, 59.981021881103516],
                                image_keypoints[-1].tolist())
@@ -265,7 +266,7 @@ class TestColmapMaupertuis(unittest.TestCase):
         kapture_data_golden = kapture_from_dir(self._kapture_dirpath)
         # drop GPS, Wifi, Lidar
         kapture_data.records_lidar = None
-        kapture_data.records_wifi =  None
+        kapture_data.records_wifi = None
         kapture_data_golden.records_gnss = None
         kapture_data_golden.sensors = kapture.Sensors({
             sensor_id: sensor
