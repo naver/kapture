@@ -86,10 +86,10 @@ def export_colmap(kapture_dirpath: str,
             try:
                 if kapture_data.rigs is None:
                     raise ValueError('No rig to export.')
-                export_colmap_rigs(colmap_rig_filepath,
-                                   kapture_data.rigs,
-                                   kapture_data.records_camera,
-                                   colmap_camera_ids)
+                export_colmap_rig(colmap_rig_filepath,
+                                  kapture_data.rigs,
+                                  kapture_data.records_camera,
+                                  colmap_camera_ids)
             except Exception as e:
                 warnings.warn(e)
                 logger.warning(e)

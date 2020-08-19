@@ -46,7 +46,7 @@ def export_opensfm_command_line():
     logger.debug(f'\\\n'.join(
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()
-        if k is not 'command'))
+        if k != 'command'))
 
     args.input = path.normpath(path.abspath(args.input))
     args.output = path.normpath(path.abspath(args.output))
