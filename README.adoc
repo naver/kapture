@@ -27,6 +27,8 @@ As well as computed data:
 
 It can be used for data processing, in particular, it is possible to extract https://github.com/naver/r2d2[R2D2] keypoints in kapture format.
 See instructions in the https://github.com/naver/r2d2[R2D2 git repository].
+D2-Net local features can also be extracted directly in the kapture format. See instructions in https://github.com/yocabon/d2-net[Our D2-Net fork].
+AP-GeM global features can be extracted directly in the kapture format. See instructions in https://github.com/yocabon/deep-image-retrieval[Our deep-image-retrieval fork].
 
 Finally, many popular datasets can directly be downloaded using the convenient https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset[downloader]!
 

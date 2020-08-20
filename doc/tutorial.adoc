@@ -295,7 +295,9 @@ First, you need to extract your local and global features for each image.
 
 In __kapture__, there isn't any code for this. However, you can extract __R2D2__ features using the
 https://github.com/naver/r2d2/blob/master/extract_kapture.py[tool] provided
-in the https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[R2D2 git repository]
+in the https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[R2D2 git repository]. For __AP-GeM__, use 
+the https://github.com/yocabon/deep-image-retrieval/blob/master/dirtorch/extract_kapture.py[script] provided in
+https://github.com/yocabon/deep-image-retrieval#feature-extraction-with-kapture-datasets[our deep-image-retrieval fork]
 
 For this tutorial, we provide precomputed __R2D2__ (500 keypoints per image) and __AP-GeM__ features for `samples/virtual_gallery_tutorial`.
 If you want to process your own dataset, you will have to convert yours to the correct format
