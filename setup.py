@@ -1,4 +1,5 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 import setuptools
 import warnings
 import os.path as path
