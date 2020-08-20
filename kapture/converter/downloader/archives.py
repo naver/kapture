@@ -1,5 +1,6 @@
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 import os
-import os.path as path
 import tarfile
 import hashlib
 import logging

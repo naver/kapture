@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019, Naver Labs Europe
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 # This script imports data from a EXIF
 
 
 import argparse
-import os
 import logging
 import os.path as path
-from tqdm import tqdm
-from PIL import Image
 import path_to_kapture
 import kapture
 from kapture.converter.exif.import_exif import import_gps_from_exif

@@ -9,7 +9,7 @@ import logging
 import os
 import os.path as path
 import shutil
-from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable, List
+from typing import Dict, Optional, Union, Iterable
 from tqdm import tqdm
 
 import kapture

@@ -1,5 +1,6 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
-from typing import List, Optional, Type
+
+from typing import List
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.utils.logging import getLogger
 

@@ -73,5 +73,5 @@ def export_openmvg_command_line():
 if __name__ == '__main__':
     try:
         export_openmvg_command_line()
-    except Exception as any_ex:
+    except Exception:
         logger.error('Fatal error', exc_info=True)

@@ -11,8 +11,7 @@ import logging
 import os
 import os.path as path
 import shutil
-from tqdm import tqdm
-from typing import List, Tuple
+from typing import List
 
 import path_to_kapture
 import kapture

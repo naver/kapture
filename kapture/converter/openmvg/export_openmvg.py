@@ -14,7 +14,7 @@ from typing import Dict, List, Union
 import quaternion
 # kapture
 import kapture
-import kapture.io.csv as kcsv
+import kapture.io.csv
 from kapture.io.records import TransferAction, get_image_fullpath
 import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace

@@ -14,7 +14,6 @@ from typing import Optional, Set, Type, Union
 
 # kapture
 import kapture
-import kapture.io.csv as csv
 import kapture.io.features
 import kapture.io.records
 import kapture.io.structure
@@ -173,7 +172,7 @@ def import_colmap(kapture_dirpath: Optional[str],
 
     # sanity checks
     if kapture_dirpath and colmap_images_dirpath and images_import_strategy == TransferAction.skip:
-        logger.warning(f'Images from colmap will not be copied (skip).')
+        logger.warning('Images from colmap will not be copied (skip).')
 
     # prepare output directory
     if kapture_dirpath:

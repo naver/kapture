@@ -45,14 +45,13 @@ import os
 import os.path as path
 import quaternion
 import re
-import shutil
 # kapture
 import path_to_kapture
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
-from kapture.io.records import TransferAction, import_record_data_from_dir_auto, get_image_fullpath
+from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.converter.colmap.import_colmap import import_colmap
 
 logger = logging.getLogger('RobotCar_Seasons')
@@ -370,7 +369,7 @@ def import_robotcar_seasons(robotcar_path: str,
             logger.info(f'saving feature DB to kapture {kapture_train_dir}  ...')
             kapture_to_dir(kapture_train_dir, kapture_train_data)
         else:
-            logger.warning(f'Colmap feature DB 3D-models/overcast-reference.db does not exist... skipping.')
+            logger.warning('Colmap feature DB 3D-models/overcast-reference.db does not exist... skipping.')
 
 
 def import_robotcar_seasons_command_line() -> None:

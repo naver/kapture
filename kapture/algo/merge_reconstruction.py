@@ -6,7 +6,6 @@ Merge kapture objects for reconstructions.
 
 import numpy as np
 import os
-import os.path as path
 import shutil
 from typing import List, Union, Optional, Tuple, Type
 

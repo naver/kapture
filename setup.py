@@ -3,7 +3,7 @@ import setuptools
 import warnings
 import os.path as path
 from glob import glob
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call
 import os
 import tempfile
 
@@ -27,7 +27,7 @@ def read_doc(filepath):
             check_call(['pandoc', '-f', 'docbook', '-t', 'markdown_strict', xml_filepath, '-o', md_filepath])
             content = read_file(md_filepath)
 
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         warnings.warn('cannot convert asciidoc to markdown.')
         content = read_file(filepath)
 

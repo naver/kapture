@@ -76,5 +76,5 @@ def import_openmvg_command_line() -> None:
 if __name__ == '__main__':
     try:
         import_openmvg_command_line()
-    except (AssertionError, LookupError, OSError) as any_ex:
+    except (AssertionError, LookupError, OSError):
         logger.error('Fatal error', exc_info=True)

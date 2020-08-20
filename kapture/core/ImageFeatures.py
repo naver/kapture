@@ -1,7 +1,7 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 from copy import deepcopy
-from typing import Set, Type, Any
+from typing import Set, Any
 import numpy as np
 
 

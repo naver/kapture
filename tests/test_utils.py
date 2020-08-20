@@ -5,16 +5,12 @@
 Test some of the utils functions and classes.
 """
 
-import logging
-import sys
-import os
 import os.path as path
 import tempfile
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture
 import kapture
-from kapture.algo.compare import equal_kapture
 import kapture.utils.paths
 
 

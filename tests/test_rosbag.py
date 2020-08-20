@@ -5,8 +5,6 @@
 Tests of various rosbag to kapture converters.
 """
 
-import logging
-import sys
 import os
 import os.path as path
 import tempfile

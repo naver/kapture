@@ -119,7 +119,7 @@ def get_keypoints_from_database(database: COLMAPDatabase,
             assert image_keypoints.dtype == dtype
             dsize = int(image_keypoints.shape[1])
         elif dsize != image_keypoints.shape[1]:
-            raise ValueError(f'inconsistent keypoints size or type.')
+            raise ValueError('inconsistent keypoints size or type.')
         # retrieve image path from image_id
         assert len(records_camera[colmap_image_id]) == 1
         timestamp = colmap_image_id

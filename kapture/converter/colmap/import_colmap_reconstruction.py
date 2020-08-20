@@ -13,7 +13,7 @@ from typing import Dict, Tuple, Optional
 import kapture
 import kapture.io.features
 # local
-from .cameras import get_camera_kapture_id_from_colmap_id, CAMERA_MODEL_NAMES, get_colmap_camera
+from .cameras import get_camera_kapture_id_from_colmap_id
 
 logger = logging.getLogger('colmap')
 

@@ -10,7 +10,7 @@ And Matches are features related to a pair of RecordCamera (2 images).
 import numpy as np
 import os
 import os.path as path
-from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable, List
+from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable
 
 import kapture
 from kapture.io.records import RECORD_DATA_DIRNAME

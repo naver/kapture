@@ -4,11 +4,8 @@
 Mainly about rig calibration
 """
 
-import numpy as np
-import quaternion
-import math
 from tqdm import tqdm
-from typing import Optional, Tuple, Union, List
+from typing import Optional, List
 import logging
 from kapture import Trajectories, Rigs
 from kapture.utils.logging import getLogger

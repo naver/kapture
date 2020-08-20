@@ -74,7 +74,7 @@ def compute_matches(input_path: str,
     matcher = MatchPairNnTorch(use_cuda=torch.cuda.is_available())
     new_matches = kapture.Matches()
 
-    logger.info(f'compute_matches. entering main loop...')
+    logger.info('compute_matches. entering main loop...')
     hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
     for image_path1, image_path2 in tqdm(image_pairs, disable=hide_progress_bar):
         if image_path1 == image_path2:

@@ -1,6 +1,6 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 
 class Observations(Dict[int, List[Tuple[str, int]]]):

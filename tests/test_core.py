@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 import quaternion
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime
 # kapture
 import path_to_kapture  # enables import kapture
 import kapture

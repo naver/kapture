@@ -255,7 +255,7 @@ def is_colmap_db_empty(database: COLMAPDatabase) -> bool:
             count = cursor.fetchall()[0][0]
             if count > 0:
                 return False
-        except:
+        except Exception:
             continue
     return True
 
@@ -273,7 +273,7 @@ def exists_table(table: str, database: COLMAPDatabase) -> bool:
         count = cursor.fetchall()[0][0]
         if count == 0:
             return False
-    except:
+    except Exception:
         return False
 
     return True

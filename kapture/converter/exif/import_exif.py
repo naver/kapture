@@ -10,10 +10,9 @@ import logging
 from typing import Tuple, Dict
 from tqdm import tqdm
 import kapture
-from kapture.io.csv import get_csv_fullpath, records_camera_from_file
+from kapture.io.csv import get_csv_fullpath
 from kapture.io.records import images_to_filepaths
 from warnings import warn
-
 
 
 logger = logging.getLogger('exif')
@@ -79,8 +78,8 @@ def convert_dms_to_float(
 
     assert all(isinstance(v, tuple) for v in dms)
     decimal = convert_rational_to_float(dms[0]) + \
-              convert_rational_to_float(dms[1]) / 60 + \
-              convert_rational_to_float(dms[2]) / 3600
+        convert_rational_to_float(dms[1]) / 60 + \
+        convert_rational_to_float(dms[2]) / 3600
     # handle South or west coordinates.
     if reference is not None and reference.upper() in ['S', 'W']:
         decimal *= -1
@@ -181,7 +180,7 @@ def import_gps_from_exif(
     :param kapture_dirpath: path to kapture directory. kpautre data are modified.
     :return:
     """
-    logger.info(f'loading kapture partial ...')
+    logger.info('loading kapture partial ...')
     skip_heavy_useless = {kapture.Trajectories,
                           kapture.RecordsLidar, kapture.RecordsWifi,
                           kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,

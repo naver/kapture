@@ -10,8 +10,7 @@ https://wiki.ros.org/camera_calibration
 """
 
 from os import path
-import sys
-from typing import List, AnyStr, Tuple, Union
+from typing import List, Union
 import yaml
 
 from kapture.core.Sensors import CameraType, Camera, Sensors

@@ -1,3 +1,5 @@
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 import requests
 import os
 import os.path as path

@@ -20,8 +20,8 @@ import kapture.io.structure
 from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, SFM_DATA_VERSION, ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS,\
-    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, ID_INTRINSIC,\
+from .openmvg_commons import DEFAULT_JSON_FILE_NAME, ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS,\
+    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC,\
     ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, \
     ROTATION, CENTER
 from .openmvg_commons import CameraModel
@@ -91,7 +91,7 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
 
     kapture_cameras = kapture.Sensors()
     if input_json.get(INTRINSICS):
-        logger.info(f'Importing intrinsics')
+        logger.info('Importing intrinsics')
         for sensor in input_json[INTRINSICS]:
             value = sensor[VALUE]
             if POLYMORPHIC_NAME in value:

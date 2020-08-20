@@ -7,7 +7,6 @@ Export the list of images of a kapture into a file listing the image files, and 
 
 import logging
 import os
-import os.path as path
 import argparse
 # kapture
 import path_to_kapture

@@ -122,7 +122,7 @@ def import_rosbag_command_line() -> None:
 
 if __name__ == '__main__':
     if not has_rosbag:
-        logger.fatal(f"You don't have ROS or import_rosbag installed")
+        logger.fatal("You don't have ROS or import_rosbag installed")
         sys.exit(-1)
     try:
         import_rosbag_command_line()

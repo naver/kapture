@@ -4,11 +4,9 @@
 import unittest
 import os
 import os.path as path
-import tempfile
 import sys
 # kapture
 import path_to_kapture  # enables import kapture
-from tools.kapture_export_ply import plot_ply
 import tools.kapture_download_dataset as download
 from unittest.mock import patch
 

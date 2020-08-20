@@ -10,7 +10,6 @@ import piexif
 from fractions import Fraction
 import kapture
 from kapture.io.records import get_image_fullpath
-from .import_exif import read_exif, replace_exif_id_by_names
 
 logger = logging.getLogger('exif')
 
@@ -74,8 +73,10 @@ def gps_record_to_exif_dict(
 
     lat_deg = convert_dms_from_float(gps_record.y, ["S", "N"])
     lng_deg = convert_dms_from_float(gps_record.x, ["W", "E"])
-    latitude_hms = (convert_rational_from_float(lat_deg[0]), convert_rational_from_float(lat_deg[1]), convert_rational_from_float(lat_deg[2]))
-    longitude_hms = (convert_rational_from_float(lng_deg[0]), convert_rational_from_float(lng_deg[1]), convert_rational_from_float(lng_deg[2]))
+    latitude_hms = (convert_rational_from_float(lat_deg[0]), convert_rational_from_float(lat_deg[1]),
+                    convert_rational_from_float(lat_deg[2]))
+    longitude_hms = (convert_rational_from_float(lng_deg[0]), convert_rational_from_float(lng_deg[1]),
+                     convert_rational_from_float(lng_deg[2]))
     gps_infos = {
             piexif.GPSIFD.GPSVersionID: (2, 0, 0, 0),
             piexif.GPSIFD.GPSLongitude: longitude_hms,

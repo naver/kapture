@@ -15,12 +15,12 @@ from kapture.algo.compare import equal_poses
 import kapture.io.csv as kcsv
 from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.converter.openmvg.import_openmvg import openmvg_to_kapture, import_openmvg  # noqa: E402
-from kapture.converter.openmvg.export_openmvg import kapture_to_openmvg, export_openmvg  # noqa: E402
-from kapture.converter.openmvg.openmvg_commons import DEFAULT_JSON_FILE_NAME, SFM_DATA_VERSION,\
-    SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS, VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID,\
-    PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0,\
-    WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR,\
-    CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR, ROTATION_WEIGHT, ROTATION, STRUCTURE, CONTROL_POINTS
+from kapture.converter.openmvg.export_openmvg import export_openmvg  # noqa: E402
+from kapture.converter.openmvg.openmvg_commons import SFM_DATA_VERSION,\
+    SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, KEY, VALUE,\
+    PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0,\
+    WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_T2,\
+    CENTER, USE_POSE_ROTATION_PRIOR, ROTATION
 from kapture.converter.openmvg.openmvg_commons import CameraModel
 
 

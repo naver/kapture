@@ -15,12 +15,12 @@ import os
 import os.path as path
 import numpy as np
 import quaternion
-from typing import Dict, Optional, Union
+from typing import Optional
 from tqdm import tqdm
 import path_to_kapture
 import kapture
 import kapture.utils.logging
-import kapture.io.csv as csv
+import kapture.io.csv
 import kapture.io.structure
 from kapture.io.records import TransferAction, get_image_fullpath, transfer_files_from_dir
 from kapture.utils.paths import path_secure

@@ -7,7 +7,7 @@ All reading and writing operations of kapture objects in CSV like files
 import os
 import os.path as path
 import re
-from typing import Any, List, Optional, Set, Type, Union, Dict
+from typing import Any, List, Optional, Set, Type, Union
 from collections import namedtuple
 import numpy as np
 
@@ -904,7 +904,7 @@ def kapture_from_dir(
                                    kapture.Points3d,
                                    kapture.Observations,
 
-        ]]] = []
+                                   ]]] = []
 ) -> kapture.Kapture:
     """
     Reads and return kapture data from directory.

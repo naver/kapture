@@ -1,3 +1,5 @@
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 import logging
 import os
 import os.path as path
@@ -10,13 +12,7 @@ from tqdm import tqdm
 from typing import Optional, Dict
 # kapture
 import kapture
-from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
-from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
-from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
-from kapture.io.features import get_matches_fullpath, image_matches_from_file
-from kapture.io.records import TransferAction, transfer_files_from_dir, get_record_fullpath
-import kapture.io.csv as csv
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.io.structure import delete_existing_kapture_files
@@ -319,4 +315,4 @@ def import_opensfm(
         matches=kapture_matches,
         points3d=kapture_points
     )
-    kapture.io.csv.kapture_to_dir(dirpath=kapture_rootdir, kapture_data=kapture_data)
+    kapture_to_dir(dirpath=kapture_rootdir, kapture_data=kapture_data)

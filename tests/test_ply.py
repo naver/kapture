@@ -4,7 +4,6 @@
 import unittest
 import os.path as path
 import tempfile
-import sys
 # kapture
 import path_to_kapture  # enables import kapture
 from tools.kapture_export_ply import plot_ply

@@ -1,6 +1,6 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
-from typing import Union, Dict, List, Tuple, TypeVar, Optional
+from typing import Union, Dict, List, Tuple, TypeVar
 from .flatten import flatten
 
 

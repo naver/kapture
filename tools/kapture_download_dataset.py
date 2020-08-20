@@ -15,10 +15,6 @@ import yaml
 import fnmatch
 from typing import Dict, Optional, List
 from tqdm import tqdm
-import tarfile
-import hashlib
-from shutil import rmtree
-from subprocess import call
 import path_to_kapture
 # import kapture
 import kapture.utils.logging
@@ -171,7 +167,7 @@ class Dataset:
             size_archive_online = get_remote_file_size(self._archive_url)
             size_archive_local = int(path.getsize(self._archive_filepath))
             if size_archive_online is None:
-                logger.critical(f'impossible to retrieve remote file size.')
+                logger.critical('impossible to retrieve remote file size.')
                 probing_status = 'corrupted'
             elif size_archive_local > size_archive_online:
                 logger.critical(f'inconsistent file size, file is bigger than it is supposed to be'
@@ -202,7 +198,7 @@ class Dataset:
                  previous_status=None) -> str:
         status = previous_status or self.prob_status()
         if force_overwrite and path.isfile(self._archive_filepath):
-            logger.debug(f'remove previously downloaded file and start from scratch.')
+            logger.debug('remove previously downloaded file and start from scratch.')
             os.remove(self._archive_filepath)
             status = self.prob_status()
 
@@ -258,7 +254,7 @@ class Dataset:
             logger.debug(f'installation script  {self._install_script_filename}')
             install_script_filepath = path.join(self._install_local_path, self._install_script_filename)
             logger.debug(f'applying installation script {install_script_filepath}')
-            ret = os.system(install_script_filepath)
+            os.system(install_script_filepath)
         # optionally: clean tar.gz file
         if not no_cleaning:
             logger.debug(f'removing archive file {path.basename(self._archive_filepath)}')
@@ -433,7 +429,6 @@ def kapture_download_dataset_cli():
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
                 dataset.download(force_overwrite=args.force)
-
 
     except Exception as e:
         raise e

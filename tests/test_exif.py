@@ -3,19 +3,17 @@
 
 import os.path as path
 import tempfile
-import os
 import shutil
 import unittest
-from PIL import Image
-from PIL.TiffImagePlugin import IFDRational
-from PIL.ExifTags import TAGS, GPSTAGS
+import piexif
 
 # kapture
 import path_to_kapture  # enables import kapture
 import kapture
 from kapture.io.records import images_to_filepaths, get_image_fullpath
-from kapture.converter.exif.import_exif import *
-from kapture.converter.exif.export_exif import *
+from kapture.converter.exif.import_exif import convert_gps_to_kapture_record, extract_gps_from_exif, \
+    import_gps_from_exif, read_exif
+from kapture.converter.exif.export_exif import export_gps_to_exif, write_exif, clear_exif
 
 from kapture.algo.compare import equal_kapture, equal_records_gnss
 
@@ -32,7 +30,8 @@ class TestImportExif(unittest.TestCase):
         self._tempdir.cleanup()
 
     def test_read_exif_invalid(self):
-        invalid_image_filepath = path.join(self._samples_folder, '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
+        invalid_image_filepath = path.join(self._samples_folder,
+                                           '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
         exif_data = read_exif(invalid_image_filepath)
         self.assertIsNone(exif_data)
 
@@ -85,7 +84,8 @@ class TestImportExif(unittest.TestCase):
         self.assertTrue(equal_kapture(temp_kapture_data, self._kapture_data))
 
     def test_write_exif(self):
-        image_filepath_wo_exif = path.join(self._samples_folder, '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
+        image_filepath_wo_exif = path.join(self._samples_folder,
+                                           '7scenes/microsoft/stairs/seq-01/frame-000000.color.jpg')
         image_filepath_w_exif = path.join(self._samples_folder, 'berlin/opensfm/images/01.jpg')
         image_filepath_temp = path.join(self._tempdir.name, 'frame-000000.color.jpg')
         shutil.copy(image_filepath_wo_exif, image_filepath_temp)

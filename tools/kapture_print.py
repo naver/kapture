@@ -1,16 +1,15 @@
+#!/usr/bin/env python3
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 """
 Script to print statistics about kapture data.
 """
 
-# !/usr/bin/env python3
-
 import argparse
 import logging
 import sys
-# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 import contextlib
 import os.path as path
-from tqdm import tqdm
 
 import path_to_kapture
 import kapture
@@ -80,14 +79,14 @@ def print_command_line() -> None:
     # print
     with open_or_stdout(args.output) as output_stream:
         if args.detail:
-            print_title(f'general', file=output_stream)
+            print_title('general', file=output_stream)
             print_key_value('path', args.input, file=output_stream, show_none=args.all)
             print_key_value('version', kapture_data.format_version, file=output_stream, show_none=args.all)
 
         if not args.detail:
             print_key_value('nb sensors', len(kapture_data.sensors), file=output_stream, show_none=args.all)
         else:
-            print_title(f'sensors', file=output_stream)
+            print_title('sensors', file=output_stream)
             cam_ids = [s_id for s_id, cam in kapture_data.sensors.items() if cam.sensor_type == 'camera']
             print_key_value(' ├─ nb cameras', len(cam_ids), file=output_stream, show_none=args.all)
             lidar_ids = [s_id for s_id, cam in kapture_data.sensors.items() if cam.sensor_type == 'lidar']
@@ -103,11 +102,12 @@ def print_command_line() -> None:
         if not args.detail:
             print_key_value('nb rigs', nb_rigs, file=output_stream, show_none=args.all)
         else:
-            print_title(f'rigs', file=output_stream)
+            print_title('rigs', file=output_stream)
             if kapture_data.rigs is not None:
                 for rig_id in kapture_data.rigs:
                     s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
-                    print_key_value(f' ├─ nb sensors in rig "{rig_id}"', len(s_ids), file=output_stream, show_none=args.all)
+                    print_key_value(f' ├─ nb sensors in rig "{rig_id}"', len(s_ids), file=output_stream,
+                                    show_none=args.all)
             print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=args.all)
 
         # records (+trajectories)
@@ -121,10 +121,10 @@ def print_command_line() -> None:
                 if record is not None:
                     timestamp_min, timestamp_max = min(record), max(record)
                     nb_sensors = len(set(s_id for _, s_id, _ in kapture.flatten(record)))
-                    print_key_value(f' ├─ timestamp range', f'{timestamp_min}:{timestamp_max}', file=output_stream,
+                    print_key_value(' ├─ timestamp range', f'{timestamp_min}:{timestamp_max}', file=output_stream,
                                     show_none=args.all)
-                    print_key_value(f' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=args.all)
-                print_key_value(f' └─ nb total', nb_record, file=output_stream, show_none=args.all)
+                    print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=args.all)
+                print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=args.all)
 
         # image features
         for feature_name in ['keypoints', 'descriptors', 'global_features']:
@@ -138,23 +138,23 @@ def print_command_line() -> None:
                     print_key_value(' ├─ kind ', feature.type_name, file=output_stream, show_none=args.all)
                     print_key_value(' ├─ data type', feature.dtype.__name__, file=output_stream, show_none=args.all)
                     print_key_value(' ├─ data size', feature.dsize, file=output_stream, show_none=args.all)
-                print_key_value(f' └─ nb images', len(kapture_data.keypoints), file=output_stream, show_none=args.all)
+                print_key_value(' └─ nb images', len(kapture_data.keypoints), file=output_stream, show_none=args.all)
 
         # matches
         nb_matches = None if kapture_data.matches is None else len(list(kapture_data.matches))
         if not args.detail:
-            print_key_value(f'nb matching pairs', nb_matches, file=output_stream, show_none=args.all)
+            print_key_value('nb matching pairs', nb_matches, file=output_stream, show_none=args.all)
         elif kapture_data.matches is not None or args.all:
             print_title('matches', file=output_stream)
-            print_key_value(f' └─ nb pairs', nb_matches, file=output_stream, show_none=args.all)
+            print_key_value(' └─ nb pairs', nb_matches, file=output_stream, show_none=args.all)
 
         # points 3D
         nb_points3d = None if kapture_data.points3d is None else len(list(kapture_data.points3d))
         if not args.detail:
-            print_key_value(f'nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
+            print_key_value('nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
         elif kapture_data.points3d is not None or args.all:
             print_title('points 3-D', file=output_stream)
-            print_key_value(f' └─ nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
+            print_key_value(' └─ nb points 3-D', nb_points3d, file=output_stream, show_none=args.all)
 
         # observations
         nb_observations_3d = len(kapture_data.observations) if kapture_data.observations is not None else None
@@ -162,13 +162,13 @@ def print_command_line() -> None:
                                   for feats in kapture_data.observations.values()
                                   for feat in feats]) if kapture_data.observations is not None else None
         if not args.detail:
-            print_key_value(f'nb observed 3-D points', nb_observations_3d, file=output_stream, show_none=args.all)
-            print_key_value(f'nb observation 2-D points', nb_observations_2d, file=output_stream, show_none=args.all)
+            print_key_value('nb observed 3-D points', nb_observations_3d, file=output_stream, show_none=args.all)
+            print_key_value('nb observation 2-D points', nb_observations_2d, file=output_stream, show_none=args.all)
         elif kapture_data.observations is not None or args.all:
             print_title('Observations', file=output_stream)
             if kapture_data.observations is not None:
-                print_key_value(f' ├─ nb observed 3-D', nb_observations_3d, file=output_stream, show_none=args.all)
-            print_key_value(f' └─ nb observations 2-D', nb_observations_2d, file=output_stream, show_none=args.all)
+                print_key_value(' ├─ nb observed 3-D', nb_observations_3d, file=output_stream, show_none=args.all)
+            print_key_value(' └─ nb observations 2-D', nb_observations_2d, file=output_stream, show_none=args.all)
 
 
 if __name__ == '__main__':

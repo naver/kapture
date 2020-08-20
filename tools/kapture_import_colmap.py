@@ -16,7 +16,7 @@ import sys
 import path_to_kapture  # enables import kapture
 import kapture
 import kapture.utils.logging
-import kapture.io.csv as csv
+import kapture.io.csv
 from kapture.io.records import TransferAction
 from kapture.converter.colmap.import_colmap import import_colmap
 

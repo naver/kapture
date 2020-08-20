@@ -126,8 +126,8 @@ def import_7scenes(d7scenes_path: str,
 
     # sensors
     """
-    From authors: The RGB and depth camera have not been calibrated and we can’t provide calibration parameters at the 
-    moment. The recorded frames correspond to the raw, uncalibrated camera images. In the KinectFusion pipeline we used 
+    From authors: The RGB and depth camera have not been calibrated and we can’t provide calibration parameters at the
+    moment. The recorded frames correspond to the raw, uncalibrated camera images. In the KinectFusion pipeline we used
     the following default intrinsics for the depth camera: Principle point (320,240), Focal length (585,585).
     """
     sensors = kapture.Sensors()

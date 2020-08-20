@@ -7,12 +7,11 @@ Must have ROS installed, as well as rosbag module.
 """
 
 from collections import OrderedDict
-from enum import Enum, unique
 import logging
 import os
 import os.path as path
 import sys
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 import numpy as np
 import PIL.Image as PILImage
 import quaternion

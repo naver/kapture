@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
-import json
 import logging
 import sys
 import os
@@ -10,12 +9,10 @@ import tempfile
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture
-import kapture
 from kapture.algo.compare import equal_kapture, equal_sensors, equal_records_gnss
 import kapture.io.csv as csv
-from kapture.io.records import TransferAction, get_image_fullpath
+from kapture.io.records import TransferAction
 from kapture.converter.opensfm.import_opensfm import import_opensfm
-from kapture.converter.opensfm.export_opensfm import export_opensfm
 
 logger = logging.getLogger('opensfm')
 

@@ -32,7 +32,7 @@ def import_colmap_rig_json(rigs_colmap: list,
     # camera_id (kapture) -> file prefix
     camera_prefixes = {}
 
-    """ rigs_colmap 
+    """ rigs_colmap
     [{
         "cameras": [
             {"camera_id": 1, "image_prefix": "leftraw/"},

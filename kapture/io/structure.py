@@ -7,7 +7,7 @@ Internal structure related operations.
 import os
 import os.path as path
 from shutil import rmtree
-from typing import List, Optional, Union
+from typing import List, Optional
 from .features import FEATURES_DATA_DIRNAMES
 from .records import RECORD_DATA_DIRNAME
 from .csv import CSV_FILENAMES

@@ -1,3 +1,5 @@
+# Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+
 import os
 import logging
 import os.path as path
@@ -10,8 +12,6 @@ from tqdm import tqdm
 from typing import Optional, Dict
 # kapture
 import kapture
-from kapture.io.structure import delete_existing_kapture_files
-from kapture.io.csv import kapture_to_dir
 from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
 from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
 from kapture.io.features import get_matches_fullpath, image_matches_from_file
@@ -91,14 +91,14 @@ POINT: {
 """
 reconstruction.meshed.json
 [{
-    'cameras': {'v2 unknown unknown 1920 1080 perspective 0': 
-                {'projection_type': 'perspective', 'width': 1920, 'height': 1080, 'focal': 0.8647151305270488, 
+    'cameras': {'v2 unknown unknown 1920 1080 perspective 0':
+                {'projection_type': 'perspective', 'width': 1920, 'height': 1080, 'focal': 0.8647151305270488,
                 'k1': 0.04060214391621549, 'k2': -0.04060273810852096}},
     'shots': {
         'frame00016.png' : {
         'rotation': [1.5061234719524716, 0.06688721174244067, -0.030847050348337724],
-         'translation': [-2.1535823328020456, 0.28345212194377944, 1.2491740134158436], 
-         'camera': 'v2 unknown unknown 1920 1080 perspective 0', 
+         'translation': [-2.1535823328020456, 0.28345212194377944, 1.2491740134158436],
+         'camera': 'v2 unknown unknown 1920 1080 perspective 0',
          'orientation': 1,
          'capture_time': 0.0,
          'gps_dop', 'gps_position',
@@ -212,7 +212,8 @@ def export_opensfm(
 
     # export shots
     opensfm_shots = {}
-    for timestamp, camera_id, image_filename in tqdm(kapture.flatten(kapture_data.records_camera), disable=disable_tqdm):
+    for timestamp, camera_id, image_filename in tqdm(kapture.flatten(kapture_data.records_camera),
+                                                     disable=disable_tqdm):
         # retrieve pose (if there is one).
         # opensfm_shots = {image_filename: shot}
         # shot = {camera , rotation, translation, capture_time, gps_position, ...}
