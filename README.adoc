@@ -8,6 +8,7 @@ image::assets/kapture_logo.svg["KAPTURE", width=64px]
 
 toc::[]
 
+image::https://github.com/naver/kapture/workflows/kapture-master/badge.svg[Continuous Integration Status]
 
 == Overview
 
