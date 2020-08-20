@@ -84,11 +84,11 @@ All API functions should be properly documented using docstrings
 
 == Unit testing
 
-kapture's testing is located under test/. Run the entire test suite with
+kapture's testing is located under tests/. Run the entire test suite with
 
 [source,txt]
 ----
-python test/run_test.py
+python -m unittest discover -s tests/
 ----
 
 or run individual test files, like `python test/test_nn.py`, for individual test suites.
