@@ -455,7 +455,7 @@ In this tutorial, we will use `vocab_tree_flickr100K_words32K.bin`.
 curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin
 ----
 
-=== 1) build the map with colmap
+==== 1) build the map with colmap
 
 [source,bash]
 ----
@@ -465,7 +465,7 @@ curl -C - --output ./vocab_tree_flickr100K_words32K.bin --url https://demuc.de/c
 kapture_colmap_build_sift_map.py -v info -i ./mapping -o ./tutorial/mapping_sift_colmap -voc ./vocab_tree_flickr100K_words32K.bin --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0
 ----
 
-=== 2) localize with colmap
+==== 2) localize with colmap
 
 [source,bash]
 ----
