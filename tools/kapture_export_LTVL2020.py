@@ -22,6 +22,7 @@ import path_to_kapture
 import kapture
 import kapture.utils.logging
 import kapture.io.features
+import kapture.io.csv
 
 logger = logging.getLogger('LTVL2020')
 
