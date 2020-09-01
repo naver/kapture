@@ -935,35 +935,8 @@ matrix_ros_to_kapture = kapture.PoseTransform(r=q_ros_to_kapture)
 pose_kapture = kapture.PoseTransform.compose([matrix_ros_to_kapture, pose_ros, matrix_ros_to_kapture.inverse()])
 ----
 
-== summary
-
-.Sensors data
-[cols="a,e,e"]
-|===
-|                 | metadata in                 | raw data in
-
-| images          | sensors/records_camera.txt  | sensors/records_data/*
-| lidar           | sensors/records_lidar.txt   | sensors/records_data/*
-| wifi            | sensors/records_wifi.txt    | sensors/records_wifi.txt
-| gnss            | sensors/records_gnss.txt    | sensors/records_gnss.txt
-| custom sensor 1 | sensors/records_CUSTOM_SENSOR1.txt | sensors/records_CUSTOM_SENSOR1.txt
-| custom sensor 2 | sensors/records_CUSTOM_SENSOR2.txt | sensors/records_data/*
-|===
-
-.Reconstruction data
-[cols="a,e,e"]
-|===
-|                 | data type specified in                           | data in
-
-| keypoints       | reconstruction/keypoints/keypoints.txt      | reconstruction/keypoints/<image_path>.kpt
-| descriptors     | reconstruction/descriptors/descriptors.txt  | reconstruction/descriptors/<image_path>.desc
-| global features | reconstruction/global_features/global_features.txt | reconstruction/global_features/<image_path>.gfeat
-| matches         | reconstruction/matches/matches.txt          | reconstruction/matches/<image1_path>.overlapping/<image2_path>.matches
-
-|===
-
 == Version History
 
-=== 1.0
+==== 1.0
 
 Initial version of the format
