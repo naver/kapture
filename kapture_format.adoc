@@ -128,14 +128,15 @@ with:
 |            field | type   | description
 | sensor_device_id | string | The unique identifier of sensor.
 |             name | string | the name of the sensor (eg. Hero7). Can be empty.
-|      sensor_type | string | The type of sensor type : `camera`, `gnss`, lidar`, `wifi`, `magnetic` or `pressure`
+|      sensor_type | string | The type of sensor among :
+                              `camera`, `depth`, `gnss`, `lidar`, `wifi`, `magnetic` or `pressure`.
 | [sensor_params]+ | list   | The sensor parameters. It depends on sensor_type.
                               See below for the different types of records and their parameters.
 |===
 
-==== camera
+==== camera / depth
 
-In the case of `sensor_type` is `camera`, `[sensor_params]` contains :
+In the case of `sensor_type` is `camera` (or `depth`), `[sensor_params]` contains :
 
 [cols=">1m,^1e,4",options="header"]
 |===
@@ -191,6 +192,7 @@ Currently, there is no specific parameters for the other sensors supported.
 ----
 # sensor_device_id, name, sensor_type, [sensor_params]+
 cam01, Hero7, camera, FULL_OPENCV, 800, 600, 600, 600, 300, 300, 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.
+depth01, kinect, camera, SIMPLE_PINHOLE, 800, 600, 600, 400, 300
 phone0, gs9, camera, SIMPLE_RADIAL, 2988, 5312, 2770, 1494, 2656, -0.035
 phone01wifi, , wifi
 lidar0, , lidar
