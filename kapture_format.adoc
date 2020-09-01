@@ -390,7 +390,31 @@ with:
 |===
 
 === `│ ├─ records_wifi.txt`
-WARNING: todo, and more sensors (pressure, BT, etc.)
+
+This file defines the wifi recordings in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|            BSSID  | string | TODO
+|             RSSI  | string | TODO
+|             FREQ  | string | TODO
+|         SCANTIME  | string | TODO
+|      VISIBLENAME  | string | TODO
+|===
 
 ==== example
 
