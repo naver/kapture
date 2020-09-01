@@ -299,6 +299,47 @@ with:
 0001, cam02, query/query003.jpg
 ----
 
+=== `│ ├─ records_depth.txt`
+
+This file defines the depth images in the dataset, using one line per snapshot.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, depth_image_path
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|        timestamp | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+| depth_image_path | path   | Path to the depth image file. The path is relative to `sensors/records_data/`.
+|===
+
+==== example
+
+.sensors/records_depth.txt
+[source,txt]
+----
+# timestamp, device_id, depth_image_path
+0000, cam01, map/cam_01/00001.depth
+0000, cam02, map/cam_02/00001.depth
+0001, cam01, map/cam_01/00003.depth
+0001, cam02, query/query003.depth
+----
+
+==== TIPS
+
+If images and depth images come from a single sensor (same field of view, same timestamps),
+you should define a rig including both camera and depth sensor. Thus you can define
+a single trajectory for the rig, and it will automatically be defined for both images and depth sensors.
+
 === `│ ├─ records_gnss.txt`
 
 This file defines the GNSS (a.k.a. GPS) in the dataset per timestamp.
