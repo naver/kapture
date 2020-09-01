@@ -462,6 +462,18 @@ For instance, it is possible to group data files per sensor, or to create distin
 │     ...
 ----
 
+=== `│ └─ records_data/*.depth`
+
+A single depth file contains a single depth map.
+
+==== syntax
+
+A `.depth` file is an array of float formatted as binary.
+The data type of the array is signed float on 32 bits.
+Each float value represent a distance in meters from the sensor origin plane.
+The size of the array is specified in the sensor parameters (sensors.txt).
+The first pixel of the array correspond to the upper left corner.
+The second pixel is the next on the row, and so on.
 
 == `├─ reconstruction/`
 
