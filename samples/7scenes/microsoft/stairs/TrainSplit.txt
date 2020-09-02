@@ -1,4 +1,2 @@
 sequence2
 sequence3
-sequence5
-sequence6
