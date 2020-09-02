@@ -13,8 +13,8 @@ def merge_records_data(image_list: List[List[str]],
     Merge several records data. keep only the first image.
 
     :param image_list: list of image_names
-    :param image dir paths
-    :param directory root path to the merged kapture
+    :param image_paths: list of image paths
+    :param kapture_path: root path to the merged kapture
     :param images_import_method: choose how to import actual image files
     """
     assert len(image_list) > 0
