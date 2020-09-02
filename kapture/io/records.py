@@ -8,13 +8,12 @@ import logging
 import os
 import os.path as path
 import shutil
-from typing import Dict, Optional, Union, Iterable
-from tqdm import tqdm
-
+from typing import Dict, Optional, Union, Iterable, Tuple
+import numpy as np
 import kapture
 from kapture.utils.paths import path_secure
 from kapture.utils.logging import getLogger
-from kapture.io.binary import TransferAction, transfer_files_from_dir
+from kapture.io.binary import TransferAction, transfer_files_from_dir, array_from_file
 
 logger = getLogger()
 
@@ -128,7 +127,7 @@ def import_record_data_from_dir_auto(
 def get_image_fullpath(kapture_dir_path: str, image_filename: Optional[str] = None) -> str:
     """
     Get the full path of the image file in the kapture.
-     If image file name is missing, this gives the top directory of the images.
+     If image_filename is missing, this gives the top directory (records_data).
 
     :param kapture_dir_path: the kapture top directory
     :param image_filename: optional image file name
@@ -146,3 +145,43 @@ def images_to_filepaths(images: kapture.RecordsCamera, kapture_dirpath: str) -> 
     :return: images name to images file path dictionary
     """
     return records_to_filepaths(images, kapture_dirpath)
+
+
+# depth ###############################################################################################################
+def get_depth_map_fullpath(kapture_dir_path: str, depth_map_filename: Optional[str] = None) -> str:
+    """
+    Get the full path of the depth map file in the kapture.
+     If depth_map_filename is missing, this gives the top directory (records_data).
+
+    :param kapture_dir_path: the kapture top directory
+    :param depth_map_filename: optional image file name
+    :return: Depth map file full path
+    """
+    return get_record_fullpath(kapture_dir_path, depth_map_filename)
+
+
+def depth_maps_to_filepaths(depth_records: kapture.RecordsDepth, kapture_dirpath: str) -> Dict[str, str]:
+    """
+    Computes filepaths for depth maps records.
+
+    :param images: images records
+    :param kapture_dirpath: top kapture directory path
+    :return: images name to images file path dictionary
+    """
+    return records_to_filepaths(depth_records, kapture_dirpath)
+
+
+# depth maps ######################################################################################################
+def records_depth_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
+    """
+    Read the image keypoints
+
+    :param filepath: path to the file
+    :param size: [width, height]
+    :return: the depth map as a numpy array
+    """
+    dtype = kapture.RecordsDepth.dtype
+    dsize = int(size[0] * size[1])
+    bitmap = array_from_file(filepath, dtype, dsize)
+    bitmap = bitmap.reshape((size[1], size[0]))
+    return bitmap

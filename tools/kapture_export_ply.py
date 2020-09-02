@@ -10,7 +10,8 @@ import logging
 import os
 import os.path as path
 from tqdm import tqdm
-
+import numpy as np
+from PIL import Image
 import path_to_kapture
 import kapture
 import kapture.utils.logging
@@ -18,8 +19,8 @@ import kapture.io.csv as csv
 import kapture.io.ply as ply
 import kapture.io.image as image
 import kapture.io.features
-import kapture.io.records
-
+from kapture.io.records import get_image_fullpath, records_depth_from_file
+from typing import Optional
 
 logger = logging.getLogger('plot')
 
@@ -27,8 +28,8 @@ logger = logging.getLogger('plot')
 def plot_ply(kapture_path: str,
              ply_path: str,
              axis_length: float,
-             only: [],
-             skip: []
+             only: Optional[list] = None,
+             skip: Optional[list] = None
              ) -> None:
     """
     Plot the kapture data in a PLY file.
@@ -46,7 +47,9 @@ def plot_ply(kapture_path: str,
         kapture_data = csv.kapture_from_dir(kapture_path)
 
         def _should_do(choice: str) -> bool:
-            return (not only or choice in only) and choice not in skip
+            ok_only = only is None or choice in only
+            ok_skip = skip is None or choice not in skip
+            return ok_only or ok_skip
 
         logger.info('plotting  ...')
         if _should_do('rigs') and kapture_data.rigs:
@@ -79,6 +82,26 @@ def plot_ply(kapture_path: str,
                 image.image_keypoints_to_image_file(
                     image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
 
+        if _should_do('depth') and kapture_data.records_depth:
+            logger.info(f'creating depth maps in 3D.')
+            depth_records_filepaths = kapture.io.records.depth_maps_to_filepaths(kapture_data.records_depth,
+                                                                                 kapture_path)
+            map_depth_to_sensor = {depth_map_name: sensor_id
+                                   for _, sensor_id, depth_map_name in kapture.flatten(kapture_data.records_depth)}
+            for depth_map_name, depth_map_filepath in tqdm(depth_records_filepaths.items(),
+                                                           disable=logger.level >= logging.CRITICAL):
+                depth_png_filepath = path.join(ply_path, f'depth_images/{depth_map_name}.png')
+                logger.debug(f'creating depth map file {depth_png_filepath}')
+                os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
+                depth_sensor_id = map_depth_to_sensor[depth_map_name]
+                depth_map_sizes = tuple(int(x) for x in kapture_data.sensors[depth_sensor_id].sensor_params[1:3])
+                depth_map = records_depth_from_file(depth_map_filepath, depth_map_sizes)
+                # min max scaling
+                depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
+                depth_map = (depth_map * 255.).astype(np.uint8)
+                depth_image = Image.fromarray(depth_map)
+                depth_image.save(depth_png_filepath)
+
         logger.info('done.')
 
     except Exception as e:
@@ -86,7 +109,7 @@ def plot_ply(kapture_path: str,
         raise
 
 
-def plot_command_line() -> None:
+def export_ply_command_line() -> None:
     """
     Do the plot to ply file using the parameters given on the command line.
     """
@@ -96,8 +119,10 @@ def plot_command_line() -> None:
         'rig_stat': 'plot the sensor relative poses for each trajectory timestamp.',
         'trajectories': 'plot the trajectory of every sensors.',
         'points3d': 'plot the 3-D point cloud.',
-        'keypoints': 'plot keypoints in 3D over the image plane.'
+        'keypoints': 'plot keypoints in 3D over the image plane.',
+        'depth': 'plot depth maps as point cloud (one per depth map)'
     }
+
     parser = argparse.ArgumentParser(description='plot out camera geometry to PLY file.')
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
@@ -133,4 +158,4 @@ def plot_command_line() -> None:
 
 
 if __name__ == '__main__':
-    plot_command_line()
+    export_ply_command_line()

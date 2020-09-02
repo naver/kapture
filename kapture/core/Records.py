@@ -1,5 +1,6 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+import numpy as np
 from typing import Union, Dict, List, Tuple, TypeVar
 from .flatten import flatten
 
@@ -197,7 +198,7 @@ class RecordsDepth(RecordsBase[str]):
     """
     Depth map records
     """
-
+    dtype = np.float32
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
                     value: Union[Dict[str, str], str]):
