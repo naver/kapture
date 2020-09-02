@@ -148,7 +148,7 @@ def merge_records_gnss(records_gnss_list: List[Optional[kapture.RecordsGnss]]) -
     """
     assert len(records_gnss_list) > 0
 
-    merged_records_gnss = kapture.RecordsWifi()
+    merged_records_gnss = kapture.RecordsGnss()
     for records_gnss in records_gnss_list:
         if records_gnss is None:
             continue
@@ -166,9 +166,10 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
     Merge multiple kapture while keeping ids (sensor_id) identical in merged and inputs.
 
     :param kapture_list: list of kapture to merge.
-    :param skip_list: optional types not to merge. sensors and rigs are unskipable
+    :param skip_list: optional types not to merge. sensors and rigs are unskippable
     :param data_paths: list of path to root path directory in same order as mentioned in kapture_list.
     :param kapture_path: directory root path to the merged kapture.
+    :param images_import_method: method to transfer image files
     :return: merged kapture
     """
     merged_kapture = kapture.Kapture()
@@ -180,7 +181,7 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
 
     # get the union of all rigs
     new_rigs = merge_rigs([every_kapture.rigs for every_kapture in kapture_list])
-    if new_rigs:  # if merge_rigs returned an empty object, keep merged_kapture.sensors to None
+    if new_rigs:  # if merge_rigs returned an empty object, keep merged_kapture.rigs to None
         merged_kapture.rigs = new_rigs
 
     # all fields below can be skipped with skip_list
