@@ -183,8 +183,21 @@ See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
  - localization pipelines
 
 == Contributing
+
+There are many ways to contribute to the kapture project:
+
+* provide feedback and suggestions of improvements
+* submit bug reports in the project bug tracker
+* provide a dataset in kapture format that we can add to the downloader tool
+* implement a feature or bug-fix for an outstanding issue
+* add support of kapture format in other software packages (e.g. SfM pipelines...), thus adding support for more datasets
+* provide scripts to create data in kapture format (e.g. local/global feature extraction)
+* propose a new feature and implement it
+
 If you wish to contribute, please refer to the  link:CONTRIBUTING.adoc[CONTRIBUTING] page.
 
 == License
 Software license is detailed in the link:LICENSE[LICENSE] file.
 
+== Contact Us
+You can contact us through https://github.com/naver/kapture[GitHub], or at kapture@naverlabs.com

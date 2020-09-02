@@ -6,14 +6,19 @@
 
 == Overview
 
-There are several ways to contribue to the kapture project:
+There are many ways to contribute to the kapture project:
 
+* provide feedback and suggestions of improvements
 * submit bug reports in the project bug tracker
+* provide a dataset in kapture format that we can add to the downloader tool
 * implement a feature or bug-fix for an outstanding issue
+* add support of kapture format in other software packages (e.g. SfM pipelines...), thus adding support for more datasets
+* provide scripts to create data in kapture format (e.g. local/global feature extraction)
 * propose a new feature and implement it
 
-And of course, it is possible to discuss new features or other aspects of the project.
+We're happy to help you make kapture better, so please mailto:kapture@naverlabs.com[contact us] for additional information.
 
+The rest of the document concerns software contributions.
 
 == Install kapture
 
@@ -64,7 +69,7 @@ Docstrings are written in the `sphinx` format.
 
 .Conventions
 
-* Variable names shoud be explicit (e.g. avoid acronyms)
+* Variable names should be explicit (e.g. avoid acronyms)
 * private member variables should start with an `_` (underscore)
 
 .File headers
