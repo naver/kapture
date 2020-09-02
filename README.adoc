@@ -156,6 +156,13 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
  - `mch`: handle keypoints matches.
 
 
+== kapture support in other packages
+
+- https://github.com/naver/r2d2[R2D2] local features can be directly generated in kapture format. See https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[here]
+
+- https://github.com/yocabon/deep-image-retrieval/[DIR/ApGem] global feature extractor in kapture format: https://github.com/yocabon/deep-image-retrieval#feature-extraction-with-kapture-datasets[here]
+
+
 == Datasets
 
 The kapture package provides conversion tools for several data formats and datasets used in the domain.
