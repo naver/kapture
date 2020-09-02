@@ -609,7 +609,7 @@ def image_features_config_from_file(config_filepath: str) -> ImageFeatureConfig:
 
 
 # files #########################################################################################################
-def array_to_file(
+def image_feature_to_file(
         config_filepath: str,
         image_features: Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]
 ) -> None:
@@ -665,8 +665,8 @@ def keypoints_to_file(config_filepath: str, keypoints: kapture.Keypoints) -> Non
     :param config_filepath:
     :param keypoints:
     """
-    return array_to_file(config_filepath=config_filepath,
-                         image_features=keypoints)
+    return image_feature_to_file(config_filepath=config_filepath,
+                                 image_features=keypoints)
 
 
 def keypoints_from_dir(kapture_dirpath: str, images_paths: Optional[Set[str]]) -> kapture.Keypoints:
@@ -691,8 +691,8 @@ def descriptors_to_file(config_filepath: str, descriptors: kapture.Descriptors) 
     :param config_filepath:
     :param descriptors:
     """
-    return array_to_file(config_filepath=config_filepath,
-                         image_features=descriptors)
+    return image_feature_to_file(config_filepath=config_filepath,
+                                 image_features=descriptors)
 
 
 def descriptors_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.Descriptors:
@@ -717,8 +717,8 @@ def global_features_to_file(config_filepath: str, global_features: kapture.Globa
     :param config_filepath:
     :param global_features:
     """
-    return array_to_file(config_filepath=config_filepath,
-                         image_features=global_features)
+    return image_feature_to_file(config_filepath=config_filepath,
+                                 image_features=global_features)
 
 
 def global_features_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.GlobalFeatures:

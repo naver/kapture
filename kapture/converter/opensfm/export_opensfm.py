@@ -12,10 +12,12 @@ from tqdm import tqdm
 from typing import Optional, Dict
 # kapture
 import kapture
+from kapture.io.binary import TransferAction, transfer_files_from_dir
 from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
 from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
 from kapture.io.features import get_matches_fullpath, image_matches_from_file
-from kapture.io.records import TransferAction, transfer_files_from_dir, get_record_fullpath
+from kapture.io.records import get_record_fullpath
+
 
 logger = logging.getLogger('opensfm')
 

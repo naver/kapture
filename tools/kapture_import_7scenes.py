@@ -177,7 +177,7 @@ def import_7scenes(d7scenes_path: str,
         # depth maps is in mm in 7scenes, convert it to meters
         depth_map = Image.open(depth_map_filepath_7scenes)
         depth_map = np.array(depth_map).astype(np.float32) * 1.0e-3
-        kapture.io.features.array_to_file(depth_map_filepath_kapture, depth_map)
+        kapture.io.binary.array_to_file(depth_map_filepath_kapture, depth_map)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(

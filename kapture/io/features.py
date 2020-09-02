@@ -15,39 +15,7 @@ from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable
 import kapture
 from kapture.io.records import RECORD_DATA_DIRNAME
 from kapture.utils.paths import path_secure, populate_files_in_dirpath
-
-
-# Binary data File IO ##################################################################################################
-def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.array:
-    """
-    Reads a binary file of given type(dtype) and columns (dsize) into a numpy array.
-
-    :param filepath: input path to binary file
-    :param dtype: data type (eg. float)
-    :param dsize: number of data (of type) per feature (eg. 2 for a simple keypoint)
-    :return: numpy array
-    """
-    if not isinstance(dtype, type):
-        raise TypeError('expect type as dtype.')
-    if not isinstance(dsize, int) or dsize <= 0:
-        raise TypeError('expect positive int as dsize.')
-
-    with open(filepath, 'rb') as file:
-        data_array = np.fromfile(file, dtype=dtype)
-    data_array = data_array.reshape((-1, dsize))
-    return data_array
-
-
-def array_to_file(filepath: str, data_array: np.array) -> None:
-    """
-    Writes the numpy array into a binary file.
-
-    :param filepath:
-    :param data_array:
-    """
-    os.makedirs(path.dirname(filepath), exist_ok=True)
-    with open(filepath, 'wb') as f:
-        data_array.tofile(f, sep='')
+from kapture.io.binary import array_from_file, array_to_file
 
 
 # Feature files related functions ######################################################################################

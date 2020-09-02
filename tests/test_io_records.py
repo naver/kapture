@@ -10,6 +10,7 @@ import tempfile
 import path_to_kapture  # enables import kapture
 import kapture
 import kapture.io.records
+from kapture.io.binary import transfer_files_from_dir_link, transfer_files_from_dir_copy
 from kapture.utils.paths import path_secure, populate_files_in_dirpath
 
 
@@ -49,7 +50,7 @@ class TestRecordCopy(unittest.TestCase):
         expected_filepaths = (kapture.io.records.get_image_fullpath(self._dest_dirpath, filename)
                               for filename in self._filenames)
 
-        kapture.io.records.transfer_files_from_dir_copy(
+        transfer_files_from_dir_copy(
             origin_filepaths,
             expected_filepaths
         )
@@ -78,7 +79,7 @@ class TestRecordLinkAbs(unittest.TestCase):
         destination_filepaths = [
             kapture.io.records.get_image_fullpath(self._dest_dirpath, filename)
             for filename in self._filenames]
-        kapture.io.records.transfer_files_from_dir_link(
+        transfer_files_from_dir_link(
             source_filepaths, destination_filepaths, do_relative_link=False
         )
 
@@ -109,7 +110,7 @@ class TestRecordLinkRel(unittest.TestCase):
         destination_filepaths = [
             kapture.io.records.get_image_fullpath(self._dest_dirpath, filename)
             for filename in self._filenames]
-        kapture.io.records.transfer_files_from_dir_link(
+        transfer_files_from_dir_link(
             source_filepaths, destination_filepaths, do_relative_link=True
         )
 

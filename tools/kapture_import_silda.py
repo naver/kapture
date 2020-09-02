@@ -22,7 +22,8 @@ import kapture
 import kapture.utils.logging
 import kapture.io.csv
 import kapture.io.structure
-from kapture.io.records import TransferAction, get_image_fullpath, transfer_files_from_dir
+from kapture.io.binary import TransferAction, transfer_files_from_dir
+from kapture.io.records import get_image_fullpath
 from kapture.utils.paths import path_secure
 import kapture.io.features
 
