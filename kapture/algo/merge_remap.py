@@ -212,6 +212,7 @@ def merge_remap(kapture_list: List[kapture.Kapture],
     :param skip_list: input optional types to not merge. sensors and rigs are unskippable
     :param data_paths: list of path to root path directory in same order as mentioned in kapture_list.
     :param kapture_path: directory root path to the merged kapture.
+    :param images_import_method: method to transfer image files
     :return:
     """
     merged_kapture = kapture.Kapture()
