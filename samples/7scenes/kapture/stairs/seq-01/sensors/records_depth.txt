@@ -1,0 +1,5 @@
+# kapture format: 1.0
+# timestamp, device_id, depth_map_path
+0, kinect_depth, frame-000000.depth
+1, kinect_depth, frame-000001.depth
+2, kinect_depth, frame-000002.depth

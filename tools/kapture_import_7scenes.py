@@ -21,6 +21,8 @@ import re
 import numpy as np
 import quaternion
 from typing import Optional
+from PIL import Image
+from tqdm import tqdm
 # kapture
 import path_to_kapture
 import kapture
@@ -28,7 +30,7 @@ import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
-from kapture.io.records import TransferAction, import_record_data_from_dir_auto
+from kapture.io.records import TransferAction, import_record_data_from_dir_auto, get_record_fullpath
 
 logger = logging.getLogger('7scenes')
 MODEL = kapture.CameraType.RADIAL
@@ -36,7 +38,9 @@ MODEL = kapture.CameraType.RADIAL
 POSE_SUFFIX = 'pose'
 RGB_SUFFIX = 'color'
 DEPTH_SUFFIX = 'depth'
-CAMERA_ID = 'kinect'
+RGB_SENSOR_ID = 'kinect_rgb'
+DEPTH_SENSOR_ID = 'kinect_depth'
+RGBD_SENSOR_ID = 'kinect'
 PARTITION_FILENAMES = {
     'mapping': 'TrainSplit.txt',
     'query': 'TestSplit.txt'
@@ -75,7 +79,7 @@ def import_7scenes(d7scenes_path: str,
                      for filename in sorted(d7s_filenames)
                      if d7s_filename_re.search(filename)}
 
-    # reorg as shot[seq, id] = {color: , pose: , ...}
+    # reorg as shot[seq, id] = {color: , depth: , pose: , ...}
     shots = {}
     for timestamp, (filename, file_attribs) in enumerate(d7s_filenames.items()):
         shot_id = (file_attribs.get('sequence'), file_attribs['frame_id'])
@@ -90,6 +94,7 @@ def import_7scenes(d7scenes_path: str,
         # read the authors split file
         partition_filepath = path.join(d7scenes_path, PARTITION_FILENAMES[partition])
         if not path.isfile(partition_filepath):
+
             raise FileNotFoundError(f'partition file is missing: {partition_filepath}.')
         with open(partition_filepath, 'rt') as file:
             split_sequences = [f'seq-{int(seq.strip()[len("sequence"):]):02}' for seq in file.readlines()]
@@ -103,13 +108,20 @@ def import_7scenes(d7scenes_path: str,
         raise FileNotFoundError('no file found: make sure the path to 7scenes sequence is valid.')
 
     # eg. shots['seq-01', '000000'] =
-    #       {'color': 'seq-01/frame-000000.color.jpg', 'pose': 'seq-01/frame-000000.pose.txt', 'timestamp': 0}
+    #       {
+    #           'color': 'seq-01/frame-000000.color.jpg',
+    #           'depth': 'seq-01/frame-000000.depth.png',
+    #           'pose': 'seq-01/frame-000000.pose.txt',
+    #           'timestamp': 0}
 
-    # images
-    logger.info('populating image files ...')
+    # images + depth maps
+    logger.info('populating image and depth maps files ...')
     snapshots = kapture.RecordsCamera()
+    depth_maps = kapture.RecordsDepth()
     for shot in shots.values():
-        snapshots[shot['timestamp'], CAMERA_ID] = shot['color']
+        snapshots[shot['timestamp'], RGB_SENSOR_ID] = shot['color']
+        kapture_depth_map_filename = shot['depth'][:-len('.png')]  # kapture depth files are not png
+        depth_maps[shot['timestamp'], DEPTH_SENSOR_ID] = kapture_depth_map_filename
 
     # poses
     logger.info('import poses files ...')
@@ -122,7 +134,7 @@ def import_7scenes(d7scenes_path: str,
         rotation_quat = quaternion.from_rotation_matrix(rotation_mat)
         pose_world_from_cam = kapture.PoseTransform(r=rotation_quat, t=position_vec)
         pose_cam_from_world = pose_world_from_cam.inverse()
-        trajectories[shot['timestamp'], CAMERA_ID] = pose_cam_from_world
+        trajectories[shot['timestamp'], RGBD_SENSOR_ID] = pose_cam_from_world
 
     # sensors
     """
@@ -131,20 +143,47 @@ def import_7scenes(d7scenes_path: str,
     the following default intrinsics for the depth camera: Principle point (320,240), Focal length (585,585).
     """
     sensors = kapture.Sensors()
-    sensors[CAMERA_ID] = kapture.Camera(
-        name='kinect',
-        camera_type=kapture.CameraType.SIMPLE_PINHOLE,
-        camera_params=[640, 480, 585, 320, 240]  # w, h, f, cx, cy
+    camera_type = kapture.CameraType.SIMPLE_PINHOLE
+    camera_params = [640, 480, 585, 320, 240]  # w, h, f, cx, cy
+    sensors[RGB_SENSOR_ID] = kapture.Camera(
+        name=RGB_SENSOR_ID,
+        camera_type=camera_type,
+        camera_params=camera_params
     )
+    sensors[DEPTH_SENSOR_ID] = kapture.Camera(
+        name=DEPTH_SENSOR_ID,
+        camera_type=camera_type,
+        camera_params=camera_params,
+        sensor_type='depth'
+    )
+
+    # bind camera and depth sensor into a rig
+    logger.info('building rig with camera and depth sensor ...')
+    rigs = kapture.Rigs()
+    rigs[RGBD_SENSOR_ID, RGB_SENSOR_ID] = kapture.PoseTransform()
+    rigs[RGBD_SENSOR_ID, DEPTH_SENSOR_ID] = kapture.PoseTransform()
 
     # import (copy) image files.
     logger.info('copying image files ...')
     image_filenames = [f for _, _, f in kapture.flatten(snapshots)]
     import_record_data_from_dir_auto(d7scenes_path, kapture_dir_path, image_filenames, images_import_method)
 
+    # import (copy) depth map files.
+    logger.info('converting depth files ...')
+    depth_map_filenames = kapture.io.records.records_to_filepaths(depth_maps, kapture_dir_path)
+    hide_progress = logger.getEffectiveLevel() > logging.INFO
+    for depth_map_filename, depth_map_filepath_kapture in tqdm(depth_map_filenames.items(), disable=hide_progress):
+        depth_map_filepath_7scenes = path.join(d7scenes_path, depth_map_filename + '.png')
+        # depth maps is in mm in 7scenes, convert it to meters
+        depth_map = Image.open(depth_map_filepath_7scenes)
+        depth_map = np.array(depth_map).astype(np.float32) * 1.0e-3
+        kapture.io.features.array_to_file(depth_map_filepath_kapture, depth_map)
+
     # pack into kapture format
     imported_kapture = kapture.Kapture(
         records_camera=snapshots,
+        records_depth=depth_maps,
+        rigs=rigs,
         trajectories=trajectories,
         sensors=sensors)
 

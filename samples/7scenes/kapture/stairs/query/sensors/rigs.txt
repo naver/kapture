@@ -1,0 +1,4 @@
+# kapture format: 1.0
+# rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz
+kinect, kinect_rgb,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0
+kinect, kinect_depth,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0

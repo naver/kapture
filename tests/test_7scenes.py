@@ -8,6 +8,7 @@ import unittest
 import path_to_kapture  # enables import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture
+from kapture.io.records import TransferAction
 from tools.kapture_import_7scenes import import_7scenes
 
 
@@ -26,7 +27,8 @@ class TestImport7scenes(unittest.TestCase):
         kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'both')
         import_7scenes(d7scenes_path=self.d7scenes_rootpath,
                        kapture_dir_path=self._tempdir.name,
-                       force_overwrite_existing=True)
+                       force_overwrite_existing=True,
+                       images_import_method=TransferAction.copy)
 
         imported_kdata = kapture_from_dir(self._tempdir.name)
         expected_kdata = kapture_from_dir(kapture_gt_dirpath)

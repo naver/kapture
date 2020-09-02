@@ -151,7 +151,11 @@ def get_record_fullpath(
 
 
 def records_to_filepaths(
-        records: Union[kapture.RecordsCamera, kapture.RecordsWifi, kapture.RecordsLidar, kapture.RecordsGnss],
+        records: Union[kapture.RecordsCamera,
+                       kapture.RecordsDepth,
+                       kapture.RecordsWifi,
+                       kapture.RecordsLidar,
+                       kapture.RecordsGnss],
         kapture_dirpath: str
 ) -> Dict[str, str]:
     """
