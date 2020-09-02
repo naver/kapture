@@ -5,7 +5,7 @@ All base kapture objects, with their reading and writing functions on disk,
 and the conversion from and to other formats.
 """
 
-from .core import *
+from .core import *  # noqa: F401 F403
 # silence kapture logging to critical only, except if told otherwise
 import logging
 
