@@ -3,7 +3,7 @@
 from .Sensors import Sensors, Camera
 from .Rigs import Rigs
 from .Trajectories import Trajectories
-from .Records import RecordsCamera, RecordsLidar, RecordsWifi, RecordsGnss
+from .Records import RecordsCamera, RecordsDepth, RecordsLidar, RecordsWifi, RecordsGnss
 from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Matches import Matches
 from .Observations import Observations
@@ -24,6 +24,7 @@ class Kapture:
             rigs: Optional[Rigs] = None,
             trajectories: Optional[Trajectories] = None,
             records_camera: Optional[RecordsCamera] = None,
+            records_depth: Optional[RecordsDepth] = None,
             records_lidar: Optional[RecordsLidar] = None,
             records_wifi: Optional[RecordsWifi] = None,
             records_gnss: Optional[RecordsGnss] = None,
@@ -38,6 +39,7 @@ class Kapture:
         self.rigs = rigs
         self.trajectories = trajectories
         self.records_camera = records_camera
+        self.records_depth = records_depth
         self.records_lidar = records_lidar
         self.records_wifi = records_wifi
         self.records_gnss = records_gnss
@@ -116,6 +118,19 @@ class Kapture:
         if records_camera is not None and not isinstance(records_camera, RecordsCamera):
             raise TypeError('RecordsCamera expected')
         self._records_camera = records_camera
+
+    @property
+    def records_depth(self) -> Optional[RecordsDepth]:
+        """
+        :return: Depth records
+        """
+        return self._records_depth
+
+    @records_depth.setter
+    def records_depth(self, records_depth: Optional[RecordsDepth]):
+        if records_depth is not None and not isinstance(records_depth, RecordsDepth):
+            raise TypeError('RecordsDepth expected')
+        self._records_depth = records_depth
 
     @property
     def records_lidar(self) -> Optional[RecordsLidar]:

@@ -22,6 +22,7 @@ CSV_FILENAMES = {
     kapture.Trajectories: path.join('sensors', 'trajectories.txt'),
     kapture.Rigs: path.join('sensors', 'rigs.txt'),
     kapture.RecordsCamera: path.join('sensors', 'records_camera.txt'),
+    kapture.RecordsDepth: path.join('sensors', 'records_depth.txt'),
     kapture.RecordsLidar: path.join('sensors', 'records_lidar.txt'),
     kapture.RecordsWifi: path.join('sensors', 'records_wifi.txt'),
     kapture.RecordsGnss: path.join('sensors', 'records_gnss.txt'),
@@ -372,6 +373,47 @@ def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = Non
                 continue
             records_camera[(int(timestamp), str(device_id))] = image_path
     return records_camera
+
+
+########################################################################################################################
+# Records Depth #######################################################################################################
+def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) -> None:
+    """
+    Writes records_depth to CSV file.
+
+    :param filepath:
+    :param records_depth:
+    """
+    assert (isinstance(records_depth, kapture.RecordsDepth))
+    header = '# timestamp, device_id, depth_map_path'
+    table = (
+        [timestamp, sensor_id] + [records_depth[(timestamp, sensor_id)]]
+        for timestamp, sensor_id in sorted(records_depth.key_pairs())
+    )
+    with open(filepath, 'w') as file:
+        table_to_file(file, table, header=header)
+
+
+def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsDepth:
+    """
+    Reads records_depth from CSV file.
+
+    :param filepath: input file path
+    :param camera_ids: input set of valid camera device ids.
+                        If the records_camera contains unknown devices, they will be ignored.
+                        If not given, all cameras are loaded.
+    :return: camera records
+    """
+    records_depth = kapture.RecordsDepth()
+    with open(filepath) as file:
+        table = table_from_file(file)
+        # timestamp, device_id, image_path
+        for timestamp, device_id, depth_map_path in table:
+            if camera_ids is not None and device_id not in camera_ids:
+                # just ignore
+                continue
+            records_depth[(int(timestamp), str(device_id))] = depth_map_path
+    return records_depth
 
 
 ########################################################################################################################
@@ -824,6 +866,7 @@ KAPTURE_ATTRIBUTE_WRITERS = {
     kapture.Rigs: rigs_to_file,
     kapture.Trajectories: trajectories_to_file,
     kapture.RecordsCamera: records_camera_to_file,
+    kapture.RecordsDepth: records_depth_to_file,
     kapture.RecordsLidar: records_lidar_to_file,
     kapture.RecordsWifi: records_wifi_to_file,
     kapture.RecordsGnss: records_gnss_to_file,
@@ -839,6 +882,7 @@ KAPTURE_ATTRIBUTE_NAMES = {  # used to list attributes to be saved
     kapture.Rigs: 'rigs',
     kapture.Trajectories: 'trajectories',
     kapture.RecordsCamera: 'records_camera',
+    kapture.RecordsDepth: 'records_depth',
     kapture.RecordsLidar: 'records_lidar',
     kapture.RecordsWifi: 'records_wifi',
     kapture.RecordsGnss: 'records_gnss',
@@ -876,6 +920,7 @@ KAPTURE_LOADABLE_TYPES = {
     kapture.Rigs,
     kapture.Trajectories,
     kapture.RecordsCamera,
+    kapture.RecordsDepth,
     kapture.RecordsLidar,
     kapture.RecordsWifi,
     kapture.RecordsGnss,
@@ -894,6 +939,7 @@ def kapture_from_dir(
         skip_list: List[Type[Union[kapture.Rigs,
                                    kapture.Trajectories,
                                    kapture.RecordsCamera,
+                                   kapture.RecordsDepth,
                                    kapture.RecordsLidar,
                                    kapture.RecordsWifi,
                                    kapture.RecordsGnss,
@@ -904,7 +950,7 @@ def kapture_from_dir(
                                    kapture.Points3d,
                                    kapture.Observations,
 
-                                   ]]] = []
+        ]]] = []
 ) -> kapture.Kapture:
     """
     Reads and return kapture data from directory.
@@ -968,6 +1014,16 @@ def kapture_from_dir(
                                  for sensor_id in kapture_data.sensors.keys()
                                  if kapture_data.sensors[sensor_id].sensor_type == 'camera'])
         kapture_data.records_camera = records_camera_from_file(csv_filepaths[kapture.RecordsCamera], camera_sensor_ids)
+
+    # records depth
+    if kapture.RecordsDepth in kapture_loadable_data:
+        records_depth_file_path = csv_filepaths[kapture.RecordsDepth]
+        logger.debug(f'loading depth {records_depth_file_path} ...')
+        assert kapture_data.sensors is not None
+        depth_sensor_ids = set([sensor_id
+                                for sensor_id in kapture_data.sensors.keys()
+                                if kapture_data.sensors[sensor_id].sensor_type == 'depth'])
+        kapture_data.records_depth = records_depth_from_file(csv_filepaths[kapture.RecordsDepth], depth_sensor_ids)
 
     # records lidar
     if kapture.RecordsLidar in kapture_loadable_data:

@@ -146,7 +146,11 @@ class Camera(Sensor):
     A camera definition
     """
 
-    def __init__(self, camera_type: Union[CameraType, str], camera_params: list = None, name: Optional[str] = None):
+    def __init__(self,
+                 camera_type: Union[CameraType, str],
+                 camera_params: list = None,
+                 name: Optional[str] = None,
+                 sensor_type: str = 'camera'):
         # type checking
         assert name is None or isinstance(name, str)
         if isinstance(camera_type, str):
@@ -155,12 +159,13 @@ class Camera(Sensor):
         # check params are consistent with model
         assert isinstance(camera_params, list)
         assert len(camera_params) == CAMERA_TYPE_PARAMS_COUNT[camera_type]
+        assert sensor_type == 'camera' or sensor_type == 'depth'
 
         # make sure it crashes if camera_params cannot be cast to float, store as string in sensor_params
         camera_params = [float(v) for v in camera_params]
         camera_params = [str(int(v)) if v.is_integer() else str(v) for v in camera_params]
         sensor_params = [camera_type.name] + camera_params
-        super(Camera, self).__init__(sensor_type='camera', sensor_params=sensor_params, name=name)
+        super(Camera, self).__init__(sensor_type=sensor_type, sensor_params=sensor_params, name=name)
 
     @property
     def camera_type(self) -> CameraType:
@@ -191,8 +196,8 @@ def create_sensor(sensor_type: str, sensor_params: Optional[list] = None, name: 
     :param name: sensor name
     :return: created instance
     """
-    if sensor_type == 'camera':
+    if sensor_type == 'camera' or sensor_type == 'depth':
         assert sensor_params is not None
-        return Camera(camera_type=sensor_params[0], camera_params=sensor_params[1:], name=name)
+        return Camera(camera_type=sensor_params[0], camera_params=sensor_params[1:], name=name, sensor_type=sensor_type)
     else:
         return Sensor(sensor_type=sensor_type, sensor_params=sensor_params, name=name)

@@ -9,7 +9,8 @@ from .Sensors import Sensor, Sensors, create_sensor
 from .Sensors import Camera, CameraType, CAMERA_TYPE_PARAMS_COUNT, CAMERA_TYPE_PARAMS_COUNT_FROM_NAME
 from .Rigs import Rigs
 from .Trajectories import Trajectories, rigs_remove, rigs_remove_inplace, rigs_recover, rigs_recover_inplace
-from .Records import RecordsBase, RecordsCamera, RecordsLidar, RecordsWifi, RecordWifi, RecordGnss, RecordsGnss
+from .Records import RecordsBase, RecordsCamera, RecordsDepth
+from .Records import RecordsLidar, RecordsWifi, RecordWifi, RecordGnss, RecordsGnss
 from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Observations import Observations
 from .Matches import Matches

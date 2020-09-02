@@ -33,21 +33,21 @@ def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.array:
         raise TypeError('expect positive int as dsize.')
 
     with open(filepath, 'rb') as file:
-        image_features = np.fromfile(file, dtype=dtype)
-    image_features = image_features.reshape((-1, dsize))
-    return image_features
+        data_array = np.fromfile(file, dtype=dtype)
+    data_array = data_array.reshape((-1, dsize))
+    return data_array
 
 
-def array_to_file(filepath: str, image_keypoints: np.array) -> None:
+def array_to_file(filepath: str, data_array: np.array) -> None:
     """
     Writes the numpy array into a binary file.
 
     :param filepath:
-    :param image_keypoints:
+    :param data_array:
     """
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'wb') as f:
-        image_keypoints.tofile(f, sep='')
+        data_array.tofile(f, sep='')
 
 
 # Feature files related functions ######################################################################################

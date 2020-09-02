@@ -193,6 +193,26 @@ class RecordsCamera(RecordsBase[str]):
         super(RecordsCamera, self).__setitem__(key, value)
 
 
+class RecordsDepth(RecordsBase[str]):
+    """
+    Depth map records
+    """
+
+    def __setitem__(self,
+                    key: Union[int, Tuple[int, str]],
+                    value: Union[Dict[str, str], str]):
+        """ see RecordsBase.__setitem__ """
+        if isinstance(key, tuple):
+            if not isinstance(value, str):
+                raise TypeError('invalid data')
+        elif isinstance(key, int):
+            if not isinstance(value, dict):
+                raise TypeError('invalid value for data')
+            if not all(isinstance(v, str) for v in value.values()):
+                raise TypeError('invalid data')
+        super(RecordsDepth, self).__setitem__(key, value)
+
+
 class RecordsLidar(RecordsBase[str]):
     """
     Lidar records
