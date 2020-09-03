@@ -6,7 +6,7 @@ Functions to import the rig part of colmap (json format).
 
 import json
 import logging
-from typing import Optional, Dict, Tuple
+from typing import Optional, Tuple
 # kapture
 import kapture
 # local
