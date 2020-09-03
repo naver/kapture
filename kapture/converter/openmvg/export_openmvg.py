@@ -10,7 +10,7 @@ import os
 import os.path as path
 import pathlib
 import shutil
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 import quaternion
 # kapture
 import kapture
@@ -92,76 +92,9 @@ def load_kapture(kapture_path: str) -> kapture.Kapture:
     return kapture_data
 
 
-def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
-                       image_action: TransferAction, openmvg_path: str) -> Dict:
-    """
-    Convert the kapture data into an openMVG dataset stored as a dictionary.
-    The format is defined here:
-    https://openmvg.readthedocs.io/en/latest/software/SfM/SfM_OutputFormat/
-
-    :param kapture_data: the kapture data
-    :param kapture_path: top directory of the kapture data and the images
-    :param image_action: action to apply on images: link, copy, move or do nothing.
-    :param openmvg_path: top directory of the openmvg data and images
-    :return: an SfM_data, the openmvg structure, stored as a dictionary ready to be serialized
-    """
-
-    assert kapture_data.cameras is not None
-    assert kapture_data.records_camera is not None
-    cameras = kapture_data.cameras
-    # Check we don't have other sensors defined
-    extra_sensor_number = len(kapture_data.sensors)-len(cameras)
-    if extra_sensor_number > 0:
-        logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
-    records_camera = kapture_data.records_camera
-    all_records_camera = list(kapture.flatten(records_camera))
-    trajectories = kapture_data.trajectories
-
-    # openmvg does not support rigs
-    if kapture_data.rigs:
-        logger.info('remove rigs notation.')
-        rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
-        kapture_data.rigs.clear()
-
-    # Compute root path and camera used in records
-    sub_root_path: str = ''
-    image_dirs = {}
-    used_cameras = {}
-    for _, cam_id, name in all_records_camera:
-        used_cameras[cam_id] = cam_id
-        img_dir = path.dirname(name)
-        image_dirs[img_dir] = img_dir
-    if len(image_dirs) > 1:
-        # Find if they share a top path
-        image_dirs_list = list(image_dirs.keys())
-        sub_root_path = path.commonpath(image_dirs_list)
-    elif len(image_dirs) == 1:
-        sub_root_path = next(iter(image_dirs.keys()))
-    if image_action == TransferAction.skip:
-        root_path = kapture_path
-    else:  # We will create a new hierarchy of images
-        root_path = openmvg_path
-    root_path = os.path.abspath(path.join(root_path, sub_root_path))
-    if image_action == TransferAction.root_link:
-        if not sub_root_path:
-            # We can not link directly to the top destination openmvg directory
-            # We need an additional level
-            root_path = path.join(root_path, 'images')
-        kapture_records_path = get_image_fullpath(kapture_path, sub_root_path)
-        # Do a unique images directory link
-        # openmvg_root_path -> kapture/<records_dir>/openmvg_top_images_directory
-        # beware that the paths are reverted in the symlink call
-        os.symlink(kapture_records_path, root_path)
-    sfm_data = {SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
-                ROOT_PATH: root_path}
-
-    views = []
+def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current)\
+        -> Tuple[List, int, int]:
     intrinsics = []
-    extrinsics = []
-    polymorphic_id_current = 1
-    ptr_wrapper_id_current = 1
-    polymorphic_id_types = {}
-
     # process all cameras
     for cam_id, camera in cameras.items():
         # Ignore not used cameras
@@ -178,7 +111,7 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
             # w, h, f, cx, cy
             model_used = CameraModel.pinhole
             faked_params = [camera_params[0], camera_params[1],  # width height
-                            (camera_params[2] + camera_params[3])/2,  # fx+fy/2 as f
+                            (camera_params[2] + camera_params[3]) / 2,  # fx+fy/2 as f
                             camera_params[4], camera_params[5]]  # cx cy
             data = _get_intrinsic_pinhole(faked_params)
         elif cam_type == kapture.CameraType.SIMPLE_RADIAL:
@@ -199,7 +132,7 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
             model_used = CameraModel.pinhole_brown_t2
             k3 = camera_params[10] if len(camera_params) > 10 else 0
             faked_params = [camera_params[0], camera_params[1],  # width height
-                            (camera_params[2] + camera_params[3])/2,  # fx+fy/2 as f
+                            (camera_params[2] + camera_params[3]) / 2,  # fx+fy/2 as f
                             camera_params[4], camera_params[5],  # cx cy
                             camera_params[6], camera_params[7], k3,  # k1, k2, k3
                             camera_params[8], camera_params[9]  # p1, p2 (=t1, t2)
@@ -233,8 +166,8 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
             # w, h, f, cx, cy, k
             model_used = CameraModel.pinhole_radial_k1
             faked_params = [camera_params[0], camera_params[1],  # width height
-                            max(camera_params[0], camera_params[1])*DEFAULT_FOCAL_LENGTH_FACTOR,  # max(w,h)*1.2 as f
-                            int(camera_params[0]/2), int(camera_params[1]/2),  # cx cy
+                            max(camera_params[0], camera_params[1]) * DEFAULT_FOCAL_LENGTH_FACTOR,  # max(w,h)*1.2 as f
+                            int(camera_params[0] / 2), int(camera_params[1] / 2),  # cx cy
                             0.0]  # k1
             data = _get_intrinsic_pinhole_radial_k1(faked_params)
         else:
@@ -259,9 +192,16 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
 
         intrinsic[PTR_WRAPPER] = data_wrapper
         intrinsics.append({KEY: cam_id, VALUE: intrinsic})
+    return intrinsics, polymorphic_id_current, ptr_wrapper_id_current
 
+
+def _export_images_and_poses(all_records_camera, cameras, trajectories,
+                             image_action, kapture_path,
+                             root_path, sub_root_path,
+                             polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current) -> Tuple[List, List]:
+    views = []
+    extrinsics = []
     global_timestamp = 0
-
     # process all images
     for timestamp, cam_id, kapture_name in all_records_camera:
         local_path = path.dirname(path.relpath(kapture_name, sub_root_path))
@@ -339,6 +279,87 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
         views.append({KEY: global_timestamp, VALUE: view})
 
         global_timestamp += 1
+
+    return views, extrinsics
+
+
+def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
+                       image_action: TransferAction, openmvg_path: str) -> Dict:
+    """
+    Convert the kapture data into an openMVG dataset stored as a dictionary.
+    The format is defined here:
+    https://openmvg.readthedocs.io/en/latest/software/SfM/SfM_OutputFormat/
+
+    :param kapture_data: the kapture data
+    :param kapture_path: top directory of the kapture data and the images
+    :param image_action: action to apply on images: link, copy, move or do nothing.
+    :param openmvg_path: top directory of the openmvg data and images
+    :return: an SfM_data, the openmvg structure, stored as a dictionary ready to be serialized
+    """
+
+    assert kapture_data.cameras is not None
+    assert kapture_data.records_camera is not None
+    cameras = kapture_data.cameras
+    # Check we don't have other sensors defined
+    extra_sensor_number = len(kapture_data.sensors)-len(cameras)
+    if extra_sensor_number > 0:
+        logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
+    records_camera = kapture_data.records_camera
+    all_records_camera = list(kapture.flatten(records_camera))
+    trajectories = kapture_data.trajectories
+
+    # openmvg does not support rigs
+    if kapture_data.rigs:
+        logger.info('remove rigs notation.')
+        rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
+        kapture_data.rigs.clear()
+
+    # Compute root path and camera used in records
+    sub_root_path: str = ''
+    image_dirs = {}
+    used_cameras = {}
+    for _, cam_id, name in all_records_camera:
+        used_cameras[cam_id] = cam_id
+        img_dir = path.dirname(name)
+        image_dirs[img_dir] = img_dir
+    if len(image_dirs) > 1:
+        # Find if they share a top path
+        image_dirs_list = list(image_dirs.keys())
+        sub_root_path = path.commonpath(image_dirs_list)
+    elif len(image_dirs) == 1:
+        sub_root_path = next(iter(image_dirs.keys()))
+    if image_action == TransferAction.skip:
+        root_path = kapture_path
+    else:  # We will create a new hierarchy of images
+        root_path = openmvg_path
+    root_path = os.path.abspath(path.join(root_path, sub_root_path))
+    if image_action == TransferAction.root_link:
+        if not sub_root_path:
+            # We can not link directly to the top destination openmvg directory
+            # We need an additional level
+            root_path = path.join(root_path, 'images')
+        kapture_records_path = get_image_fullpath(kapture_path, sub_root_path)
+        # Do a unique images directory link
+        # openmvg_root_path -> kapture/<records_dir>/openmvg_top_images_directory
+        # beware that the paths are reverted in the symlink call
+        os.symlink(kapture_records_path, root_path)
+
+    sfm_data = {SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
+                ROOT_PATH: root_path}
+
+    polymorphic_id_current = 1
+    ptr_wrapper_id_current = 1
+    polymorphic_id_types = {}
+
+    intrinsics, polymorphic_id_current, ptr_wrapper_id_current = _export_cameras(cameras, used_cameras,
+                                                                                 polymorphic_id_types,
+                                                                                 polymorphic_id_current,
+                                                                                 ptr_wrapper_id_current)
+
+    views, extrinsics = _export_images_and_poses(all_records_camera, cameras, trajectories,
+                                                 image_action, kapture_path,
+                                                 root_path, sub_root_path,
+                                                 polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current)
 
     sfm_data[VIEWS] = views
     sfm_data[INTRINSICS] = intrinsics
