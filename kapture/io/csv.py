@@ -600,7 +600,7 @@ def image_features_config_from_file(config_filepath: str) -> ImageFeatureConfig:
         name, dtype, dsize = line[0], line[1], int(line[2])
 
     # try to list all possible type from numpy that can be used in eval(dtype)
-    from numpy import float, float32, float64, int32, uint8
+    from numpy import float, float32, float64, int32, uint8  # noqa: F401
     if isinstance(type(eval(dtype)), type):
         dtype = eval(dtype)
     else:
@@ -840,8 +840,8 @@ def observations_from_file(
     :return: observations
     """
     assert path.basename(observations_filepath) == 'observations.txt'
-    assert images_paths_with_keypoints is None or \
-           (isinstance(images_paths_with_keypoints, set) and len(images_paths_with_keypoints) > 0)
+    assert images_paths_with_keypoints is None\
+        or (isinstance(images_paths_with_keypoints, set) and len(images_paths_with_keypoints) > 0)
     observations = kapture.Observations()
     with open(observations_filepath) as file:
         table = table_from_file(file)
@@ -934,8 +934,8 @@ KAPTURE_LOADABLE_TYPES = {
 
 
 def kapture_from_dir(
-        kapture_dirpath: str,
-        matches_pairsfile_path: Optional[str] = None,
+        kapture_dir_path: str,
+        matches_pairs_file_path: Optional[str] = None,
         skip_list: List[Type[Union[kapture.Rigs,
                                    kapture.Trajectories,
                                    kapture.RecordsCamera,
@@ -948,27 +948,26 @@ def kapture_from_dir(
                                    kapture.GlobalFeatures,
                                    kapture.Matches,
                                    kapture.Points3d,
-                                   kapture.Observations,
-
-        ]]] = []
+                                   kapture.Observations
+                                   ]]] = []
 ) -> kapture.Kapture:
     """
     Reads and return kapture data from directory.
 
-    :param kapture_dirpath: kapture directory root path
-    :param matches_pairsfile_path: text file in the csv format; where each line is image_name1, image_name2, score
+    :param kapture_dir_path: kapture directory root path
+    :param matches_pairs_file_path: text file in the csv format; where each line is image_name1, image_name2, score
     :param skip_list: Input option for expert only. Skip the load of specified parts.
     :return: kapture data read
     """
-    if not path.isdir(kapture_dirpath):
-        raise FileNotFoundError(f'No kapture directory {kapture_dirpath}')
-    csv_filepaths = {dtype: path.join(kapture_dirpath, filename)
-                     for dtype, filename in CSV_FILENAMES.items()}
-    data_dirpaths = {dtype: path.join(kapture_dirpath, dir_name)
-                     for dtype, dir_name in kapture.io.features.FEATURES_DATA_DIRNAMES.items()}
+    if not path.isdir(kapture_dir_path):
+        raise FileNotFoundError(f'No kapture directory {kapture_dir_path}')
+    csv_file_paths = {dtype: path.join(kapture_dir_path, filename)
+                      for dtype, filename in CSV_FILENAMES.items()}
+    data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
+                      for dtype, dir_name in kapture.io.features.FEATURES_DATA_DIRNAMES.items()}
 
     # keep only those in load_only and that exists
-    kapture_data_paths = {**data_dirpaths, **csv_filepaths}  # make sure files take precedence over dirs
+    kapture_data_paths = {**data_dir_paths, **csv_file_paths}  # make sure files take precedence over dirs
     kapture_loadable_data = {
         kapture_type
         for kapture_type in KAPTURE_LOADABLE_TYPES
@@ -978,7 +977,7 @@ def kapture_from_dir(
     kapture_data = kapture.Kapture()
     # sensors
     sensor_ids = None
-    sensors_file_path = csv_filepaths[kapture.Sensors]
+    sensors_file_path = csv_file_paths[kapture.Sensors]
     if sensors_file_path:
         logger.debug(f'loading sensors {sensors_file_path} ...')
         kapture_data.__version__ = get_version_from_csv_file(sensors_file_path)
@@ -987,11 +986,11 @@ def kapture_from_dir(
 
     if sensor_ids is None:
         # no need to continue, everything else depends on sensors
-        raise FileNotFoundError(f'File {sensors_file_path} is missing or empty in {kapture_dirpath}')
+        raise FileNotFoundError(f'File {sensors_file_path} is missing or empty in {kapture_dir_path}')
 
     # rigs
     if kapture.Rigs in kapture_loadable_data:
-        rigs_file_path = csv_filepaths[kapture.Rigs]
+        rigs_file_path = csv_file_paths[kapture.Rigs]
         logger.debug(f'loading rigs {rigs_file_path} ...')
         assert sensor_ids is not None
         kapture_data.rigs = rigs_from_file(rigs_file_path, sensor_ids)
@@ -1000,34 +999,34 @@ def kapture_from_dir(
 
     # trajectories
     if kapture.Trajectories in kapture_loadable_data:
-        trajectories_file_path = csv_filepaths[kapture.Trajectories]
+        trajectories_file_path = csv_file_paths[kapture.Trajectories]
         logger.debug(f'loading trajectories {trajectories_file_path} ...')
         assert sensor_ids is not None
         kapture_data.trajectories = trajectories_from_file(trajectories_file_path, sensor_ids)
 
     # records camera
     if kapture.RecordsCamera in kapture_loadable_data:
-        records_camera_file_path = csv_filepaths[kapture.RecordsCamera]
+        records_camera_file_path = csv_file_paths[kapture.RecordsCamera]
         logger.debug(f'loading images {records_camera_file_path} ...')
         assert kapture_data.sensors is not None
         camera_sensor_ids = set([sensor_id
                                  for sensor_id in kapture_data.sensors.keys()
                                  if kapture_data.sensors[sensor_id].sensor_type == 'camera'])
-        kapture_data.records_camera = records_camera_from_file(csv_filepaths[kapture.RecordsCamera], camera_sensor_ids)
+        kapture_data.records_camera = records_camera_from_file(csv_file_paths[kapture.RecordsCamera], camera_sensor_ids)
 
     # records depth
     if kapture.RecordsDepth in kapture_loadable_data:
-        records_depth_file_path = csv_filepaths[kapture.RecordsDepth]
+        records_depth_file_path = csv_file_paths[kapture.RecordsDepth]
         logger.debug(f'loading depth {records_depth_file_path} ...')
         assert kapture_data.sensors is not None
         depth_sensor_ids = set([sensor_id
                                 for sensor_id in kapture_data.sensors.keys()
                                 if kapture_data.sensors[sensor_id].sensor_type == 'depth'])
-        kapture_data.records_depth = records_depth_from_file(csv_filepaths[kapture.RecordsDepth], depth_sensor_ids)
+        kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth], depth_sensor_ids)
 
     # records lidar
     if kapture.RecordsLidar in kapture_loadable_data:
-        records_lidar_file_path = csv_filepaths[kapture.RecordsLidar]
+        records_lidar_file_path = csv_file_paths[kapture.RecordsLidar]
         logger.debug(f'loading lidar {records_lidar_file_path} ...')
         assert kapture_data.sensors is not None
         lidar_sensor_ids = set([sensor_id
@@ -1038,7 +1037,7 @@ def kapture_from_dir(
 
     # records Wifi
     if kapture.RecordsWifi in kapture_loadable_data:
-        records_wifi_file_path = csv_filepaths[kapture.RecordsWifi]
+        records_wifi_file_path = csv_file_paths[kapture.RecordsWifi]
         logger.debug(f'loading wifi {records_wifi_file_path} ...')
         assert kapture_data.sensors is not None
         wifi_sensor_ids = set([sensor_id
@@ -1049,7 +1048,7 @@ def kapture_from_dir(
 
     # records GNSS
     if kapture.RecordsGnss in kapture_loadable_data:
-        records_gnss_file_path = csv_filepaths[kapture.RecordsGnss]
+        records_gnss_file_path = csv_file_paths[kapture.RecordsGnss]
         logger.debug(f'loading GNSS {records_gnss_file_path} ...')
         assert kapture_data.sensors is not None
         epsg_codes = {sensor_id: sensor.sensor_params[0]
@@ -1068,37 +1067,37 @@ def kapture_from_dir(
 
     # keypoints
     if kapture.Keypoints in kapture_loadable_data:
-        logger.debug(f'loading keypoints {data_dirpaths[kapture.Keypoints]} ...')
+        logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.keypoints = keypoints_from_dir(kapture_dirpath, image_filenames)
+        kapture_data.keypoints = keypoints_from_dir(kapture_dir_path, image_filenames)
 
     # descriptors
     if kapture.Descriptors in kapture_loadable_data:
-        logger.debug(f'loading descriptors {data_dirpaths[kapture.Descriptors]} ...')
+        logger.debug(f'loading descriptors {data_dir_paths[kapture.Descriptors]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.descriptors = descriptors_from_dir(kapture_dirpath, image_filenames)
+        kapture_data.descriptors = descriptors_from_dir(kapture_dir_path, image_filenames)
 
     # global_features
     if kapture.GlobalFeatures in kapture_loadable_data:
-        logger.debug(f'loading global features {data_dirpaths[kapture.GlobalFeatures]} ...')
+        logger.debug(f'loading global features {data_dir_paths[kapture.GlobalFeatures]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.global_features = global_features_from_dir(kapture_dirpath, image_filenames)
+        kapture_data.global_features = global_features_from_dir(kapture_dir_path, image_filenames)
 
     # matches
     if kapture.Matches in kapture_loadable_data:
-        logger.debug(f'loading matches {data_dirpaths[kapture.Matches]} ...')
+        logger.debug(f'loading matches {data_dir_paths[kapture.Matches]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.matches = matches_from_dir(kapture_dirpath, image_filenames, matches_pairsfile_path)
+        kapture_data.matches = matches_from_dir(kapture_dir_path, image_filenames, matches_pairs_file_path)
 
     # points3d
     if kapture.Points3d in kapture_loadable_data:
-        points3d_file_path = csv_filepaths[kapture.Points3d]
+        points3d_file_path = csv_file_paths[kapture.Points3d]
         logger.debug(f'loading points 3d {points3d_file_path} ...')
         kapture_data.points3d = points3d_from_file(points3d_file_path)
 
     # observations
     if kapture.Observations in kapture_loadable_data:
-        observations_file_path = csv_filepaths[kapture.Observations]
+        observations_file_path = csv_file_paths[kapture.Observations]
         logger.debug(f'loading observations {observations_file_path} ...')
         assert kapture_data.keypoints is not None
         assert kapture_data.points3d is not None
