@@ -13,7 +13,7 @@ import numpy as np
 import kapture
 from kapture.utils.paths import path_secure
 from kapture.utils.logging import getLogger
-from kapture.io.binary import TransferAction, transfer_files_from_dir, array_from_file
+from kapture.io.binary import TransferAction, transfer_files_from_dir, array_from_file, array_to_file
 
 logger = getLogger()
 
@@ -147,7 +147,7 @@ def images_to_filepaths(images: kapture.RecordsCamera, kapture_dirpath: str) -> 
     return records_to_filepaths(images, kapture_dirpath)
 
 
-# depth ###############################################################################################################
+# depth maps file paths ################################################################################################
 def get_depth_map_fullpath(kapture_dir_path: str, depth_map_filename: Optional[str] = None) -> str:
     """
     Get the full path of the depth map file in the kapture.
@@ -171,17 +171,28 @@ def depth_maps_to_filepaths(depth_records: kapture.RecordsDepth, kapture_dirpath
     return records_to_filepaths(depth_records, kapture_dirpath)
 
 
-# depth maps ######################################################################################################
+# depth maps IO ########################################################################################################
 def records_depth_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
     """
-    Read the image keypoints
+    Load the depth map from binary file to a numpy array.
 
     :param filepath: path to the file
     :param size: [width, height]
     :return: the depth map as a numpy array
     """
+    assert isinstance(size, tuple) and len(size) == 2
     dtype = kapture.RecordsDepth.dtype
     dsize = int(size[0] * size[1])
     bitmap = array_from_file(filepath, dtype, dsize)
     bitmap = bitmap.reshape((size[1], size[0]))
     return bitmap
+
+
+def records_depth_to_file(filepath: str, depth_map: np.array) -> None:
+    """
+    Writes the depth map from numpy array to binary file.
+
+    :param filepath: file path
+    :param depth_map: depth map as a numpy array
+    """
+    array_to_file(filepath, depth_map)
