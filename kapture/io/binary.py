@@ -10,7 +10,6 @@ import shutil
 from typing import Type, Iterable
 from tqdm import tqdm
 import logging
-import kapture
 from kapture.utils.logging import getLogger
 from enum import auto
 from kapture.utils.Collections import AutoEnum
