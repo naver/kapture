@@ -202,7 +202,7 @@ def export_opensfm(
 
     disable_tqdm = logger.getEffectiveLevel() > logging.INFO  # dont display tqdm for non-verbose levels
     # load reconstruction
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_dirpath=kapture_rootdir)
+    kapture_data = kapture.io.csv.kapture_from_dir(kapture_rootdir)
 
     # export cameras
     opensfm_cameras = {}

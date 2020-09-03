@@ -53,7 +53,7 @@ def colmap_localize(kapture_path: str,
     """
     # Load input files first to make sure it is OK
     logger.info('loading kapture files...')
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, matches_pairsfile_path=pairsfile_path)
+    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, pairsfile_path)
 
     colmap_localize_from_loaded_data(kapture_data,
                                      kapture_path,
