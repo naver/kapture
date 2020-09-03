@@ -5,7 +5,7 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture

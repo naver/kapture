@@ -6,7 +6,7 @@ import os.path as path
 import tempfile
 import numpy as np
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.io.csv import kapture_from_dir

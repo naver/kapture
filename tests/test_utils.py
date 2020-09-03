@@ -9,7 +9,7 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.utils.paths
 

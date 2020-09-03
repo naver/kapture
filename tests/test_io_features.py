@@ -6,7 +6,7 @@ import os.path as path
 import numpy as np
 import tempfile
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.features as binary
 

@@ -7,7 +7,7 @@ import quaternion
 import math
 import copy
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.evaluation import evaluate, evaluate_error_absolute, fill_bins
 

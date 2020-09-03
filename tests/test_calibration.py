@@ -4,7 +4,7 @@
 import unittest
 import numpy as np
 import quaternion
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 from kapture import Rigs, Trajectories, PoseTransform, flatten
 from kapture.algo.calibration import rigs_calibrate_average
 from kapture.algo.pose_operations import average_quaternion

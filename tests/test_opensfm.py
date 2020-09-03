@@ -8,7 +8,7 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 from kapture.algo.compare import equal_kapture, equal_sensors, equal_records_gnss
 import kapture.io.csv as csv
 from kapture.io.records import TransferAction

@@ -7,7 +7,7 @@ import quaternion
 from copy import deepcopy
 from datetime import datetime
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_trajectories, equal_rigs
 
@@ -465,6 +465,7 @@ class TestRecords(unittest.TestCase):
 
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()
+        self.assertIsNotNone(records_lidar, "Records Lidar created")
 
     def test_init_wifi(self):
         records_wifi = kapture.RecordsWifi()

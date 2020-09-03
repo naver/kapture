@@ -6,7 +6,7 @@ import os
 import os.path as path
 import sys
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import tools.kapture_download_dataset as download
 from unittest.mock import patch
 

@@ -5,7 +5,7 @@ import unittest
 import os.path as path
 import tempfile
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 from tools.kapture_export_ply import plot_ply
 
 

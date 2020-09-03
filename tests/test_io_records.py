@@ -7,7 +7,7 @@ import os.path as path
 import sys
 import tempfile
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.records
 from kapture.io.binary import transfer_files_from_dir_link, transfer_files_from_dir_copy

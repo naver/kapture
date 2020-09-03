@@ -10,7 +10,7 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_kapture
 from kapture.core.Sensors import Camera, CameraType
@@ -19,7 +19,7 @@ import kapture.io.csv as kcsv
 from kapture.converter.ros_tools.import_utbm_sensor import BB2_CAMERA_IDENTIFIERS, TOPICS_BB2
 from kapture.converter.ros_tools.import_utbm_sensor import import_ros_camera_calibration, import_utbm_sensors
 try:
-    import rosbag
+    import rosbag  # noqa: F401
     from kapture.converter.ros_tools.import_rosbag import RosBagImporter
     has_rosbag = True
 except ModuleNotFoundError:

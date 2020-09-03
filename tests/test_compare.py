@@ -7,7 +7,7 @@ import quaternion
 import copy
 import os.path as path
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
 from kapture.algo.compare import is_distance_within_threshold, pose_transform_distance
