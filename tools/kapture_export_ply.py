@@ -83,7 +83,7 @@ def plot_ply(kapture_path: str,
                     image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
 
         if _should_do('depth') and kapture_data.records_depth:
-            logger.info(f'creating depth maps in 3D.')
+            logger.info('creating depth maps in 3D.')
             depth_records_filepaths = kapture.io.records.depth_maps_to_filepaths(kapture_data.records_depth,
                                                                                  kapture_path)
             map_depth_to_sensor = {depth_map_name: sensor_id
