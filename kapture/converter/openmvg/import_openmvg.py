@@ -78,7 +78,6 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
     :return: the constructed kapture object
     """
 
-    polymorphic_id_to_value = {}
     root_path: str = ''
 
     if input_json[ROOT_PATH]:
@@ -89,8 +88,23 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
         raise ValueError(f"Missing root_path to do image action '{image_action.name}'")
     openmvg_images_dir = path.basename(root_path)
 
+    # Imports all the data from the json file to kapture objects
+    kapture_cameras = _import_cameras(input_json)
+    device_identifiers = {int: str}  # Pose id -> device id
+    timestamp_for_pose = {int: int}  # Pose id -> timestamp
+    # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
+    records_camera = _import_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+                                    device_identifiers, timestamp_for_pose)
+    trajectories = _import_trajectories(input_json, device_identifiers, timestamp_for_pose)
+
+    kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
+    return kapture_data
+
+
+def _import_cameras(input_json) -> kapture.Sensors:
     kapture_cameras = kapture.Sensors()
     if input_json.get(INTRINSICS):
+        polymorphic_id_to_value = {}
         logger.info('Importing intrinsics')
         for sensor in input_json[INTRINSICS]:
             value = sensor[VALUE]
@@ -98,7 +112,7 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
                 # new type name: store it for next instances
                 polymorphic_id = value[POLYMORPHIC_ID] & GET_ID_MASK
                 polymorphic_id_to_value[polymorphic_id] = value[POLYMORPHIC_NAME]
-                logger.debug("New camera_type: "+polymorphic_id_to_value[polymorphic_id])
+                logger.debug("New camera_type: " + polymorphic_id_to_value[polymorphic_id])
             else:
                 if POLYMORPHIC_ID not in value:
                     raise ValueError(f'{POLYMORPHIC_ID} is missing (intrinsics)')
@@ -188,8 +202,11 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
 
             kapture_cameras[str(sensor[KEY])] = camera
 
-    device_identifiers = {int: str}  # Pose id -> device id
-    timestamp_for_pose = {int: int}  # Pose id -> timestamp
+    return kapture_cameras
+
+
+def _import_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+                   device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
     if input_json.get(VIEWS):
         views = input_json[VIEWS]
@@ -201,7 +218,7 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
             os.symlink(root_path, path.join(kapture_records_path, openmvg_images_dir))
         logger.info(f'Importing {len(views)} images')
         # Progress bar only in debug or info level
-        if image_action != TransferAction.skip and image_action != TransferAction.root_link\
+        if image_action != TransferAction.skip and image_action != TransferAction.root_link \
                 and logger.getEffectiveLevel() <= logging.INFO:
             progress_bar = tqdm(total=len(views))
         else:
@@ -255,7 +272,10 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
             key = (timestamp, device_id)  # tuple of int,str
             records_camera[key] = path_secure(kapture_filename)
         progress_bar and progress_bar.close()
+    return records_camera
 
+
+def _import_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
     if input_json.get(EXTRINSICS):
         extrinsics = input_json[EXTRINSICS]
@@ -275,6 +295,4 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
                 logger.warning(f'Missing device for extrinsic {pose_id}')
                 continue
             trajectories[(timestamp, device_id)] = kap_pose  # tuple of int,str -> 6D pose
-
-    kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
-    return kapture_data
+    return trajectories
