@@ -24,13 +24,13 @@ from typing import Optional
 from PIL import Image
 from tqdm import tqdm
 # kapture
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
-from kapture.io.records import TransferAction, import_record_data_from_dir_auto, get_record_fullpath
+from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 
 logger = logging.getLogger('7scenes')
 MODEL = kapture.CameraType.RADIAL

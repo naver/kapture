@@ -12,7 +12,7 @@ import os.path as path
 import shutil
 from typing import List
 
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.io.csv
 import kapture.utils.logging

@@ -46,7 +46,7 @@ import os.path as path
 import quaternion
 import re
 # kapture
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files

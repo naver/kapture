@@ -30,7 +30,7 @@ It is subject to the Creative Commons Attribution Non Commercial No Derivatives 
 import logging
 import argparse
 # kapture
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture.utils.logging
 from kapture.converter.virtual_gallery.import_virtual_gallery import import_virtual_gallery
 from kapture.io.records import TransferAction

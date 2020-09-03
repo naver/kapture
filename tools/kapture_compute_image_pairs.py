@@ -9,7 +9,7 @@ from typing import List, Tuple, Union
 import numpy as np
 from tqdm import tqdm
 
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.csv import kapture_from_dir, table_to_file

@@ -12,14 +12,14 @@ import os.path as path
 from tqdm import tqdm
 import numpy as np
 from PIL import Image
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv as csv
 import kapture.io.ply as ply
 import kapture.io.image as image
 import kapture.io.features
-from kapture.io.records import get_image_fullpath, records_depth_from_file
+from kapture.io.records import records_depth_from_file
 from typing import Optional
 
 logger = logging.getLogger('plot')

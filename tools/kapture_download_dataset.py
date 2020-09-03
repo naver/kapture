@@ -15,7 +15,7 @@ import yaml
 import fnmatch
 from typing import Dict, Optional, List
 from tqdm import tqdm
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 # import kapture
 import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size

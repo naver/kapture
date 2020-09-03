@@ -11,13 +11,13 @@ import logging
 from os import path
 import sys
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture.io.csv as kcsv
 import kapture.utils.logging
 
 # rosbag
 try:
-    import rosbag
+    import rosbag  # noqa: F401
     from kapture.converter.ros_tools.import_rosbag import RosBagImporter
 
     has_rosbag = True

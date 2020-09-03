@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 # kapture
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from typing import List

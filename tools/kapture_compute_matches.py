@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 from collections import OrderedDict
 
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.csv import kapture_from_dir, table_from_file

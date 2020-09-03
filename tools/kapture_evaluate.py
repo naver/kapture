@@ -14,7 +14,7 @@ from statistics import mean, median
 from math import isnan
 from typing import List, Tuple
 
-import path_to_kapture
+import path_to_kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
 from kapture.algo.evaluation import evaluate, fill_bins

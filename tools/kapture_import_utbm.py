@@ -14,13 +14,13 @@ import argparse
 import logging
 import sys
 # kapture
-import path_to_kapture  # enables import kapture
+import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture.core.Sensors
 import kapture.utils.logging
 
 # rosbag
 try:
-    import rosbag
+    import rosbag  # noqa: F401
     from kapture.converter.ros_tools.import_rosbag import RosBagImporter
     has_rosbag = True
 except ModuleNotFoundError:
