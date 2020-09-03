@@ -199,6 +199,7 @@ class RecordsDepth(RecordsBase[str]):
     Depth map records
     """
     dtype = np.float32
+
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
                     value: Union[Dict[str, str], str]):
