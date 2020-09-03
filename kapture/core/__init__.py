@@ -4,19 +4,20 @@
 All kapture objects representing the data kapture manages.
 """
 
-from .PoseTransform import PoseTransform
-from .Sensors import Sensor, Sensors, create_sensor
-from .Sensors import Camera, CameraType, CAMERA_TYPE_PARAMS_COUNT, CAMERA_TYPE_PARAMS_COUNT_FROM_NAME
-from .Rigs import Rigs
-from .Trajectories import Trajectories, rigs_remove, rigs_remove_inplace, rigs_recover, rigs_recover_inplace
-from .Records import RecordsBase, RecordsCamera, RecordsDepth
-from .Records import RecordsLidar, RecordsWifi, RecordWifi, RecordGnss, RecordsGnss
-from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
-from .Observations import Observations
-from .Matches import Matches
-from .Points3d import Points3d
-from .Kapture import Kapture
-from .flatten import flatten
+from .PoseTransform import PoseTransform  # noqa: F401
+from .Sensors import Sensor, Sensors, create_sensor  # noqa: F401
+from .Sensors import Camera, CameraType, CAMERA_TYPE_PARAMS_COUNT, CAMERA_TYPE_PARAMS_COUNT_FROM_NAME  # noqa: F401
+from .Rigs import Rigs  # noqa: F401
+from .Trajectories import Trajectories  # noqa: F401
+from .Trajectories import rigs_remove, rigs_remove_inplace, rigs_recover, rigs_recover_inplace  # noqa: F401
+from .Records import RecordsBase, RecordsCamera, RecordsDepth  # noqa: F401
+from .Records import RecordsLidar, RecordsWifi, RecordWifi, RecordGnss, RecordsGnss  # noqa: F401
+from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures  # noqa: F401
+from .Observations import Observations  # noqa: F401
+from .Matches import Matches  # noqa: F401
+from .Points3d import Points3d  # noqa: F401
+from .Kapture import Kapture  # noqa: F401
+from .flatten import flatten  # noqa: F401
 
 import logging
 
