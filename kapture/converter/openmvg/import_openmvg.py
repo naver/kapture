@@ -101,7 +101,7 @@ def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
     return kapture_data
 
 
-def _import_cameras(input_json) -> kapture.Sensors:
+def _import_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
     if input_json.get(INTRINSICS):
         polymorphic_id_to_value = {}

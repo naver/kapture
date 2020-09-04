@@ -92,8 +92,7 @@ def load_kapture(kapture_path: str) -> kapture.Kapture:
     return kapture_data
 
 
-def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current)\
-        -> Tuple[List, int, int]:
+def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_cur, ptr_wrapper_id_cur):  # noqa: C901
     intrinsics = []
     # process all cameras
     for cam_id, camera in cameras.items():
@@ -177,22 +176,22 @@ def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_
         if model_used not in polymorphic_id_types:
             # if this is the first time model_used is encountered
             # set the first bit of polymorphic_id_current to 1
-            intrinsic[POLYMORPHIC_ID] = polymorphic_id_current | NEW_ID_MASK
+            intrinsic[POLYMORPHIC_ID] = polymorphic_id_cur | NEW_ID_MASK
             intrinsic[POLYMORPHIC_NAME] = model_used.name
-            polymorphic_id_types[model_used] = polymorphic_id_current
-            polymorphic_id_current += 1
+            polymorphic_id_types[model_used] = polymorphic_id_cur
+            polymorphic_id_cur += 1
         else:
             intrinsic[POLYMORPHIC_ID] = polymorphic_id_types[model_used]
 
         # it is assumed that this camera is only encountered once
         # set the first bit of ptr_wrapper_id_current to 1
-        data_wrapper = {ID: ptr_wrapper_id_current | NEW_ID_MASK,
+        data_wrapper = {ID: ptr_wrapper_id_cur | NEW_ID_MASK,
                         DATA: data}
-        ptr_wrapper_id_current += 1
+        ptr_wrapper_id_cur += 1
 
         intrinsic[PTR_WRAPPER] = data_wrapper
         intrinsics.append({KEY: cam_id, VALUE: intrinsic})
-    return intrinsics, polymorphic_id_current, ptr_wrapper_id_current
+    return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur
 
 
 def _export_images_and_poses(all_records_camera, cameras, trajectories,
