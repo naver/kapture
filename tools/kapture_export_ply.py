@@ -25,7 +25,13 @@ from typing import Optional
 logger = logging.getLogger('plot')
 
 
-def plot_ply(kapture_path: str,
+def _should_do(choice: str) -> bool:
+    ok_only = only is None or choice in only
+    ok_skip = skip is None or choice not in skip
+    return ok_only or ok_skip
+
+
+def plot_ply(kapture_path: str,  # noqa: C901
              ply_path: str,
              axis_length: float,
              only: Optional[list] = None,
@@ -45,11 +51,6 @@ def plot_ply(kapture_path: str,
 
         logger.info('loading data ...')
         kapture_data = csv.kapture_from_dir(kapture_path)
-
-        def _should_do(choice: str) -> bool:
-            ok_only = only is None or choice in only
-            ok_skip = skip is None or choice not in skip
-            return ok_only or ok_skip
 
         logger.info('plotting  ...')
         if _should_do('rigs') and kapture_data.rigs:
