@@ -234,45 +234,53 @@ def _import_images(input_json, image_action, kapture_images_path, openmvg_images
             device_id = str(input_data[ID_INTRINSIC])  # device_id must be a string for kapture
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
-            filename: str
-            if input_data.get(LOCAL_PATH):
-                filename = path.join(input_data[LOCAL_PATH], input_data[FILENAME])
-            else:
-                filename = input_data[FILENAME]
-            if root_path:
-                src_path = path.join(root_path, filename)
-            else:
-                src_path = filename
 
-            # Add the common openmvg images directory in front of the filename
-            kapture_filename = path.join(openmvg_images_dir, filename)
-            if image_action != TransferAction.skip and image_action != TransferAction.root_link:
-                dst_path = get_image_fullpath(kapture_images_path, kapture_filename)
-                # Create destination directory if necessary
-                dst_dir = path.dirname(dst_path)
-                if not path.isdir(dst_dir):
-                    os.makedirs(dst_dir, exist_ok=True)
-                # Check if already exist
-                if path.exists(dst_path):
-                    os.unlink(dst_path)
-                # Create file or link
-                if image_action == TransferAction.copy:
-                    shutil.copy2(src_path, dst_path)
-                elif image_action == TransferAction.move:
-                    shutil.move(src_path, dst_path)
-                else:
-                    # Individual link
-                    if image_action == TransferAction.link_relative:
-                        # Compute relative path
-                        src_path = path.relpath(src_path, dst_dir)
-                    os.symlink(src_path, dst_path)
-                    # This might crash on Windows if the user executing this code has no admin privilege
-                progress_bar and progress_bar.update(1)
+            kapture_filename = _import_image_file(input_data, openmvg_images_dir, root_path,
+                                                  kapture_images_path, image_action)
+
+            progress_bar and progress_bar.update(1)
 
             key = (timestamp, device_id)  # tuple of int,str
             records_camera[key] = path_secure(kapture_filename)
         progress_bar and progress_bar.close()
     return records_camera
+
+
+def _import_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
+    # Add the common openmvg images directory in front of the filename
+    filename: str
+    if input_data.get(LOCAL_PATH):
+        filename = path.join(input_data[LOCAL_PATH], input_data[FILENAME])
+    else:
+        filename = input_data[FILENAME]
+    kapture_filename = path.join(openmvg_images_dir, filename)
+    if image_action != TransferAction.skip and image_action != TransferAction.root_link:
+        src_path: str
+        if root_path:
+            src_path = path.join(root_path, filename)
+        else:
+            src_path = filename
+        dst_path = get_image_fullpath(kapture_images_path, kapture_filename)
+        # Create destination directory if necessary
+        dst_dir = path.dirname(dst_path)
+        if not path.isdir(dst_dir):
+            os.makedirs(dst_dir, exist_ok=True)
+        # Check if already exist
+        if path.exists(dst_path):
+            os.unlink(dst_path)
+        # Create file or link
+        if image_action == TransferAction.copy:
+            shutil.copy2(src_path, dst_path)
+        elif image_action == TransferAction.move:
+            shutil.move(src_path, dst_path)
+        else:
+            # Individual link
+            if image_action == TransferAction.link_relative:
+                # Compute relative path
+                src_path = path.relpath(src_path, dst_dir)
+            os.symlink(src_path, dst_path)
+            # Symlink might crash on Windows if the user executing this code has no admin privilege
+    return kapture_filename
 
 
 def _import_trajectories(input_json, device_identifiers, timestamp_for_pose):
