@@ -380,7 +380,7 @@ def equal_points3d(points3d_a: Optional[kapture.Points3d],
     return are_equal
 
 
-def equal_kapture(data_a: kapture.Kapture, data_b: kapture.Kapture) -> bool:
+def equal_kapture(data_a: kapture.Kapture, data_b: kapture.Kapture) -> bool:  # noqa: C901
     """
     Compare two instances of Kapture.
      Poses are compared with is_distance_within_threshold(pose_transform_distance())
