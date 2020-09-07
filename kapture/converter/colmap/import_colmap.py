@@ -143,7 +143,7 @@ def import_colmap_from_reconstruction_files(reconstruction_dir_path: str,
     return kapture_data
 
 
-def import_colmap(kapture_dir_path: Optional[str],
+def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import algorithm is well documented
                   colmap_database_filepath: str = None,
                   colmap_reconstruction_dir_path: str = None,
                   colmap_images_dir_path: str = None,
