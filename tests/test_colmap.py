@@ -49,11 +49,8 @@ class TestColmapImportT265(unittest.TestCase):
         self._tempdir.cleanup()
 
     def test_t265_db_only(self):
-        kapture_data = import_colmap_database(
-            colmap_database_filepath=self._database_filepath,
-            kapture_dirpath=self._kapture_dirpath,
-            no_geometric_filtering=True
-        )
+        kapture_data = import_colmap_database(self._database_filepath, self._kapture_dirpath,
+                                              no_geometric_filtering=True)
 
         # check the numbers
         self.assertEqual(2, len(kapture_data.sensors))
@@ -113,11 +110,8 @@ class TestColmapMaupertuis(unittest.TestCase):
         self._tempdir.cleanup()
 
     def test_maupertuis_import_db_only(self):
-        kapture_data = import_colmap_database(
-            colmap_database_filepath=self._database_filepath,
-            kapture_dirpath=self._temp_dirpath,
-            no_geometric_filtering=True
-        )
+        kapture_data = import_colmap_database(self._database_filepath, self._temp_dirpath,
+                                              no_geometric_filtering=True)
 
         # check the numbers
         self.assertIsNone(kapture_data.trajectories)
@@ -239,14 +233,11 @@ class TestColmapMaupertuis(unittest.TestCase):
                          set(observations[0]))
 
     def test_maupertuis_import(self):
-        kapture_data = import_colmap(
-            kapture_dirpath=self._temp_dirpath,
-            colmap_database_filepath=self._database_filepath,
-            colmap_reconstruction_dirpath=self._reconstruction_path,
-            colmap_images_dirpath=self._images_filepath,
-            force_overwrite_existing=True,
-            images_import_strategy=TransferAction.copy,
-            no_geometric_filtering=True
+        kapture_data = import_colmap(self._temp_dirpath, self._database_filepath,
+                                     self._reconstruction_path, self._images_filepath,
+                                     force_overwrite_existing=True,
+                                     images_import_strategy=TransferAction.copy,
+                                     no_geometric_filtering=True
         )
 
         # check the numbers
@@ -288,14 +279,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         colmap_db_filepath = path.join(self._temp_dirpath, 'colmap.db')
         export_colmap(self._kapture_dirpath, colmap_db_filepath, None, None, True)
 
-        kapture_data = import_colmap(
-            kapture_dirpath=self._temp_dirpath,
-            colmap_database_filepath=colmap_db_filepath,
-            colmap_reconstruction_dirpath=None,
-            colmap_images_dirpath=None,
-            force_overwrite_existing=True,
-            no_geometric_filtering=True
-        )
+        kapture_data = import_colmap(self._temp_dirpath, colmap_db_filepath,
+                                     force_overwrite_existing=True,
+                                     no_geometric_filtering=True)
 
         # check the numbers
         self.assertEqual(1, len(kapture_data.sensors))
@@ -315,14 +301,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         colmap_txt_filepath = path.join(self._temp_dirpath, 'dense')
         export_colmap(self._kapture_dirpath, colmap_db_filepath, colmap_txt_filepath, None, True)
 
-        kapture_data = import_colmap(
-            kapture_dirpath=self._temp_dirpath,
-            colmap_database_filepath=colmap_db_filepath,
-            colmap_reconstruction_dirpath=colmap_txt_filepath,
-            colmap_images_dirpath=None,
-            force_overwrite_existing=True,
-            no_geometric_filtering=True
-        )
+        kapture_data = import_colmap(self._temp_dirpath, colmap_db_filepath, colmap_txt_filepath,
+                                     force_overwrite_existing=True,
+                                     no_geometric_filtering=True)
 
         # check the numbers
         self.assertEqual(1, len(kapture_data.sensors))
