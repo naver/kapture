@@ -13,7 +13,7 @@ import gzip
 import pickle
 import json
 from tqdm import tqdm
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 # kapture
 import kapture
 from kapture.io.csv import kapture_to_dir
@@ -130,6 +130,136 @@ def import_camera(
         raise ValueError(f'unable to convert camera of type {opensfm_camera["projection_type"]}')
 
 
+def _import_gnss(opensfm_root_dir, kapture_sensors, image_sensors, image_timestamps, disable_tqdm) \
+        -> Optional[kapture.RecordsGnss]:
+    """
+    Imports the GNSS info from the images exif.
+
+    """
+    # gps from pre-extracted exif, in exif/image_name.jpg.exif
+    kapture_gnss = None
+    opensfm_exif_dir_path = path.join(opensfm_root_dir, 'exif')
+    opensfm_exif_suffix = '.exif'
+    if path.isdir(opensfm_exif_dir_path):
+        logger.info('importing GNSS from exif ...')
+        camera_ids = set(image_sensors.values())
+        # add a gps sensor for each camera
+        map_cam_to_gnss_sensor = {cam_id: 'GPS_' + cam_id for cam_id in camera_ids}
+        for gnss_id in map_cam_to_gnss_sensor.values():
+            kapture_sensors[gnss_id] = kapture.Sensor(sensor_type='gnss', sensor_params=['EPSG:4326'])
+        # build epsg_code for all cameras
+        kapture_gnss = kapture.RecordsGnss()
+        opensfm_exif_filepath_list = (path.join(dir_path, filename)
+                                      for dir_path, _, filename_list in os.walk(opensfm_exif_dir_path)
+                                      for filename in filename_list
+                                      if filename.endswith(opensfm_exif_suffix))
+        for opensfm_exif_filepath in tqdm(opensfm_exif_filepath_list, disable=disable_tqdm):
+            image_filename = path.relpath(opensfm_exif_filepath, opensfm_exif_dir_path)[:-len(opensfm_exif_suffix)]
+            image_timestamp = image_timestamps[image_filename]
+            image_sensor_id = image_sensors[image_filename]
+            gnss_timestamp = image_timestamp
+            gnss_sensor_id = map_cam_to_gnss_sensor[image_sensor_id]
+            with open(opensfm_exif_filepath, 'rt') as f:
+                js_root = json.load(f)
+                if 'gps' not in js_root:
+                    logger.warning(f'NO GPS data in "{opensfm_exif_filepath}"')
+                    continue
+
+                gps_coords = {
+                    'x': js_root['gps']['longitude'],
+                    'y': js_root['gps']['latitude'],
+                    'z': js_root['gps'].get('altitude', 0.0),
+                    'dop': js_root['gps'].get('dop', 0),
+                    'utc': 0,
+                }
+                logger.debug(f'found GPS data for ({gnss_timestamp}, {gnss_sensor_id}) in "{opensfm_exif_filepath}"')
+                kapture_gnss[gnss_timestamp, gnss_sensor_id] = kapture.RecordGnss(**gps_coords)
+    return kapture_gnss
+
+
+def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqdm)\
+        -> Tuple[kapture.Descriptors, kapture.Keypoints, kapture.Matches]:
+    # import features (keypoints + descriptors)
+    kapture_keypoints = None  # kapture.Keypoints(type_name='opensfm', dsize=4, dtype=np.float64)
+    kapture_descriptors = None  # kapture.Descriptors(type_name='opensfm', dsize=128, dtype=np.uint8)
+    opensfm_features_dir_path = path.join(opensfm_root_dir, 'features')
+    opensfm_features_suffix = '.features.npz'
+    if path.isdir(opensfm_features_dir_path):
+        logger.info('importing keypoints and descriptors ...')
+        opensfm_features_file_list = (path.join(dp, fn)
+                                      for dp, _, fs in os.walk(opensfm_features_dir_path) for fn in fs)
+        opensfm_features_file_list = (filepath
+                                      for filepath in opensfm_features_file_list
+                                      if filepath.endswith(opensfm_features_suffix))
+        for opensfm_feature_filename in tqdm(opensfm_features_file_list, disable=disable_tqdm):
+            image_filename = path.relpath(opensfm_feature_filename, opensfm_features_dir_path)[
+                             :-len(opensfm_features_suffix)]
+            opensfm_image_features = np.load(opensfm_feature_filename)
+            opensfm_image_keypoints = opensfm_image_features['points']
+            opensfm_image_descriptors = opensfm_image_features['descriptors']
+            logger.debug(f'parsing keypoints and descriptors in {opensfm_feature_filename}')
+            if kapture_keypoints is None:
+                # print(type(opensfm_image_keypoints.dtype))
+                # HAHOG = Hessian Affine feature point detector + HOG descriptor
+                kapture_keypoints = kapture.Keypoints(
+                    type_name='HessianAffine',
+                    dsize=opensfm_image_keypoints.shape[1],
+                    dtype=opensfm_image_keypoints.dtype)
+            if kapture_descriptors is None:
+                kapture_descriptors = kapture.Descriptors(
+                    type_name='HOG',
+                    dsize=opensfm_image_descriptors.shape[1],
+                    dtype=opensfm_image_descriptors.dtype)
+
+            # convert keypoints file
+            keypoint_file_path = kapture.io.features.get_features_fullpath(
+                data_type=kapture.Keypoints, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
+            kapture.io.features.image_keypoints_to_file(
+                filepath=keypoint_file_path, image_keypoints=opensfm_image_keypoints)
+            # register the file
+            kapture_keypoints.add(image_filename)
+
+            # convert descriptors file
+            descriptor_file_path = kapture.io.features.get_features_fullpath(
+                data_type=kapture.Descriptors, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
+            kapture.io.features.image_descriptors_to_file(
+                filepath=descriptor_file_path, image_descriptors=opensfm_image_descriptors)
+            # register the file
+            kapture_descriptors.add(image_filename)
+    # import matches
+    kapture_matches = kapture.Matches()
+    opensfm_matches_suffix = '_matches.pkl.gz'
+    opensfm_matches_dir_path = path.join(opensfm_root_dir, 'matches')
+    if path.isdir(opensfm_matches_dir_path):
+        logger.info('importing matches ...')
+        opensfm_matches_file_list = (path.join(dp, fn)
+                                     for dp, _, fs in os.walk(opensfm_matches_dir_path) for fn in fs)
+        opensfm_matches_file_list = (filepath
+                                     for filepath in opensfm_matches_file_list
+                                     if filepath.endswith(opensfm_matches_suffix))
+
+        for opensfm_matches_filename in tqdm(opensfm_matches_file_list, disable=disable_tqdm):
+            image_filename_1 = path.relpath(opensfm_matches_filename, opensfm_matches_dir_path)[
+                               :-len(opensfm_matches_suffix)]
+            logger.debug(f'parsing matches in {image_filename_1}')
+            with gzip.open(opensfm_matches_filename, 'rb') as f:
+                opensfm_matches = pickle.load(f)
+                for image_filename_2, opensfm_image_matches in opensfm_matches.items():
+                    image_pair = (image_filename_1, image_filename_2)
+                    # register the pair to kapture
+                    kapture_matches.add(*image_pair)
+                    # convert the bin file to kapture
+                    kapture_matches_filepath = kapture.io.features.get_matches_fullpath(
+                        image_filename_pair=image_pair,
+                        kapture_dirpath=kapture_root_dir)
+                    kapture_image_matches = np.hstack([
+                        opensfm_image_matches.astype(np.float64),
+                        # no matches scoring = assume all to one
+                        np.ones(shape=(opensfm_image_matches.shape[0], 1), dtype=np.float64)])
+                    kapture.io.features.image_matches_to_file(kapture_matches_filepath, kapture_image_matches)
+    return kapture_descriptors, kapture_keypoints, kapture_matches
+
+
 def import_opensfm(
         opensfm_root_dir: str,
         kapture_root_dir: str,
@@ -193,124 +323,12 @@ def import_opensfm(
         filename_list=filename_list,
         copy_strategy=images_import_method)
 
-    # gps from pre-extracted exif, in exif/image_name.jpg.exif
-    kapture_gnss = None
-    opensfm_exif_dir_path = path.join(opensfm_root_dir, 'exif')
-    opensfm_exif_suffix = '.exif'
-    if path.isdir(opensfm_exif_dir_path):
-        logger.info('importing GNSS from exif ...')
-        camera_ids = set(image_sensors.values())
-        # add a gps sensor for each camera
-        map_cam_to_gnss_sensor = {cam_id: 'GPS_' + cam_id for cam_id in camera_ids}
-        for gnss_id in map_cam_to_gnss_sensor.values():
-            kapture_sensors[gnss_id] = kapture.Sensor(sensor_type='gnss', sensor_params=['EPSG:4326'])
-        # build epsg_code for all cameras
-        kapture_gnss = kapture.RecordsGnss()
-        opensfm_exif_filepath_list = (path.join(dir_path, filename)
-                                      for dir_path, _, filename_list in os.walk(opensfm_exif_dir_path)
-                                      for filename in filename_list
-                                      if filename.endswith(opensfm_exif_suffix))
-        for opensfm_exif_filepath in tqdm(opensfm_exif_filepath_list, disable=disable_tqdm):
-            image_filename = path.relpath(opensfm_exif_filepath, opensfm_exif_dir_path)[:-len(opensfm_exif_suffix)]
-            image_timestamp = image_timestamps[image_filename]
-            image_sensor_id = image_sensors[image_filename]
-            gnss_timestamp = image_timestamp
-            gnss_sensor_id = map_cam_to_gnss_sensor[image_sensor_id]
-            with open(opensfm_exif_filepath, 'rt') as f:
-                js_root = json.load(f)
-                if 'gps' not in js_root:
-                    logger.warning(f'NO GPS data in "{opensfm_exif_filepath}"')
-                    continue
-
-                gps_coords = {
-                    'x': js_root['gps']['longitude'],
-                    'y': js_root['gps']['latitude'],
-                    'z': js_root['gps'].get('altitude', 0.0),
-                    'dop': js_root['gps'].get('dop', 0),
-                    'utc': 0,
-                }
-                logger.debug(f'found GPS data for ({gnss_timestamp}, {gnss_sensor_id}) in "{opensfm_exif_filepath}"')
-                kapture_gnss[gnss_timestamp, gnss_sensor_id] = kapture.RecordGnss(**gps_coords)
-
-    # import features (keypoints + descriptors)
-    kapture_keypoints = None  # kapture.Keypoints(type_name='opensfm', dsize=4, dtype=np.float64)
-    kapture_descriptors = None  # kapture.Descriptors(type_name='opensfm', dsize=128, dtype=np.uint8)
-    opensfm_features_dir_path = path.join(opensfm_root_dir, 'features')
-    opensfm_features_suffix = '.features.npz'
-    if path.isdir(opensfm_features_dir_path):
-        logger.info('importing keypoints and descriptors ...')
-        opensfm_features_file_list = (path.join(dp, fn)
-                                      for dp, _, fs in os.walk(opensfm_features_dir_path) for fn in fs)
-        opensfm_features_file_list = (filepath
-                                      for filepath in opensfm_features_file_list
-                                      if filepath.endswith(opensfm_features_suffix))
-        for opensfm_feature_filename in tqdm(opensfm_features_file_list, disable=disable_tqdm):
-            image_filename = path.relpath(opensfm_feature_filename, opensfm_features_dir_path)[
-                             :-len(opensfm_features_suffix)]
-            opensfm_image_features = np.load(opensfm_feature_filename)
-            opensfm_image_keypoints = opensfm_image_features['points']
-            opensfm_image_descriptors = opensfm_image_features['descriptors']
-            logger.debug(f'parsing keypoints and descriptors in {opensfm_feature_filename}')
-            if kapture_keypoints is None:
-                # print(type(opensfm_image_keypoints.dtype))
-                # HAHOG = Hessian Affine feature point detector + HOG descriptor
-                kapture_keypoints = kapture.Keypoints(
-                    type_name='HessianAffine',
-                    dsize=opensfm_image_keypoints.shape[1],
-                    dtype=opensfm_image_keypoints.dtype)
-            if kapture_descriptors is None:
-                kapture_descriptors = kapture.Descriptors(
-                    type_name='HOG',
-                    dsize=opensfm_image_descriptors.shape[1],
-                    dtype=opensfm_image_descriptors.dtype)
-
-            # convert keypoints file
-            keypoint_file_path = kapture.io.features.get_features_fullpath(
-                data_type=kapture.Keypoints, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
-            kapture.io.features.image_keypoints_to_file(
-                filepath=keypoint_file_path, image_keypoints=opensfm_image_keypoints)
-            # register the file
-            kapture_keypoints.add(image_filename)
-
-            # convert descriptors file
-            descriptor_file_path = kapture.io.features.get_features_fullpath(
-                data_type=kapture.Descriptors, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
-            kapture.io.features.image_descriptors_to_file(
-                filepath=descriptor_file_path, image_descriptors=opensfm_image_descriptors)
-            # register the file
-            kapture_descriptors.add(image_filename)
-
-    # import matches
-    kapture_matches = kapture.Matches()
-    opensfm_matches_suffix = '_matches.pkl.gz'
-    opensfm_matches_dir_path = path.join(opensfm_root_dir, 'matches')
-    if path.isdir(opensfm_matches_dir_path):
-        logger.info('importing matches ...')
-        opensfm_matches_file_list = (path.join(dp, fn)
-                                     for dp, _, fs in os.walk(opensfm_matches_dir_path) for fn in fs)
-        opensfm_matches_file_list = (filepath
-                                     for filepath in opensfm_matches_file_list
-                                     if filepath.endswith(opensfm_matches_suffix))
-
-        for opensfm_matches_filename in tqdm(opensfm_matches_file_list, disable=disable_tqdm):
-            image_filename_1 = path.relpath(opensfm_matches_filename, opensfm_matches_dir_path)[
-                               :-len(opensfm_matches_suffix)]
-            logger.debug(f'parsing matches in {image_filename_1}')
-            with gzip.open(opensfm_matches_filename, 'rb') as f:
-                opensfm_matches = pickle.load(f)
-                for image_filename_2, opensfm_image_matches in opensfm_matches.items():
-                    image_pair = (image_filename_1, image_filename_2)
-                    # register the pair to kapture
-                    kapture_matches.add(*image_pair)
-                    # convert the bin file to kapture
-                    kapture_matches_filepath = kapture.io.features.get_matches_fullpath(
-                        image_filename_pair=image_pair,
-                        kapture_dirpath=kapture_root_dir)
-                    kapture_image_matches = np.hstack([
-                        opensfm_image_matches.astype(np.float64),
-                        # no matches scoring = assume all to one
-                        np.ones(shape=(opensfm_image_matches.shape[0], 1), dtype=np.float64)])
-                    kapture.io.features.image_matches_to_file(kapture_matches_filepath, kapture_image_matches)
+    # Imports Gnss
+    kapture_gnss = _import_gnss(opensfm_root_dir, kapture_sensors, image_sensors, image_timestamps, disable_tqdm)
+    # Imports descriptors, keypoints and matches
+    kapture_descriptors, kapture_keypoints, kapture_matches = _import_features_and_matches(opensfm_root_dir,
+                                                                                           kapture_root_dir,
+                                                                                           disable_tqdm)
 
     # import 3-D points
     if 'points' in opensfm_reconstruction:
