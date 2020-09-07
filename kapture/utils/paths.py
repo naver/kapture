@@ -15,18 +15,18 @@ from kapture.utils.logging import getLogger
 logger = getLogger()
 
 
-def path_secure(anypath: AnyStr) -> AnyStr:
+def path_secure(any_path: AnyStr) -> AnyStr:
     """
     Make sure path representation is OS independent (same on linux and windows),
     because path can be used as an identifier (eg. images).
 
-    :param anypath: path to normalize
+    :param any_path: path to normalize
     :return: normalized path
     """
-    return path.normpath(anypath).replace('\\', '/')
+    return path.normpath(any_path).replace('\\', '/')
 
 
-def populate_files_in_dirpath(root_dirpath: str,
+def populate_files_in_dirpath(root_dir_path: str,
                               filename_extensions: Optional[Union[str, List[str]]] = None,
                               do_relative_path: bool = True
                               ) -> Iterable[str]:
@@ -34,15 +34,15 @@ def populate_files_in_dirpath(root_dirpath: str,
     Returns the list of file path into the given root path.
     If a list of extensions is given, returns only files with those extensions.
 
-    :param root_dirpath: the root directory path
+    :param root_dir_path: the root directory path
     :param filename_extensions: optional file name extensions to filter in
     :param do_relative_path: if True, computes relative path.
     :return: list of paths
     """
     # list all files
-    filepaths = (
+    file_paths = (
         path.join(subdir, filename)
-        for subdir, _, file_list in os.walk(root_dirpath)
+        for subdir, _, file_list in os.walk(root_dir_path)
         for filename in file_list
     )
     # if extensions are given, keep only files that complies.
@@ -53,33 +53,34 @@ def populate_files_in_dirpath(root_dirpath: str,
         # make sure given extensions are lower case.
         filename_extensions = [ext.lower() for ext in filename_extensions]
         # check the extension is authorized
-        filepaths = (
-            filepath for filepath in filepaths
-            if path.splitext(filepath)[1].lower() in filename_extensions
+        file_paths = (
+            file_path for file_path in file_paths
+            if path.splitext(file_path)[1].lower() in filename_extensions
         )
 
     # make it relative to root
     if do_relative_path:
-        filepaths = (
-            path.relpath(filepath, root_dirpath)
-            for filepath in filepaths
+        file_paths = (
+            path.relpath(file_path, root_dir_path)
+            for file_path in file_paths
         )
 
-    filepaths = (path_secure(filepath)
-                 for filepath in filepaths)
-    return filepaths
+    file_paths = (path_secure(file_path)
+                  for file_path in file_paths)
+    return file_paths
 
 
-def safe_remove_file(filepath: str, force: bool) -> None:
+def safe_remove_file(filepath: str, force: bool, comment: Optional[str] = '') -> None:
     """
     Safely remove a file, optionally asking confirmation to the user on the command line.
 
     :param filepath: path to the file to delete.
     :param force: If True, does not ask the question to the user and just do it.
+    :param comment: comment on the file
     """
     if path.isfile(filepath):
         to_delete = (force or
-                     (input(f'{filepath} already exist, would you like to delete it ? [y/N]').lower() == 'y'))
+                     (input(f'{comment} {filepath} already exist, would you like to delete it ? [y/N]').lower() == 'y'))
         # delete all or quit
         if to_delete:
             logger.info(f'deleting already existing {filepath}')
