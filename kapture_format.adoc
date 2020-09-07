@@ -419,22 +419,24 @@ This file defines the wifi recordings in the dataset per timestamp.
 each line of the file follow this syntax:
 
 [source,txt]
-----
-timestamp, device_id, BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME
-----
+timestamp, device_id, SSID, BSSID, frequency, RSSI, scan_time_start, scan_time_end
 
 with:
 
 [cols=">1m,^1e,4",options="header"]
 |===
 |            field  | type   | description
-|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number,
+                                or any other ID to designate when this result was last seen.
+                                There is no guarantee `timestamp` lies into the range of
+                                [`scan_time_start`..`scan_time_end`].
 |        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
-|            BSSID  | string | TODO
-|             RSSI  | string | TODO
-|             FREQ  | string | TODO
-|         SCANTIME  | string | TODO
-|      VISIBLENAME  | string | TODO
+|             SSID  | string | The network name.
+|            BSSID  | string | Basic service set identifiers (BSSID) of the record.
+|        frequency  | uint32 | WiFi frequency bands in Hz.
+|             RSSI  | float  | Received Signal Strength Indicator.
+|  scan_time_start  | uint32 | The timestamp when scanning started. 0 means undefined.
+|    scan_time_end  | uint32 | The timestamp when scanning ended. 0 means undefined.
 |===
 
 ==== example
@@ -442,8 +444,10 @@ with:
 .sensors/records_wifi.txt
 [source,txt]
 ----
-# timestamp (ScanEndTime), device_id, BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME
-TODO
+# timestamp, device_id, SSID, BSSID, frequency, RSSI, scan_time_start, scan_time_end
+0, phone01wifi, , BA:98:76:54:32:10, 2400, 120.0, 0, 10
+0, phone01wifi, , 01:23:45:67:89:AB, 2400,  33.0, 0, 10
+1, phone01wifi, , 24:a4:3c:9e:d2:84, 2400, 122.0, 0, 10
 ----
 
 === `│  ├─ records_SENSOR_TYPE.txt`
