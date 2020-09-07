@@ -237,8 +237,7 @@ class TestColmapMaupertuis(unittest.TestCase):
                                      self._reconstruction_path, self._images_filepath,
                                      force_overwrite_existing=True,
                                      images_import_strategy=TransferAction.copy,
-                                     no_geometric_filtering=True
-        )
+                                     no_geometric_filtering=True)
 
         # check the numbers
         self.assertEqual(1, len(kapture_data.sensors))
