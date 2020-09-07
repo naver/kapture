@@ -286,12 +286,7 @@ class TestColmapMaupertuis(unittest.TestCase):
     def test_maupertuis_export_db_only(self):
         # export/import and check
         colmap_db_filepath = path.join(self._temp_dirpath, 'colmap.db')
-        export_colmap(
-            kapture_dirpath=self._kapture_dirpath,
-            colmap_database_filepath=colmap_db_filepath,
-            colmap_reconstruction_dirpath=None,
-            colmap_rig_filepath=None,
-            force_overwrite_existing=True)
+        export_colmap(self._kapture_dirpath, colmap_db_filepath, None, None, True)
 
         kapture_data = import_colmap(
             kapture_dirpath=self._temp_dirpath,
@@ -318,12 +313,7 @@ class TestColmapMaupertuis(unittest.TestCase):
         # export/import and check
         colmap_db_filepath = path.join(self._temp_dirpath, 'colmap.db')
         colmap_txt_filepath = path.join(self._temp_dirpath, 'dense')
-        export_colmap(
-            kapture_dirpath=self._kapture_dirpath,
-            colmap_database_filepath=colmap_db_filepath,
-            colmap_reconstruction_dirpath=colmap_txt_filepath,
-            colmap_rig_filepath=None,
-            force_overwrite_existing=True)
+        export_colmap(self._kapture_dirpath, colmap_db_filepath, colmap_txt_filepath, None, True)
 
         kapture_data = import_colmap(
             kapture_dirpath=self._temp_dirpath,
