@@ -38,6 +38,89 @@ SILDA_CORPUS_SPLIT_FILENAMES = {
 }
 
 
+def _import_cameras(silda_dir_path, snapshots, fallback_cam_model) -> kapture.Sensors:
+    logger.info('Processing sensors ...')
+    cameras = kapture.Sensors()
+    # use hard coded intrinsics
+    # evaluated using colmap
+    # 1 OPENCV_FISHEYE 1024 1024 393.299 394.815 512 512 -0.223483 0.117325 -0.0326138 0.00361082
+    #                  fx, fy, cx, cy, omega
+    # 1 FOV 1024 1024 300 300 512 512 0.899632
+    cam_id_list = sorted(set(cam_id for _, cam_id, _ in kapture.flatten(snapshots)))
+    for cam_id in cam_id_list:
+        # pick a image for that cam id
+        random_image_intrinsic = next(f'{timestamp}_{cam_id}.intrinsics'  # keep only filename (thats what silda expect)
+                                      for timestamp, cid, filename in kapture.flatten(snapshots)
+                                      if cid == cam_id)
+        logger.debug(f'camera {cam_id} intrinsics : picking at random: ("{random_image_intrinsic}")')
+        intrinsic_filepath = path.join(silda_dir_path, 'camera-intrinsics', random_image_intrinsic)
+        logger.debug(f'loading file: "{intrinsic_filepath}"')
+        silda_proj_params = np.loadtxt(intrinsic_filepath)
+        # only retrieve principal point from intrinsics,
+        # because the rest correspond to a fisheye model not available in colmap.
+        principal_point = (silda_proj_params[0:2] * SILDA_IMAGE_SIZE).flatten().tolist()
+        projection = fallback_cam_model
+        if 'OPENCV_FISHEYE' == projection:
+            focal_length = [393.299, 394.815]
+            fisheye_coefficients = [-0.223483,
+                                    0.117325, -0.0326138, 0.00361082]
+            #          //    fx, fy, cx, cy, k1, k2, k3, k4
+            proj_params = focal_length + principal_point + fisheye_coefficients
+        elif 'FOV' == projection:
+            # use hard coded intrinsics from Torsten reconstruction, ie. :
+            #       217.294036, 217.214703, 512.000000, 507.897400, -0.769113
+            focal_length = [217.294036, 217.214703]
+            # principal_point = [512.000000, 507.897400]
+            omega = [-0.769113]
+            #                  fx, fy, cx, cy, omega
+            proj_params = focal_length + principal_point + omega
+        else:
+            raise ValueError('Only accepts OPENCV_FISHEYE, or FOV as projection model.')
+
+        camera = kapture.Camera(projection, SILDA_IMAGE_SIZE.tolist() + proj_params)
+        cameras[cam_id] = camera
+    return cameras
+
+
+def _import_trajectories(silda_dir_path, image_name_to_ids, hide_progress_bars) -> kapture.Trajectories:
+    logger.info('Processing trajectories ...')
+    trajectories = kapture.Trajectories()
+    with open(path.join(silda_dir_path, 'silda-train-poses.txt')) as file:
+        lines = file.readlines()
+        lines = (line.rstrip().split() for line in lines)
+        extrinsics = {
+            line[0]: np.array(line[1:8], dtype=np.float) for line in lines
+        }
+    for silda_image_name, pose_params in tqdm(extrinsics.items(), disable=hide_progress_bars):
+        # Silda poses are 7-dim vectors with the rotation quaternion,
+        # and the translation vector. The order needs to be:
+        # qw,qx,qy,qz,tx,ty,tz
+        # The parameters should be described in terms of camera to world transformations
+        if silda_image_name not in image_name_to_ids:
+            # if this is not referenced: means its part of the corpus to be ignored.
+            continue
+        pose = kapture.PoseTransform(pose_params[0:4], pose_params[4:7]).inverse()
+        timestamp, cam_id = image_name_to_ids[silda_image_name]
+        trajectories[timestamp, cam_id] = pose
+    # if query, trajectories is empty, so juste do not save it
+    if len(trajectories) == 0:
+        trajectories = None
+    return trajectories
+
+
+def _make_rigs(replace_pose_rig, trajectories) -> kapture.Rigs:
+    logger.info('Making up a rig ...')
+    rigs = kapture.Rigs()
+    pose_babord = kapture.PoseTransform(t=[0, 0, 0], r=quaternion.from_rotation_vector([0, -np.pi / 2, 0]))
+    pose_tribord = kapture.PoseTransform(t=[0, 0, 0], r=quaternion.from_rotation_vector([0, np.pi / 2, 0]))
+    rigs['silda_rig', '0'] = pose_babord
+    rigs['silda_rig', '1'] = pose_tribord
+    if replace_pose_rig:
+        logger.info('replacing camera poses with rig poses.')
+        kapture.rigs_recover_inplace(trajectories, rigs)
+    return rigs
+
+
 def import_silda(silda_dir_path: str,
                  destination_kapture_dir_path: str,
                  fallback_cam_model: str = 'FOV',
@@ -123,82 +206,13 @@ def import_silda(silda_dir_path: str,
 
     assert len(image_filenames_kapture) == len(image_filenames_original)
     # intrinsics #######################################################################################################
-    logger.info('Processing sensors ...')
-    cameras = kapture.Sensors()
-    # use hard coded intrinsics
-    # evaluated using colmap
-    # 1 OPENCV_FISHEYE 1024 1024 393.299 394.815 512 512 -0.223483 0.117325 -0.0326138 0.00361082
-    #                  fx, fy, cx, cy, omega
-    # 1 FOV 1024 1024 300 300 512 512 0.899632
-    cam_id_list = sorted(set(cam_id for _, cam_id, _ in kapture.flatten(snapshots)))
-    for cam_id in cam_id_list:
-        # pick a image for that cam id
-        random_image_intrinsic = next(f'{timestamp}_{cam_id}.intrinsics'  # keep only filename (thats what silda expect)
-                                      for timestamp, cid, filename in kapture.flatten(snapshots)
-                                      if cid == cam_id)
-        logger.debug(f'camera {cam_id} intrinsics : picking at random: ("{random_image_intrinsic}")')
-        intrinsic_filepath = path.join(silda_dir_path, 'camera-intrinsics', random_image_intrinsic)
-        logger.debug(f'loading file: "{intrinsic_filepath}"')
-        silda_proj_params = np.loadtxt(intrinsic_filepath)
-        # only retrieve principal point from intrinsics,
-        # because the rest correspond to a fisheye model not available in colmap.
-        principal_point = (silda_proj_params[0:2] * SILDA_IMAGE_SIZE).flatten().tolist()
-        projection = fallback_cam_model
-        if 'OPENCV_FISHEYE' == projection:
-            focal_length = [393.299, 394.815]
-            fisheye_coefficients = [-0.223483,
-                                    0.117325, -0.0326138, 0.00361082]
-            #          //    fx, fy, cx, cy, k1, k2, k3, k4
-            proj_params = focal_length + principal_point + fisheye_coefficients
-        elif 'FOV' == projection:
-            # use hard coded intrinsics from Torsten reconstruction, ie. :
-            #       217.294036, 217.214703, 512.000000, 507.897400, -0.769113
-            focal_length = [217.294036, 217.214703]
-            # principal_point = [512.000000, 507.897400]
-            omega = [-0.769113]
-            #                  fx, fy, cx, cy, omega
-            proj_params = focal_length + principal_point + omega
-        else:
-            raise ValueError('Only accepts OPENCV_FISHEYE, or FOV as projection model.')
-
-        camera = kapture.Camera(projection, SILDA_IMAGE_SIZE.tolist() + proj_params)
-        cameras[cam_id] = camera
+    cameras = _import_cameras(silda_dir_path, snapshots, fallback_cam_model)
 
     # extrinsics #######################################################################################################
-    logger.info('Processing trajectories ...')
-    trajectories = kapture.Trajectories()
-    with open(path.join(silda_dir_path, 'silda-train-poses.txt')) as file:
-        lines = file.readlines()
-        lines = (line.rstrip().split() for line in lines)
-        extrinsics = {
-            line[0]: np.array(line[1:8], dtype=np.float) for line in lines
-        }
-
-    for silda_image_name, pose_params in tqdm(extrinsics.items(), disable=hide_progress_bars):
-        # Silda poses are 7-dim vectors with the rotation quaternion,
-        # and the translation vector. The order needs to be:
-        # qw,qx,qy,qz,tx,ty,tz
-        # The parameters should be described in terms of camera to world transformations
-        if silda_image_name not in image_name_to_ids:
-            # if this is not referenced: means its part of the corpus to be ignored.
-            continue
-        pose = kapture.PoseTransform(pose_params[0:4], pose_params[4:7]).inverse()
-        timestamp, cam_id = image_name_to_ids[silda_image_name]
-        trajectories[timestamp, cam_id] = pose
-    # if query, trajectories is empty, so juste do not save it
-    if len(trajectories) == 0:
-        trajectories = None
+    trajectories = _import_trajectories(silda_dir_path, image_name_to_ids, hide_progress_bars)
 
     # rigs
-    logger.info('Making up a rig ...')
-    rigs = kapture.Rigs()
-    pose_babord = kapture.PoseTransform(t=[0, 0, 0], r=quaternion.from_rotation_vector([0, -np.pi / 2, 0]))
-    pose_tribord = kapture.PoseTransform(t=[0, 0, 0], r=quaternion.from_rotation_vector([0, np.pi / 2, 0]))
-    rigs['silda_rig', '0'] = pose_babord
-    rigs['silda_rig', '1'] = pose_tribord
-    if replace_pose_rig:
-        logger.info('replacing camera poses with rig poses.')
-        kapture.rigs_recover_inplace(trajectories, rigs)
+    rigs = _make_rigs(replace_pose_rig, trajectories)
 
     # pack it all together
     kapture_data = kapture.Kapture(
