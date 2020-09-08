@@ -15,7 +15,7 @@ import os
 import os.path as path
 import numpy as np
 import quaternion
-from typing import Optional
+from typing import Any, Dict, Optional
 from tqdm import tqdm
 import path_to_kapture  # noqa: F401
 import kapture
@@ -38,8 +38,8 @@ SILDA_CORPUS_SPLIT_FILENAMES = {
 }
 
 
-def import_silda(silda_dirpath: str,
-                 destination_kapture_dirpath: str,
+def import_silda(silda_dir_path: str,
+                 destination_kapture_dir_path: str,
                  fallback_cam_model: str = 'FOV',
                  do_split_cams: bool = False,
                  corpus: Optional[str] = None,
@@ -49,8 +49,8 @@ def import_silda(silda_dirpath: str,
     """
     Imports data from silda dataset.
 
-    :param silda_dirpath: path to the silda top directory
-    :param destination_kapture_dirpath: input path to kapture directory.
+    :param silda_dir_path: path to the silda top directory
+    :param destination_kapture_dir_path: input path to kapture directory.
     :param fallback_cam_model: camera model to fallback when necessary
     :param do_split_cams: If true, re-organises and renames the image files to split apart cameras.
     :param corpus: the list of corpus to be imported, among 'mapping', 'query'.
@@ -60,15 +60,15 @@ def import_silda(silda_dirpath: str,
     """
 
     # sanity check
-    silda_dirpath = path_secure(path.abspath(silda_dirpath))
-    destination_kapture_dirpath = path_secure(path.abspath(destination_kapture_dirpath))
+    silda_dir_path = path_secure(path.abspath(silda_dir_path))
+    destination_kapture_dir_path = path_secure(path.abspath(destination_kapture_dir_path))
     if TransferAction.root_link == images_import_strategy and do_split_cams:
         raise ValueError('impossible to only link images directory and applying split cam.')
     hide_progress_bars = logger.getEffectiveLevel() >= logging.INFO
 
     # prepare output directory
-    kapture.io.structure.delete_existing_kapture_files(destination_kapture_dirpath, force_overwrite_existing)
-    os.makedirs(destination_kapture_dirpath, exist_ok=True)
+    kapture.io.structure.delete_existing_kapture_files(destination_kapture_dir_path, force_overwrite_existing)
+    os.makedirs(destination_kapture_dir_path, exist_ok=True)
 
     # images ###########################################################################################################
     logger.info('Processing images ...')
@@ -77,14 +77,14 @@ def import_silda(silda_dirpath: str,
     #   ├── 1445_0.png
     #   ├── 1445_1.png
     #   ...
-    silda_images_root_path = path.join(silda_dirpath, 'silda-images')
+    silda_images_root_path = path.join(silda_dir_path, 'silda-images')
     # list all png files (its PNG in silda) using a generator.
     if corpus is not None:
         assert corpus in SILDA_CORPUS_SPLIT_FILENAMES
         # if corpus specified, filter by those which directory name match corpus.
         logger.debug(f'only importing {corpus} part.')
-        coprus_filepath = path.join(silda_dirpath, SILDA_CORPUS_SPLIT_FILENAMES[corpus])
-        with open(coprus_filepath, 'rt') as corpus_file:
+        corpus_file_path = path.join(silda_dir_path, SILDA_CORPUS_SPLIT_FILENAMES[corpus])
+        with open(corpus_file_path, 'rt') as corpus_file:
             corpus_filenames = corpus_file.readlines()
             image_filenames_original = sorted(
                 filename.strip()
@@ -93,7 +93,7 @@ def import_silda(silda_dirpath: str,
     else:
         image_filenames_original = sorted(
             filename
-            for dirpath, sd, fs in os.walk(silda_images_root_path)
+            for dir_path, sd, fs in os.walk(silda_images_root_path)
             for filename in fs
             if filename.endswith('.png'))
 
@@ -102,9 +102,10 @@ def import_silda(silda_dirpath: str,
     image_name_to_ids = {}  # '1445_0.png' -> (1445, 0)
     for image_filename_original in tqdm(image_filenames_original, disable=hide_progress_bars):
         # retrieve info from image filename
-        shot_info = SILDA_IMAGE_NAME_PATTERN.match(image_filename_original)
-        assert shot_info is not None
-        shot_info = shot_info.groupdict()
+        name_parts_match = SILDA_IMAGE_NAME_PATTERN.match(image_filename_original)
+        assert name_parts_match is not None
+        shot_info: Dict[str, Any]
+        shot_info = name_parts_match.groupdict()
         shot_info['timestamp'] = int(shot_info['timestamp'])  # To avoid warnings about type of the value
         # eg. file_info = {'filename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
         # create a path of the image into NLE dir
@@ -136,7 +137,7 @@ def import_silda(silda_dirpath: str,
                                       for timestamp, cid, filename in kapture.flatten(snapshots)
                                       if cid == cam_id)
         logger.debug(f'camera {cam_id} intrinsics : picking at random: ("{random_image_intrinsic}")')
-        intrinsic_filepath = path.join(silda_dirpath, 'camera-intrinsics', random_image_intrinsic)
+        intrinsic_filepath = path.join(silda_dir_path, 'camera-intrinsics', random_image_intrinsic)
         logger.debug(f'loading file: "{intrinsic_filepath}"')
         silda_proj_params = np.loadtxt(intrinsic_filepath)
         # only retrieve principal point from intrinsics,
@@ -166,7 +167,7 @@ def import_silda(silda_dirpath: str,
     # extrinsics #######################################################################################################
     logger.info('Processing trajectories ...')
     trajectories = kapture.Trajectories()
-    with open(path.join(silda_dirpath, 'silda-train-poses.txt')) as file:
+    with open(path.join(silda_dir_path, 'silda-train-poses.txt')) as file:
         lines = file.readlines()
         lines = (line.rstrip().split() for line in lines)
         extrinsics = {
@@ -208,20 +209,20 @@ def import_silda(silda_dirpath: str,
     )
 
     logger.info('saving to Kapture  ...')
-    kapture.io.csv.kapture_to_dir(destination_kapture_dirpath, kapture_data)
+    kapture.io.csv.kapture_to_dir(destination_kapture_dir_path, kapture_data)
 
     # finally import images
     if images_import_strategy != TransferAction.skip:
         # importing image files
         logger.info(f'importing {len(image_filenames_original)} images ...')
         assert len(image_filenames_original) == len(image_filenames_kapture)
-        image_filepaths_original = [
+        image_file_paths_original = [
             path.join(silda_images_root_path, image_filename_kapture)
             for image_filename_kapture in image_filenames_original]
-        image_filepaths_kapture = [
-            get_image_fullpath(destination_kapture_dirpath, image_filename_kapture)
+        image_file_paths_kapture = [
+            get_image_fullpath(destination_kapture_dir_path, image_filename_kapture)
             for image_filename_kapture in image_filenames_kapture]
-        transfer_files_from_dir(image_filepaths_original, image_filepaths_kapture, images_import_strategy)
+        transfer_files_from_dir(image_file_paths_original, image_file_paths_kapture, images_import_strategy)
     logger.info('done.')
 
 
