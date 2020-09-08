@@ -21,6 +21,9 @@ logger = logging.getLogger('kapture_print')
 
 @contextlib.contextmanager
 def open_or_stdout(filename=None):
+    """
+    Get the output to print into
+    """
     # from https://stackoverflow.com/questions/17602878/how-to-handle-both-with-open-and-sys-stdout-nicely
     if filename and filename != '-':
         fh = open(filename, 'w')
@@ -34,12 +37,18 @@ def open_or_stdout(filename=None):
             fh.close()
 
 
-def print_key_value(key, value, file, show_none):
+def print_key_value(key, value, file, show_none) -> None:
+    """
+    Prints a key and its value
+    """
     if value is not None or show_none:
         print(f'{key:25}: {value}', file=file)
 
 
-def print_title(title, file):
+def print_title(title, file) -> None:
+    """
+    Prints the title
+    """
     print(f'=== {title:^25} ===', file=file)
 
 
