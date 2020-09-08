@@ -35,7 +35,7 @@ class TestFlatten(unittest.TestCase):
         actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
         self.assertEqual(actual_list_sorted, expected_list_sorted)
 
-        test_values = kapture.RecordWifi(3, 4, 7, 'c')
+        test_values = kapture.RecordWifi(frequency=2500, rssi=-1.0)
         expected_list = [(test_values,)]
         actual_list = list(kapture.flatten(test_values, is_sorted=False))
         actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
@@ -45,7 +45,7 @@ class TestFlatten(unittest.TestCase):
     def test_simple_dict(self):
         test_values = {'a': 1, 'c': 3, 'b': 4, 'z': 0, 'y': 9, 'd': 5}
         expected_list = [('a', 1), ('c', 3), ('b', 4), ('z', 0), ('y', 9), ('d', 5)]
-        expected_list_sorted = [('a', 1), ('b', 4), ('c', 3),  ('d', 5), ('y', 9), ('z', 0)]
+        expected_list_sorted = [('a', 1), ('b', 4), ('c', 3), ('d', 5), ('y', 9), ('z', 0)]
         actual_list = list(kapture.flatten(test_values, is_sorted=False))
         actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
         self.assertEqual(actual_list, expected_list)
@@ -460,8 +460,8 @@ class TestRecords(unittest.TestCase):
         self.assertEqual('cam0/image001.jpg', kapture_data.records_camera[timestamp1, device_id0])
         self.assertEqual('cam1/image001.jpg', kapture_data.records_camera[timestamp1, device_id1])
 
-        self.assertNotIn((timestamp1, 'cam2'),  kapture_data.records_camera)
-        self.assertNotIn((2, device_id0),  kapture_data.records_camera)
+        self.assertNotIn((timestamp1, 'cam2'), kapture_data.records_camera)
+        self.assertNotIn((2, device_id0), kapture_data.records_camera)
 
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()
@@ -471,14 +471,13 @@ class TestRecords(unittest.TestCase):
         records_wifi = kapture.RecordsWifi()
         timestamp0, timestamp1 = 0, 1
         device_id0, device_id1 = 'AC01324954_WIFI', 'AC01324955_WIFI'
-        bssid = '68:72:51:80:52:df'
+        bssid, ssid = '68:72:51:80:52:df', 'M1X_PicoM2'
         rssi = -33
         freq = 2417
-        scan_time = 1555398770280
-        visible_name = 'M1X_PicoM2'
+        scan_time_start, scan_time_end = 1555398770280, 1555398770290
         # assign
-        wifi_data = {}
-        wifi_data[bssid] = kapture.RecordWifi(rssi, freq, scan_time, visible_name)
+        wifi_data = {bssid: kapture.RecordWifi(ssid=ssid, rssi=rssi, frequency=freq,
+                                               scan_time_start=scan_time_start, scan_time_end=scan_time_end)}
         records_wifi[timestamp0, device_id0] = wifi_data
         kapture_data = kapture.Kapture(records_wifi=records_wifi)
         self.assertEqual(1, len(kapture_data.records_wifi.keys()))
@@ -500,9 +499,9 @@ class TestRecords(unittest.TestCase):
         unix_ts = int(datetime(year=1986, month=4, day=26).timestamp())
 
         records_gnss = kapture.RecordsGnss()
-        records_gnss[0, gps_id1] = kapture.RecordGnss(x+0, y+0, z+0, unix_ts+0, 9.)
-        records_gnss[1, gps_id1] = kapture.RecordGnss(x+1, y+1, z+1, unix_ts+1, 2.)
-        records_gnss[1, gps_id2] = kapture.RecordGnss(x+2, y+2, z+2, unix_ts+2, 2.)
+        records_gnss[0, gps_id1] = kapture.RecordGnss(x + 0, y + 0, z + 0, unix_ts + 0, 9.)
+        records_gnss[1, gps_id1] = kapture.RecordGnss(x + 1, y + 1, z + 1, unix_ts + 1, 2.)
+        records_gnss[1, gps_id2] = kapture.RecordGnss(x + 2, y + 2, z + 2, unix_ts + 2, 2.)
         records_gnss[2] = {gps_id1: kapture.RecordGnss(x + 3, y + 3, z + 3, unix_ts + 3, 0.)}
 
         self.assertEqual(3, len(records_gnss))

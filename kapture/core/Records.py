@@ -6,27 +6,27 @@ from .flatten import flatten
 
 
 class RecordWifi:
-    """
-    RSSI, FREQ, SCANTIME, VISIBLENAME
-    """
+    """ frequency, rssi, ssid, scan_time_start, scan_time_end """
 
     def __init__(self,
-                 rssi: int,
-                 freq: int,
-                 scan_time: int,
-                 visible_name: str):
+                 frequency: int,
+                 rssi: float,
+                 ssid: str = '',
+                 scan_time_start: int = 0,
+                 scan_time_end: int = 0
+                 ):
         # enforce type
-        self.rssi = int(rssi)
-        self.freq = int(freq)
-        self.scan_time = int(scan_time)
-        self.visible_name = str(visible_name)
+        self.frequency = int(frequency)
+        self.rssi = float(rssi)
+        self.ssid = str(ssid)
+        self.scan_time_start = int(scan_time_start)
+        self.scan_time_end = int(scan_time_end)
 
     def as_list(self) -> List[str]:
         """
         :return: Wifi records as list of strings
         """
-        values = [self.rssi, self.freq,
-                  self.scan_time, self.visible_name]
+        values = [self.frequency, self.rssi, self.ssid, self.scan_time_start, self.scan_time_end]
         return [str(v) for v in values]
 
     def __repr__(self) -> str:
@@ -238,9 +238,9 @@ class RecordsLidar(RecordsBase[str]):
 class RecordsWifi(RecordsBase[Dict[str, RecordWifi]]):
     """
     brief: Records
-            records[timestamp][sensor_id][bssid] = <RecordWifi>
+            records[timestamp][sensor_id] = {bssid: <RecordWifi>}
             or
-            records[(timestamp, sensor_id)][bssid] = <RecordWifi>
+            records[(timestamp, sensor_id)] = {bssid: <RecordWifi>}
     """
 
     def __setitem__(self,

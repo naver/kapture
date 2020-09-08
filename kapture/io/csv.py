@@ -469,12 +469,11 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
     :param records_wifi:
     """
     assert (isinstance(records_wifi, kapture.RecordsWifi))
-    header = ('# timestamp (ScanEndTime), device_id, '
-              'BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME')
+    header = '# timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end'
     table = []
     for timestamp, sensor_id in sorted(records_wifi.key_pairs()):
-        for bssid in records_wifi[timestamp, sensor_id]:
-            table.append([timestamp, sensor_id, bssid] + records_wifi[(timestamp, sensor_id)][bssid].as_list())
+        for bssid, record in records_wifi[timestamp, sensor_id].items():
+            table.append([timestamp, sensor_id, bssid] + record.as_list())
     with open(filepath, 'w') as file:
         table_to_file(file, table, header=header)
 
@@ -494,22 +493,16 @@ def records_wifi_from_file(
     records_wifi = kapture.RecordsWifi()
     with open(filepath) as file:
         table = table_from_file(file)
-        records_wifi_current = {}
-        cur_timestamp = -1
-        # timestamp (ScanEndTime), device_id, BSSID, RSSI, FREQ, SCANTIME, VISIBLENAME
-        for timestamp, device_id, bssid, *wifi_params in table:
+        # timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
+        for timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end in table:
+            timestamp, device_id = int(timestamp), str(device_id)
             if wifi_ids is not None and device_id not in wifi_ids:
                 # just ignore
                 continue
-            if timestamp != cur_timestamp:
-                if records_wifi_current:
-                    records_wifi[(int(cur_timestamp), str(device_id))] = records_wifi_current
-                records_wifi_current = {}
-                cur_timestamp = timestamp
-            records_wifi_current[bssid] = kapture.RecordWifi(*wifi_params)
-        # Don't forget last line
-        if records_wifi_current:
-            records_wifi[(int(cur_timestamp), str(device_id))] = records_wifi_current
+            if (timestamp, device_id) not in records_wifi:
+                records_wifi[timestamp, device_id] = {}
+            records_wifi[timestamp, device_id][BSSID] = kapture.RecordWifi(
+                frequency, RSSI, SSID, scan_time_start, scan_time_end)
 
     return records_wifi
 

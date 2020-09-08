@@ -179,7 +179,7 @@ TODO
 
 ==== wifi
 
-TODO
+Wifi sensor does not have intrinsic parameters.
 
 ==== Other sensors
 
@@ -419,7 +419,7 @@ This file defines the wifi recordings in the dataset per timestamp.
 each line of the file follow this syntax:
 
 [source,txt]
-timestamp, device_id, SSID, BSSID, frequency, RSSI, scan_time_start, scan_time_end
+timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
 
 with:
 
@@ -431,10 +431,10 @@ with:
                                 There is no guarantee `timestamp` lies into the range of
                                 [`scan_time_start`..`scan_time_end`].
 |        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
-|             SSID  | string | The network name.
 |            BSSID  | string | Basic service set identifiers (BSSID) of the record.
 |        frequency  | uint32 | WiFi frequency bands in Hz.
 |             RSSI  | float  | Received Signal Strength Indicator.
+|             SSID  | string | The network name.
 |  scan_time_start  | uint32 | The timestamp when scanning started. 0 means undefined.
 |    scan_time_end  | uint32 | The timestamp when scanning ended. 0 means undefined.
 |===
@@ -444,10 +444,10 @@ with:
 .sensors/records_wifi.txt
 [source,txt]
 ----
-# timestamp, device_id, SSID, BSSID, frequency, RSSI, scan_time_start, scan_time_end
-0, phone01wifi, , BA:98:76:54:32:10, 2400, 120.0, 0, 10
-0, phone01wifi, , 01:23:45:67:89:AB, 2400,  33.0, 0, 10
-1, phone01wifi, , 24:a4:3c:9e:d2:84, 2400, 122.0, 0, 10
+# timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
+0, phone01wifi, BA:98:76:54:32:10, 2400, 120.0, , 0, 10
+0, phone01wifi, 01:23:45:67:89:AB, 2400,  33.0, , 0, 10
+1, phone01wifi, 24:a4:3c:9e:d2:84, 2400, 122.0, , 0, 10
 ----
 
 === `│  ├─ records_SENSOR_TYPE.txt`

@@ -556,13 +556,15 @@ class TestCsvM1x(unittest.TestCase):
         self.assertEqual(2, len(self._kapture_data.records_wifi.key_pairs()))
         self.assertIn(1555398770307, self._kapture_data.records_wifi)
         self.assertIn('AC01324954_wifi', self._kapture_data.records_wifi[1555398770307])
-        wifi_expected = kapture.RecordWifi(-33, 2417, 1555398770280, 'M1X_PicoM2')
+        wifi_expected = {'68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
+                         '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-49, ssid='@HYUNDAI-WiFi')}
         # compare representation, to be robust to ?????
         self.assertEqual(str(wifi_expected),
-                         str(self._kapture_data.records_wifi[1555398770307, 'AC01324954_wifi']['68:72:51:80:52:df']))
-        wifi_expected = kapture.RecordWifi(-47, 5765, 1555398770280, '@HYUNDAI-WiFi')
+                         str(self._kapture_data.records_wifi[1555398770307, 'AC01324954_wifi']))
+        wifi_expected = {'68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-35, ssid='M1X_PicoM2'),
+                         '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-47, ssid='@HYUNDAI-WiFi')}
         self.assertEqual(str(wifi_expected),
-                         str(self._kapture_data.records_wifi[1555398771307, 'AC01324954_wifi']['68:9c:e2:e1:b0:60']))
+                         str(self._kapture_data.records_wifi[1555398771307, 'AC01324954_wifi']))
 
     def test_records_lidar_read_file(self):
         self.assertEqual(3, len(self._kapture_data.records_lidar.keys()))

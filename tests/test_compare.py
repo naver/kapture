@@ -212,27 +212,43 @@ class TestCompareM1x(unittest.TestCase):
     def test_equal_records_wifi(self):
         kapture_data_a = copy.deepcopy(self._kapture_data)
         kapture_data_b = copy.deepcopy(self._kapture_data)
+        # check for deep copy
         self.assertTrue(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
 
-        wifi_a = kapture.RecordWifi(3, 4, 7, 'c')
-        wifi_b = kapture.RecordWifi(4, 4, 7, 'c')
-        wifi_c = kapture.RecordWifi(3, 3, 7, 'c')
-        wifi_d = kapture.RecordWifi(3, 4, 6, 'c')
-        wifi_e = kapture.RecordWifi(3, 4, 7, 'b')
-
-        kapture_data_a.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_a}
-        self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_a}
+        record_wifi_1 = {
+            '68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-49.0, ssid='@HYUNDAI-WiFi'),
+        }
+        record_wifi_2 = {
+            '68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-35.0, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-47.0, ssid='@HYUNDAI-WiFi'),
+        }
+        # check deep copy just did nothing: recreate the B
+        kapture_data_b.records_wifi = kapture.RecordsWifi()
+        kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi'] = record_wifi_1
+        kapture_data_b.records_wifi[1555398771307, 'AC01324954_wifi'] = record_wifi_2
         self.assertTrue(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_b}
+
+        # check if some are missing, its not equal
+        kapture_data_b.records_wifi = kapture.RecordsWifi()
+        kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi'] = record_wifi_1
         self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid2': wifi_a}
+
+        # just modify a single frequency
+        kapture_data_b = copy.deepcopy(self._kapture_data)
+        kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi']['68:72:51:80:52:df'].frequency += 1
         self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_c}
+
+        # just modify a single rssi
+        kapture_data_b = copy.deepcopy(self._kapture_data)
+        kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi']['68:72:51:80:52:df'].rssi += 2.0
         self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_d}
+
+        # just modify a single bssid
+        kapture_data_b = copy.deepcopy(self._kapture_data)
+        dropped = kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi'].pop('68:72:51:80:52:df')
         self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
-        kapture_data_b.records_wifi[(7497487, 'sensor1')] = {'bssid1': wifi_e}
+        kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi']['XX:XX:XX:XX:XX:XX'] = dropped
         self.assertFalse(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
 
     def test_equal_keypoints(self):
