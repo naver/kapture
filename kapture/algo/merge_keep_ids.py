@@ -8,6 +8,7 @@ from typing import List, Optional, Type
 
 import kapture
 from kapture.io.records import TransferAction, get_image_fullpath
+from kapture.utils.Collections import get_new_if_not_none
 
 from .merge_reconstruction import merge_keypoints, merge_descriptors, merge_global_features, merge_matches
 from .merge_reconstruction import merge_points3d_and_observations, merge_points3d
@@ -159,8 +160,10 @@ def merge_records_gnss(records_gnss_list: List[Optional[kapture.RecordsGnss]]) -
     return merged_records_gnss
 
 
-def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
-                   data_paths: List[str], kapture_path: str,
+def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function a bit long but not too complex
+                   skip_list: List[Type],
+                   data_paths: List[str],
+                   kapture_path: str,
                    images_import_method: TransferAction) -> kapture.Kapture:
     """
     Merge multiple kapture while keeping ids (sensor_id) identical in merged and inputs.
@@ -176,25 +179,23 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
 
     # get the union of all sensors
     new_sensors = merge_sensors([every_kapture.sensors for every_kapture in kapture_list])
-    if new_sensors:  # if merge_sensors returned an empty object, keep merged_kapture.sensors to None
-        merged_kapture.sensors = new_sensors
+    # if merge_sensors returned an empty object, keep merged_kapture.sensors to None
+    merged_kapture.sensors = get_new_if_not_none(new_sensors, merged_kapture.sensors)
 
     # get the union of all rigs
     new_rigs = merge_rigs([every_kapture.rigs for every_kapture in kapture_list])
-    if new_rigs:  # if merge_rigs returned an empty object, keep merged_kapture.rigs to None
-        merged_kapture.rigs = new_rigs
+    # if merge_rigs returned an empty object, keep merged_kapture.rigs to None
+    merged_kapture.rigs = get_new_if_not_none(new_rigs, merged_kapture.rigs)
 
     # all fields below can be skipped with skip_list
     # we do not assign the properties when the merge evaluate to false, we keep it as None
     if kapture.Trajectories not in skip_list:
         new_trajectories = merge_trajectories([every_kapture.trajectories for every_kapture in kapture_list])
-        if new_trajectories:
-            merged_kapture.trajectories = new_trajectories
+        merged_kapture.trajectories = get_new_if_not_none(new_trajectories, merged_kapture.trajectories)
 
     if kapture.RecordsCamera not in skip_list:
         new_records_camera = merge_records_camera([every_kapture.records_camera for every_kapture in kapture_list])
-        if new_records_camera:
-            merged_kapture.records_camera = new_records_camera
+        merged_kapture.records_camera = get_new_if_not_none(new_records_camera, merged_kapture.records_camera)
 
         merge_records_data([[image_name
                              for _, _, image_name in kapture.flatten(every_kapture.records_camera)]
@@ -206,16 +207,13 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
 
     if kapture.RecordsLidar not in skip_list:
         new_records_lidar = merge_records_lidar([every_kapture.records_lidar for every_kapture in kapture_list])
-        if new_records_lidar:
-            merged_kapture.records_lidar = new_records_lidar
+        merged_kapture.records_lidar = get_new_if_not_none(new_records_lidar, merged_kapture.records_lidar)
     if kapture.RecordsWifi not in skip_list:
         new_records_wifi = merge_records_wifi([every_kapture.records_wifi for every_kapture in kapture_list])
-        if new_records_wifi:
-            merged_kapture.records_wifi = new_records_wifi
+        merged_kapture.records_wifi = get_new_if_not_none(new_records_wifi, merged_kapture.records_wifi)
     if kapture.RecordsGnss not in skip_list:
         new_records_gnss = merge_records_gnss([every_kapture.records_gnss for every_kapture in kapture_list])
-        if new_records_gnss:
-            merged_kapture.records_gnss = new_records_gnss
+        merged_kapture.records_gnss = get_new_if_not_none(new_records_gnss, merged_kapture.records_gnss)
 
     # for the reconstruction, except points and observations, the files are copied with shutil.copy
     # if kapture_path evaluates to False, all copies will be skipped (but classes will be filled normally)
@@ -224,38 +222,31 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture], skip_list: List[Type],
         keypoints_not_none = [k for k in keypoints if k is not None]
         if len(keypoints_not_none) > 0:
             new_keypoints = merge_keypoints(keypoints, data_paths, kapture_path)
-            if new_keypoints:
-                merged_kapture.keypoints = new_keypoints
+            merged_kapture.keypoints = get_new_if_not_none(new_keypoints, merged_kapture.keypoints)
     if kapture.Descriptors not in skip_list:
         descriptors = [every_kapture.descriptors for every_kapture in kapture_list]
         descriptors_not_none = [k for k in descriptors if k is not None]
         if len(descriptors_not_none) > 0:
             new_descriptors = merge_descriptors(descriptors, data_paths, kapture_path)
-            if new_descriptors:
-                merged_kapture.descriptors = new_descriptors
+            merged_kapture.descriptors = get_new_if_not_none(new_descriptors, merged_kapture.descriptors)
     if kapture.GlobalFeatures not in skip_list:
         global_features = [every_kapture.global_features for every_kapture in kapture_list]
         global_features_not_none = [k for k in global_features if k is not None]
         if len(global_features_not_none) > 0:
             new_global_features = merge_global_features(global_features, data_paths, kapture_path)
-            if new_global_features:
-                merged_kapture.global_features = new_global_features
+            merged_kapture.global_features = get_new_if_not_none(new_global_features, merged_kapture.global_features)
     if kapture.Matches not in skip_list:
         matches = [every_kapture.matches for every_kapture in kapture_list]
         new_matches = merge_matches(matches, data_paths, kapture_path)
-        if new_matches:
-            merged_kapture.matches = new_matches
+        merged_kapture.matches = get_new_if_not_none(new_matches, merged_kapture.matches)
 
     if kapture.Points3d not in skip_list and kapture.Observations not in skip_list:
         points_and_obs = [(every_kapture.points3d, every_kapture.observations) for every_kapture in kapture_list]
         new_points, new_observations = merge_points3d_and_observations(points_and_obs)
-        if new_points:
-            merged_kapture.points3d = new_points
-        if new_observations:
-            merged_kapture.observations = new_observations
+        merged_kapture.points3d = get_new_if_not_none(new_points, merged_kapture.points3d)
+        merged_kapture.observations = get_new_if_not_none(new_observations, merged_kapture.observations)
     elif kapture.Points3d not in skip_list:
         points = [every_kapture.points3d for every_kapture in kapture_list]
         new_points = merge_points3d(points)
-        if new_points:
-            merged_kapture.points3d = new_points
+        merged_kapture.points3d = get_new_if_not_none(new_points, merged_kapture.points3d)
     return merged_kapture
