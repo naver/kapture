@@ -6,6 +6,7 @@ Additional collections and base python objects.
 
 import collections
 from enum import Enum
+from typing import Any
 
 
 class AutoEnum(Enum):
@@ -35,3 +36,10 @@ class LimitedDictionary(collections.OrderedDict):
         if len(self) > self._maxsize:
             oldest = next(iter(self))
             del self[oldest]
+
+
+def get_new_if_not_none(new_value: Any, old_value: Any) -> Any:
+    """
+    Return the new value if it is not None
+    """
+    return old_value if new_value is None else new_value
