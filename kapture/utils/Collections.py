@@ -38,8 +38,8 @@ class LimitedDictionary(collections.OrderedDict):
             del self[oldest]
 
 
-def get_new_if_not_none(new_value: Any, old_value: Any) -> Any:
+def get_new_if_not_empty(new_value: Any, old_value: Any) -> Any:
     """
     Return the new value if it is not None
     """
-    return old_value if new_value is None else new_value
+    return new_value if new_value else old_value
