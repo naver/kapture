@@ -37,6 +37,7 @@ def merge_kaptures(kapture_path_list: List[str],
     :param kapture_path_list: list of path to the top directory of the kapture datasets to merge
     :param merged_path: path to the merged top directory kapture to create
     :param keep_sensor_ids: if True, will keep the original sensor identifiers. Otherwise, might rename them.
+    :param images_import_strategy: import action to apply on image files
     :param skip: list of kapture data type names to optionally skip (trajectories, records_camera, descriptors, ...)
     :param force: If True, silently overwrite kapture files if already exists.
     """
