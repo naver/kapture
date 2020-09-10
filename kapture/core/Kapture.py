@@ -253,9 +253,9 @@ class Kapture:
         representation = '\n'.join([
             f'{name[1:]:14} : {len(value):4}'
             for name, value in self.__dict__.items()
-            if value is not None
+            if not name.startswith('__') and value is not None
         ])
 
         if len(representation) == 0:
             representation = 'no data'
-        return representation
+        return self.format_version + ' ' + representation
