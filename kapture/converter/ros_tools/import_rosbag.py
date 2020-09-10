@@ -11,7 +11,7 @@ import logging
 import os
 import os.path as path
 import sys
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import PIL.Image as PILImage
 import quaternion
@@ -69,6 +69,43 @@ class PositionInfo:
         self.pose6d = pose6d
 
 
+def _extract_img_buf(msg) -> np.ndarray:
+    """
+    Extracts the image as numpy one dimension array from the ROS message
+    """
+    # TODO: Better image decoding:
+    #  cv_bridge (depend on OpenCV)
+    #  ros_numpy: no dependency on OpenCV but not natively installed on melodic
+    # The below code is adapted from its Image.py file and will work for types like:
+    # rgb8, rgba8, rgb16, rgba16, bgr8, bgra8, bgr16, bgra16, mono8, mono16
+    # and the bayer formats but not the OpenCV CvMat types.
+    dtype = np.uint8
+    if len(msg.encoding) > 0:
+        if msg.encoding.endswith("8"):
+            dtype = np.uint8
+        elif msg.encoding.endswith("16"):
+            dtype = np.uint16
+        else:
+            raise ValueError(f'Unsupported image encoding {msg.encoding}')
+    nb_channels = 1
+    if msg.step > 0:
+        nb_channels = int(msg.step / msg.width)
+    if nb_channels > 1:
+        img_buf = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, msg.width, nb_channels)
+    else:
+        img_buf = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, msg.width)
+    return img_buf
+
+
+def _check_timestamp_delta(images_stamp: Dict[Any, rospy.rostime.Time]) -> None:
+    # The images are taken every 0.033 second
+    # Check all images have the same time stamp modulo epsilon
+    for topic1, stamp1 in images_stamp.items():
+        for topic2, stamp2 in images_stamp.items():
+            delta = (stamp1 - stamp2).to_sec()
+            assert (abs(delta) < 0.001), "{topic1} and {topic2} images must have the same timestamp"
+
+
 class RosBagImporter:
     """
     A importer of ROS bags with multi cam images data and odometry.
@@ -100,10 +137,48 @@ class RosBagImporter:
         os.makedirs(kapture_path, exist_ok=True)
         kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
         self._images_full_path = get_image_fullpath(kapture_path)
+        self._image_directory_path = OrderedDict()  # Should be OrderedDict[str, str]
+        self._image_topic_to_cam_id = dict()
         # Keys = timestamp, values odometer poses
         self._last_poses = LimitedDictionary(20)
         self.images_info = list()  # Of ImageInfo: type annotation is not supported in 3.6
         self.poses_info = list()  # Of PositionInfo
+        self._image_count_per_camera = -1
+        self._saved_number = 0
+
+    def _check_bag_topics(self, bag: rosbag.bag.Bag, odometry_topic: Optional[str], image_topics: List[str]):
+        bag_info = bag.get_type_and_topic_info()
+        all_topics = list(bag_info[1].keys())
+        self.logger.debug(f'Topics found {all_topics}')
+        # Check topics
+        if odometry_topic and odometry_topic not in all_topics:
+            raise ValueError(f'Missing topic {odometry_topic} in Rosbag')
+        for image_topic in image_topics:
+            if image_topic not in all_topics:
+                raise ValueError(f'Missing image topic {image_topic} in Rosbag')
+        message_count = bag.get_message_count()
+        self.logger.info(f"{message_count} messages in total")
+        self._image_count_per_camera = -1
+        for topic in all_topics:
+            stats = bag_info[1][topic]
+            count = stats[1]
+            self.logger.info(f'In topic {topic:30s} {count:#10d} messages of type {stats[0]}')
+            # Make sure we have the same number of images for all camera
+            if topic in image_topics:
+                if self._image_count_per_camera >= 0:
+                    assert count == self._image_count_per_camera, "All cameras have the same number of images"
+                self._image_count_per_camera = count
+
+    def _create_images_directories(self, camera_identifiers, image_topics):
+        self._image_directory_path.clear()
+        self._image_topic_to_cam_id.clear()
+        for (image_topic, camera_id) in zip(image_topics, camera_identifiers):
+            self._image_topic_to_cam_id[image_topic] = camera_id
+            self.logger.info(f'images from {image_topic} mapped to camera {camera_id}')
+            dir_path = path.join(self._images_full_path, camera_id)
+            self._image_directory_path[image_topic] = dir_path
+            os.makedirs(dir_path, exist_ok=True)
+        self.logger.info(f'Saving images into {" ".join(dir_path for dir_path in self._image_directory_path.values())}')
 
     def _save_image(self,
                     image_bitmap: np.ndarray,
@@ -123,6 +198,7 @@ class RosBagImporter:
         image_path = os.path.join(image_directory_path, f'frame_{image_number:09d}.jpg')
         img = PILImage.fromarray(image_bitmap)
         img.save(image_path)
+        self._saved_number += 1
         # Set the capture time to the file saved
         taken_time = timestamp.to_sec()
         os.utime(image_path, (taken_time, taken_time))
@@ -146,7 +222,7 @@ class RosBagImporter:
                 chosen_stamp = stamp
         return self._last_poses[chosen_stamp]
 
-    def import_multi_camera(self, odometry_topic: Optional[str],
+    def import_multi_camera(self, odometry_topic: Optional[str],  # noqa: C901
                             image_topics: Union[str, List[str]],
                             camera_identifiers: Union[str, List[str]],
                             save_all_positions: bool = True,
@@ -175,14 +251,6 @@ class RosBagImporter:
         # uint8[] data
         #
 
-        # Check that we have an odometry topic
-        if odometry_topic and len(odometry_topic) == 0:
-            odometry_topic = None
-        if odometry_topic is None:
-            self.logger.info('No odometry topic')
-            if find_image_position:
-                self.logger.info('Will not find position for the images without odometry')
-                find_image_position = False
         # Check that we have image topics
         if isinstance(image_topics, str):
             image_topics = [image_topics]
@@ -197,62 +265,43 @@ class RosBagImporter:
             self.logger.fatal(f'Please provide an equal number of image topics and camera identifiers:'
                               f' {len(camera_identifiers)} cameras for {nb_image_topics} image topics.')
             raise ValueError('Unequal number of image topics and camera identifiers')
+        topics_to_import = image_topics.copy()
+        # Check that we have an odometry topic
+        if odometry_topic and len(odometry_topic) == 0:
+            odometry_topic = None
+        if odometry_topic is None:
+            self.logger.info('No odometry topic')
+            if find_image_position:
+                self.logger.info('Will not find position for the images without odometry')
+                find_image_position = False
+        else:
+            topics_to_import.append(odometry_topic)
 
         # Make sure the camera identifiers are defined in the list of sensors
         for camera_id in camera_identifiers:
             if self._sensors.get(camera_id) is None:
                 raise ValueError(f'Camera identifier {camera_id} is not defined in {list(self._sensors.keys())}')
         # Create images directories
-        image_directory_path = OrderedDict()  # Should be OrderedDict[str, str]
-        image_topic_to_cam_id = dict()
-        for (image_topic, camera_id) in zip(image_topics, camera_identifiers):
-            image_topic_to_cam_id[image_topic] = camera_id
-            self.logger.info(f'images from {image_topic} mapped to camera {camera_id}')
-            dir_path = path.join(self._images_full_path, camera_id)
-            image_directory_path[image_topic] = dir_path
-            os.makedirs(dir_path, exist_ok=True)
-        self.logger.info(f'Saving images into {" ".join(dir_path for dir_path in image_directory_path.values())}')
+        self._create_images_directories(camera_identifiers, image_topics)
+
         with rosbag.Bag(self._rosbag_path) as bag:
-            bag_info = bag.get_type_and_topic_info()
-            all_topics = list(bag_info[1].keys())
-            self.logger.debug(f'Topics found {all_topics}')
-            # Check topics
-            if odometry_topic and odometry_topic not in all_topics:
-                raise ValueError(f'Missing topic {odometry_topic} in Rosbag')
-            for image_topic in image_topics:
-                if image_topic not in all_topics:
-                    raise ValueError(f'Missing image topic {image_topic} in Rosbag')
-            message_count = bag.get_message_count()
-            self.logger.info(f"{message_count} messages in total")
-            image_count_per_camera = -1
-            for topic in all_topics:
-                stats = bag_info[1][topic]
-                count = stats[1]
-                self.logger.info(f'In topic {topic:30s} {count:#10d} messages of type {stats[0]}')
-                # Make sure we have the same number of images for all camera
-                if topic in image_topics:
-                    if image_count_per_camera >= 0:
-                        assert count == image_count_per_camera, "All cameras have the same number of images"
-                    image_count_per_camera = count
+            self._check_bag_topics(bag, odometry_topic, image_topics)
 
             # Read the messages
             num_msgs = 1
             image_number = 1
-            saved_number = 0
-            images_stamp = {}  # images time stamp of type rospy.rostime.Time per topic
-            images_buffer = {}  # the images read as byte array per topic : Dict[str, np.ndarray]
+            self._saved_number = 0
+            images_stamp: Dict[Any, rospy.rostime.Time] = {}  # images time stamp of type rospy.rostime.Time per topic
+            images_buffer: Dict[str, np.ndarray] = {}  # the images read as byte array per topic : Dict[str, np.ndarray]
             dir_last_image_time = {}  # image directory -> time of the last image written : Dict[str, float]
             count_to_skip = int(100 / percent) if percent < 100 else 1
-            self.logger.info(f'Reading {image_count_per_camera} images per camera')
+            self.logger.info(f'Reading {self._image_count_per_camera} images per camera')
             if percent < 100:
                 self.logger.info(f' Keeping {percent}% of the images')
             if not self.logger.isEnabledFor(logging.DEBUG):
-                progress_bar = tqdm(total=image_count_per_camera)
+                progress_bar = tqdm(total=self._image_count_per_camera)
             else:
                 progress_bar = None
-            topics_to_import = image_topics.copy()
-            if odometry_topic:
-                topics_to_import.append(odometry_topic)
             for topic, msg, t in bag.read_messages(topics=topics_to_import):
                 # Consider the data timestamp, not the recording timestamp t
                 stamp = msg.header.stamp
@@ -266,45 +315,19 @@ class RosBagImporter:
                     self.logger.debug(f"{num_msgs:5d} STAMP='{stamp.secs}.{stamp.nsecs}'"
                                       f" {topic} HxW={msg.height}x{msg.width}")
                     images_stamp[topic] = stamp
-                    # TODO: Better image decoding:
-                    #  cv_bridge (depend on OpenCV)
-                    #  ros_numpy: no dependency on OpenCV but not natively installed on melodic
-                    # The below code is adapted from its Image.py file and will work for types like:
-                    # rgb8, rgba8, rgb16, rgba16, bgr8, bgra8, bgr16, bgra16, mono8, mono16
-                    # and the bayer formats but not the OpenCV CvMat types.
-                    dtype = np.uint8
-                    if len(msg.encoding) > 0:
-                        if msg.encoding.endswith("8"):
-                            dtype = np.uint8
-                        elif msg.encoding.endswith("16"):
-                            dtype = np.uint16
-                        else:
-                            raise ValueError(f'Unsupported image encoding {msg.encoding}')
-                    nb_channels = 1
-                    if msg.step > 0:
-                        nb_channels = int(msg.step / msg.width)
-                    if nb_channels > 1:
-                        img_buf = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, msg.width, nb_channels)
-                    else:
-                        img_buf = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, msg.width)
-                    images_buffer[topic] = img_buf
+                    images_buffer[topic] = _extract_img_buf(msg)
                 else:
                     self.logger.debug(f"{num_msgs:5d} Ignoring message of topic '{topic}'")
                 # If we have all images, save them on disk
                 if len(images_stamp) == nb_image_topics:
-                    # The images are taken every 0.033 second
-                    # Check all images have the same time stamp modulo epsilon
-                    for topic1, stamp1 in images_stamp.items():
-                        for topic2, stamp2 in images_stamp.items():
-                            delta = (stamp1-stamp2).to_sec()
-                            assert (abs(delta) < 0.001), "{topic1} and {topic2} images must have the same timestamp"
+                    _check_timestamp_delta(images_stamp)
                     pose6d = self._find_pose(stamp) if find_image_position else None
                     if pose6d or not find_image_position:
                         # Save only some images
                         if ((image_number-1) % count_to_skip) == 0:
                             for image_topic in image_topics:
                                 img = images_buffer[image_topic]
-                                image_directory = image_directory_path[image_topic]
+                                image_directory = self._image_directory_path[image_topic]
                                 stamp = images_stamp[image_topic]
                                 try:
                                     img_name = path_secure(self._save_image(img, image_directory, image_number, stamp))
@@ -313,9 +336,8 @@ class RosBagImporter:
                                                           f" from topic {image_topic}")
                                 else:
                                     dir_last_image_time[image_directory] = stamp.to_sec()
-                                    saved_number += 1
                                     self.images_info.append(
-                                        ImageInfo(img_name, stamp, image_topic_to_cam_id[image_topic])
+                                        ImageInfo(img_name, stamp, self._image_topic_to_cam_id[image_topic])
                                     )
                             if pose6d:
                                 self.poses_info.append(PositionInfo(stamp, pose6d))
@@ -328,12 +350,11 @@ class RosBagImporter:
                     # Else wait until we have the first pose
                 num_msgs += 1
             progress_bar and progress_bar.close()
-            for image_directory, dir_time in dir_last_image_time.items():
-                os.utime(image_directory, (dir_time, dir_time))
-            self.logger.info(f'Saved {saved_number} images')
+            for image_dir, dir_time in dir_last_image_time.items():
+                os.utime(image_dir, (dir_time, dir_time))
+            self.logger.info(f'Saved {self._saved_number} images')
 
-    def save_to_kapture(self,
-                        trajectory_rig_id: Optional[str] = None) -> None:
+    def save_to_kapture(self, trajectory_rig_id: Optional[str] = None) -> None:
         """
         Save the data in kapture format.
 
