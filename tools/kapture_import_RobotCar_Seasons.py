@@ -114,7 +114,7 @@ def import_robotcar_rig(extrinsics_dir_path: str) -> kapture.Rigs:
     return rigs
 
 
-def import_robotcar_colmap_location(robotcar_path: str,
+def import_robotcar_colmap_location(robotcar_path: str,  # noqa: C901: function a bit long but not too complex
                                     colmap_reconstruction_fullpath: path,
                                     kapture_path: str,
                                     rigs: kapture.Rigs,
@@ -223,7 +223,7 @@ def read_robotcar_v2_train(robotcar_path: str) -> Dict[str, kapture.PoseTransfor
     return train_data
 
 
-def import_robotcar_seasons(robotcar_path: str,
+def import_robotcar_seasons(robotcar_path: str,  # noqa: C901: function a bit long but not too complex
                             kapture_path: str,
                             force_overwrite_existing: bool = False,
                             images_import_method: TransferAction = TransferAction.skip,
@@ -243,7 +243,7 @@ def import_robotcar_seasons(robotcar_path: str,
     :param skip_reconstruction: if True, will skip the reconstruction part from the training data
     :param rig_collapse: if True, will collapse the rig
     :param use_colmap_intrinsics: if True, will use the colmap intrinsics
-    :param import_v1:
+    :param import_v1: if True, will use the version 1 of the format
     """
 
     os.makedirs(kapture_path, exist_ok=True)
@@ -285,7 +285,7 @@ def import_robotcar_seasons(robotcar_path: str,
         for colmap_reconstruction in dirs:
             (loc_id, _) = colmap_reconstruction.split('_')
             kapture_reconstruction_dir = path.join(kapture_path, f"{int(loc_id):02d}", "mapping")
-            delete_existing_kapture_files(kapture_reconstruction_dir, force_erase=force_overwrite_existing)
+            delete_existing_kapture_files(kapture_reconstruction_dir, force_overwrite_existing)
             logger.info(f'Converting reconstruction {loc_id} to kapture  ...')
             kapture_reconstruction_data = import_robotcar_colmap_location(
                 robotcar_path,
@@ -300,36 +300,7 @@ def import_robotcar_seasons(robotcar_path: str,
             kapture_imported_training[int(loc_id)] = kapture_reconstruction_data
 
     if not import_v1:
-        queries_per_location = {image_name: (ts, cam_id, loc_id)
-                                for loc_id, kdata_test in kapture_imported_query.items()
-                                for ts, cam_id, image_name in kapture.flatten(kdata_test.records_camera)}
-        # read robotcar_v2_train.txt
-        v2_train_data = read_robotcar_v2_train(robotcar_path)
-        for image_name, pose in v2_train_data.items():
-            ts, cam_id, loc_id = queries_per_location[image_name]
-            assert cam_id == 'rear'
-            kapture_imported_training[loc_id].records_camera[ts, cam_id] = image_name
-            kapture_imported_training[loc_id].trajectories[ts, cam_id] = pose
-            matches = image_pattern.match(image_name)
-            if not matches:
-                logger.warning(f"Error matching line in {image_name}")
-                continue
-            matches = matches.groupdict()
-            condition = str(matches['condition'])
-            timestamp = str(matches['timestamp'])
-            # added left and right images in records_camera
-            left_image_name = condition + '/' + 'left' + '/' + timestamp + '.jpg'
-            right_image_name = condition + '/' + 'right' + '/' + timestamp + '.jpg'
-            kapture_imported_training[loc_id].records_camera[ts, 'left'] = left_image_name
-            kapture_imported_training[loc_id].records_camera[ts, 'right'] = right_image_name
-
-            # remove entries from query
-            del kapture_imported_query[loc_id].records_camera[ts][cam_id]
-            del kapture_imported_query[loc_id].records_camera[ts]['left']
-            del kapture_imported_query[loc_id].records_camera[ts]['right']
-            del kapture_imported_query[loc_id].records_camera[ts]
-
-        # all remaining query images are kept; reading robotcar_v2_test.txt is not necessary
+        _import_robotcar_v2_train(robotcar_path, kapture_imported_query, kapture_imported_training, image_pattern)
 
     # apply rig collapse
     if rig_collapse:
@@ -343,7 +314,7 @@ def import_robotcar_seasons(robotcar_path: str,
         loc_id_str = f"{loc_id:02d}"
         logger.info(f'writing test data: {loc_id_str}')
         kapture_test_dir = path.join(kapture_path, loc_id_str, "query")
-        delete_existing_kapture_files(kapture_test_dir, force_erase=force_overwrite_existing)
+        delete_existing_kapture_files(kapture_test_dir, force_overwrite_existing)
         if not kapture_query.records_camera:  # all images were removed
             continue
         kapture_to_dir(kapture_test_dir, kapture_query)
@@ -361,23 +332,60 @@ def import_robotcar_seasons(robotcar_path: str,
                                          mapping_images, images_import_method)
 
     if import_feature_db:
-        # Convert Colmap reference DB to kapture
-        kapture_train_dir = path.join(kapture_path, "mapping")
-        if path.exists(path.join(robotcar_path, "3D-models/overcast-reference.db")):
-            delete_existing_kapture_files(kapture_train_dir, force_erase=force_overwrite_existing)
-            kapture_train_data = import_colmap(
-                kapture_dir_path=kapture_train_dir,
-                colmap_database_filepath=path.join(robotcar_path, "3D-models/overcast-reference.db"),
-                colmap_reconstruction_dir_path='',
-                colmap_images_dir_path=path.join(robotcar_path, "images"),
-                no_geometric_filtering=True,
-                force_overwrite_existing=force_overwrite_existing,
-                images_import_strategy=TransferAction.skip
-            )
-            logger.info(f'saving feature DB to kapture {kapture_train_dir}  ...')
-            kapture_to_dir(kapture_train_dir, kapture_train_data)
-        else:
-            logger.warning('Colmap feature DB 3D-models/overcast-reference.db does not exist... skipping.')
+        _import_colmap_overcast_reference(robotcar_path, kapture_path, force_overwrite_existing)
+
+
+def _import_robotcar_v2_train(robotcar_path, kapture_imported_query, kapture_imported_training, image_pattern):
+    queries_per_location = {image_name: (ts, cam_id, loc_id)
+                            for loc_id, kapture_test in kapture_imported_query.items()
+                            for ts, cam_id, image_name in kapture.flatten(kapture_test.records_camera)}
+    # read robotcar_v2_train.txt
+    v2_train_data = read_robotcar_v2_train(robotcar_path)
+    for image_name, pose in v2_train_data.items():
+        ts, cam_id, loc_id = queries_per_location[image_name]
+        assert cam_id == 'rear'
+        kapture_imported_training[loc_id].records_camera[ts, cam_id] = image_name
+        kapture_imported_training[loc_id].trajectories[ts, cam_id] = pose
+        matches = image_pattern.match(image_name)
+        if not matches:
+            logger.warning(f"Error matching line in {image_name}")
+            continue
+        matches = matches.groupdict()
+        condition = str(matches['condition'])
+        timestamp = str(matches['timestamp'])
+        # added left and right images in records_camera
+        left_image_name = condition + '/' + 'left' + '/' + timestamp + '.jpg'
+        right_image_name = condition + '/' + 'right' + '/' + timestamp + '.jpg'
+        kapture_imported_training[loc_id].records_camera[ts, 'left'] = left_image_name
+        kapture_imported_training[loc_id].records_camera[ts, 'right'] = right_image_name
+
+        # remove entries from query
+        del kapture_imported_query[loc_id].records_camera[ts][cam_id]
+        del kapture_imported_query[loc_id].records_camera[ts]['left']
+        del kapture_imported_query[loc_id].records_camera[ts]['right']
+        del kapture_imported_query[loc_id].records_camera[ts]
+    # all remaining query images are kept; reading robotcar_v2_test.txt is not necessary
+
+
+def _import_colmap_overcast_reference(robotcar_path, kapture_path, force_overwrite_existing):
+    # Convert Colmap reference DB to kapture
+    kapture_train_dir = path.join(kapture_path, "mapping")
+    colmap_db_path = path.join(robotcar_path, "3D-models/overcast-reference.db")
+    if path.exists(colmap_db_path):
+        delete_existing_kapture_files(kapture_train_dir, force_overwrite_existing)
+        kapture_train_data = import_colmap(
+            kapture_dir_path=kapture_train_dir,
+            colmap_database_filepath=colmap_db_path,
+            colmap_reconstruction_dir_path='',
+            colmap_images_dir_path=path.join(robotcar_path, "images"),
+            no_geometric_filtering=True,
+            force_overwrite_existing=force_overwrite_existing,
+            images_import_strategy=TransferAction.skip
+        )
+        logger.info(f'saving feature DB to kapture {kapture_train_dir}  ...')
+        kapture_to_dir(kapture_train_dir, kapture_train_data)
+    else:
+        logger.warning(f'Colmap feature DB {colmap_db_path} does not exist... skipping.')
 
 
 def import_robotcar_seasons_command_line() -> None:
