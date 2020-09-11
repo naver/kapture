@@ -77,17 +77,16 @@ def colmap_command_line() -> None:
     kapture.io.structure.delete_existing_kapture_files(args.kapture, force_erase=args.force)
 
     logger.info('importing colmap ...')
-    kapture_data = import_colmap(
-        kapture_dirpath=args.kapture,
-        colmap_database_filepath=args.database,
-        colmap_reconstruction_dirpath=args.reconstruction,
-        colmap_images_dirpath=args.images,
-        colmap_rig_filepath=args.rig,
-        no_geometric_filtering=args.no_geometric_filtering,
-        skip_reconstruction=args.skip_reconstruction,
-        force_overwrite_existing=args.force,
-        images_import_strategy=args.image_transfer if args.images is not None else TransferAction.skip
-    )
+    kapture_data = import_colmap(args.kapture,
+                                 args.database,
+                                 args.reconstruction,
+                                 args.images,
+                                 args.rig,
+                                 args.no_geometric_filtering,
+                                 args.skip_reconstruction,
+                                 args.force,
+                                 args.image_transfer if args.images is not None else TransferAction.skip
+                                 )
 
     logger.info('saving to kapture  ...')
     logger.debug(f'\t"{args.kapture}"')
