@@ -215,18 +215,25 @@ class TestCompareM1x(unittest.TestCase):
         # check for deep copy
         self.assertTrue(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
 
-        record_wifi_1 = {
-            '68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
-            '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-49.0, ssid='@HYUNDAI-WiFi'),
-        }
-        record_wifi_2 = {
-            '68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-35.0, ssid='M1X_PicoM2'),
-            '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-47.0, ssid='@HYUNDAI-WiFi'),
-        }
+        record_wifi_1 = kapture.RecordWifi({
+            '68:72:51:80:52:df': kapture.RecordWifiHotspot(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifiHotspot(frequency=5765, rssi=-49.0, ssid='@HYUNDAI-WiFi'),
+        })
+        record_wifi_2 = kapture.RecordWifi({
+            '68:72:51:80:52:df': kapture.RecordWifiHotspot(frequency=2417, rssi=-35.0, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifiHotspot(frequency=5765, rssi=-47.0, ssid='@HYUNDAI-WiFi'),
+        })
+        record_wifi_2_str = kapture.RecordWifi({
+            '68:72:51:80:52:df': kapture.RecordWifiHotspot(frequency='2417', rssi='-35.0', ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifiHotspot(frequency='5765', rssi='-47.0', ssid='@HYUNDAI-WiFi'),
+        })
         # check deep copy just did nothing: recreate the B
         kapture_data_b.records_wifi = kapture.RecordsWifi()
         kapture_data_b.records_wifi[1555398770307, 'AC01324954_wifi'] = record_wifi_1
         kapture_data_b.records_wifi[1555398771307, 'AC01324954_wifi'] = record_wifi_2
+        self.assertTrue(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
+        # check str arguments are casted to the proper types
+        kapture_data_b.records_wifi[1555398771307, 'AC01324954_wifi'] = record_wifi_2_str
         self.assertTrue(equal_records_wifi(kapture_data_a.records_wifi, kapture_data_b.records_wifi))
 
         # check if some are missing, its not equal

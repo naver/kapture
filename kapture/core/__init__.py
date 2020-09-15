@@ -10,8 +10,8 @@ from .Sensors import Camera, CameraType, CAMERA_TYPE_PARAMS_COUNT, CAMERA_TYPE_P
 from .Rigs import Rigs  # noqa: F401
 from .Trajectories import Trajectories  # noqa: F401
 from .Trajectories import rigs_remove, rigs_remove_inplace, rigs_recover, rigs_recover_inplace  # noqa: F401
-from .Records import RecordsBase, RecordsCamera, RecordsDepth  # noqa: F401
-from .Records import RecordsLidar, RecordsWifi, RecordWifi, RecordGnss, RecordsGnss  # noqa: F401
+from .Records import RecordsBase, RecordsArray, RecordsCamera, RecordsDepth  # noqa: F401
+from .Records import RecordsLidar, RecordsWifi, RecordWifi, RecordWifiHotspot, RecordGnss, RecordsGnss  # noqa: F401
 from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures  # noqa: F401
 from .Observations import Observations  # noqa: F401
 from .Matches import Matches  # noqa: F401

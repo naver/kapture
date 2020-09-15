@@ -460,6 +460,53 @@ def records_lidar_from_file(
 
 
 ########################################################################################################################
+def records_generic_to_file(
+        filepath: str,
+        records: kapture.RecordsBase) -> None:
+    """
+        Writes records_wifi to file
+
+        :param filepath: path where to save records file.
+        :param records:
+        """
+    assert (isinstance(records, kapture.RecordsBase))
+    header = '# ' + ', '.join(f.name for f in records.record_type.fields())
+    table = []
+    for timestamp, sensor_id, record in kapture.flatten(records, is_sorted=True):
+        table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
+    with open(filepath, 'w') as file:
+        table_to_file(file, table, header=header)
+
+
+def records_generic_from_file(
+        records_type: Type,
+        filepath: str,
+        sensor_ids: Optional[Set[str]] = None
+) -> Union[kapture.RecordsBase, kapture.RecordsGnss]:
+    """
+    Reads Records data from CSV file.
+
+    :param records_type: type of records expected (eg RecordsWifi)
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                     If omitted, then it loads all devices.
+    :return: records
+    """
+    records = records_type()
+    with open(filepath) as file:
+        table = table_from_file(file)
+        # timestamp, device_id, *
+        for timestamp, device_id, *data in table:
+            timestamp = int(timestamp)
+            device_id = str(device_id)
+            if sensor_ids is not None and device_id not in sensor_ids:
+                # just ignore
+                continue
+            records[timestamp, device_id] = records_type.record_type(*data)
+
+    return records
+
+
 # Records Wifi #########################################################################################################
 def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> None:
     """
@@ -473,7 +520,7 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
     table = []
     for timestamp, sensor_id in sorted(records_wifi.key_pairs()):
         for bssid, record in records_wifi[timestamp, sensor_id].items():
-            table.append([timestamp, sensor_id, bssid] + record.as_list())
+            table.append([timestamp, sensor_id, bssid] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
         table_to_file(file, table, header=header)
 
@@ -500,32 +547,22 @@ def records_wifi_from_file(
                 # just ignore
                 continue
             if (timestamp, device_id) not in records_wifi:
-                records_wifi[timestamp, device_id] = {}
-            records_wifi[timestamp, device_id][BSSID] = kapture.RecordWifi(
+                records_wifi[timestamp, device_id] = kapture.RecordWifi()
+            records_wifi[timestamp, device_id][BSSID] = kapture.RecordWifiHotspot(
                 frequency, RSSI, SSID, scan_time_start, scan_time_end)
 
     return records_wifi
 
 
-########################################################################################################################
 # Records GNSS #########################################################################################################
 def records_gnss_to_file(
         filepath: str,
         records_gnss: kapture.RecordsGnss
 ) -> None:
     """
-    Writes records_gnss to file
 
-    :param filepath:
-    :param records_gnss:
     """
-    assert isinstance(records_gnss, kapture.RecordsGnss)
-    header = '# timestamp, device_id, x, y, z, utc, dop'
-    table = []
-    for timestamp, sensor_id, gnss_record in kapture.flatten(records_gnss, is_sorted=True):
-        table.append([timestamp, sensor_id] + gnss_record.as_list())
-    with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+    records_generic_to_file(filepath, records_gnss)
 
 
 def records_gnss_from_file(
@@ -539,20 +576,12 @@ def records_gnss_from_file(
     :param gnss_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
                      If omitted, then it loads all devices.
     :return: GNSS records
-    """
-    records_gnss = kapture.RecordsGnss()
-    with open(filepath) as file:
-        table = table_from_file(file)
-        # timestamp, device_id, x, y, z, utc, dop
-        for timestamp, device_id, x, y, z, utc, dop in table:
-            timestamp = int(timestamp)
-            device_id = str(device_id)
-            if gnss_ids is not None and device_id not in gnss_ids:
-                # just ignore
-                continue
-            records_gnss[timestamp, device_id] = kapture.RecordGnss(x, y, z, utc, dop)
-
-    return records_gnss
+    # """
+    return records_generic_from_file(
+        records_type=kapture.RecordsGnss,
+        filepath=filepath,
+        sensor_ids=gnss_ids
+    )
 
 
 ########################################################################################################################
