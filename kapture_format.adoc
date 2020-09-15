@@ -450,6 +450,106 @@ with:
 1, phone01wifi, 24:a4:3c:9e:d2:84, 2400, 122.0, , 0, 10
 ----
 
+=== `│ ├─ records_bluetooth.txt`
+
+This file defines the bluetooth recordings in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+timestamp, device_id, address, RSSI, name
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number,
+                                or any other ID to designate when this result was last seen.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|          address  | string | The remote device identifiers.
+|             RSSI  | float  | Received Signal Strength Indicator.
+|             name  | string | The remote device name.
+|===
+
+
+=== `│ ├─ records_accelerometer.txt`
+
+This file defines the accelerometer recordings in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+timestamp, device_id, x_acc, y_acc, z_acc
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number,
+                                or any other ID to designate when this result was last seen.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|            x_acc  | float  | The acceleration along X axis.
+|            y_acc  | float  | The acceleration along Y axis.
+|            z_acc  | float  | The acceleration along Z axis.
+|===
+
+
+=== `│ ├─ records_gyroscope.txt`
+
+This file defines the gyroscope recordings in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+timestamp, device_id, x_speed, y_speed, z_speed
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number,
+                                or any other ID to designate when this result was last seen.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|          x_speed  | float  | The rotation speed around X axis.
+|          y_speed  | float  | The rotation speed around Y axis.
+|          z_speed  | float  | The rotation speed around Z axis.
+|===
+
+
+=== `│ ├─ records_magnetic.txt`
+
+This file defines the magnetic recordings in the dataset per timestamp.
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+timestamp, device_id, x_strength, y_strength, z_strength
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field  | type   | description
+|        timestamp  | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number,
+                                or any other ID to designate when this result was last seen.
+|        device_id  | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`.
+|       x_strength  | float  | The strength of the magnetic field along X axis.
+|       y_strength  | float  | The strength of the magnetic field along Y axis.
+|       z_strength  | float  | The strength of the magnetic field along Z axis.
+|===
+
+
 === `│  ├─ records_SENSOR_TYPE.txt`
 
 These files defines snapshot of a custom (not specified) sensor.

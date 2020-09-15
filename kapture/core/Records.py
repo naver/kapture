@@ -21,9 +21,9 @@ T = TypeVar('T')  # Declare generic type variable
 class RecordsBase(Dict[int, Dict[str, T]]):
     """
     brief: Records
-            records[timestamp][sensor_id] = <DataRecords>
+            records[timestamp][sensor_id] = <Record>
             or
-            records[(timestamp, sensor_id)] = <DataRecords>
+            records[timestamp, sensor_id] = <Record>
     """
 
     def __setitem__(self,
@@ -161,11 +161,7 @@ class RecordsLidar(RecordsFilePath):
     pass
 
 
-# Record Data ##########################################################################################################
-class RecordsArray(RecordsBase[T]):
-    pass
-
-
+# Record Array #########################################################################################################
 # @dataclass
 class RecordArray:
     def __post_init__(self):
@@ -185,7 +181,17 @@ class RecordArray:
     def fields(cls):
         return fields(cls)
 
-# Wifi #################################################################################################################
+
+class RecordsArray(RecordsBase[T]):
+    """
+    brief: Records
+            records[timestamp][sensor_id] = RecordArray
+            or
+            records[timestamp, sensor_id] = RecordArray
+    """
+    pass
+
+
 # wifi recordings is made of dict of hotspot (with signal strength).
 @dataclass
 class RecordWifiHotspot(RecordArray):
@@ -208,15 +214,40 @@ class RecordWifi(dict):
 class RecordsWifi(RecordsArray[RecordWifi]):
     """
     brief: Records wifi
-            records[timestamp][sensor_id] = {bssid: <RecordWifi>}
+            records[timestamp][sensor_id] =  <RecordWifi> = {bssid: RecordWifiHotspot}
             or
-            records[(timestamp, sensor_id)] = {bssid: <RecordWifi>}
+            records[timestamp, sensor_id] = <RecordWifi>
     """
     record_type = RecordWifi
 
 
-# GNSS #################################################################################################################
-# gnss recordings is made of gnss recording (with position).
+# bluetooth recordings is made of dict of bt devices fingerprints (with signal strength).
+@dataclass
+class RecordBluetoothDevice(RecordArray):
+    rssi: float
+    name: str = ''
+
+
+class RecordBluetooth(dict):
+    def __setitem__(self, address: str, data: RecordBluetoothDevice):
+        if not isinstance(address, str):
+            raise TypeError(f'{address} is not expected type str.')
+        if not isinstance(data, RecordWifiHotspot):
+            raise TypeError(f'{data} is not expected type RecordWifiHotspot.')
+        super().__setitem__(address, data)
+
+
+class RecordsBluetooth(RecordsArray[RecordBluetooth]):
+    """
+    brief: Records wifi
+            records[timestamp][sensor_id] = <RecordBluetooth> = {address: <RecordBluetoothDevice>}
+            or
+            records[timestamp, sensor_id] = <RecordBluetooth>
+    """
+    record_type = RecordBluetooth
+
+
+# gnss recordings
 @dataclass
 class RecordGnss(RecordArray):
     x: float
@@ -227,10 +258,40 @@ class RecordGnss(RecordArray):
 
 
 class RecordsGnss(RecordsArray[RecordGnss]):
-    """
-    brief: Records
-            records[timestamp][sensor_id] = <RecordGnss>
-            or
-            records[(timestamp, sensor_id)] = <RecordGnss>
-    """
     record_type = RecordGnss
+
+
+# Accelerometer recordings
+@dataclass
+class RecordAccelerometer(RecordArray):
+    x_acc: float
+    y_acc: float
+    z_acc: float
+
+
+class RecordsAccelerometer(RecordsArray[RecordAccelerometer]):
+    record_type = RecordAccelerometer
+
+
+# Gyroscope recordings
+@dataclass
+class RecordGyroscope(RecordArray):
+    x_seed: float
+    y_seed: float
+    z_seed: float
+
+
+class RecordsGyroscope(RecordsArray[RecordGyroscope]):
+    record_type = RecordGyroscope
+
+
+# Magnetic field recordings
+@dataclass
+class RecordMagnetic(RecordArray):
+    x_strength: float
+    y_strength: float
+    z_strength: float
+
+
+class RecordsMagnetic(RecordsArray[RecordMagnetic]):
+    record_type = RecordMagnetic
