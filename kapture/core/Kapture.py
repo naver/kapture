@@ -3,7 +3,8 @@
 from .Sensors import Sensors, Camera
 from .Rigs import Rigs
 from .Trajectories import Trajectories
-from .Records import RecordsCamera, RecordsDepth, RecordsLidar, RecordsWifi, RecordsGnss
+from .Records import RecordsCamera, RecordsDepth, RecordsLidar, RecordsWifi, RecordsBluetooth
+from .Records import RecordsGnss, RecordsAccelerometer, RecordsGyroscope, RecordsMagnetic
 from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Matches import Matches
 from .Observations import Observations
@@ -27,7 +28,11 @@ class Kapture:
             records_depth: Optional[RecordsDepth] = None,
             records_lidar: Optional[RecordsLidar] = None,
             records_wifi: Optional[RecordsWifi] = None,
+            records_bluetooth: Optional[RecordsBluetooth] = None,
             records_gnss: Optional[RecordsGnss] = None,
+            records_accelerometer: Optional[RecordsAccelerometer] = None,
+            records_gyroscope: Optional[RecordsGyroscope] = None,
+            records_magnetic: Optional[RecordsMagnetic] = None,
             keypoints: Optional[Keypoints] = None,
             descriptors: Optional[Descriptors] = None,
             global_features: Optional[GlobalFeatures] = None,
@@ -42,7 +47,11 @@ class Kapture:
         self.records_depth = records_depth
         self.records_lidar = records_lidar
         self.records_wifi = records_wifi
+        self.records_bluetooth = records_bluetooth
         self.records_gnss = records_gnss
+        self.records_accelerometer = records_accelerometer
+        self.records_gyroscope = records_gyroscope
+        self.records_magnetic = records_magnetic
         self.keypoints = keypoints
         self.descriptors = descriptors
         self.global_features = global_features
@@ -159,6 +168,19 @@ class Kapture:
         self._records_wifi = records_wifi
 
     @property
+    def records_bluetooth(self) -> Optional[RecordsBluetooth]:
+        """
+        :return: Bluetooth records
+        """
+        return self._records_bluetooth
+
+    @records_bluetooth.setter
+    def records_bluetooth(self, records_bluetooth: Optional[RecordsBluetooth]):
+        if records_bluetooth is not None and not isinstance(records_bluetooth, RecordsBluetooth):
+            raise TypeError('RecordsBluetooth expected')
+        self._records_bluetooth = records_bluetooth
+
+    @property
     def records_gnss(self) -> Optional[RecordsGnss]:
         """
         :return: GNSS records
@@ -170,6 +192,45 @@ class Kapture:
         if records_gnss is not None and not isinstance(records_gnss, RecordsGnss):
             raise TypeError('RecordsGnss expected')
         self._records_gnss = records_gnss
+
+    @property
+    def records_accelerometer(self) -> Optional[RecordsAccelerometer]:
+        """
+        :return: Acceleration records
+        """
+        return self._records_accelerometer
+
+    @records_accelerometer.setter
+    def records_accelerometer(self, records_accelerometer: Optional[RecordsAccelerometer]):
+        if records_accelerometer is not None and not isinstance(records_accelerometer, RecordsAccelerometer):
+            raise TypeError('RecordsAccelerometer expected')
+        self._records_accelerometer = records_accelerometer
+
+    @property
+    def records_gyroscope(self) -> Optional[RecordsGyroscope]:
+        """
+        :return: Gyroscope records
+        """
+        return self._records_gyroscope
+
+    @records_gyroscope.setter
+    def records_gyroscope(self, records_gyroscope: Optional[RecordsGyroscope]):
+        if records_gyroscope is not None and not isinstance(records_gyroscope, RecordsGyroscope):
+            raise TypeError('RecordsGyroscope expected')
+        self._records_gyroscope = records_gyroscope
+
+    @property
+    def records_magnetic(self) -> Optional[RecordsMagnetic]:
+        """
+        :return: Magnetic records
+        """
+        return self._records_magnetic
+
+    @records_magnetic.setter
+    def records_magnetic(self, records_magnetic: Optional[RecordsMagnetic]):
+        if records_magnetic is not None and not isinstance(records_magnetic, RecordsMagnetic):
+            raise TypeError('RecordsMagnetic expected')
+        self._records_magnetic = records_magnetic
 
     @property
     def keypoints(self) -> Optional[Keypoints]:

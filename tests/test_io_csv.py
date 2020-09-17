@@ -137,7 +137,7 @@ class TestCsvTrajectories(unittest.TestCase):
     def test_trajectories_write(self):
         pose1 = kapture.PoseTransform(r=[1.0, 0.0, 0.0, 0.0], t=[0.0, 0.0, 0.0])
         pose2 = kapture.PoseTransform(r=[0.5, 0.5, 0.5, 0.5], t=[4., 2., -2.])
-        content_expected = [csv.KAPTURE_FORMAT_1+'\n',
+        content_expected = [csv.KAPTURE_FORMAT_1 + '\n',
                             '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz\n',
                             '       0, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0\n',
                             '       0, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0\n',
@@ -231,7 +231,7 @@ class TestCsvGnss(unittest.TestCase):
         records_gnss = csv.records_gnss_from_file(self._gnss_filepath)
 
         second_sensors_filepath = self._sensors_filepath + '.cpy'
-        second_gnss_filepath = self._gnss_filepath+'.cpy'
+        second_gnss_filepath = self._gnss_filepath + '.cpy'
         csv.sensors_to_file(second_sensors_filepath, sensors)
         csv.records_gnss_to_file(second_gnss_filepath, records_gnss)
         second_sensors = csv.sensors_from_file(second_sensors_filepath)
@@ -423,10 +423,10 @@ class TestCsvObservations(unittest.TestCase):
             0: [('image1.jpg', 0), ('image2.jpg', 0)],
             2: [('image1.jpg', 2), ('image2.jpg', 3)]
         })
-        self._observations_csv_expected = csv.KAPTURE_FORMAT_1+"\n"\
-            "# point3d_id, [image_path, feature_id]*\n" \
-            "0, image1.jpg, 0, image2.jpg, 0\n" \
-            "2, image1.jpg, 2, image2.jpg, 3\n"
+        self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + "\n"
+        self._observations_csv_expected += ''.join(["# point3d_id, [image_path, feature_id]*\n",
+                                                    "0, image1.jpg, 0, image2.jpg, 0\n",
+                                                    "2, image1.jpg, 2, image2.jpg, 3\n"])
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
@@ -501,6 +501,7 @@ class TestCsvKapture(unittest.TestCase):
         kapture_read = csv.kapture_from_dir(self._tempdir.name)
         self.assertEqual(csv.current_format_version(), kapture_read.format_version, "We have the current version")
 
+
 ########################################################################################################################
 # M1X ##################################################################################################################
 
@@ -516,11 +517,12 @@ class TestCsvM1x(unittest.TestCase):
 
     def test_sensors_read_file(self):
         self.assertIsInstance(self._kapture_data.sensors, kapture.Sensors)
-        self.assertEqual(len(self._kapture_data.sensors), 13)
+        self.assertEqual(len(self._kapture_data.sensors), 14)
         self.assertIn('lidar0', self._kapture_data.sensors)
         self.assertIn('22970291', self._kapture_data.sensors)
         self.assertIn('AC01324969', self._kapture_data.sensors)
         self.assertIn('AC01324954_wifi', self._kapture_data.sensors)
+        self.assertIn('AC01324954_bluetooth', self._kapture_data.sensors)
         self.assertEqual('horizontal', self._kapture_data.sensors['lidar1'].name)
         self.assertEqual('camera', self._kapture_data.sensors['22970291'].sensor_type)
         self.assertEqual('lidar', self._kapture_data.sensors['lidar0'].sensor_type)
@@ -532,7 +534,7 @@ class TestCsvM1x(unittest.TestCase):
         self.assertEqual(len(self._kapture_data.rigs.keys()), 1)
         self.assertIn('rig', self._kapture_data.rigs)
         # there is 13 sensors in this rig
-        self.assertEqual(len(self._kapture_data.rigs['rig']), 13)
+        self.assertEqual(len(self._kapture_data.rigs['rig']), 14)
         self.assertIn('lidar0', self._kapture_data.rigs['rig'])
 
     def test_trajectories_read_file(self):
@@ -556,15 +558,38 @@ class TestCsvM1x(unittest.TestCase):
         self.assertEqual(2, len(self._kapture_data.records_wifi.key_pairs()))
         self.assertIn(1555398770307, self._kapture_data.records_wifi)
         self.assertIn('AC01324954_wifi', self._kapture_data.records_wifi[1555398770307])
-        wifi_expected = {'68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
-                         '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-49, ssid='@HYUNDAI-WiFi')}
+        record_wifi_expected = kapture.RecordWifi({
+            '68:72:51:80:52:df': kapture.RecordWifiSignal(frequency=2417, rssi=-33.0, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifiSignal(frequency=5765, rssi=-49, ssid='@HYUNDAI-WiFi')
+        })
         # compare representation, to be robust to ?????
-        self.assertEqual(str(wifi_expected),
+        self.assertEqual(str(record_wifi_expected),
                          str(self._kapture_data.records_wifi[1555398770307, 'AC01324954_wifi']))
-        wifi_expected = {'68:72:51:80:52:df': kapture.RecordWifi(frequency=2417, rssi=-35, ssid='M1X_PicoM2'),
-                         '68:9c:e2:e1:b0:60': kapture.RecordWifi(frequency=5765, rssi=-47, ssid='@HYUNDAI-WiFi')}
-        self.assertEqual(str(wifi_expected),
+        record_wifi_expected = kapture.RecordWifi({
+            '68:72:51:80:52:df': kapture.RecordWifiSignal(frequency=2417, rssi=-35, ssid='M1X_PicoM2'),
+            '68:9c:e2:e1:b0:60': kapture.RecordWifiSignal(frequency=5765, rssi=-47, ssid='@HYUNDAI-WiFi')
+        })
+        self.assertEqual(str(record_wifi_expected),
                          str(self._kapture_data.records_wifi[1555398771307, 'AC01324954_wifi']))
+
+    def test_records_bluetooth_read_file(self):
+        self.assertEqual(2, len(self._kapture_data.records_bluetooth.keys()))
+        self.assertEqual(2, len(self._kapture_data.records_bluetooth.key_pairs()))
+        self.assertIn(1555398770307, self._kapture_data.records_bluetooth)
+        self.assertIn('AC01324954_bluetooth', self._kapture_data.records_bluetooth[1555398770307])
+        record_bluetooth_expected = kapture.RecordBluetooth({
+            '35:A8:4B:D9:95:06': kapture.RecordBluetoothSignal(rssi=-73.0),
+            '6F:80:17:51:5C:16': kapture.RecordBluetoothSignal(rssi=-88, name='MyPhone')
+        })
+        # compare representation, to be robust to ?????
+        self.assertEqual(str(record_bluetooth_expected),
+                         str(self._kapture_data.records_bluetooth[1555398770307, 'AC01324954_bluetooth']))
+        record_wifi_expected = kapture.RecordWifi({
+            '52:BE:1D:75:47:A1': kapture.RecordBluetoothSignal(rssi=-89),
+            '94:65:2D:A6:EF:C4': kapture.RecordBluetoothSignal(rssi=-59)
+        })
+        self.assertEqual(str(record_wifi_expected),
+                         str(self._kapture_data.records_bluetooth[1555398771307, 'AC01324954_bluetooth']))
 
     def test_records_lidar_read_file(self):
         self.assertEqual(3, len(self._kapture_data.records_lidar.keys()))

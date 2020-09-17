@@ -35,7 +35,7 @@ class TestFlatten(unittest.TestCase):
         actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
         self.assertEqual(actual_list_sorted, expected_list_sorted)
 
-        test_values = kapture.RecordWifi(frequency=2500, rssi=-1.0)
+        test_values = kapture.RecordWifiSignal(frequency=2500, rssi=-1.0)
         expected_list = [(test_values,)]
         actual_list = list(kapture.flatten(test_values, is_sorted=False))
         actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
@@ -476,8 +476,9 @@ class TestRecords(unittest.TestCase):
         freq = 2417
         scan_time_start, scan_time_end = 1555398770280, 1555398770290
         # assign
-        wifi_data = {bssid: kapture.RecordWifi(ssid=ssid, rssi=rssi, frequency=freq,
-                                               scan_time_start=scan_time_start, scan_time_end=scan_time_end)}
+
+        wifi_data = kapture.RecordWifi({bssid: kapture.RecordWifiSignal(ssid=ssid, rssi=rssi, frequency=freq,
+                                                                        scan_time_start=scan_time_start, scan_time_end=scan_time_end)})
         records_wifi[timestamp0, device_id0] = wifi_data
         kapture_data = kapture.Kapture(records_wifi=records_wifi)
         self.assertEqual(1, len(kapture_data.records_wifi.keys()))

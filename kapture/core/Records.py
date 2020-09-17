@@ -1,76 +1,17 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 import numpy as np
+from dataclasses import dataclass, fields, astuple, asdict, fields
 from typing import Union, Dict, List, Tuple, TypeVar
-from .flatten import flatten
 
-
-class RecordWifi:
-    """ frequency, rssi, ssid, scan_time_start, scan_time_end """
-
-    def __init__(self,
-                 frequency: int,
-                 rssi: float,
-                 ssid: str = '',
-                 scan_time_start: int = 0,
-                 scan_time_end: int = 0
-                 ):
-        # enforce type
-        self.frequency = int(frequency)
-        self.rssi = float(rssi)
-        self.ssid = str(ssid)
-        self.scan_time_start = int(scan_time_start)
-        self.scan_time_end = int(scan_time_end)
-
-    def as_list(self) -> List[str]:
-        """
-        :return: Wifi records as list of strings
-        """
-        values = [self.frequency, self.rssi, self.ssid, self.scan_time_start, self.scan_time_end]
-        return [str(v) for v in values]
-
-    def __repr__(self) -> str:
-        return ', '.join(self.as_list())
-
-    def __hash__(self):
-        return hash(tuple(self.as_list()))
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return NotImplemented
-        return self.as_list() == other.as_list()
-
-
-class RecordGnss:
-    """
-    X, Y, Z, UTC, DOP,
-    """
-    def __init__(self,
-                 x: float, y: float, z: float,
-                 utc: int,
-                 dop: float):
-        # enforce type
-        self.x, self.y, self.z = float(x), float(y), float(z)
-        self.utc = int(utc)
-        self.dop = float(dop)
-
-    def as_list(self) -> List[str]:
-        """
-        :return: GNSS records as list of strings
-        """
-        values = [self.x, self.y, self.z, self.utc, self.dop]
-        return [str(v) for v in values]
-
-    def __repr__(self) -> str:
-        return ', '.join(self.as_list())
-
-    def __hash__(self):
-        return hash(tuple(self.as_list()))
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return NotImplemented
-        return self.as_list() == other.as_list()
+"""
+Records contains sensor recordings.
+Each recording (eg. an image) is an entry in Records, with a device ID and a timestamp.
+There is to kind of Records : 
+ - Files: big recorded data (from camera, lidar, depth camera, ...) are stored in separated binary files.
+ - Array: small recorded data (from wifi, gnss) are directly stored in kapture text files.
+ 
+"""
 
 
 ########################################################################################################################
@@ -80,9 +21,9 @@ T = TypeVar('T')  # Declare generic type variable
 class RecordsBase(Dict[int, Dict[str, T]]):
     """
     brief: Records
-            records[timestamp][sensor_id] = <DataRecords>
+            records[timestamp][sensor_id] = <Record>
             or
-            records[(timestamp, sensor_id)] = <DataRecords>
+            records[timestamp, sensor_id] = <Record>
     """
 
     def __setitem__(self,
@@ -104,14 +45,18 @@ class RecordsBase(Dict[int, Dict[str, T]]):
                 raise TypeError('invalid timestamp')
             if not isinstance(device_id, str):
                 raise TypeError('invalid device_id')
+            if not isinstance(value, self.record_type):
+                raise TypeError(f'invalid record type of {type(value)} (expect {self.record_type})')
             self.setdefault(timestamp, {})[device_id] = value
         elif isinstance(key, int):
             # key is a timestamp
             timestamp = key
             if not isinstance(value, dict):
-                raise TypeError('invalid value for data')
+                raise TypeError('invalid value for data (expect dict)')
             if not all(isinstance(k, str) for k in value.keys()):
                 raise TypeError('invalid device_id')
+            if not all(isinstance(k, self.record_type) for k in value.values()):
+                raise TypeError(f'invalid value for record (expect all {self.record_type})')
             super(RecordsBase, self).__setitem__(timestamp, value)
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
@@ -174,10 +119,11 @@ class RecordsBase(Dict[int, Dict[str, T]]):
         return '\n'.join(lines)
 
 
-class RecordsCamera(RecordsBase[str]):
+class RecordsFilePath(RecordsBase[str]):
     """
-    Camera records
+    Brief: base class for records pointing to a data file (eg. camera, lidar).
     """
+    record_type = str
 
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
@@ -191,104 +137,161 @@ class RecordsCamera(RecordsBase[str]):
                 raise TypeError('invalid value for data')
             if not all(isinstance(v, str) for v in value.values()):
                 raise TypeError('invalid data')
-        super(RecordsCamera, self).__setitem__(key, value)
+        super(RecordsFilePath, self).__setitem__(key, value)
 
 
-class RecordsDepth(RecordsBase[str]):
+class RecordsCamera(RecordsFilePath):
+    """
+    Camera records
+    """
+    pass
+
+
+class RecordsDepth(RecordsFilePath):
     """
     Depth map records
     """
     dtype = np.float32
 
-    def __setitem__(self,
-                    key: Union[int, Tuple[int, str]],
-                    value: Union[Dict[str, str], str]):
-        """ see RecordsBase.__setitem__ """
-        if isinstance(key, tuple):
-            if not isinstance(value, str):
-                raise TypeError('invalid data')
-        elif isinstance(key, int):
-            if not isinstance(value, dict):
-                raise TypeError('invalid value for data')
-            if not all(isinstance(v, str) for v in value.values()):
-                raise TypeError('invalid data')
-        super(RecordsDepth, self).__setitem__(key, value)
 
-
-class RecordsLidar(RecordsBase[str]):
+class RecordsLidar(RecordsFilePath):
     """
     Lidar records
     """
-
-    def __setitem__(self,
-                    key: Union[int, Tuple[int, str]],
-                    value: Union[Dict[str, str], str]):
-        """ see RecordsBase.__setitem__ """
-        if isinstance(key, tuple):
-            if not isinstance(value, str):
-                raise TypeError('invalid data')
-        elif isinstance(key, int):
-            if not isinstance(value, dict):
-                raise TypeError('invalid value for data')
-            if not all(isinstance(v, str) for v in value.values()):
-                raise TypeError('invalid data')
-        super(RecordsLidar, self).__setitem__(key, value)
+    pass
 
 
-class RecordsWifi(RecordsBase[Dict[str, RecordWifi]]):
+# Record Array #########################################################################################################
+# @dataclass
+class RecordArray:
+    def __post_init__(self):
+        # force cast to expected types
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if not isinstance(value, field.type):
+                setattr(self, field.name, field.type(value))
+
+    def astuple(self):
+        return astuple(self)
+
+    def asdict(self):
+        return asdict(self)
+
+    @classmethod
+    def fields(cls):
+        return fields(cls)
+
+
+class RecordsArray(RecordsBase[T]):
     """
     brief: Records
-            records[timestamp][sensor_id] = {bssid: <RecordWifi>}
+            records[timestamp][sensor_id] = RecordArray
             or
-            records[(timestamp, sensor_id)] = {bssid: <RecordWifi>}
+            records[timestamp, sensor_id] = RecordArray
     """
-
-    def __setitem__(self,
-                    key: Union[int, Tuple[int, str]],
-                    value: Dict[str, RecordWifi]):
-        if isinstance(key, tuple):
-            if not isinstance(value, Dict):
-                raise TypeError('invalid data')
-        elif isinstance(key, int):
-            if not isinstance(value, dict):
-                raise TypeError('invalid value for data')
-            if not all(isinstance(v, dict) for v in value.values()):
-                raise TypeError('invalid data')
-        super(RecordsWifi, self).__setitem__(key, value)
+    pass
 
 
-class RecordsGnss(RecordsBase[Dict[str, RecordGnss]]):
+# wifi recordings is made of dict of signals (with signal strength).
+@dataclass
+class RecordWifiSignal(RecordArray):
+    frequency: int
+    rssi: float
+    ssid: str = ''
+    scan_time_start: int = 0
+    scan_time_end: int = 0
+
+
+class RecordWifi(dict):
+    def __setitem__(self, bssid: str, data: RecordWifiSignal):
+        if not isinstance(bssid, str):
+            raise TypeError(f'{bssid} is not expected type str.')
+        if not isinstance(data, RecordWifiSignal):
+            raise TypeError(f'{data} is not expected type RecordWifiHotspot.')
+        super().__setitem__(bssid, data)
+
+
+class RecordsWifi(RecordsArray[RecordWifi]):
     """
-    brief: Records
-            records[timestamp][sensor_id] = <RecordGnss>
+    brief: Records wifi
+            records[timestamp][sensor_id] =  <RecordWifi> = {bssid: RecordWifiHotspot}
             or
-            records[(timestamp, sensor_id)] = <RecordGnss>
+            records[timestamp, sensor_id] = <RecordWifi>
     """
+    record_type = RecordWifi
 
-    def __setitem__(self,
-                    key: Union[int, Tuple[int, str]],
-                    value: Union[Dict[str, RecordGnss], RecordGnss]):
-        """
-        will raise error is sensor_id is not valid.
-        """
-        if isinstance(key, tuple):
-            # records[timestamp, sensor_id] = <RecordGnss>
-            # check record is valid
-            if not isinstance(value, RecordGnss):
-                raise TypeError('invalid value for data')
-        elif isinstance(key, int):
-            # records[timestamp] = {sensor_id: <RecordGnss>}
-            if not isinstance(value, dict):
-                raise TypeError('invalid value for data')
-            # check all values are valid records
-            if not all(isinstance(v, RecordGnss) for v in value.values()):
-                raise TypeError('invalid GNSS data')
 
-        super(RecordsGnss, self).__setitem__(key, value)
+# bluetooth recordings is made of dict of bt devices fingerprints (with signal strength).
+@dataclass
+class RecordBluetoothSignal(RecordArray):
+    rssi: float
+    name: str = ''
 
-    def __repr__(self) -> str:
-        lines = []
-        # [timestamp, sensor_id] = <RecordGnss>
-        lines += [f'[ {timestamp:010}, {sensor_id:5}] = {location}'
-                  for timestamp, sensor_id, location in flatten(self)]
-        return '\n'.join(lines)
+
+class RecordBluetooth(dict):
+    def __setitem__(self, address: str, data: RecordBluetoothSignal):
+        if not isinstance(address, str):
+            raise TypeError(f'{address} is not expected type str.')
+        if not isinstance(data, RecordBluetoothSignal):
+            raise TypeError(f'{data} is not expected type RecordBluetoothDevice.')
+        super().__setitem__(address, data)
+
+
+class RecordsBluetooth(RecordsArray[RecordBluetooth]):
+    """
+    brief: Records wifi
+            records[timestamp][sensor_id] = <RecordBluetooth> = {address: <RecordBluetoothDevice>}
+            or
+            records[timestamp, sensor_id] = <RecordBluetooth>
+    """
+    record_type = RecordBluetooth
+
+
+# gnss recordings
+@dataclass
+class RecordGnss(RecordArray):
+    x: float
+    y: float
+    z: float
+    utc: int
+    dop: float = 0.
+
+
+class RecordsGnss(RecordsArray[RecordGnss]):
+    record_type = RecordGnss
+
+
+# Accelerometer recordings
+@dataclass
+class RecordAccelerometer(RecordArray):
+    x_acc: float
+    y_acc: float
+    z_acc: float
+
+
+class RecordsAccelerometer(RecordsArray[RecordAccelerometer]):
+    record_type = RecordAccelerometer
+
+
+# Gyroscope recordings
+@dataclass
+class RecordGyroscope(RecordArray):
+    x_seed: float
+    y_seed: float
+    z_seed: float
+
+
+class RecordsGyroscope(RecordsArray[RecordGyroscope]):
+    record_type = RecordGyroscope
+
+
+# Magnetic field recordings
+@dataclass
+class RecordMagnetic(RecordArray):
+    x_strength: float
+    y_strength: float
+    z_strength: float
+
+
+class RecordsMagnetic(RecordsArray[RecordMagnetic]):
+    record_type = RecordMagnetic
