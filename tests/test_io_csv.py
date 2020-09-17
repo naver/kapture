@@ -534,7 +534,7 @@ class TestCsvM1x(unittest.TestCase):
         self.assertEqual(len(self._kapture_data.rigs.keys()), 1)
         self.assertIn('rig', self._kapture_data.rigs)
         # there is 13 sensors in this rig
-        self.assertEqual(len(self._kapture_data.rigs['rig']), 13)
+        self.assertEqual(len(self._kapture_data.rigs['rig']), 14)
         self.assertIn('lidar0', self._kapture_data.rigs['rig'])
 
     def test_trajectories_read_file(self):
