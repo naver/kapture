@@ -192,9 +192,9 @@ class RecordsArray(RecordsBase[T]):
     pass
 
 
-# wifi recordings is made of dict of hotspot (with signal strength).
+# wifi recordings is made of dict of signals (with signal strength).
 @dataclass
-class RecordWifiHotspot(RecordArray):
+class RecordWifiSignal(RecordArray):
     frequency: int
     rssi: float
     ssid: str = ''
@@ -203,10 +203,10 @@ class RecordWifiHotspot(RecordArray):
 
 
 class RecordWifi(dict):
-    def __setitem__(self, bssid: str, data: RecordWifiHotspot):
+    def __setitem__(self, bssid: str, data: RecordWifiSignal):
         if not isinstance(bssid, str):
             raise TypeError(f'{bssid} is not expected type str.')
-        if not isinstance(data, RecordWifiHotspot):
+        if not isinstance(data, RecordWifiSignal):
             raise TypeError(f'{data} is not expected type RecordWifiHotspot.')
         super().__setitem__(bssid, data)
 
@@ -223,17 +223,17 @@ class RecordsWifi(RecordsArray[RecordWifi]):
 
 # bluetooth recordings is made of dict of bt devices fingerprints (with signal strength).
 @dataclass
-class RecordBluetoothDevice(RecordArray):
+class RecordBluetoothSignal(RecordArray):
     rssi: float
     name: str = ''
 
 
 class RecordBluetooth(dict):
-    def __setitem__(self, address: str, data: RecordBluetoothDevice):
+    def __setitem__(self, address: str, data: RecordBluetoothSignal):
         if not isinstance(address, str):
             raise TypeError(f'{address} is not expected type str.')
-        if not isinstance(data, RecordWifiHotspot):
-            raise TypeError(f'{data} is not expected type RecordWifiHotspot.')
+        if not isinstance(data, RecordBluetoothSignal):
+            raise TypeError(f'{data} is not expected type RecordBluetoothDevice.')
         super().__setitem__(address, data)
 
 
