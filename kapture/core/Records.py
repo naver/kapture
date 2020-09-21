@@ -264,9 +264,9 @@ class RecordsGnss(RecordsArray[RecordGnss]):
 # Accelerometer recordings
 @dataclass
 class RecordAccelerometer(RecordArray):
-    x_acc: float
-    y_acc: float
-    z_acc: float
+    x_accel: float
+    y_accel: float
+    z_accel: float
 
 
 class RecordsAccelerometer(RecordsArray[RecordAccelerometer]):
@@ -276,9 +276,9 @@ class RecordsAccelerometer(RecordsArray[RecordAccelerometer]):
 # Gyroscope recordings
 @dataclass
 class RecordGyroscope(RecordArray):
-    x_seed: float
-    y_seed: float
-    z_seed: float
+    x_speed: float
+    y_speed: float
+    z_speed: float
 
 
 class RecordsGyroscope(RecordsArray[RecordGyroscope]):
