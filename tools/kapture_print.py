@@ -129,7 +129,8 @@ def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
                 print_key_value(' ├─ kind ', feature.type_name, file=output_stream, show_none=show_all)
                 print_key_value(' ├─ data type', feature.dtype.__name__, file=output_stream, show_none=show_all)
                 print_key_value(' ├─ data size', feature.dsize, file=output_stream, show_none=show_all)
-            print_key_value(' └─ nb images', len(kapture_data.keypoints), file=output_stream, show_none=show_all)
+            nb_images = len(feature) if feature is not None else None
+            print_key_value(' └─ nb images', nb_images, file=output_stream, show_none=show_all)
 
 
 def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
