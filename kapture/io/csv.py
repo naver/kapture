@@ -1251,8 +1251,8 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('magnetic', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_gyroscope = records_gyroscope_from_file(records_gyroscope_file_path,
-                                                                     sensor_ids)
+        kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path,
+                                                                   sensor_ids)
 
 
 def _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matches_pairs_file_path,
