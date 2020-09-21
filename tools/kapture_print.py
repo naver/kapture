@@ -104,9 +104,9 @@ def print_records(kapture_data, output_stream, show_detail, show_all) -> None:
             print_key_value(f'nb {record_name}', nb_record, file=output_stream, show_none=show_all)
         elif record is not None or show_all:
             print_title(f'{record_name}', file=output_stream)
-            if record is not None:
+            if record is not None and len(record) > 0:
                 timestamp_min, timestamp_max = min(record), max(record)
-                nb_sensors = len(set(s_id for _, s_id, _ in kapture.flatten(record)))
+                nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
                 print_key_value(' ├─ timestamp range', f'{timestamp_min}:{timestamp_max}', file=output_stream,
                                 show_none=show_all)
                 print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
