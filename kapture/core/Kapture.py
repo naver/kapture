@@ -319,4 +319,4 @@ class Kapture:
 
         if len(representation) == 0:
             representation = 'no data'
-        return self.format_version + ' ' + representation
+        return representation
