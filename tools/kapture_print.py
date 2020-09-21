@@ -88,7 +88,8 @@ def print_records(kapture_data, output_stream, show_detail, show_all) -> None:
     Prints the records and trajectories to the output stream
     """
     # records (+trajectories)
-    for record_name in ['trajectories', 'records_camera', 'records_lidar', 'records_wifi', 'records_gnss']:
+    for record_name in ['trajectories', 'records_camera', 'records_lidar', 'records_wifi', 'records_bluetooth',
+                        'records_gnss', 'records_accelerometer', 'records_gyroscope', 'records_magnetic']:
         record = getattr(kapture_data, record_name)
         nb_record = None if record is None else len(list(kapture.flatten(record)))
         if not show_detail:
