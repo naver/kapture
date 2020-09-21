@@ -474,7 +474,7 @@ def records_generic_to_file(
         :param records:
         """
     assert (isinstance(records, kapture.RecordsBase))
-    header = '# ' + ', '.join(f.name for f in records.record_type.fields())
+    header = '# timestamp, device_id, ' + ', '.join(f.name for f in records.record_type.fields())
     table = []
     for timestamp, sensor_id, record in kapture.flatten(records, is_sorted=True):
         table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
