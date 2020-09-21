@@ -92,7 +92,7 @@ def print_records(kapture_data, output_stream, show_detail, show_all) -> None:
         record = getattr(kapture_data, record_name)
         nb_record = None if record is None else len(list(kapture.flatten(record)))
         if not show_detail:
-            print_key_value(f'nb {record_name} records', nb_record, file=output_stream, show_none=show_all)
+            print_key_value(f'nb {record_name}', nb_record, file=output_stream, show_none=show_all)
         elif record is not None or show_all:
             print_title(f'{record_name}', file=output_stream)
             if record is not None:
@@ -175,7 +175,7 @@ def print_command_line() -> None:
         help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
     parser_verbosity.add_argument(
         '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-k', '--kapture', required=True,
+    parser.add_argument('-i', '--input', '-k', '--kapture', required=True,
                         help='path to kapture data root directory.')
     parser.add_argument('-o', '--output', required=False, default='-',
                         help='output file [stdout]')
@@ -193,7 +193,7 @@ def print_command_line() -> None:
     args.input = path.abspath(args.input)
     # load
     kapture_data = kapture.io.csv.kapture_from_dir(args.input)
-    do_print(kapture_data, args.kapture, args.output, args.detail, args.all)
+    do_print(kapture_data, args.input, args.output, args.detail, args.all)
 
 
 def do_print(kapture_data: kapture, kapture_name: str, output: str, show_detail: bool, show_all: bool) -> None:
@@ -208,6 +208,7 @@ def do_print(kapture_data: kapture, kapture_name: str, output: str, show_detail:
             print_key_value('path', kapture_name, file=output_stream, show_none=show_all)
             print_key_value('version', kapture_data.format_version, file=output_stream, show_none=show_all)
 
+        print(kapture_data)
         print_sensors(kapture_data, output_stream, show_detail, show_all)
         print_records(kapture_data, output_stream, show_detail, show_all)
         print_features(kapture_data, output_stream, show_detail, show_all)
