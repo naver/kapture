@@ -15,7 +15,82 @@ from .merge_reconstruction import merge_points3d_and_observations, merge_points3
 from .merge_records_data import merge_records_data
 
 
-def merge_sensors(sensors_list: List[Optional[kapture.Sensors]]) -> kapture.Sensors:
+def merge_table_key1(
+        table_list,
+        table_merged,
+):
+    """
+    Merge several table of with (timestamps, device_id)  into one.
+    Each tuple (timestamps, device_id) is a unique key (eg. RecordsCamera).
+    If multiple timestamp and sensor identifier, keep only the first one.
+
+    :param table_list: list of table to merge.
+    :param table_merged: the merged instance.
+    """
+    assert len(table_list) > 0
+    for table in table_list:
+        if table is None:
+            continue
+        for key1, entry in kapture.flatten(table):
+            if key1 in table_merged:
+                # skip to keep the first one
+                continue
+            table_merged[key1] = entry
+    return table_merged
+
+
+def merge_table_key2(
+        table_list,
+        table_merged,
+):
+    """
+    Merge several table of with (timestamps, device_id)  into one.
+    Each tuple (timestamps, device_id) is a unique key (eg. RecordsCamera).
+    If multiple timestamp and sensor identifier, keep only the first one.
+
+    :param table_list: list of table to merge.
+    :param table_merged: the merged instance.
+    """
+    assert len(table_list) > 0
+    for table in table_list:
+        if table is None:
+            continue
+        for key1, key2, entry in kapture.flatten(table):
+            if (key1, key2) in table_merged:
+                # skip to keep the first one
+                continue
+            table_merged[key1, key2] = entry
+    return table_merged
+
+
+def merge_table_key3(
+        table_list,
+        table_merged,
+        subdict_constructor=dict,
+):
+    """
+    Merge several records lists. Records is a dict (eg. wifi)).
+    For record with the same timestamp and sensor identifier, keep only the first one.
+
+    :param subdict_constructor: used to create a new Dict type
+    :param table_list: list of table to merge.
+    :param table_merged: the merged instance.
+    """
+    assert len(table_list) > 0
+    for table in table_list:
+        if table is None:
+            continue
+        for key1, key2, key3, entry in kapture.flatten(table):
+            if (key1, key2) not in table_merged:
+                # if timestamp, sensor_id not there yet, create an instance of dict record
+                table_merged[key1, key2] = subdict_constructor()
+            table_merged[key1, key2].setdefault(key3, entry)
+    return table_merged
+
+
+def merge_sensors(
+        sensors_list: List[Optional[kapture.Sensors]]
+) -> kapture.Sensors:
     """
     Merge several sensors lists. For sensor with the same identifier, keep only the first one.
 
@@ -23,19 +98,18 @@ def merge_sensors(sensors_list: List[Optional[kapture.Sensors]]) -> kapture.Sens
     :return: merge sensors
     """
     assert len(sensors_list) > 0
-
+    assert all(isinstance(i, kapture.Sensors) for i in sensors_list)
     merged_sensors = kapture.Sensors()
-    for sensors in sensors_list:
-        if sensors is None:
-            continue
-        for sensor_id in sensors.keys():
-            if sensor_id in merged_sensors:
-                continue
-            merged_sensors[sensor_id] = sensors[sensor_id]
+    merge_table_key1(
+        table_list=sensors_list,
+        table_merged=merged_sensors
+    )
     return merged_sensors
 
 
-def merge_rigs(rigs_list: List[Optional[kapture.Rigs]]) -> kapture.Rigs:
+def merge_rigs(
+        rigs_list: List[Optional[kapture.Rigs]]
+) -> kapture.Rigs:
     """
     Merge several rigs lists. For sensor with the same rig and sensor identifier, keep only the first one.
 
@@ -43,19 +117,18 @@ def merge_rigs(rigs_list: List[Optional[kapture.Rigs]]) -> kapture.Rigs:
     :return: merged rigs
     """
     assert len(rigs_list) > 0
-
+    assert all(isinstance(i, kapture.Rigs) or i is None for i in rigs_list)
     merged_rigs = kapture.Rigs()
-    for rigs in rigs_list:
-        if rigs is None:
-            continue
-        for rig_id, sensor_id in rigs.key_pairs():
-            if rig_id in merged_rigs and sensor_id in merged_rigs[rig_id]:
-                continue
-            merged_rigs[(rig_id, sensor_id)] = rigs[(rig_id, sensor_id)]
+    merge_table_key2(
+        table_list=rigs_list,
+        table_merged=merged_rigs
+    )
     return merged_rigs
 
 
-def merge_trajectories(trajectories_list: List[Optional[kapture.Trajectories]]) -> kapture.Trajectories:
+def merge_trajectories(
+        trajectories_list: List[Optional[kapture.Trajectories]]
+) -> kapture.Trajectories:
     """
     Merge several trajectories lists. For trajectory point with the same timestamp and sensor identifier,
      keep only the first one.
@@ -64,19 +137,18 @@ def merge_trajectories(trajectories_list: List[Optional[kapture.Trajectories]]) 
     :return: merged trajectories
     """
     assert len(trajectories_list) > 0
-
+    assert all(isinstance(i, kapture.Trajectories) or i is None for i in trajectories_list)
     merged_trajectories = kapture.Trajectories()
-    for trajectories in trajectories_list:
-        if trajectories is None:
-            continue
-        for timestamp, sensor_id, pose in kapture.flatten(trajectories):
-            if (timestamp, sensor_id) in merged_trajectories:
-                continue
-            merged_trajectories[(timestamp, sensor_id)] = pose
+    merge_table_key2(
+        table_list=trajectories_list,
+        table_merged=merged_trajectories
+    )
     return merged_trajectories
 
 
-def merge_records_camera(records_camera_list: List[Optional[kapture.RecordsCamera]]) -> kapture.RecordsCamera:
+def merge_records_camera(
+        records_camera_list: List[Optional[kapture.RecordsCamera]]
+) -> kapture.RecordsCamera:
     """
     Merge several camera records lists. For camera record with the same timestamp and sensor identifier,
      keep only the first one.
@@ -85,19 +157,18 @@ def merge_records_camera(records_camera_list: List[Optional[kapture.RecordsCamer
     :return: merged camera records
     """
     assert len(records_camera_list) > 0
-
-    merged_records_camera = kapture.RecordsCamera()
-    for records_camera in records_camera_list:
-        if records_camera is None:
-            continue
-        for timestamp, sensor_id, filename in kapture.flatten(records_camera):
-            if (timestamp, sensor_id) in merged_records_camera:
-                continue
-            merged_records_camera[(timestamp, sensor_id)] = filename
-    return merged_records_camera
+    assert all(isinstance(i, kapture.RecordsCamera) or i is None for i in records_camera_list)
+    merged_records = kapture.RecordsCamera()
+    merge_table_key2(
+        table_list=records_camera_list,
+        table_merged=merged_records
+    )
+    return merged_records
 
 
-def merge_records_lidar(records_lidar_list: List[Optional[kapture.RecordsLidar]]) -> kapture.RecordsLidar:
+def merge_records_lidar(
+        records_lidar_list: List[Optional[kapture.RecordsLidar]]
+) -> kapture.RecordsLidar:
     """
     Merge several lidar records lists. For lidar record with the same timestamp and sensor identifier,
      keep only the first one.
@@ -106,40 +177,62 @@ def merge_records_lidar(records_lidar_list: List[Optional[kapture.RecordsLidar]]
     :return: merged lidar records
     """
     assert len(records_lidar_list) > 0
-
-    merged_records_lidar = kapture.RecordsLidar()
-    for records_lidar in records_lidar_list:
-        if records_lidar is None:
-            continue
-        for timestamp, sensor_id, filename in kapture.flatten(records_lidar):
-            if (timestamp, sensor_id) in merged_records_lidar:
-                continue
-            merged_records_lidar[(timestamp, sensor_id)] = filename
-    return merged_records_lidar
+    assert all(isinstance(i, kapture.RecordsLidar) or i is None for i in records_lidar_list)
+    merged_records = kapture.RecordsLidar()
+    merge_table_key2(
+        table_list=records_lidar_list,
+        table_merged=merged_records
+    )
+    return merged_records
 
 
-def merge_records_wifi(records_wifi_list: List[Optional[kapture.RecordsWifi]]) -> kapture.RecordsWifi:
+def merge_records_wifi(
+        records_wifi_list: List[Optional[kapture.RecordsWifi]]
+) -> kapture.RecordsWifi:
     """
-    Merge several wifi records lists. For wifi record with the same timestamp and sensor identifier,
+    Merge several wifi records lists.
+    For wifi record with the same timestamp, sensor, BSSID,
      keep only the first one.
 
     :param records_wifi_list: list of wifi records
     :return: merged wifi records
     """
     assert len(records_wifi_list) > 0
-
-    merged_records_wifi = kapture.RecordsWifi()
-    for records_wifi in records_wifi_list:
-        if records_wifi is None:
-            continue
-        for timestamp, sensor_id, record_wifi in kapture.flatten(records_wifi):
-            if (timestamp, sensor_id) in merged_records_wifi:
-                continue
-            merged_records_wifi[(timestamp, sensor_id)] = record_wifi
-    return merged_records_wifi
+    assert all(isinstance(i, kapture.RecordsWifi) or i is None for i in records_wifi_list)
+    merged_records = kapture.RecordsWifi()
+    merge_table_key3(
+        table_list=records_wifi_list,
+        table_merged=merged_records,
+        subdict_constructor=kapture.RecordsWifi.record_type
+    )
+    return merged_records
 
 
-def merge_records_gnss(records_gnss_list: List[Optional[kapture.RecordsGnss]]) -> kapture.RecordsGnss:
+def merge_records_bluetooth(
+        records_bluetooth_list: List[Optional[kapture.RecordsBluetooth]]
+) -> kapture.RecordsBluetooth:
+    """
+    Merge several bluetooth records lists.
+    For bluetooth record with the same timestamp, sensor, address,
+     keep only the first one.
+
+    :param records_bluetooth_list: list of wifi records
+    :return: merged bluetooth records
+    """
+    assert len(records_bluetooth_list) > 0
+    assert all(isinstance(i, kapture.RecordsBluetooth) or i is None for i in records_bluetooth_list)
+    merged_records = kapture.RecordsBluetooth()
+    merge_table_key3(
+        table_list=records_bluetooth_list,
+        table_merged=merged_records,
+        subdict_constructor=kapture.RecordsBluetooth.record_type
+    )
+    return merged_records
+
+
+def merge_records_gnss(
+        records_gnss_list: List[Optional[kapture.RecordsGnss]]
+) -> kapture.RecordsGnss:
     """
     Merge several gnss records lists. For gnss record with the same timestamp and sensor identifier,
      keep only the first one.
@@ -148,16 +241,76 @@ def merge_records_gnss(records_gnss_list: List[Optional[kapture.RecordsGnss]]) -
     :return: merged gnss records
     """
     assert len(records_gnss_list) > 0
+    assert all(isinstance(i, kapture.RecordsGnss) or i is None for i in records_gnss_list)
+    merged_records = kapture.RecordsGnss()
+    merge_table_key2(
+        table_list=records_gnss_list,
+        table_merged=merged_records
+    )
+    return merged_records
 
-    merged_records_gnss = kapture.RecordsGnss()
-    for records_gnss in records_gnss_list:
-        if records_gnss is None:
-            continue
-        for timestamp, sensor_id, record_gnss in kapture.flatten(records_gnss):
-            if (timestamp, sensor_id) in merged_records_gnss:
-                continue
-            merged_records_gnss[(timestamp, sensor_id)] = record_gnss
-    return merged_records_gnss
+
+def merge_records_accelerometer(
+        records_accelerometer_list: List[Optional[kapture.RecordsAccelerometer]]
+) -> kapture.RecordsAccelerometer:
+    """
+    Merge several accelerometer records lists.
+    For accelerometer record with the same timestamp and sensor identifier,
+     keep only the first one.
+
+    :param records_accelerometer_list: list of accelerometer records
+    :return: merged accelerometer records
+    """
+    assert len(records_accelerometer_list) > 0
+    assert all(isinstance(i, kapture.RecordsAccelerometer) or i is None for i in records_accelerometer_list)
+    merged_records = kapture.RecordsAccelerometer()
+    merge_table_key2(
+        table_list=records_accelerometer_list,
+        table_merged=merged_records
+    )
+    return merged_records
+
+
+def merge_records_gyroscope(
+        records_gyroscope_list: List[Optional[kapture.RecordsGyroscope]]
+) -> kapture.RecordsGyroscope:
+    """
+    Merge several gyroscope records lists.
+    For gyroscope record with the same timestamp and sensor identifier,
+     keep only the first one.
+
+    :param records_gyroscope_list: list of gnss records
+    :return: merged gyroscope records
+    """
+    assert len(records_gyroscope_list) > 0
+    assert all(isinstance(i, kapture.RecordsGyroscope) or i is None for i in records_gyroscope_list)
+    merged_records = kapture.RecordsGyroscope()
+    merge_table_key2(
+        table_list=records_gyroscope_list,
+        table_merged=merged_records
+    )
+    return merged_records
+
+
+def merge_records_magnetic(
+        records_magnetic_list: List[Optional[kapture.RecordsMagnetic]]
+) -> kapture.RecordsMagnetic:
+    """
+    Merge several magnetic records lists.
+    For magnetic record with the same timestamp and sensor identifier,
+     keep only the first one.
+
+    :param records_magnetic_list: list of gnss records
+    :return: merged magnetic records
+    """
+    assert len(records_magnetic_list) > 0
+    assert all(isinstance(i, kapture.RecordsMagnetic) or i is None for i in records_magnetic_list)
+    merged_records = kapture.RecordsMagnetic()
+    merge_table_key2(
+        table_list=records_magnetic_list,
+        table_merged=merged_records
+    )
+    return merged_records
 
 
 def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function a bit long but not too complex
@@ -206,14 +359,40 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function 
                            images_import_method)
 
     if kapture.RecordsLidar not in skip_list:
-        new_records_lidar = merge_records_lidar([every_kapture.records_lidar for every_kapture in kapture_list])
-        merged_kapture.records_lidar = get_new_if_not_empty(new_records_lidar, merged_kapture.records_lidar)
+        new_records_lidar = merge_records_lidar([every_kapture.records_lidar
+                                                 for every_kapture in kapture_list])
+        merged_kapture.records_lidar = get_new_if_not_empty(new_records_lidar,
+                                                            merged_kapture.records_lidar)
     if kapture.RecordsWifi not in skip_list:
-        new_records_wifi = merge_records_wifi([every_kapture.records_wifi for every_kapture in kapture_list])
-        merged_kapture.records_wifi = get_new_if_not_empty(new_records_wifi, merged_kapture.records_wifi)
+        new_records_wifi = merge_records_wifi([every_kapture.records_wifi
+                                               for every_kapture in kapture_list])
+        merged_kapture.records_wifi = get_new_if_not_empty(new_records_wifi,
+                                                           merged_kapture.records_wifi)
+    if kapture.RecordsBluetooth not in skip_list:
+        new_records_bluetooth = merge_records_bluetooth([every_kapture.records_bluetooth
+                                                         for every_kapture in kapture_list])
+        merged_kapture.records_bluetooth = get_new_if_not_empty(new_records_bluetooth,
+                                                                merged_kapture.records_bluetooth)
     if kapture.RecordsGnss not in skip_list:
-        new_records_gnss = merge_records_gnss([every_kapture.records_gnss for every_kapture in kapture_list])
-        merged_kapture.records_gnss = get_new_if_not_empty(new_records_gnss, merged_kapture.records_gnss)
+        new_records_gnss = merge_records_gnss([every_kapture.records_gnss
+                                               for every_kapture in kapture_list])
+        merged_kapture.records_gnss = get_new_if_not_empty(new_records_gnss,
+                                                           merged_kapture.records_gnss)
+    if kapture.RecordsAccelerometer not in skip_list:
+        new_records_accelerometer = merge_records_accelerometer([every_kapture.records_accelerometer
+                                                                 for every_kapture in kapture_list])
+        merged_kapture.records_accelerometer = get_new_if_not_empty(new_records_accelerometer,
+                                                                    merged_kapture.records_accelerometer)
+    if kapture.RecordsGyroscope not in skip_list:
+        new_records_gyroscope = merge_records_gyroscope([every_kapture.records_gyroscope
+                                                         for every_kapture in kapture_list])
+        merged_kapture.records_gyroscope = get_new_if_not_empty(new_records_gyroscope,
+                                                                merged_kapture.records_gyroscope)
+    if kapture.RecordsMagnetic not in skip_list:
+        new_records_magnetic = merge_records_magnetic([every_kapture.records_magnetic
+                                                       for every_kapture in kapture_list])
+        merged_kapture.records_magnetic = get_new_if_not_empty(new_records_magnetic,
+                                                               merged_kapture.records_magnetic)
 
     # for the reconstruction, except points and observations, the files are copied with shutil.copy
     # if kapture_path evaluates to False, all copies will be skipped (but classes will be filled normally)
