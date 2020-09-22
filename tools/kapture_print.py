@@ -218,7 +218,6 @@ def do_print(kapture_data: kapture, kapture_name: str, output: str, show_detail:
             print_key_value('path', kapture_name, file=output_stream, show_none=show_all)
             print_key_value('version', kapture_data.format_version, file=output_stream, show_none=show_all)
 
-        print(kapture_data)
         print_sensors(kapture_data, output_stream, show_detail, show_all)
         print_records(kapture_data, output_stream, show_detail, show_all)
         print_features(kapture_data, output_stream, show_detail, show_all)
