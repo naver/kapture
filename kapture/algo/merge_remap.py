@@ -37,6 +37,95 @@ def get_rigs_mapping(rigs: kapture.Rigs, offset: int = 0) -> Dict[str, str]:
     return {k: f'rig{v}' for k, v in zip(rigs.keys(), range(offset, offset + len(rigs)))}
 
 
+def merge_table_key1(
+        table_list,
+        sensor_mappings: List[Dict[str, str]],
+        table_constructor,
+):
+    """
+    Merge several table with 1 key (Only device_id) into one.
+    If multiple entry for a key keep only the first one.
+
+    :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
+    :param table_list: list of table to merge.
+    :param table_constructor: the class type of table.
+    :return table_merged
+
+    """
+    assert len(table_list) > 0
+    assert len(table_list) == len(sensor_mappings)
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
+    for table, sensor_mapping in zip(table_list, sensor_mappings):
+        for sensor_id, entry in kapture.flatten(table):
+            new_sensor_id = sensor_mapping[sensor_id]
+            table_merged[new_sensor_id] = entry
+    return table_merged
+
+
+def merge_table_key2(
+        table_list,
+        sensor_mappings: List[Dict[str, str]],
+        table_constructor,
+):
+    """
+    Merge several table with 2 keys (eg. timestamps, device_id)  into one.
+    If multiple entry for a key keep only the first one.
+
+    :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
+    :param table_list: list of table to merge.
+    :param table_constructor: the class type of table.
+    :return table_merged
+
+    """
+    assert len(table_list) > 0
+    assert len(table_list) == len(sensor_mappings)
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
+    for table, sensor_mapping in zip(table_list, sensor_mappings):
+        for key1, sensor_id, entry in kapture.flatten(table):
+            new_sensor_id = sensor_mapping[sensor_id]
+            table_merged[key1, new_sensor_id] = entry
+    return table_merged
+
+
+def merge_table_key3(
+        table_list,
+        sensor_mappings: List[Dict[str, str]],
+        table_constructor,
+        subdict_constructor=dict,
+):
+    """
+    Merge several table with 2 keys (eg. timestamps, device_id)  into one.
+    If multiple entry for a key keep only the first one.
+
+    :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
+    :param table_list: list of table to merge.
+    :param table_constructor: the class type of table.
+    :param subdict_constructor: used to create a new Dict type
+    :return table_merged
+
+    """
+    assert len(table_list) > 0
+    assert len(table_list) == len(sensor_mappings)
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
+    for table, sensor_mapping in zip(table_list, sensor_mappings):
+        for key1, sensor_id, key3, entry in kapture.flatten(table):
+            new_sensor_id = sensor_mapping[sensor_id]
+            if (key1, new_sensor_id) not in table_merged:
+                # if timestamp, sensor_id not there yet, create an instance of dict record
+                table_merged[key1, new_sensor_id] = subdict_constructor()
+            table_merged[key1, new_sensor_id].setdefault(key3, entry)
+    return table_merged
+
+
 def merge_sensors(
         sensors_list: List[Optional[kapture.Sensors]],
         sensor_mappings: List[Dict[str, str]]) -> kapture.Sensors:
@@ -47,17 +136,11 @@ def merge_sensors(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged sensors definitions
     """
-    assert len(sensors_list) > 0
-    assert len(sensors_list) == len(sensor_mappings)
-
-    merged_sensors = kapture.Sensors()
-    for sensors, mapping in zip(sensors_list, sensor_mappings):
-        if sensors is None:
-            continue
-        for sensor_id in sensors.keys():
-            new_id = mapping[sensor_id]
-            merged_sensors[new_id] = sensors[sensor_id]
-    return merged_sensors
+    return merge_table_key1(
+        table_list=sensors_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.Sensors
+    )
 
 
 def merge_rigs(
@@ -126,17 +209,11 @@ def merge_records_camera(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged camera records
     """
-    assert len(records_camera_list) > 0
-    assert len(records_camera_list) == len(sensor_mappings)
-
-    merged_records_camera = kapture.RecordsCamera()
-    for records_camera, sensor_mapping in zip(records_camera_list, sensor_mappings):
-        if records_camera is None:
-            continue
-        for timestamp, sensor_id, filename in kapture.flatten(records_camera):
-            new_sensor_id = sensor_mapping[sensor_id]
-            merged_records_camera[(timestamp, new_sensor_id)] = filename
-    return merged_records_camera
+    return merge_table_key2(
+        table_list=records_camera_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsCamera
+    )
 
 
 def merge_records_lidar(
@@ -149,17 +226,11 @@ def merge_records_lidar(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged lidar records
     """
-    assert len(records_lidar_list) > 0
-    assert len(records_lidar_list) == len(sensor_mappings)
-
-    merged_records_lidar = kapture.RecordsLidar()
-    for records_lidar, sensor_mapping in zip(records_lidar_list, sensor_mappings):
-        if records_lidar is None:
-            continue
-        for timestamp, sensor_id, filename in kapture.flatten(records_lidar):
-            new_sensor_id = sensor_mapping[sensor_id]
-            merged_records_lidar[(timestamp, new_sensor_id)] = filename
-    return merged_records_lidar
+    return merge_table_key2(
+        table_list=records_lidar_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsLidar
+    )
 
 
 def merge_records_wifi(
@@ -172,20 +243,12 @@ def merge_records_wifi(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged wifi records
     """
-    assert len(records_wifi_list) > 0
-    assert len(records_wifi_list) == len(sensor_mappings)
-
-    merged_wifi_records = kapture.RecordsWifi()
-    for wifi_records, sensor_mapping in zip(records_wifi_list, sensor_mappings):
-        if wifi_records is None:
-            continue
-        for timestamp, sensor_id, bssid, record_wifi_signal in kapture.flatten(wifi_records):
-            new_sensor_id = sensor_mapping[sensor_id]
-            if (timestamp, new_sensor_id) not in merged_wifi_records:
-                merged_wifi_records[timestamp, new_sensor_id] = kapture.RecordWifi()
-            # if collision, keep first one.
-            merged_wifi_records[timestamp, new_sensor_id].setdefault(bssid, record_wifi_signal)
-    return merged_wifi_records
+    return merge_table_key3(
+        table_list=records_wifi_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsWifi,
+        subdict_constructor=kapture.RecordsWifi.record_type
+    )
 
 
 def merge_records_bluetooth(
@@ -198,45 +261,12 @@ def merge_records_bluetooth(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged bluetooth records
     """
-    assert len(records_bluetooth_list) > 0
-    assert len(records_bluetooth_list) == len(sensor_mappings)
-
-    merged_bluetooth_records = kapture.RecordsBluetooth()
-    for bluetooth_records, sensor_mapping in zip(records_bluetooth_list, sensor_mappings):
-        if bluetooth_records is None:
-            continue
-        for timestamp, sensor_id, address, record_bluetooth_signal in kapture.flatten(bluetooth_records):
-            new_sensor_id = sensor_mapping[sensor_id]
-            if (timestamp, new_sensor_id) not in merged_bluetooth_records:
-                merged_bluetooth_records[timestamp, new_sensor_id] = kapture.RecordBluetooth()
-            # if collision, keep first one.
-            merged_bluetooth_records[timestamp, new_sensor_id].setdefault(address, record_bluetooth_signal)
-    return merged_bluetooth_records
-
-
-def merge_records_generic(
-        records_type,
-        records_list,
-        sensor_mappings: List[Dict[str, str]]):
-    """
-    Merge several records list into one list with new identifiers for the sensors.
-
-    :param records_type: kapture class corresponding to the Records.
-    :param records_list: list of records to merge
-    :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
-    :return: merged records
-    """
-    assert len(records_list) > 0
-    assert len(records_list) == len(sensor_mappings)
-
-    merged_records = records_type()
-    for records, sensor_mapping in zip(records_list, sensor_mappings):
-        if records is None:
-            continue
-        for timestamp, sensor_id, record in kapture.flatten(records):
-            new_sensor_id = sensor_mapping[sensor_id]
-            merged_records[timestamp, new_sensor_id] = record
-    return merged_records
+    return merge_table_key3(
+        table_list=records_bluetooth_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsBluetooth,
+        subdict_constructor=kapture.RecordsBluetooth.record_type
+    )
 
 
 def merge_records_gnss(
@@ -249,10 +279,11 @@ def merge_records_gnss(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged gnss records
     """
-    return merge_records_generic(
-        kapture.RecordsGnss,
-        records_gnss_list,
-        sensor_mappings)
+    return merge_table_key2(
+        table_list=records_gnss_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsGnss
+    )
 
 
 def merge_records_accelerometer(
@@ -265,10 +296,11 @@ def merge_records_accelerometer(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged accelerometer records
     """
-    return merge_records_generic(
-        kapture.RecordsAccelerometer,
-        records_accelerometer_list,
-        sensor_mappings)
+    return merge_table_key2(
+        table_list=records_accelerometer_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsAccelerometer
+    )
 
 
 def merge_records_gyroscope(
@@ -281,10 +313,11 @@ def merge_records_gyroscope(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged gyroscope records
     """
-    return merge_records_generic(
-        kapture.RecordsGyroscope,
-        records_gyroscope_list,
-        sensor_mappings)
+    return merge_table_key2(
+        table_list=records_gyroscope_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsGyroscope
+    )
 
 
 def merge_records_magnetic(
@@ -297,10 +330,11 @@ def merge_records_magnetic(
     :param sensor_mappings: mapping of the sensor identifiers to their new identifiers
     :return: merged magnetic records
     """
-    return merge_records_generic(
-        kapture.RecordsMagnetic,
-        records_magnetic_list,
-        sensor_mappings)
+    return merge_table_key2(
+        table_list=records_magnetic_list,
+        sensor_mappings=sensor_mappings,
+        table_constructor=kapture.RecordsMagnetic
+    )
 
 
 def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a bit long but not too complex

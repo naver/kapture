@@ -17,20 +17,22 @@ from .merge_records_data import merge_records_data
 
 def merge_table_key1(
         table_list,
-        table_merged,
+        table_constructor,
 ):
     """
-    Merge several table of with (timestamps, device_id)  into one.
-    Each tuple (timestamps, device_id) is a unique key (eg. RecordsCamera).
-    If multiple timestamp and sensor identifier, keep only the first one.
+    Merge several table with 1 key (eg. device_id)  into one.
+    If multiple entry for a key keep only the first one.
 
     :param table_list: list of table to merge.
-    :param table_merged: the merged instance.
+    :param table_constructor: the class type of table.
+    :return table_merged
     """
     assert len(table_list) > 0
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
     for table in table_list:
-        if table is None:
-            continue
         for key1, entry in kapture.flatten(table):
             if key1 in table_merged:
                 # skip to keep the first one
@@ -41,20 +43,22 @@ def merge_table_key1(
 
 def merge_table_key2(
         table_list,
-        table_merged,
+        table_constructor,
 ):
     """
-    Merge several table of with (timestamps, device_id)  into one.
-    Each tuple (timestamps, device_id) is a unique key (eg. RecordsCamera).
-    If multiple timestamp and sensor identifier, keep only the first one.
+    Merge several table with 2 keys (eg. timestamps, device_id)  into one.
+    If multiple entry for a key keep only the first one.
 
     :param table_list: list of table to merge.
-    :param table_merged: the merged instance.
+    :param table_constructor: the class type of table.
+    :return table_merged
     """
     assert len(table_list) > 0
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
     for table in table_list:
-        if table is None:
-            continue
         for key1, key2, entry in kapture.flatten(table):
             if (key1, key2) in table_merged:
                 # skip to keep the first one
@@ -65,21 +69,24 @@ def merge_table_key2(
 
 def merge_table_key3(
         table_list,
-        table_merged,
+        table_constructor,
         subdict_constructor=dict,
 ):
     """
     Merge several records lists. Records is a dict (eg. wifi)).
     For record with the same timestamp and sensor identifier, keep only the first one.
 
-    :param subdict_constructor: used to create a new Dict type
     :param table_list: list of table to merge.
-    :param table_merged: the merged instance.
+    :param table_constructor: the class type of table.
+    :param subdict_constructor: used to create a new Dict type
+    :return table_merged
     """
     assert len(table_list) > 0
+    table_list = [table for table in table_list if table is not None]
+    if not all(isinstance(table, table_constructor) for table in table_list):
+        raise TypeError(f'unexpected type.')
+    table_merged = table_constructor()
     for table in table_list:
-        if table is None:
-            continue
         for key1, key2, key3, entry in kapture.flatten(table):
             if (key1, key2) not in table_merged:
                 # if timestamp, sensor_id not there yet, create an instance of dict record
@@ -97,14 +104,10 @@ def merge_sensors(
     :param sensors_list: list of sensors
     :return: merge sensors
     """
-    assert len(sensors_list) > 0
-    assert all(isinstance(i, kapture.Sensors) for i in sensors_list)
-    merged_sensors = kapture.Sensors()
-    merge_table_key1(
+    return merge_table_key1(
         table_list=sensors_list,
-        table_merged=merged_sensors
+        table_constructor=kapture.Sensors
     )
-    return merged_sensors
 
 
 def merge_rigs(
@@ -116,14 +119,10 @@ def merge_rigs(
     :param rigs_list: list of rigs
     :return: merged rigs
     """
-    assert len(rigs_list) > 0
-    assert all(isinstance(i, kapture.Rigs) or i is None for i in rigs_list)
-    merged_rigs = kapture.Rigs()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=rigs_list,
-        table_merged=merged_rigs
+        table_constructor=kapture.Rigs
     )
-    return merged_rigs
 
 
 def merge_trajectories(
@@ -136,14 +135,10 @@ def merge_trajectories(
     :param trajectories_list: list of trajectories
     :return: merged trajectories
     """
-    assert len(trajectories_list) > 0
-    assert all(isinstance(i, kapture.Trajectories) or i is None for i in trajectories_list)
-    merged_trajectories = kapture.Trajectories()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=trajectories_list,
-        table_merged=merged_trajectories
+        table_constructor=kapture.Trajectories
     )
-    return merged_trajectories
 
 
 def merge_records_camera(
@@ -156,14 +151,10 @@ def merge_records_camera(
     :param records_camera_list: list of camera records
     :return: merged camera records
     """
-    assert len(records_camera_list) > 0
-    assert all(isinstance(i, kapture.RecordsCamera) or i is None for i in records_camera_list)
-    merged_records = kapture.RecordsCamera()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_camera_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsCamera
     )
-    return merged_records
 
 
 def merge_records_lidar(
@@ -176,14 +167,10 @@ def merge_records_lidar(
     :param records_lidar_list: list of lidar records
     :return: merged lidar records
     """
-    assert len(records_lidar_list) > 0
-    assert all(isinstance(i, kapture.RecordsLidar) or i is None for i in records_lidar_list)
-    merged_records = kapture.RecordsLidar()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_lidar_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsLidar
     )
-    return merged_records
 
 
 def merge_records_wifi(
@@ -197,15 +184,11 @@ def merge_records_wifi(
     :param records_wifi_list: list of wifi records
     :return: merged wifi records
     """
-    assert len(records_wifi_list) > 0
-    assert all(isinstance(i, kapture.RecordsWifi) or i is None for i in records_wifi_list)
-    merged_records = kapture.RecordsWifi()
-    merge_table_key3(
+    return merge_table_key3(
         table_list=records_wifi_list,
-        table_merged=merged_records,
+        table_constructor=kapture.RecordsWifi,
         subdict_constructor=kapture.RecordsWifi.record_type
     )
-    return merged_records
 
 
 def merge_records_bluetooth(
@@ -219,15 +202,11 @@ def merge_records_bluetooth(
     :param records_bluetooth_list: list of wifi records
     :return: merged bluetooth records
     """
-    assert len(records_bluetooth_list) > 0
-    assert all(isinstance(i, kapture.RecordsBluetooth) or i is None for i in records_bluetooth_list)
-    merged_records = kapture.RecordsBluetooth()
-    merge_table_key3(
+    return merge_table_key3(
         table_list=records_bluetooth_list,
-        table_merged=merged_records,
+        table_constructor=kapture.RecordsBluetooth,
         subdict_constructor=kapture.RecordsBluetooth.record_type
     )
-    return merged_records
 
 
 def merge_records_gnss(
@@ -240,14 +219,10 @@ def merge_records_gnss(
     :param records_gnss_list: list of gnss records
     :return: merged gnss records
     """
-    assert len(records_gnss_list) > 0
-    assert all(isinstance(i, kapture.RecordsGnss) or i is None for i in records_gnss_list)
-    merged_records = kapture.RecordsGnss()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_gnss_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsGnss
     )
-    return merged_records
 
 
 def merge_records_accelerometer(
@@ -261,14 +236,10 @@ def merge_records_accelerometer(
     :param records_accelerometer_list: list of accelerometer records
     :return: merged accelerometer records
     """
-    assert len(records_accelerometer_list) > 0
-    assert all(isinstance(i, kapture.RecordsAccelerometer) or i is None for i in records_accelerometer_list)
-    merged_records = kapture.RecordsAccelerometer()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_accelerometer_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsAccelerometer
     )
-    return merged_records
 
 
 def merge_records_gyroscope(
@@ -282,14 +253,10 @@ def merge_records_gyroscope(
     :param records_gyroscope_list: list of gnss records
     :return: merged gyroscope records
     """
-    assert len(records_gyroscope_list) > 0
-    assert all(isinstance(i, kapture.RecordsGyroscope) or i is None for i in records_gyroscope_list)
-    merged_records = kapture.RecordsGyroscope()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_gyroscope_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsGyroscope
     )
-    return merged_records
 
 
 def merge_records_magnetic(
@@ -303,14 +270,10 @@ def merge_records_magnetic(
     :param records_magnetic_list: list of gnss records
     :return: merged magnetic records
     """
-    assert len(records_magnetic_list) > 0
-    assert all(isinstance(i, kapture.RecordsMagnetic) or i is None for i in records_magnetic_list)
-    merged_records = kapture.RecordsMagnetic()
-    merge_table_key2(
+    return merge_table_key2(
         table_list=records_magnetic_list,
-        table_merged=merged_records
+        table_constructor=kapture.RecordsMagnetic
     )
-    return merged_records
 
 
 def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function a bit long but not too complex

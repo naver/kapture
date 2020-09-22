@@ -53,8 +53,16 @@ def merge_kaptures(kapture_path_list: List[str],
         skip_list.append(kapture.RecordsLidar)
     if 'records_wifi' in skip:
         skip_list.append(kapture.RecordsWifi)
+    if 'records_bluetooth' in skip:
+        skip_list.append(kapture.RecordsBluetooth)
     if 'records_gnss' in skip:
         skip_list.append(kapture.RecordsGnss)
+    if 'records_accelerometer' in skip:
+        skip_list.append(kapture.RecordsAccelerometer)
+    if 'records_gyroscope' in skip:
+        skip_list.append(kapture.RecordsGyroscope)
+    if 'records_magnetic' in skip:
+        skip_list.append(kapture.RecordsMagnetic)
     if 'keypoints' in skip:
         skip_list.append(kapture.Keypoints)
     if 'descriptors' in skip:
