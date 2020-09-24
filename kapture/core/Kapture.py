@@ -9,8 +9,9 @@ from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Matches import Matches
 from .Observations import Observations
 from .Points3d import Points3d
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Union
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -310,11 +311,37 @@ class Kapture:
             raise TypeError('Points3d expected')
         self._points3d = points3d
 
+    def as_dict(self, keep_none=False) -> Dict[str, Union[
+        Sensors,
+        Rigs,
+        Trajectories,
+        RecordsCamera,
+        RecordsDepth,
+        RecordsLidar,
+        RecordsWifi,
+        RecordsBluetooth,
+        RecordsGnss,
+        RecordsAccelerometer,
+        RecordsGyroscope,
+        RecordsMagnetic,
+        Keypoints,
+        Descriptors,
+        GlobalFeatures,
+        Matches,
+        Observations,
+        Points3d
+    ]]:
+        """ convenience accessor to all members at once """
+        return {
+            name[1:]: member
+            for name, member in self.__dict__.items()
+            if not name.startswith('__') and (keep_none or member is not None)
+        }
+
     def __repr__(self) -> str:
         representation = '\n'.join([
-            f'{name[1:]:14} : {len(value):4}'
-            for name, value in self.__dict__.items()
-            if not name.startswith('__') and value is not None
+            f'{name:14} : {len(value):4}'
+            for name, value in self.as_dict().items()
         ])
 
         if len(representation) == 0:

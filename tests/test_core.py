@@ -716,6 +716,25 @@ class TestKapture(unittest.TestCase):
         kapture_data.sensors = sensors
         kapture_data.sensors['lidar0'] = lidar0
 
+    def test_as_dict(self):
+        kapture_data = kapture.Kapture()
+        # test empty
+        members = kapture_data.as_dict()
+        self.assertEqual(members, {})
+        members = kapture_data.as_dict(keep_none=True)
+        self.assertEqual(len(members), 18)
+        self.assertTrue(all(member is None for member in members.values()))
+
+        # test sensors only
+        kapture_data.sensors = kapture.Sensors({'cam0': kapture.Sensor('camera', [])})
+        members = kapture_data.as_dict()
+        self.assertEqual(len(members), 1)
+        self.assertEqual(members, {'sensors': kapture_data.sensors})
+        members = kapture_data.as_dict(keep_none=True)
+        self.assertEqual(len(members), 18)
+        self.assertEqual(members['sensors'], kapture_data.sensors)
+        self.assertTrue(all(member is None for name, member in members.items() if name != 'sensors'))
+
 
 if __name__ == '__main__':
     unittest.main()
