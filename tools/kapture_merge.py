@@ -25,7 +25,7 @@ from kapture.io.records import TransferAction
 logger = logging.getLogger('merge')
 
 
-def merge_kaptures(kapture_path_list: List[str],
+def merge_kaptures(kapture_path_list: List[str],  # noqa: C901: function really not complex
                    merged_path: str,
                    keep_sensor_ids:  bool,
                    images_import_strategy: TransferAction = TransferAction.skip,
