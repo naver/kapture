@@ -30,7 +30,7 @@ def merge_table_key1(
     assert len(table_list) > 0
     table_list = [table for table in table_list if table is not None]
     if not all(isinstance(table, table_constructor) for table in table_list):
-        raise TypeError(f'unexpected type.')
+        raise TypeError('unexpected type.')
     table_merged = table_constructor()
     for table in table_list:
         for key1, entry in kapture.flatten(table):
@@ -56,7 +56,7 @@ def merge_table_key2(
     assert len(table_list) > 0
     table_list = [table for table in table_list if table is not None]
     if not all(isinstance(table, table_constructor) for table in table_list):
-        raise TypeError(f'unexpected type.')
+        raise TypeError('unexpected type.')
     table_merged = table_constructor()
     for table in table_list:
         for key1, key2, entry in kapture.flatten(table):
@@ -84,7 +84,7 @@ def merge_table_key3(
     assert len(table_list) > 0
     table_list = [table for table in table_list if table is not None]
     if not all(isinstance(table, table_constructor) for table in table_list):
-        raise TypeError(f'unexpected type.')
+        raise TypeError('unexpected type.')
     table_merged = table_constructor()
     for table in table_list:
         for key1, key2, key3, entry in kapture.flatten(table):
