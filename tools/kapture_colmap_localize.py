@@ -32,7 +32,7 @@ def colmap_localize(kapture_path: str,
                     input_database_path: str,
                     input_reconstruction_path: str,
                     colmap_binary: str,
-                    pairsfile_path: Optional[str],
+                    pairs_file_path: Optional[str],
                     use_colmap_matches_importer: bool,
                     image_registrator_options: List[str],
                     skip_list: List[str],
@@ -45,7 +45,8 @@ def colmap_localize(kapture_path: str,
     :param input_database_path: path to the map colmap.db
     :param input_database_path: path to the map colmap.db
     :param input_reconstruction_path: path to the map reconstruction folder
-    :param pairsfile_path: Optional[str],
+    :param colmap_binary: path to the colmap binary executable
+    :param pairs_file_path: Optional[str],
     :param use_colmap_matches_importer: bool,
     :param image_registrator_options: options for the image registrator
     :param skip_list: list of steps to skip
@@ -53,7 +54,7 @@ def colmap_localize(kapture_path: str,
     """
     # Load input files first to make sure it is OK
     logger.info('loading kapture files...')
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, pairsfile_path)
+    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, pairs_file_path)
 
     colmap_localize_from_loaded_data(kapture_data,
                                      kapture_path,
@@ -61,7 +62,6 @@ def colmap_localize(kapture_path: str,
                                      input_database_path,
                                      input_reconstruction_path,
                                      colmap_binary,
-                                     pairsfile_path,
                                      use_colmap_matches_importer,
                                      image_registrator_options,
                                      skip_list,
@@ -74,7 +74,6 @@ def colmap_localize_from_loaded_data(kapture_data: kapture.Kapture,
                                      input_database_path: str,
                                      input_reconstruction_path: str,
                                      colmap_binary: str,
-                                     pairsfile_path: Optional[str],
                                      use_colmap_matches_importer: bool,
                                      image_registrator_options: List[str],
                                      skip_list: List[str],
@@ -88,7 +87,7 @@ def colmap_localize_from_loaded_data(kapture_data: kapture.Kapture,
     :param input_database_path: path to the map colmap.db
     :param input_database_path: path to the map colmap.db
     :param input_reconstruction_path: path to the map reconstruction folder
-    :param pairsfile_path: Optional[str],
+    :param colmap_binary: path to the colmap binary executable
     :param use_colmap_matches_importer: bool,
     :param image_registrator_options: options for the image registrator
     :param skip_list: list of steps to skip
@@ -251,7 +250,7 @@ def colmap_localize_command_line():
                              ' is in the user PATH).')
     parser.add_argument('--use-colmap-matches-importer', action='store_true', default=False,
                         help='Use colmap matches_importer instead of manually filling the two_view_geometry table')
-    parser.add_argument('--pairsfile-path',
+    parser.add_argument('--pairs-file-path',
                         default=None,
                         type=str,
                         help=('text file in the csv format; where each line is image_name1, image_name2, score '
@@ -279,7 +278,7 @@ def colmap_localize_command_line():
     colmap_localize(args.input, args.output,
                     args.database, args.reconstruction,
                     args.colmap_binary,
-                    args.pairsfile_path, args.use_colmap_matches_importer,
+                    args.pairs_file_path, args.use_colmap_matches_importer,
                     image_registrator_options,
                     args.skip, args.force)
 

@@ -30,7 +30,7 @@ logger = logging.getLogger('colmap_build_map')
 def colmap_build_map(kapture_path: str,
                      colmap_path: str,
                      colmap_binary: str,
-                     pairsfile_path: Optional[str],
+                     pairs_file_path: Optional[str],
                      use_colmap_matches_importer: bool,
                      point_triangulator_options: List[str],
                      skip_list: List[str],
@@ -41,7 +41,7 @@ def colmap_build_map(kapture_path: str,
       :param kapture_path: path to the kapture to use
       :param colmap_path: path to the colmap build
       :param colmap_binary: path to the colmap executable
-      :param pairsfile_path: Optional[str],
+      :param pairs_file_path: Optional[str],
       :param use_colmap_matches_importer: bool,
       :param point_triangulator_options: options for the point triangulator
       :param skip_list: list of steps to skip
@@ -49,13 +49,12 @@ def colmap_build_map(kapture_path: str,
       """
     # Load input files first to make sure it is OK
     logger.info('loading kapture files...')
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, pairsfile_path)
+    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, pairs_file_path)
 
     colmap_build_map_from_loaded_data(kapture_data,
                                       kapture_path,
                                       colmap_path,
                                       colmap_binary,
-                                      pairsfile_path,
                                       use_colmap_matches_importer,
                                       point_triangulator_options,
                                       skip_list,
@@ -66,7 +65,6 @@ def colmap_build_map_from_loaded_data(kapture_data: kapture.Kapture,
                                       kapture_path: str,
                                       colmap_path: str,
                                       colmap_binary: str,
-                                      pairsfile_path: Optional[str],
                                       use_colmap_matches_importer: bool,
                                       point_triangulator_options: List[str],
                                       skip_list: List[str],
@@ -78,7 +76,6 @@ def colmap_build_map_from_loaded_data(kapture_data: kapture.Kapture,
     :param kapture_path: path to the kapture to use
     :param colmap_path: path to the colmap build
     :param colmap_binary: path to the colmap executable
-    :param pairsfile_path: Optional[str],
     :param use_colmap_matches_importer: bool,
     :param point_triangulator_options: options for the point triangulator
     :param skip_list: list of steps to skip
@@ -211,8 +208,8 @@ def colmap_build_map_command_line():
                              '(default is "colmap", i.e. assume the binary'
                              ' is in the user PATH).')
     parser.add_argument('--use-colmap-matches-importer', action='store_true', default=False,
-                        help='Use colmap matches_importer instead of manually filling the two_view_geometry table')
-    parser.add_argument('--pairsfile-path',
+                        help='Use colmap matches importer instead of manually filling the two_view_geometry table')
+    parser.add_argument('--pairs-file-path',
                         default=None,
                         type=str,
                         help=('text file in the csv format; where each line is image_name1, image_name2, score '
@@ -237,9 +234,8 @@ def colmap_build_map_command_line():
     args_dict['point_triangulator_options'] = point_triangulator_options
     logger.debug('colmap_build_map.py \\\n' + '  \\\n'.join(
         '--{:20} {:100}'.format(k, str(v)) for k, v in args_dict.items()))
-
     colmap_build_map(args.input, args.output, args.colmap_binary,
-                     args.pairsfile_path, args.use_colmap_matches_importer, point_triangulator_options,
+                     args.pairs_file_path, args.use_colmap_matches_importer, point_triangulator_options,
                      args.skip, args.force)
 
 
