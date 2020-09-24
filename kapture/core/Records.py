@@ -1,16 +1,16 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 import numpy as np
-from dataclasses import dataclass, fields, astuple, asdict, fields
+from dataclasses import dataclass, astuple, asdict, fields
 from typing import Union, Dict, List, Tuple, TypeVar
 
 """
 Records contains sensor recordings.
 Each recording (eg. an image) is an entry in Records, with a device ID and a timestamp.
-There is to kind of Records : 
+There is to kind of Records :
  - Files: big recorded data (from camera, lidar, depth camera, ...) are stored in separated binary files.
  - Array: small recorded data (from wifi, gnss) are directly stored in kapture text files.
- 
+
 """
 
 
