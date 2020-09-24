@@ -47,6 +47,7 @@ def colmap_localize_sift(kapture_path: str,
     :param input_database_path: path to the map colmap.db
     :param input_database_path: path to the map colmap.db
     :param input_reconstruction_path: path to the map reconstruction folder
+    :param colmap_binary: path to the colmap binary executable
     :param colmap_use_cpu: to use cpu only (and ignore gpu) or to use also gpu
     :param colmap_gpu_index: gpu index for sift extractor and mapper
     :param vocab_tree_path: path to the colmap vocabulary tree file
