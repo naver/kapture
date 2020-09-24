@@ -967,7 +967,7 @@ def observations_from_file(
     """
     assert path.basename(observations_filepath) == 'observations.txt'
     assert images_paths_with_keypoints is None \
-           or (isinstance(images_paths_with_keypoints, set) and len(images_paths_with_keypoints) > 0)
+        or (isinstance(images_paths_with_keypoints, set) and len(images_paths_with_keypoints) > 0)
     observations = kapture.Observations()
     with open(observations_filepath) as file:
         table = table_from_file(file)
@@ -1091,7 +1091,7 @@ def kapture_from_dir(
                                    kapture.Matches,
                                    kapture.Points3d,
                                    kapture.Observations
-        ]]] = []
+                                   ]]] = []
 ) -> kapture.Kapture:
     """
     Reads and return kapture data from directory.
@@ -1175,8 +1175,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('camera', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_camera = records_camera_from_file(csv_file_paths[kapture.RecordsCamera],
-                                                               sensor_ids)
+        kapture_data.records_camera = records_camera_from_file(csv_file_paths[kapture.RecordsCamera], sensor_ids)
     # records depth
     if kapture.RecordsDepth in kapture_loadable_data:
         records_depth_file_path = csv_file_paths[kapture.RecordsDepth]
@@ -1184,8 +1183,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('depth', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth],
-                                                             sensor_ids)
+        kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth], sensor_ids)
     # records lidar
     if kapture.RecordsLidar in kapture_loadable_data:
         records_lidar_file_path = csv_file_paths[kapture.RecordsLidar]
@@ -1193,8 +1191,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('lidar', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_lidar = records_lidar_from_file(records_lidar_file_path,
-                                                             sensor_ids)
+        kapture_data.records_lidar = records_lidar_from_file(records_lidar_file_path, sensor_ids)
     # records Wifi
     if kapture.RecordsWifi in kapture_loadable_data:
         records_wifi_file_path = csv_file_paths[kapture.RecordsWifi]
@@ -1242,8 +1239,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('gyroscope', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_gyroscope = records_gyroscope_from_file(records_gyroscope_file_path,
-                                                                     sensor_ids)
+        kapture_data.records_gyroscope = records_gyroscope_from_file(records_gyroscope_file_path, sensor_ids)
     # records Magnetic
     if kapture.RecordsMagnetic in kapture_loadable_data:
         records_magnetic_file_path = csv_file_paths[kapture.RecordsMagnetic]
@@ -1251,8 +1247,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         sensor_ids = get_sensor_ids_of_type('magnetic', kapture_data.sensors)
         assert sensor_ids is not None
-        kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path,
-                                                                   sensor_ids)
+        kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path, sensor_ids)
 
 
 def _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matches_pairs_file_path,
