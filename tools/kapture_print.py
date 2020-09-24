@@ -70,7 +70,8 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' ├─ nb bluetooth', len(bluetooth_ids), file=output_stream, show_none=show_all)
         gnss_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'gnss']
         print_key_value(' ├─ nb gnss', len(gnss_ids), file=output_stream, show_none=show_all)
-        accelerometer_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'accelerometer']
+        accelerometer_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                             if sensor.sensor_type == 'accelerometer']
         print_key_value(' ├─ nb accelerometer', len(accelerometer_ids), file=output_stream, show_none=show_all)
         gyroscope_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'gyroscope']
         print_key_value(' ├─ nb gyroscope', len(gyroscope_ids), file=output_stream, show_none=show_all)
