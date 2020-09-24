@@ -9,7 +9,7 @@ from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Matches import Matches
 from .Observations import Observations
 from .Points3d import Points3d
-from typing import Dict, Optional, List, Union
+from typing import Dict, Optional, Union
 import logging
 
 logger = logging.getLogger(__name__)
