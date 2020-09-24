@@ -10,6 +10,8 @@ import logging
 import sys
 import contextlib
 import os.path as path
+from typing import Optional
+from datetime import datetime
 
 import path_to_kapture  # noqa: F401
 import kapture
@@ -92,7 +94,19 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=show_all)
 
 
-def print_records(kapture_data, output_stream, show_detail, show_all) -> None:
+def formated_timestamp(timestamp: int, timestamp_unit: Optional[str], timestamp_formatting: Optional[str]):
+    if timestamp_unit is None or timestamp_unit == 'int':
+        return timestamp
+    if timestamp_unit == 'posix-ms':
+        timestamp /= 1000.
+    dt = datetime.fromtimestamp(timestamp)
+    return dt.strftime(timestamp_formatting)
+
+
+def print_records(kapture_data, output_stream, show_detail, show_all,
+                  timestamp_unit=None,
+                  timestamp_formatting=None
+) -> None:
     """
     Prints the records and trajectories to the output stream
     """
@@ -106,10 +120,12 @@ def print_records(kapture_data, output_stream, show_detail, show_all) -> None:
         elif record is not None or show_all:
             print_title(f'{record_name}', file=output_stream)
             if record is not None and len(record) > 0:
-                timestamp_min, timestamp_max = min(record), max(record)
+                timestamp_range = [min(record), max(record)]
+                timestamp_range = [formated_timestamp(t, timestamp_unit, timestamp_formatting)
+                                   for t in timestamp_range]
                 nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
-                print_key_value(' ├─ timestamp range', f'{timestamp_min}:{timestamp_max}', file=output_stream,
-                                show_none=show_all)
+                print_key_value(' ├─ timestamp range', f'{timestamp_range[0]} - {timestamp_range[1]}',
+                                file=output_stream, show_none=show_all)
                 print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
             print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=show_all)
 
@@ -194,6 +210,11 @@ def print_command_line() -> None:
                         help='display all, even None')
     parser.add_argument('-d', '--detail', action='store_true', default=False,
                         help='display detailed')
+    parser.add_argument('-t', '--timestamp_unit', choices=['int', 'posix', 'posix-ms'],
+                        default=None, nargs='?', const='posix',
+                        help='Tells what timestamp are, helps human display.')
+    parser.add_argument('-f', '--timestamp_formatting', default='%Y/%m/%d %H:%M:%S.%f',
+                        help='Tells what timestamp are, helps human display.')
     args = parser.parse_args()
 
     logger.setLevel(args.verbose)
@@ -204,23 +225,40 @@ def print_command_line() -> None:
     args.input = path.abspath(args.input)
     # load
     kapture_data = kapture.io.csv.kapture_from_dir(args.input)
-    do_print(kapture_data, args.input, args.output, args.detail, args.all)
+    do_print(kapture_data, args.input, args.output, args.detail, args.all,
+             args.timestamp_unit, args.timestamp_formatting)
 
 
-def do_print(kapture_data: kapture, kapture_name: str, output: str, show_detail: bool, show_all: bool) -> None:
+def do_print(
+        kapture_data: kapture,
+        kapture_path: str,
+        output_filepath: str,
+        show_detail: bool,
+        show_all: bool,
+        timestamp_unit: str,
+        timestamp_formatting: str,
+) -> None:
     """
-    Do the print using the given user parameters
+    Print out kapture data:
+
+    :param kapture_data: input kapture data to print.
+    :param kapture_path: full path to kapture directory.
+    :param output_filepath: file path where to print. '-' means stdout.
+    :param show_detail: If true, show details about data (in depth)
+    :param show_all: If true, prints even if None
+    :param timestamp_unit: explicitly tells the unit of timestamp (eg. posix)
+    :param timestamp_formatting: how to format the timestamp on display
     """
 
     # print
-    with open_or_stdout(output) as output_stream:
+    with open_or_stdout(output_filepath) as output_stream:
         if show_detail:
             print_title('general', file=output_stream)
-            print_key_value('path', kapture_name, file=output_stream, show_none=show_all)
+            print_key_value('path', kapture_path, file=output_stream, show_none=show_all)
             print_key_value('version', kapture_data.format_version, file=output_stream, show_none=show_all)
 
         print_sensors(kapture_data, output_stream, show_detail, show_all)
-        print_records(kapture_data, output_stream, show_detail, show_all)
+        print_records(kapture_data, output_stream, show_detail, show_all, timestamp_unit, timestamp_formatting)
         print_features(kapture_data, output_stream, show_detail, show_all)
         print_matches(kapture_data, output_stream, show_detail, show_all)
         print_points(kapture_data, output_stream, show_detail, show_all)
