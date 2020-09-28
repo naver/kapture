@@ -31,6 +31,7 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
+from kapture.utils.paths import path_secure
 
 logger = logging.getLogger('7scenes')
 MODEL = kapture.CameraType.RADIAL
@@ -71,7 +72,7 @@ def import_7scenes(d7scenes_path: str,
     d7s_filename_re = re.compile(r'((?P<sequence>.+)/)?frame-(?P<frame_id>\d{6})\.(?P<suffix>\w*)\.(?P<ext>\w*)')
 
     # populate all relevant files
-    d7s_filenames = (path.relpath(path.join(dp, fn), d7scenes_path)
+    d7s_filenames = (path_secure(path.relpath(path.join(dp, fn), d7scenes_path))
                      for dp, _, fs in os.walk(d7scenes_path) for fn in fs)
 
     logger.info('populating 7-scenes files ...')

@@ -377,7 +377,7 @@ def kapture_download_dataset_cli():
 
         if args.cmd == 'update':
             logger.info(f'updating dataset list from {args.repo} ...')
-            index_remote_url = path.join(args.repo, INDEX_FILENAME)
+            index_remote_url = args.repo + '/' + INDEX_FILENAME
             logger.debug(f'retrieving index at {index_remote_url}')
             r = requests.get(index_remote_url, allow_redirects=True)
             if r.status_code != requests.codes.ok:
