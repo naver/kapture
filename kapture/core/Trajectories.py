@@ -4,6 +4,7 @@ from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
 from typing import Union, Dict, List, Tuple, Optional
+from copy import deepcopy
 
 
 class Trajectories(Dict[int, Dict[str, PoseTransform]]):
@@ -108,17 +109,18 @@ def rigs_remove(trajectories: Trajectories, rigs: Rigs) -> Trajectories:
     """
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
-    new_trajectories = Trajectories()
-    for timestamp, device_id, pose_rig_from_world in flatten(trajectories):
-        if device_id not in rigs:
-            # its not a rig, copy it Aziz (lumière)
-            new_trajectories[timestamp, device_id] = pose_rig_from_world
-        else:
-            # its a rig, add every sensors in it instead.
-            for cam_id, pose_device_from_rig in rigs[device_id].items():
-                pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
-                new_trajectories[timestamp, cam_id] = pose_cam_from_world
-
+    # new_trajectories = Trajectories()
+    # for timestamp, device_id, pose_rig_from_world in flatten(trajectories):
+    #     if device_id not in rigs:
+    #         # its not a rig, copy it Aziz (lumière)
+    #         new_trajectories[timestamp, device_id] = pose_rig_from_world
+    #     else:
+    #         # its a rig, add every sensors in it instead.
+    #         for cam_id, pose_device_from_rig in rigs[device_id].items():
+    #             pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
+    #             new_trajectories[timestamp, cam_id] = pose_cam_from_world
+    new_trajectories = deepcopy(trajectories)
+    rigs_remove_inplace(new_trajectories, rigs)
     return new_trajectories
 
 
@@ -132,21 +134,28 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs):
     :param rigs: input Rigs that defines the rigs/sensors relationship.
     :return:
     """
+    MAX_RIG_DEPTH = 10
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
     # collect all poses of rigs in trajectories
-    jobs = [(timestamp, rig_id, pose_rig_from_world)
-            for timestamp, rig_id, pose_rig_from_world in flatten(trajectories)
-            if rig_id in rigs.keys()]
+    for iteration in range(MAX_RIG_DEPTH):
+        # repeat the operation while there is so rig remaining (nested rigs)
+        jobs = [(timestamp, rig_id, pose_rig_from_world)
+                for timestamp, rig_id, pose_rig_from_world in flatten(trajectories)
+                if rig_id in rigs.keys()]
 
-    # replace those rigs poses by the one of the sensors
-    for timestamp, rig_id, pose_rig_from_world in jobs:
-        # its a rig, add every sensors in it instead.
-        for sensor_id, pose_device_from_rig in rigs[rig_id].items():
-            pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
-            trajectories[timestamp, sensor_id] = pose_cam_from_world
-        # then remove this rig pose
-        del trajectories[timestamp][rig_id]
+        if len(jobs) == 0:
+            # we are done
+            break
+
+        # replace those rigs poses by the one of the sensors
+        for timestamp, rig_id, pose_rig_from_world in jobs:
+            # its a rig, add every sensors in it instead.
+            for device_id, pose_device_from_rig in rigs[rig_id].items():
+                pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
+                trajectories[timestamp, device_id] = pose_cam_from_world
+            # then remove this rig pose
+            del trajectories[timestamp][rig_id]
 
     # remove useless (empty) timestamp (if any) from trajectories
     for timestamp in trajectories.keys():

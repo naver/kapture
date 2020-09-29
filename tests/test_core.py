@@ -371,8 +371,9 @@ class TestTrajectoriesRig(unittest.TestCase):
     def setUp(self):
         self._rigs = kapture.Rigs()
         looking_not_straight = quaternion.from_rotation_vector([0, np.deg2rad(5.), 0])
-        self._rigs['rig', 'cam1'] = kapture.PoseTransform(t=[-10, 0, 0], r=looking_not_straight).inverse()
-        self._rigs['rig', 'cam2'] = kapture.PoseTransform(t=[+10, 0, 0], r=looking_not_straight.inverse()).inverse()
+        self._rigs['rig', 'phone'] = kapture.PoseTransform()  # do a nested rig
+        self._rigs['phone', 'cam1'] = kapture.PoseTransform(t=[-10, 0, 0], r=looking_not_straight).inverse()
+        self._rigs['phone', 'cam2'] = kapture.PoseTransform(t=[+10, 0, 0], r=looking_not_straight.inverse()).inverse()
         self._trajectories_rigs = kapture.Trajectories()
         for timestamp, ratio in enumerate(np.linspace(0., 1., num=8)):
             looking_around = quaternion.from_rotation_vector([0, np.deg2rad(360. * ratio), 0])
@@ -381,7 +382,8 @@ class TestTrajectoriesRig(unittest.TestCase):
         self._trajectories_cams = kapture.Trajectories()
         for timestamp, rig_id, pose_rig_from_world in kapture.flatten(self._trajectories_rigs, is_sorted=True):
             for rig_id2, cam_id, pose_cam_from_rig in kapture.flatten(self._rigs):
-                assert rig_id == rig_id
+                if cam_id == 'phone':
+                    continue
                 pose_cam_from_world = kapture.PoseTransform.compose([pose_cam_from_rig, pose_rig_from_world])
                 self._trajectories_cams[timestamp, cam_id] = pose_cam_from_world
 
