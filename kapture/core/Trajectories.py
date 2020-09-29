@@ -109,22 +109,12 @@ def rigs_remove(trajectories: Trajectories, rigs: Rigs) -> Trajectories:
     """
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
-    # new_trajectories = Trajectories()
-    # for timestamp, device_id, pose_rig_from_world in flatten(trajectories):
-    #     if device_id not in rigs:
-    #         # its not a rig, copy it Aziz (lumière)
-    #         new_trajectories[timestamp, device_id] = pose_rig_from_world
-    #     else:
-    #         # its a rig, add every sensors in it instead.
-    #         for cam_id, pose_device_from_rig in rigs[device_id].items():
-    #             pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
-    #             new_trajectories[timestamp, cam_id] = pose_cam_from_world
     new_trajectories = deepcopy(trajectories)
     rigs_remove_inplace(new_trajectories, rigs)
     return new_trajectories
 
 
-def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs):
+def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int = 10):
     """
     Removes rigs poses and replaces them by the poses of every sensors in it.
     The operation is performed inplace, and modifies trajectories.
@@ -132,13 +122,13 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs):
 
     :param trajectories: input/output Trajectories where the rigs has to be replaced
     :param rigs: input Rigs that defines the rigs/sensors relationship.
+    :param max_depth: maximum nested rig depth.
     :return:
     """
-    MAX_RIG_DEPTH = 10
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
     # collect all poses of rigs in trajectories
-    for iteration in range(MAX_RIG_DEPTH):
+    for iteration in range(max_depth):
         # repeat the operation while there is so rig remaining (nested rigs)
         jobs = [(timestamp, rig_id, pose_rig_from_world)
                 for timestamp, rig_id, pose_rig_from_world in flatten(trajectories)
@@ -162,9 +152,7 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs):
         if len(trajectories[timestamp]) == 0:
             del trajectories[timestamp]
 
-    # clear rigs
     # Do not clear, the rigs : so easy to do outside, and so easy
-    # rigs.clear()
 
 
 def rigs_recover(
@@ -183,45 +171,16 @@ def rigs_recover(
     :param master_sensors: input If given, only compute rig poses for the given sensors.
     :return: a new Trajectories.
     """
-
-    # senor -> rig_id, pose_rig_from_sensor
-    reverse_rig_dict = {
-        sensor_id: (rig_id, rigs[rig_id, sensor_id].inverse())
-        for rig_id, sensor_id in rigs.key_pairs()
-    }
-    new_trajectories = Trajectories()
-
-    for timestamp, sensor_id, pose_sensor_from_world in flatten(trajectories, is_sorted=True):
-        # if the sensor is part of a rig, set the pose of the rig,
-        # instead of the pose of the sensor
-        if sensor_id not in reverse_rig_dict:
-            new_trajectories[timestamp, sensor_id] = pose_sensor_from_world
-        else:  # sensor_id in reverse_rig_dict
-            rig_id, pose_rig_from_sensor = reverse_rig_dict[sensor_id]
-            # only compute rig poses for master_sensors if any.
-            if master_sensors is not None and master_sensors != sensor_id:
-                continue
-
-            # skip if rig pose already recovered.
-            if rig_id in trajectories[timestamp]:
-                continue
-
-            # warning: if multiple sensors can be used to infer the rig pose
-            # (eg. no master sensor, or multiple master sensors), only one sensor is used to compute the rig pose.
-            # Since we use is_sorted=True, the selected sensor should be consistent, when present. But if for some
-            # timestamp, the usual first sensor is missing, then, another sensor is used as reference and
-            # if the sensors dos not actually use the rig calibration (no rigid transform between sensors),
-            # it may end up to inconsistent results.
-            pose_rig_from_world = PoseTransform.compose([pose_rig_from_sensor, pose_sensor_from_world])
-            new_trajectories[timestamp, rig_id] = pose_rig_from_world
-
+    new_trajectories = deepcopy(trajectories)
+    rigs_recover_inplace(new_trajectories, rigs, master_sensors)
     return new_trajectories
 
 
 def rigs_recover_inplace(
         trajectories: Trajectories,
         rigs: Rigs,
-        master_sensors: Optional[List[str]] = None
+        master_sensors: Optional[List[str]] = None,
+        max_depth: int = 10
 ):
     """
     Updates the given trajectories by replacing sensor poses by the rig poses,
@@ -235,17 +194,24 @@ def rigs_recover_inplace(
     :return:
     """
 
-    # senor -> rig_id, pose_rig_from_sensor
+    # sensor_id -> rig_id, pose_rig_from_sensor
     reverse_rig_dict = {
         sensor_id: (rig_id, rigs[rig_id, sensor_id].inverse())
         for rig_id, sensor_id in rigs.key_pairs()
     }
 
-    for timestamp, sensor_id, pose_sensor_from_world in flatten(trajectories, is_sorted=True):
-        # if the sensor is part of a rig, set the pose of the rig,
-        # instead of the pose of the sensor
-        if sensor_id in reverse_rig_dict:
-            # something to do
+    for iteration in range(max_depth):
+        # do the replacement while there is sensor_id in trajectories, that can be converted to rig_id
+        jobs = [(timestamp, sensor_id, pose_sensor_from_world)
+                for timestamp, sensor_id, pose_sensor_from_world in flatten(trajectories, is_sorted=True)
+                if sensor_id in reverse_rig_dict]
+
+        if len(jobs) == 0:
+            break
+
+        for timestamp, sensor_id, pose_sensor_from_world in jobs:
+            # if the sensor is part of a rig, set the pose of the rig,
+            # instead of the pose of the sensor
             rig_id, pose_rig_from_sensor = reverse_rig_dict[sensor_id]
             pose_sensor_from_world = trajectories[timestamp].pop(sensor_id)
 
