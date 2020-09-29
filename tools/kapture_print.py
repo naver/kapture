@@ -86,6 +86,9 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         magnetic_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'magnetic']
         print_key_value(' ├─ nb magnetic', len(magnetic_ids), file=output_stream, show_none=show_all)
         print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=show_all)
+
+
+def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
     # for rigs, count the number of different rigs ids (not sensors in it).
     nb_rigs = len(kapture_data.rigs) if kapture_data.rigs is not None else None
     if not show_detail:
@@ -93,10 +96,12 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
     else:
         print_title('rigs', file=output_stream)
         if kapture_data.rigs is not None:
-            for rig_id in kapture_data.rigs:
+            for rig_id, rig in kapture_data.rigs.items():
                 s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
-                print_key_value(f' ├─ nb sensors in rig "{rig_id}"', len(s_ids), file=output_stream,
-                                show_none=show_all)
+                print_key_value(' ├─ rig id', rig_id, file=output_stream, show_none=show_all)
+                for sensor_id in s_ids:
+                    print_key_value(' │  ├─ sensor id', sensor_id, file=output_stream, show_none=show_all)
+                print_key_value(' │  └─ nb sensor total', len(s_ids), file=output_stream, show_none=show_all)
         print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=show_all)
 
 
@@ -288,6 +293,7 @@ def do_print(
             print_key_value('version', kapture_data.format_version, file=output_stream, show_none=show_all)
 
         print_sensors(kapture_data, output_stream, show_detail, show_all)
+        print_rigs(kapture_data, output_stream, show_detail, show_all)
         print_records(kapture_data, output_stream, show_detail, show_all, timestamp_unit, timestamp_formatting)
         print_features(kapture_data, output_stream, show_detail, show_all)
         print_matches(kapture_data, output_stream, show_detail, show_all)
