@@ -45,7 +45,7 @@ def open_or_stdout(filename=None):
             fh.close()
 
 
-def print_key_value(key, value, file, show_none) -> None:
+def print_key_value(key, value, file, show_none=False) -> None:
     """
     Prints a key and its value
     """
@@ -62,7 +62,7 @@ def print_title(title, file) -> None:
 
 def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
     """
-    Prints the sensors (and rigs) to the output stream
+    Prints the sensors (only) to the output stream
     """
     if not show_detail:
         print_key_value('nb sensors', len(kapture_data.sensors), file=output_stream, show_none=show_all)
@@ -89,7 +89,9 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
 
 
 def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
-    # for rigs, count the number of different rigs ids (not sensors in it).
+    """
+    Prints the rigs to the output stream
+    """
     nb_rigs = len(kapture_data.rigs) if kapture_data.rigs is not None else None
     if not show_detail:
         print_key_value('nb rigs', nb_rigs, file=output_stream, show_none=show_all)
@@ -98,10 +100,15 @@ def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
         if kapture_data.rigs is not None:
             for rig_id, rig in kapture_data.rigs.items():
                 s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
-                print_key_value(' ├─ rig id', rig_id, file=output_stream, show_none=show_all)
+                print_key_value(f' ├─ rig', rig_id, file=output_stream, show_none=show_all)
                 for sensor_id in s_ids:
-                    print_key_value(' │  ├─ sensor id', sensor_id, file=output_stream, show_none=show_all)
-                print_key_value(' │  └─ nb sensor total', len(s_ids), file=output_stream, show_none=show_all)
+                    sensor_type = 'unknown'
+                    if sensor_id in kapture_data.sensors:
+                        sensor_type = kapture_data.sensors[sensor_id].sensor_type
+                    if sensor_id in kapture_data.rigs:
+                        sensor_type = 'rig'
+                    print_key_value(f' │   ├─ {sensor_type}', sensor_id, file=output_stream, show_none=show_all)
+                print_key_value(' │   └─ nb sensors total', len(s_ids), file=output_stream, show_none=show_all)
         print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=show_all)
 
 
