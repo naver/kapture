@@ -12,6 +12,7 @@ import contextlib
 import os.path as path
 from typing import Optional
 from datetime import datetime
+import time
 
 import path_to_kapture  # noqa: F401
 import kapture
@@ -19,6 +20,11 @@ import kapture.utils.logging
 import kapture.io.csv
 
 logger = logging.getLogger('kapture_print')
+
+VALID_TIME_RANGE = [
+    time.mktime(datetime(year=year, month=1, day=1, hour=0, minute=0, second=0).timetuple())
+    for year in [1980, 2100]
+    ]
 
 
 @contextlib.contextmanager
@@ -94,11 +100,34 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=show_all)
 
 
+def guess_timestamp_unit(timestamp: int) -> str :
+    """
+    Guess if time-stamp is standard posix or millisecond posix, or just an index.
+
+    :param timestamp: the timestamp value
+    :return: 'posix' or 'posix-ms' or 'index'
+    """
+    assert isinstance(timestamp, int)
+    if VALID_TIME_RANGE[0] < timestamp < VALID_TIME_RANGE[1]:
+        return 'posix'
+    elif VALID_TIME_RANGE[0] < timestamp/1.e3 < VALID_TIME_RANGE[1]:
+        return 'posix-ms'
+    elif VALID_TIME_RANGE[0] < timestamp/1.e6 < VALID_TIME_RANGE[1]:
+        return 'posix-us'
+    else:
+        return 'index'
+
+
 def formated_timestamp(timestamp: int, timestamp_unit: Optional[str], timestamp_formatting: Optional[str]):
-    if timestamp_unit is None or timestamp_unit == 'int':
+    """ If possible, nicely format the timestamp to human readable (defined by timestamp_formatting)."""
+    if timestamp_unit == 'auto':
+        timestamp_unit = guess_timestamp_unit(timestamp)
+    if timestamp_unit is None or timestamp_unit == 'index':
         return timestamp
     if timestamp_unit == 'posix-ms':
-        timestamp /= 1000.
+        timestamp /= 1.e3
+    if timestamp_unit == 'posix-us':
+        timestamp /= 1.e6
     dt = datetime.fromtimestamp(timestamp)
     return dt.strftime(timestamp_formatting)
 
@@ -210,9 +239,10 @@ def print_command_line() -> None:
                         help='display all, even None')
     parser.add_argument('-d', '--detail', action='store_true', default=False,
                         help='display detailed')
-    parser.add_argument('-t', '--timestamp_unit', choices=['int', 'posix', 'posix-ms'],
-                        default=None, nargs='?', const='posix',
-                        help='Tells what timestamp are, helps human display.')
+    parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'posix', 'posix-ms', 'posix-us'],
+                        default='auto', nargs='?', const='posix',
+                        help='Force what timestamp really are (eg. posix or posix milliseconds) to display them nicely.'
+                             'Auto means the program try do guess. [auto]')
     parser.add_argument('-f', '--timestamp_formatting', default='%Y/%m/%d %H:%M:%S.%f',
                         help='Tells what timestamp are, helps human display.')
     args = parser.parse_args()
@@ -246,7 +276,7 @@ def do_print(
     :param output_filepath: file path where to print. '-' means stdout.
     :param show_detail: If true, show details about data (in depth)
     :param show_all: If true, prints even if None
-    :param timestamp_unit: explicitly tells the unit of timestamp (eg. posix)
+    :param timestamp_unit: tells the unit of timestamp (eg. posix)
     :param timestamp_formatting: how to format the timestamp on display
     """
 
