@@ -263,7 +263,7 @@ def rigs_to_file(filepath: str, rigs: kapture.Rigs) -> None:
         table_to_file(file, table, header=header, padding=padding)
 
 
-def rigs_from_file(filepath: str, sensor_ids: Set[str]) -> kapture.Rigs:
+def rigs_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None) -> kapture.Rigs:
     """
     Reads rigs from CSV file.
 
@@ -280,14 +280,20 @@ def rigs_from_file(filepath: str, sensor_ids: Set[str]) -> kapture.Rigs:
         for rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz in table:
             if rig_id in sensor_ids:
                 raise ValueError(f'collision between a sensor ID and rig ID ({rig_id})')
-            if sensor_id not in sensor_ids:
-                # just ignore
-                continue
             rotation = float_array_or_none([qw, qx, qy, qz])
             translation = float_array_or_none([tx, ty, tz])
             pose = kapture.PoseTransform(rotation, translation)
-            # rigs.setdefault(str(rig_id), kapture.Rig())[sensor_id] = pose
             rigs[str(rig_id), sensor_id] = pose
+
+    if sensor_ids is not None:
+        # expunge all undesired sensors
+        rig_ids = set(rigs)
+        for rig_id in rig_ids:
+            for sensor_id in set(rigs[rig_id]):
+                if sensor_id not in sensor_ids and sensor_id not in rig_ids:
+                    logger.debug(f'dropping sensor {sensor_id} from rig {rig_id} because it is unknown sensor.')
+                    del rigs[rig_id][sensor_id]
+
     return rigs
 
 
