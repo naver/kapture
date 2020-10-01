@@ -10,7 +10,7 @@ import logging
 import sys
 import contextlib
 import os.path as path
-from typing import Optional
+from typing import Optional, Tuple
 from datetime import datetime
 import time
 
@@ -24,7 +24,7 @@ logger = logging.getLogger('kapture_print')
 VALID_TIME_RANGE = [
     time.mktime(datetime(year=year, month=1, day=1, hour=0, minute=0, second=0).timetuple())
     for year in [1980, 2100]
-    ]
+]
 
 
 @contextlib.contextmanager
@@ -88,7 +88,8 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=show_all)
 
 
-def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
+def print_rigs(
+        kapture_data, output_stream, show_detail, show_all) -> None:
     """
     Prints the rigs to the output stream
     """
@@ -112,41 +113,89 @@ def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb rigs total', nb_rigs, file=output_stream, show_none=show_all)
 
 
-def guess_timestamp_unit(timestamp: int) -> str :
+FACTOR_TO_SECONDS = {
+    'second': 1.0,
+    'millisecond': 1.e-3,
+    'microsecond': 1.e-6,
+}
+
+
+def guess_timestamp_posix_unit(
+        timestamp: int,
+) -> Optional[float]:
     """
-    Guess if time-stamp is standard posix or millisecond posix, or just an index.
+    Guess the unit of a timestamp based on its value.
 
     :param timestamp: the timestamp value
     :return: 'posix' or 'posix-ms' or 'index'
     """
     assert isinstance(timestamp, int)
-    if VALID_TIME_RANGE[0] < timestamp < VALID_TIME_RANGE[1]:
-        return 'posix'
-    elif VALID_TIME_RANGE[0] < timestamp/1.e3 < VALID_TIME_RANGE[1]:
-        return 'posix-ms'
-    elif VALID_TIME_RANGE[0] < timestamp/1.e6 < VALID_TIME_RANGE[1]:
-        return 'posix-us'
-    else:
-        return 'index'
+    timestamp = float(timestamp)
+
+    for unit, factor in FACTOR_TO_SECONDS.items():
+        if VALID_TIME_RANGE[0] < factor * timestamp < VALID_TIME_RANGE[1]:
+            return unit
+
+    # none worked, its not posix
+    return None
 
 
-def formated_timestamp(timestamp: int, timestamp_unit: Optional[str], timestamp_formatting: Optional[str]):
-    """ If possible, nicely format the timestamp to human readable (defined by timestamp_formatting)."""
-    if timestamp_unit == 'auto':
-        timestamp_unit = guess_timestamp_unit(timestamp)
-    if timestamp_unit is None or timestamp_unit == 'index':
-        return timestamp
-    if timestamp_unit == 'posix-ms':
-        timestamp /= 1.e3
-    if timestamp_unit == 'posix-us':
-        timestamp /= 1.e6
-    dt = datetime.fromtimestamp(timestamp)
-    return dt.strftime(timestamp_formatting)
+def format_timestamp_range(
+        timestamp_range: Tuple[int, int],
+        timestamp_unit: Optional[str],
+        timestamp_format: Optional[str]
+) -> str:
+    """
+    Format a time range with unit.
+
+    :param timestamp_unit: timestamp unit, can be: formatted_timestamp or auto
+    :return string:
+    """
+    if timestamp_unit is None:
+        timestamp_unit = 'index'
+    elif timestamp_unit == 'auto':
+        guessed_units = tuple(guess_timestamp_posix_unit(ts) for ts in timestamp_range)
+        timestamp_unit = guessed_units[0] if guessed_units[0] == guessed_units[1] else 'index'
+
+    if timestamp_unit in FACTOR_TO_SECONDS:
+        try:
+            factor = FACTOR_TO_SECONDS[timestamp_unit]
+            dts = [datetime.utcfromtimestamp(ts * factor)
+                   for ts in timestamp_range]
+            # print the first timestamp completely
+            if timestamp_format:
+                return ' : '.join(dt.strftime(timestamp_format) for dt in dts)
+            # if format not given, use ISO for 1st, and just print what change for second.
+            timestamp_format_d = {
+                'date': '%Y/%m/%d',
+                'time': '%H:%M:%S.%f'
+            }
+            timestamp_parts = [
+                {
+                    pname: dt.strftime(pformat)
+                    for pname, pformat in timestamp_format_d.items()
+                }
+                for dt in dts
+            ]
+            timestamp_str = timestamp_parts[0]['date']
+            timestamp_str += ' '
+            timestamp_str += timestamp_parts[0]['time']
+            timestamp_str += '  :  '
+            if timestamp_parts[0]['date'] != timestamp_parts[1]['date']:
+                timestamp_str = timestamp_parts[0]['date']
+                timestamp_str += ' '
+            timestamp_str += timestamp_parts[1]['time']
+            return timestamp_str
+        except ValueError as _:
+            return ' : '.join(str(ts) for ts in timestamp_range) + f' ** FAIL to parse as posix {timestamp_unit}'
+    else:  # not posix
+        return ' : '.join(str(ts) for ts in timestamp_range)
 
 
-def print_records(kapture_data, output_stream, show_detail, show_all,
-                  timestamp_unit=None,
-                  timestamp_formatting=None
+def print_records(
+        kapture_data, output_stream, show_detail, show_all,
+        timestamp_unit=None,
+        timestamp_formatting=None
 ) -> None:
     """
     Prints the records and trajectories to the output stream
@@ -162,10 +211,9 @@ def print_records(kapture_data, output_stream, show_detail, show_all,
             print_title(f'{record_name}', file=output_stream)
             if record is not None and len(record) > 0:
                 timestamp_range = [min(record), max(record)]
-                timestamp_range = [formated_timestamp(t, timestamp_unit, timestamp_formatting)
-                                   for t in timestamp_range]
+                timestamp_range = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
                 nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
-                print_key_value(' ├─ timestamp range', f'{timestamp_range[0]} - {timestamp_range[1]}',
+                print_key_value(' ├─ timestamp range', f'{timestamp_range}',
                                 file=output_stream, show_none=show_all)
                 print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
             print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=show_all)
@@ -251,11 +299,11 @@ def print_command_line() -> None:
                         help='display all, even None')
     parser.add_argument('-d', '--detail', action='store_true', default=False,
                         help='display detailed')
-    parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'posix', 'posix-ms', 'posix-us'],
-                        default='auto', nargs='?', const='posix',
-                        help='Force what timestamp really are (eg. posix or posix milliseconds) to display them nicely.'
+    parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'second', 'millisecond', 'microsecond'],
+                        default='auto',
+                        help='Force what timestamp really are (eg. millisecond) to display them nicely.'
                              'Auto means the program try do guess. [auto]')
-    parser.add_argument('-f', '--timestamp_formatting', default='%Y/%m/%d %H:%M:%S.%f',
+    parser.add_argument('-f', '--timestamp_formatting',
                         help='Tells what timestamp are, helps human display.')
     args = parser.parse_args()
 
