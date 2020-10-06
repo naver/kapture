@@ -16,8 +16,8 @@ In this case, you will have to compile __colmap__ from source instead.
 Or you can use the ready-to-use docker image:
 [source,bash]
 ----
-docker build . -t kapture
-docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture     # <1>
+docker build . -t naver/kapture
+docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset naver/kapture     # <1>
 ----
 (1) replace `/path/to/dataset/` with the path where you (will) store datasets on the host.
 

@@ -114,9 +114,20 @@ Build the docker image:
 git clone https://github.com/naver/kapture.git
 cd kapture
 # build the docker image
-docker build . -t kapture
-# run unit tests
-docker run --runtime=nvidia -it --rm kapture python3 -m unittest discover -s /opt/kapture/tests
+docker build . -t naver/kapture
+----
+
+OR build the docker image directly from github
+
+[source,bash]
+----
+docker build git://github.com/naver/kapture -t naver/kapture
+----
+
+Finally, run unit tests:
+[source,bash]
+----
+docker run --runtime=nvidia -it --rm naver/kapture python3 -m unittest discover -s /opt/kapture/tests
 ----
 
 === Run
@@ -126,7 +137,7 @@ docker run --runtime=nvidia -it --rm kapture python3 -m unittest discover -s /op
 docker run --runtime=nvidia -it \
     --rm \ # Automatically remove the container when it exits \
     --volume /path/to/dataset/:/dataset:ro \ #read only
-    kapture
+    naver/kapture
 ----
 
 NOTE: You can bind directories between the host and the container using `--volume` or `--mount` option
