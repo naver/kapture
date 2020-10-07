@@ -7,6 +7,7 @@ Distances computation and comparison of kapture objects
 import math
 import numpy as np
 from typing import List, Optional, Tuple, Any, Union
+import inspect
 
 import kapture
 from kapture import flatten
@@ -27,9 +28,10 @@ def float_iszero(distance: float, threshold: float = 1e-05) -> bool:
     return math.isclose(distance, 0.0, rel_tol=threshold, abs_tol=threshold)
 
 
-def is_distance_within_threshold(pose_distance: Tuple[float, float],
-                                 pose_thresholds: Tuple[float, float] = (1e-05, 1e-05)
-                                 ) -> bool:
+def is_distance_within_threshold(
+        pose_distance: Tuple[float, float],
+        pose_thresholds: Tuple[float, float] = (1e-05, 1e-05)
+) -> bool:
     """
     compare a pose distance tuple to (0,0) with some thresholds
 
@@ -43,7 +45,7 @@ def is_distance_within_threshold(pose_distance: Tuple[float, float],
     translation_distance, rotation_distance = pose_distance
     translation_threshold, rotation_threshold = pose_thresholds
     return float_iszero(translation_distance, translation_threshold) \
-        and float_iszero(rotation_distance, rotation_threshold)
+           and float_iszero(rotation_distance, rotation_threshold)
 
 
 def equal_poses(pose_a: kapture.PoseTransform, pose_b: kapture.PoseTransform) -> bool:
@@ -165,8 +167,9 @@ def equal_rigs(rigs_a: Optional[kapture.Rigs], rigs_b: Optional[kapture.Rigs]) -
     return True
 
 
-def equal_trajectories(trajectories_a: Optional[kapture.Trajectories],
-                       trajectories_b: Optional[kapture.Trajectories]) -> bool:
+def equal_trajectories(
+        trajectories_a: Optional[kapture.Trajectories],
+        trajectories_b: Optional[kapture.Trajectories]) -> bool:
     """
     Compare two instances of kapture.Trajectories.
     Poses are compared with is_distance_within_threshold(pose_transform_distance())
@@ -222,12 +225,18 @@ def log_difference(a: List[Tuple[Any, ...]], b: List[Tuple[Any, ...]], func_name
         getLogger().debug('{}:\n{}'.format(func_name, '\n'.join(diffs)))
 
 
-def equal_nested_dict_or_set(data_a, data_b, name_to_log) -> bool:
+def equal_nested_dict_or_set(data_a, data_b, name_to_log, expected_type=None) -> bool:
     """
     Compare two instances of dictionary or set
 
     :return: True if they are identical, False otherwise.
     """
+    if expected_type is not None:  # do type checking
+        for data_x in [data_a, data_b]:
+            if data_x is not None and not isinstance(data_x, expected_type):
+                raise TypeError(f'expecting type {expected_type} in {name_to_log} (got {type(data_x)})')
+
+    # early check if one (or both) are None
     if data_a is None and data_b is None:
         return True
     elif data_a is None and data_b is not None:
@@ -235,6 +244,7 @@ def equal_nested_dict_or_set(data_a, data_b, name_to_log) -> bool:
     elif data_a is not None and data_b is None:
         return False
 
+    # check values
     flattened_a = list(flatten(data_a, is_sorted=True))
     flattened_b = list(flatten(data_b, is_sorted=True))
     are_equal = (flattened_a == flattened_b)
@@ -243,9 +253,10 @@ def equal_nested_dict_or_set(data_a, data_b, name_to_log) -> bool:
     return are_equal
 
 
-def equal_image_features(data_a: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]],
-                         data_b: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]]
-                         ) -> bool:
+def equal_image_features(
+        data_a: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]],
+        data_b: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]]
+) -> bool:
     """
     Compare two instances of kapture features (keypoints, descriptors or global features).
 
@@ -253,6 +264,7 @@ def equal_image_features(data_a: Optional[Union[kapture.Keypoints, kapture.Descr
     :param data_b: second set of features
     :return: True if they are identical, False otherwise.
     """
+    # early check if one is None
     if data_a is None and data_b is None:
         return True
     elif data_a is None and data_b is not None:
@@ -274,8 +286,9 @@ def equal_image_features(data_a: Optional[Union[kapture.Keypoints, kapture.Descr
     return are_equal
 
 
-def equal_records_camera(records_a: Optional[kapture.RecordsCamera],
-                         records_b: Optional[kapture.RecordsCamera]) -> bool:
+def equal_records_camera(
+        records_a: Optional[kapture.RecordsCamera],
+        records_b: Optional[kapture.RecordsCamera]) -> bool:
     """
     Compare two instances of kapture.RecordsCamera.
 
@@ -283,11 +296,14 @@ def equal_records_camera(records_a: Optional[kapture.RecordsCamera],
     :param records_b: second set of records
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(records_a, records_b, 'equal_records_camera')
+    expected_type = kapture.RecordsCamera
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
 
 
-def equal_records_lidar(records_a: Optional[kapture.RecordsLidar],
-                        records_b: Optional[kapture.RecordsLidar]) -> bool:
+def equal_records_lidar(
+        records_a: Optional[kapture.RecordsLidar],
+        records_b: Optional[kapture.RecordsLidar]) -> bool:
     """
     Compare two instances of kapture.RecordsLidar.
 
@@ -295,11 +311,14 @@ def equal_records_lidar(records_a: Optional[kapture.RecordsLidar],
     :param records_b: second set of records
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(records_a, records_b, 'equal_records_lidar')
+    expected_type = kapture.RecordsLidar
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
 
 
-def equal_records_wifi(records_a: Optional[kapture.RecordsWifi],
-                       records_b: Optional[kapture.RecordsWifi]) -> bool:
+def equal_records_wifi(
+        records_a: Optional[kapture.RecordsWifi],
+        records_b: Optional[kapture.RecordsWifi]) -> bool:
     """
     Compare two instances of kapture.RecordsWifi.
 
@@ -307,11 +326,29 @@ def equal_records_wifi(records_a: Optional[kapture.RecordsWifi],
     :param records_b: second set of records
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(records_a, records_b, 'equal_records_wifi')
+    expected_type = kapture.RecordsWifi
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
 
 
-def equal_records_gnss(records_a: Optional[kapture.RecordsGnss],
-                       records_b: Optional[kapture.RecordsGnss]) -> bool:
+def equal_records_bluetooth(
+        records_a: Optional[kapture.RecordsBluetooth],
+        records_b: Optional[kapture.RecordsBluetooth]) -> bool:
+    """
+    Compare two instances of kapture.RecordsBluetooth.
+
+    :param records_a: first set of records
+    :param records_b: second set of records
+    :return: True if they are identical, False otherwise.
+    """
+    expected_type = kapture.RecordsBluetooth
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
+
+
+def equal_records_gnss(
+        records_a: Optional[kapture.RecordsGnss],
+        records_b: Optional[kapture.RecordsGnss]) -> bool:
     """
     Compare two instances of kapture.RecordsGnss.
 
@@ -319,11 +356,59 @@ def equal_records_gnss(records_a: Optional[kapture.RecordsGnss],
     :param records_b: second set of records
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(records_a, records_b, 'equal_records_gnss')
+    expected_type = kapture.RecordsGnss
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
 
 
-def equal_matches(matches_a: Optional[kapture.Matches],
-                  matches_b: Optional[kapture.Matches]) -> bool:
+def equal_records_accelerometer(
+        records_a: Optional[kapture.RecordsAccelerometer],
+        records_b: Optional[kapture.RecordsAccelerometer]) -> bool:
+    """
+    Compare two instances of kapture.RecordsAccelerometer.
+
+    :param records_a: first set of records
+    :param records_b: second set of records
+    :return: True if they are identical, False otherwise.
+    """
+    expected_type = kapture.RecordsAccelerometer
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
+
+
+def equal_records_gyroscope(
+        records_a: Optional[kapture.RecordsGyroscope],
+        records_b: Optional[kapture.RecordsGyroscope]) -> bool:
+    """
+    Compare two instances of kapture.RecordsGyroscope.
+
+    :param records_a: first set of records
+    :param records_b: second set of records
+    :return: True if they are identical, False otherwise.
+    """
+    expected_type = kapture.RecordsGyroscope
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
+
+
+def equal_records_magnetic(
+        records_a: Optional[kapture.RecordsMagnetic],
+        records_b: Optional[kapture.RecordsMagnetic]) -> bool:
+    """
+    Compare two instances of kapture.RecordsMagnetic.
+
+    :param records_a: first set of records
+    :param records_b: second set of records
+    :return: True if they are identical, False otherwise.
+    """
+    expected_type = kapture.RecordsMagnetic
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(records_a, records_b, current_function_name, expected_type)
+
+
+def equal_matches(
+        matches_a: Optional[kapture.Matches],
+        matches_b: Optional[kapture.Matches]) -> bool:
     """
     Compare two instances of kapture.Matches.
 
@@ -331,11 +416,14 @@ def equal_matches(matches_a: Optional[kapture.Matches],
     :param matches_b: second set of matches
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(matches_a, matches_b, 'equal_matches')
+    expected_type = kapture.Matches
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(matches_a, matches_b, current_function_name, expected_type)
 
 
-def equal_observations(data_a: Optional[kapture.Observations],
-                       data_b: Optional[kapture.Observations]) -> bool:
+def equal_observations(
+        data_a: Optional[kapture.Observations],
+        data_b: Optional[kapture.Observations]) -> bool:
     """
     Compare two instances of kapture.Observations.
 
@@ -343,11 +431,14 @@ def equal_observations(data_a: Optional[kapture.Observations],
     :param data_b: second set of observations
     :return: True if they are identical, False otherwise.
     """
-    return equal_nested_dict_or_set(data_a, data_b, 'equal_observations')
+    expected_type = kapture.Observations
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_nested_dict_or_set(data_a, data_b, current_function_name, expected_type)
 
 
-def equal_points3d(points3d_a: Optional[kapture.Points3d],
-                   points3d_b: Optional[kapture.Points3d]) -> bool:
+def equal_points3d(
+        points3d_a: Optional[kapture.Points3d],
+        points3d_b: Optional[kapture.Points3d]) -> bool:
     """
     Compare two instances of kapture.Points3d.
 
@@ -380,7 +471,9 @@ def equal_points3d(points3d_a: Optional[kapture.Points3d],
     return are_equal
 
 
-def equal_kapture(data_a: kapture.Kapture, data_b: kapture.Kapture) -> bool:  # noqa: C901
+def equal_kapture(
+        data_a: kapture.Kapture,
+        data_b: kapture.Kapture) -> bool:  # noqa: C901
     """
     Compare two instances of Kapture.
      Poses are compared with is_distance_within_threshold(pose_transform_distance())
@@ -402,22 +495,16 @@ def equal_kapture(data_a: kapture.Kapture, data_b: kapture.Kapture) -> bool:  # 
         return False
 
     # compare records
-    if not equal_records_camera(data_a.records_camera, data_b.records_camera):
-        return False
-    if not equal_records_lidar(data_a.records_lidar, data_b.records_lidar):
-        return False
-    if not equal_records_wifi(data_a.records_wifi, data_b.records_wifi):
-        return False
-    if not equal_records_gnss(data_a.records_gnss, data_b.records_gnss):
-        return False
+    for record_sensor in ['camera', 'lidar', 'wifi', 'bluetooth', 'gnss', 'accelerometer', 'gyroscope', 'magnetic']:
+        record_name = f'records_{record_sensor}'
+        equal_record_function = eval(f'equal_records_{record_sensor}')
+        if not equal_record_function(getattr(data_a, record_name), getattr(data_b, record_name)):
+            return False
 
     # compare image features (keypoints, descriptors, global_features)
-    if not equal_image_features(data_a.keypoints, data_b.keypoints):
-        return False
-    if not equal_image_features(data_a.descriptors, data_b.descriptors):
-        return False
-    if not equal_image_features(data_a.global_features, data_b.global_features):
-        return False
+    for feature_type in ['keypoints', 'descriptors', 'global_features']:
+        if not equal_image_features(getattr(data_a, feature_type), getattr(data_b, feature_type)):
+            return False
 
     # compare matches
     if not equal_matches(data_a.matches, data_b.matches):
