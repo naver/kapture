@@ -1,7 +1,6 @@
 dataclasses>=0.3
 numpy>=1.16
 numpy-quaternion
-llvmlite==0.31.0  # error appeared on April the 17th
 numba
 matplotlib
 scipy

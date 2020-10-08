@@ -35,7 +35,9 @@ RUN apt-get update \
     mesa-utils \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --upgrade setuptools wheel twine
+# make sure pip 3 is >= 20.0 to enable use-feature=2020-resolver
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --upgrade setuptools wheel twine
 
 ########################################################################################################################
 # COLMAP ###############################################################################################################
@@ -78,5 +80,5 @@ RUN     cmake \
 ADD . /opt/source/kapture
 WORKDIR /opt/source/kapture
 RUN git submodule update --init --recursive
-RUN pip3 install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt --use-feature=2020-resolver
 RUN python3 setup.py install
