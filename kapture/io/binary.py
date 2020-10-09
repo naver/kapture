@@ -11,6 +11,7 @@ from typing import Type, Iterable
 from tqdm import tqdm
 import logging
 from kapture.utils.logging import getLogger
+from kapture.utils.paths import path_secure
 from enum import auto
 from kapture.utils.Collections import AutoEnum
 
@@ -84,6 +85,9 @@ def transfer_files_from_dir_link(
     """
     hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
     for src, dst in tqdm(zip(source_filepath_list, destination_filepath_list), disable=hide_progress_bar):
+        # make sure we deal absolute full path
+        src = path_secure(path.abspath(src))
+        dst = path_secure(path.abspath(dst))
         os.makedirs(path.dirname(dst), exist_ok=True)
         if force_overwrite and path.lexists(dst):
             os.remove(dst)
