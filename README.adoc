@@ -86,11 +86,11 @@ Build the docker image:
 [source,bash]
 ----
 # build the docker image : if you have already cloned the repository
-docker build . -t naver/kapture
+docker build . -t kapture/kapture
 # OR build the docker image directly from github
-docker build git://github.com/naver/kapture -t naver/kapture
+docker build git://github.com/naver/kapture -t kapture/kapture
 # run unit tests
-docker run -it --rm naver/kapture python3 -m unittest discover -s /opt/source/kapture/tests
+docker run -it --rm kapture/kapture python3 -m unittest discover -s /opt/source/kapture/tests
 ----
 
 If you want to process your own data, you can bind directories between the host and the container using
@@ -102,7 +102,7 @@ The following example mounts `/path/to/dataset/` from the host to `/dataset` ins
 docker run -it \
     --rm \ # Automatically remove the container when it exits \
     --volume /path/to/dataset/:/dataset:ro \ #read only
-    naver/kapture
+    kapture/kapture
 ----
 
 === kapture Python library
