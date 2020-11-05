@@ -127,7 +127,7 @@ docker build git://github.com/naver/kapture -t kapture/kapture
 Finally, run unit tests:
 [source,bash]
 ----
-docker run --runtime=nvidia -it --rm kapture/kapture python3 -m unittest discover -s /opt/kapture/tests
+docker run --runtime=nvidia -it --rm kapture/kapture python3 -m unittest discover -s /opt/src/kapture/tests
 ----
 
 === Run
