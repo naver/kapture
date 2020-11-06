@@ -13,6 +13,7 @@ import numpy as np
 from statistics import mean, median
 from math import isnan
 from typing import List, Tuple
+from tabulate import tabulate
 
 import path_to_kapture  # noqa: F401
 import kapture
@@ -70,6 +71,7 @@ def write_statistics_to_file(output_folder: str,
 
     bins = [(float(split_bin[0]), float(split_bin[1])) for split_bin in map(lambda x: x.split(), bins_as_str)]
     print_line = ''
+    bins_table_data = []
     for i in range(0, len(results)):
         label = labels[i]
         result = results[i]
@@ -109,6 +111,12 @@ def write_statistics_to_file(output_folder: str,
             for position_error, rotation_error, number_of_images_in_bin in filled_bins]
         print_line += ''.join(bins_lines)
         print_line += '\n'
+        bins_table_data.append([label, bins_lines[0].rstrip().split(': ')[1], bins_lines[1].rstrip().split(': ')[1], bins_lines[2].rstrip().split(': ')[1]])
+    if len(results) > 1:
+        print_line += '\n'
+        print_line += tabulate(bins_table_data, headers=('label', bins[0], bins[1], bins[2]), tablefmt='latex')
+        print_line += '\n\n'
+        print_line += tabulate(bins_table_data, headers=('label', bins[0], bins[1], bins[2]))
     print(print_line)
     with open(full_path, 'w') as fid:
         fid.write(print_line)

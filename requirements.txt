@@ -10,6 +10,7 @@ piexif==1.1.3
 requests
 pyyaml>=5.1
 wcmatch
+tabulate>=0.8.7
 
 # Issues with torch 1.5.0
 torch==1.4.0
