@@ -54,6 +54,7 @@ def write_results_to_file(output_folder: str,
 
 def write_statistics_to_file(output_folder: str,
                              labels: List[str],
+                             title: str,
                              results: List[List[Tuple[str, float, float]]],
                              bins_as_str: List[str],
                              force: bool) -> None:
@@ -62,6 +63,7 @@ def write_statistics_to_file(output_folder: str,
 
     :param output_folder: full path of folder to write statistics files in.
     :param labels: labels for the statistics files
+    :param title: title for the summary table
     :param results: results to compute statistics
     :param bins_as_str: list of bin names
     :param force: Silently overwrite results files if already exists.
@@ -114,9 +116,9 @@ def write_statistics_to_file(output_folder: str,
         bins_table_data.append([label, bins_lines[0].rstrip().split(': ')[1], bins_lines[1].rstrip().split(': ')[1], bins_lines[2].rstrip().split(': ')[1]])
     if len(results) > 1:
         print_line += '\n'
-        print_line += tabulate(bins_table_data, headers=('label', bins[0], bins[1], bins[2]), tablefmt='latex')
+        print_line += tabulate(bins_table_data, headers=(title, bins[0], bins[1], bins[2]), tablefmt='latex')
         print_line += '\n\n'
-        print_line += tabulate(bins_table_data, headers=('label', bins[0], bins[1], bins[2]))
+        print_line += tabulate(bins_table_data, headers=(title, bins[0], bins[1], bins[2]))
     print(print_line)
     with open(full_path, 'w') as fid:
         fid.write(print_line)
@@ -207,7 +209,7 @@ def save_evaluation(results: List[List[Tuple[str, float, float]]],
     :param force: Silently overwrite files if already exists.
     """
     write_results_to_file(output_dir, labels, results, force)
-    write_statistics_to_file(output_dir, labels, results, bins_as_str, force)
+    write_statistics_to_file(output_dir, labels, plot_title, results, bins_as_str, force)
     plot_localized_over_position_threshold(output_dir, labels, results,
                                            rotation_threshold, plot_max, plot_title,
                                            plot_loc, plot_font_size, plot_legend_font_size,
