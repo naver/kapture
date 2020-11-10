@@ -161,7 +161,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 
 
 === Global Features
-- https://europe.naverlabs.com/research/computer-vision-research-naver-labs-europe/learning-visual-representations/deep-image-retrieval/[AP-GeM] global feature extractor in kapture format: https://github.com/yocabon/deep-image-retrieval#feature-extraction-with-kapture-datasets[here]
+- https://europe.naverlabs.com/research/computer-vision-research-naver-labs-europe/learning-visual-representations/deep-image-retrieval/[AP-GeM] global feature extractor in kapture format: https://github.com/naver/deep-image-retrieval#feature-extraction-with-kapture-datasets[here]
 
 
 == Datasets
