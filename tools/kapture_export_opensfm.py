@@ -18,7 +18,7 @@ def export_opensfm_command_line():
     """
     Exports openSfM from kapture.
     """
-    parser = argparse.ArgumentParser(description='Imports openSfM to kapture')
+    parser = argparse.ArgumentParser(description='Exports from kapture to openSfM')
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
@@ -27,15 +27,15 @@ def export_opensfm_command_line():
     parser_verbosity.add_argument(
         '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
     ####################################################################################################################
-    parser.add_argument('-i', '--input', '--kapture', required=True,
+    parser.add_argument('-k', '--kapture', required=True,
                         help='path to kapture root directory.')
-    parser.add_argument('-o', '-k', '--output', '--opensfm', required=True,
-                        help='output directory where to save OpenSfM files.')
+    parser.add_argument('-o', '--opensfm', required=True,
+                        help='directory where to save OpenSfM files.')
     parser.add_argument('--transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], choose among: '
+                        help=f'How to export images [link_absolute], choose among: '
                              f'{", ".join(a.name for a in TransferAction)}')
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete kapture if already exists.')
+                        help='Force delete opensfm data if already exists.')
     args = parser.parse_args()
     ####################################################################################################################
     logger.setLevel(args.verbose)
@@ -48,14 +48,9 @@ def export_opensfm_command_line():
         for k, v in vars(args).items()
         if k != 'command'))
 
-    args.input = path.normpath(path.abspath(args.input))
-    args.output = path.normpath(path.abspath(args.output))
-    export_opensfm(
-        kapture_rootdir=args.input,
-        opensfm_rootdir=args.output,
-        force_overwrite_existing=args.force,
-        images_import_method=args.transfer
-    )
+    args.kapture = path.normpath(path.abspath(args.kapture))
+    args.opensfm = path.normpath(path.abspath(args.opensfm))
+    export_opensfm(args.kapture, args.opensfm, args.force, args.transfer)
 
 
 if __name__ == '__main__':

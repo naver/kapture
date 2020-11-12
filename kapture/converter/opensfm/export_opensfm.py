@@ -255,7 +255,7 @@ def export_opensfm(
         kapture_root_dir: str,
         opensfm_root_dir: str,
         force_overwrite_existing: bool = False,
-        images_import_method: TransferAction = TransferAction.copy
+        images_export_method: TransferAction = TransferAction.copy
 ) -> None:
     """
     Export the kapture data to an openSfM format
@@ -263,7 +263,7 @@ def export_opensfm(
     :param kapture_root_dir: full path to the top kapture directory
     :param opensfm_root_dir: path of the directory where to store the data in openSfM format
     :param force_overwrite_existing: if true, will remove existing openSfM data without prompting the user.
-    :param images_import_method:
+    :param images_export_method:
     """
 
     disable_tqdm = logger.getEffectiveLevel() > logging.INFO  # don't display tqdm for non-verbose levels
@@ -316,7 +316,7 @@ def export_opensfm(
         source_filepath_list=kapture_image_file_paths,
         destination_filepath_list=opensfm_image_file_paths,
         force_overwrite=force_overwrite_existing,
-        copy_strategy=images_import_method,
+        copy_strategy=images_export_method,
     )
 
     _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_root_dir, opensfm_root_dir,
