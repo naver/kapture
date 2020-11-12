@@ -50,12 +50,7 @@ def import_opensfm_command_line():
     args.input = path.normpath(path.abspath(args.input))
     args.output = path.normpath(path.abspath(args.output))
 
-    import_opensfm(
-        opensfm_rootdir=args.input,
-        kapture_rootdir=args.output,
-        force_overwrite_existing=args.force,
-        images_import_method=args.transfer
-    )
+    import_opensfm(args.input, args.output, args.force, args.transfer)
 
 
 if __name__ == '__main__':
