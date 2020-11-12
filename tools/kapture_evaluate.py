@@ -113,7 +113,8 @@ def write_statistics_to_file(output_folder: str,
             for position_error, rotation_error, number_of_images_in_bin in filled_bins]
         print_line += ''.join(bins_lines)
         print_line += '\n'
-        bins_table_data.append([label, bins_lines[0].rstrip().split(': ')[1], bins_lines[1].rstrip().split(': ')[1], bins_lines[2].rstrip().split(': ')[1]])
+        bins_table_data.append([label, bins_lines[0].rstrip().split(': ')[1], bins_lines[1].rstrip().split(': ')[1],
+                                bins_lines[2].rstrip().split(': ')[1]])
     if len(results) > 1:
         print_line += '\n'
         print_line += tabulate(bins_table_data, headers=(title, bins[0], bins[1], bins[2]), tablefmt='latex')
