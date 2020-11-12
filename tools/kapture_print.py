@@ -101,7 +101,7 @@ def print_rigs(
         if kapture_data.rigs is not None:
             for rig_id, rig in kapture_data.rigs.items():
                 s_ids = [s_id for s_id in kapture_data.rigs[rig_id]]
-                print_key_value(f' ├─ rig', rig_id, file=output_stream, show_none=show_all)
+                print_key_value(' ├─ rig', rig_id, file=output_stream, show_none=show_all)
                 for sensor_id in s_ids:
                     sensor_type = 'unknown'
                     if sensor_id in kapture_data.sensors:
@@ -148,7 +148,9 @@ def format_timestamp_range(
     """
     Format a time range with unit.
 
+    :param timestamp_range: range of timestamps
     :param timestamp_unit: timestamp unit, can be: formatted_timestamp or auto
+    :param timestamp_format: the timestamp format string
     :return string:
     """
     if timestamp_unit is None:
@@ -186,7 +188,7 @@ def format_timestamp_range(
                 timestamp_str += ' '
             timestamp_str += timestamp_parts[1]['time']
             return timestamp_str
-        except ValueError as _:
+        except ValueError as _:  # noqa: F841
             return ' : '.join(str(ts) for ts in timestamp_range) + f' ** FAIL to parse as posix {timestamp_unit}'
     else:  # not posix
         return ' : '.join(str(ts) for ts in timestamp_range)
