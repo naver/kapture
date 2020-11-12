@@ -44,8 +44,8 @@ def is_distance_within_threshold(
     """
     translation_distance, rotation_distance = pose_distance
     translation_threshold, rotation_threshold = pose_thresholds
-    return float_iszero(translation_distance, translation_threshold) \
-           and float_iszero(rotation_distance, rotation_threshold)
+    return float_iszero(translation_distance, translation_threshold)\
+        and float_iszero(rotation_distance, rotation_threshold)
 
 
 def equal_poses(pose_a: kapture.PoseTransform, pose_b: kapture.PoseTransform) -> bool:
