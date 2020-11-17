@@ -24,11 +24,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Build and publish
+    - name: pypi Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
         twine upload --skip-existing dist/*
-
+    - name: Docker build and publish
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: kapture/kapture
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tags: "latest,${{ env.STATE_RELEASE_VERSION }}"
