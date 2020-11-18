@@ -129,6 +129,7 @@ def get_keypoints_from_database(database: COLMAPDatabase,
         if image_keypoints is None or image_keypoints.shape[0] == 0:
             logger.warning(f'image={image_filename} has 0 keypoints')
             empty_keypoints.append((image_filename, keypoints_filepath))
+            continue
 
         if image_keypoints.dtype != dtype:
             raise ValueError('inconsistent keypoints type.')
@@ -192,6 +193,7 @@ def get_descriptors_from_database(database: COLMAPDatabase,
         if image_descriptors is None or image_descriptors.shape[0] == 0:
             logger.warning(f'image={image_id}:{image_filename} has 0 descriptors.')
             empty_descriptors.append((image_filename, descriptors_filepath))
+            continue
 
         if image_descriptors.dtype != dtype:
             raise ValueError('inconsistent descriptors type.')
