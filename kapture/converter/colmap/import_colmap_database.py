@@ -108,26 +108,45 @@ def get_keypoints_from_database(database: COLMAPDatabase,
     image_filenames = set()
     dtype = np.float32
     dsize = None  # usually 6, will be retrieved on first keypoints of DB
+
+    empty_keypoints = []
+
     # DB query
     colmap_keypoints_request = (
-        (image_id, blob_to_array(data, dtype, (rows, cols)) if (rows > 0 and cols > 0) else np.zeros((0, 6)))
+        (image_id, blob_to_array(data, dtype, (rows, cols)) if (rows > 0 and cols > 0) else None)
         for image_id, rows, cols, data in database.execute("SELECT image_id, rows, cols, data FROM keypoints"))
 
     hide_progressbar = logger.getEffectiveLevel() > logging.INFO
     for colmap_image_id, image_keypoints in tqdm(colmap_keypoints_request, disable=hide_progressbar):
-        if dsize is None:
-            assert image_keypoints.dtype == dtype
-            dsize = int(image_keypoints.shape[1])
-        elif dsize != image_keypoints.shape[1]:
-            raise ValueError('inconsistent keypoints size or type.')
         # retrieve image path from image_id
         assert len(records_camera[colmap_image_id]) == 1
         timestamp = colmap_image_id
         image_filename = next((v for v in records_camera[timestamp].values()), None)
         assert image_filename
         keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_dirpath, image_filename)
-        if image_keypoints.shape[0] == 0:
+
+        # handle no keypoints (delay)
+        if image_keypoints is None or image_keypoints.shape[0] == 0:
             logger.warning(f'image={image_filename} has 0 keypoints')
+            empty_keypoints.append((image_filename, keypoints_filepath))
+
+        if image_keypoints.dtype != dtype:
+            raise ValueError('inconsistent keypoints type.')
+        if dsize is None:
+            dsize = int(image_keypoints.shape[1])
+        elif dsize != image_keypoints.shape[1]:
+            raise ValueError('inconsistent keypoints size.')
+
+        # save the actual file
+        kapture.io.features.image_keypoints_to_file(keypoints_filepath, image_keypoints)
+        # register it into kapture
+        image_filenames.add(image_filename)
+
+    # do all the empty keypoints at the end when we know for sure dsize
+    for image_filename, keypoints_filepath in empty_keypoints:
+        if dsize is None:
+            dsize = 6
+        image_keypoints = np.zeros((0, dsize), dtype=dtype)
         # save the actual file
         kapture.io.features.image_keypoints_to_file(keypoints_filepath, image_keypoints)
         # register it into kapture
@@ -157,25 +176,43 @@ def get_descriptors_from_database(database: COLMAPDatabase,
     dtype = np.uint8  # values in the range 0…255
     # see https://colmap.github.io/tutorial.html#feature-detection-and-extraction
     dsize = None  # usually uint8, 128, will be retrieved on first descriptor of DB
+
+    empty_descriptors = []
+
     colmap_descriptors = (
-        (image_id, blob_to_array(data, dtype, (rows, cols)) if (rows > 0 and cols > 0) else np.zeros((0, dsize)))
+        (image_id, blob_to_array(data, dtype, (rows, cols)) if (rows > 0 and cols > 0) else None)
         for image_id, rows, cols, data in database.execute("SELECT image_id, rows, cols, data FROM descriptors"))
     hide_progressbar = logger.getEffectiveLevel() > logging.INFO
     for image_id, image_descriptors in tqdm(colmap_descriptors, disable=hide_progressbar):
         # retrieve image path from image_id (actually the timestamp)
-        if dsize is None:
-            dsize = int(image_descriptors.shape[1])
-        elif dsize != image_descriptors.shape[1] or dtype != image_descriptors.dtype:
-            raise ValueError('inconsistent descriptors size or type.')
-
         image_filename = next((v for v in images[image_id].values()), None)
         assert image_filename
         descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_dirpath, image_filename)
-        if image_descriptors.shape[0] == 0:
+
+        if image_descriptors is None or image_descriptors.shape[0] == 0:
             logger.warning(f'image={image_id}:{image_filename} has 0 descriptors.')
+            empty_descriptors.append((image_filename, descriptors_filepath))
+
+        if image_descriptors.dtype != dtype:
+            raise ValueError('inconsistent descriptors type.')
+        if dsize is None:
+            dsize = int(image_descriptors.shape[1])
+        elif dsize != image_descriptors.shape[1]:
+            raise ValueError('inconsistent descriptors size.')
+
         # save the actual file
-        kapture.io.features.image_keypoints_to_file(descriptors_filepath, image_descriptors)
+        kapture.io.features.image_descriptors_to_file(descriptors_filepath, image_descriptors)
         # register it into to kapture
+        image_filenames.add(image_filename)
+
+    # do all the empty descriptors at the end when we know for sure dsize
+    for image_filename, descriptors_filepath in empty_descriptors:
+        if dsize is None:
+            dsize = 128
+        image_descriptors = np.zeros((0, dsize), dtype=dtype)
+        # save the actual file
+        kapture.io.features.image_descriptors_to_file(descriptors_filepath, image_descriptors)
+        # register it into kapture
         image_filenames.add(image_filename)
 
     if image_filenames:
