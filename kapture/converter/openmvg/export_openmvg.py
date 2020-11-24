@@ -20,7 +20,7 @@ import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS,\
+from .openmvg_commons import DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, OPENMVG_JSON_ROOT_PATH, INTRINSICS,\
     VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW,\
     ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT,\
     DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR, CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR,\
@@ -343,8 +343,8 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
         # beware that the paths are reverted in the symlink call
         os.symlink(kapture_records_path, root_path)
 
-    sfm_data = {SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
-                ROOT_PATH: root_path}
+    sfm_data = {OPENMVG_JSON_SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
+                OPENMVG_JSON_ROOT_PATH: root_path}
 
     polymorphic_id_current = 1
     ptr_wrapper_id_current = 1
