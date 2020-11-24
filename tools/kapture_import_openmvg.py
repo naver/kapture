@@ -8,6 +8,7 @@ This script imports an openmvg file in the kapture format.
 import argparse
 import logging
 import sys
+import os.path as path
 
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
@@ -15,7 +16,7 @@ import kapture.utils.logging
 from kapture.io.records import TransferAction
 # openmvg
 from kapture.converter.openmvg.import_openmvg import import_openmvg
-
+from kapture.converter.openmvg.openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME
 
 logger = logging.getLogger('openmvg')
 
@@ -35,12 +36,14 @@ def import_openmvg_command_line() -> None:
     parser.add_argument('-y', '--force', action='store_true', default=False,
                         help='silently delete kapture data if already exists.')
     # create the parser for the import command #########################################################################
-    parser.add_argument('-i', '-s', '--sfm_data', required=True,
-                        help='path to openMVG Regions data structure.')
+    parser.add_argument('-i', '--openmvg',
+                        help='path to openMVG directory, will automatically look for sfm_data, regions and pair files.')
+    parser.add_argument('-s', '--sfm_data',
+                        help='path to openMVG sfm_data data file.')
     parser.add_argument('-r', '--regions',
-                        help='path to openMVG JSON file.')
-    parser.add_argument('-p', '--pair_wise_matches',
-                        help='path to openMVG data structure used to store matches between pair of images.')
+                        help='path to openMVG directory containing region files (feat, desc).')
+    parser.add_argument('-m', '--matches',
+                        help='path to openMVG directory containing data structure used to store matches.')
     parser.add_argument('-o', '-k', '--kapture', required=True,
                         help='top directory where to save Kapture files.')
     parser.add_argument('--image_action', default='root_link', type=TransferAction,
@@ -63,7 +66,32 @@ def import_openmvg_command_line() -> None:
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()))
 
+    # argument logic.
+    if args.openmvg:
+        args.openmvg = path.abspath(args.openmvg)
+        # automatically look for sfm_data, regions and pair files if not specified
+        if args.sfm_data is None:
+            args.sfm_data = path.join(args.openmvg, OPENMVG_DEFAULT_JSON_FILE_NAME)
+        if args.regions is None:
+            args.regions = args.openmvg
+        if args.matches is None:
+            args.matches = args.openmvg
+
+    # normalizes paths
+    if args.sfm_data is not None:
+        args.sfm_data = path.normpath(path.abspath(args.sfm_data))
+    if args.regions is not None:
+        args.regions = path.normpath(path.abspath(args.regions))
+    if args.matches is not None:
+        args.matches = path.normpath(path.abspath(args.matches))
+
+    # sanity check
+    if all(i is None for i in [args.sfm_data, args.regions, args.matches]):
+        raise ValueError('Need openMVG files as input.')
+
     import_openmvg(args.sfm_data,
+                   args.regions,
+                   args.matches,
                    args.kapture,
                    args.image_action,
                    args.force)

@@ -20,8 +20,8 @@ import kapture.io.structure
 from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS,\
-    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC,\
+from .openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
+    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, \
     ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, \
     ROTATION, CENTER
 from .openmvg_commons import CameraModel
@@ -29,46 +29,47 @@ from .openmvg_commons import CameraModel
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 
-def import_openmvg(sfm_data_path: str,
-                   kapture_path: str,
-                   image_action: TransferAction,
-                   force_overwrite_existing: bool = False) -> None:
+def import_openmvg(
+        sfm_data_path: str,
+        region_dir_path: str,
+        matches_dirpath: str,
+        kapture_path: str,
+        image_action: TransferAction,
+        force_overwrite_existing: bool = False) -> None:
     """
     Converts an openMVG JSON file to a kapture directory.
     If an image action is provided (link, copy or move), links to the image files are created,
     or the image files are copied or moved.
 
-    :param sfm_data_path: path to the openMVG file (or its directory)
+    :param sfm_data_path: path to the openMVG sfm_data file.
     :param kapture_path: path to the kapture directory where the data will be exported
     :param image_action: action to apply to the images
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     """
 
+    # sanity check
+    if not path.isfile(sfm_data_path):
+        raise ValueError(f'OpenMVG JSON file {sfm_data_path} does not exist.')
+
     os.makedirs(kapture_path, exist_ok=True)
     kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
-    if path.isdir(sfm_data_path):
-        input_file = path.join(sfm_data_path, DEFAULT_JSON_FILE_NAME)
-    else:
-        input_file = sfm_data_path
-    if not path.isfile(input_file):
-        raise ValueError(f'OpenMVG JSON file {input_file} does not exist')
 
-    logger.info(f'Loading openmvg file {input_file}')
-
-    with open(input_file, 'r') as f:
+    logger.info(f'Loading openmvg file {sfm_data_path}')
+    with open(sfm_data_path, 'r') as f:
         input_json = json.load(f)
         kapture_data = import_openmvg_sfm_data_json(input_json, kapture_path, image_action)
-        logger.info(f'Saving to kapture {kapture_path}')
-        kcsv.kapture_to_dir(kapture_path, kapture_data)
+    logger.info(f'Saving to kapture {kapture_path}')
+    kcsv.kapture_to_dir(kapture_path, kapture_data)
 
 
 GET_ID_MASK = 2147483647  # 01111111 11111111 11111111 11111111
 ID_POSE_NOT_LOCALIZED = 4294967295  # 11111111 11111111 11111111 11111111
 
 
-def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[str, Dict]],
-                                 kapture_images_path: str,
-                                 image_action=TransferAction.skip) -> kapture.Kapture:
+def import_openmvg_sfm_data_json(
+        sfm_data_json: Dict[str, Union[str, Dict]],
+        kapture_images_path: str,
+        image_action=TransferAction.skip) -> kapture.Kapture:
     """
     Imports an openMVG sfm_data json structure to a kapture object.
     Also copy, move or link the images files if necessary.
@@ -79,22 +80,22 @@ def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[str, Dict]],
     :return: the constructed kapture object
     """
 
-    root_path: str = ''
+    data_root_path: str = ''
 
     if sfm_data_json[OPENMVG_JSON_ROOT_PATH]:
-        root_path = sfm_data_json[OPENMVG_JSON_ROOT_PATH]
+        data_root_path = sfm_data_json[OPENMVG_JSON_ROOT_PATH]
     elif image_action == TransferAction.skip:
-        logger.warning("No root_path in input file")
+        logger.warning('No root_path in sfm_data.')
     else:  # It is needed to execute an action with the image file
         raise ValueError(f"Missing root_path to do image action '{image_action.name}'")
-    openmvg_images_dir = path.basename(root_path)
+    openmvg_images_dir = path.basename(data_root_path)
 
     # Imports all the data from the json file to kapture objects
-    kapture_cameras = _import_cameras(sfm_data_json)
+    kapture_cameras = import_openmvg_cameras(sfm_data_json)
     device_identifiers = {int: str}  # Pose id -> device id
     timestamp_for_pose = {int: int}  # Pose id -> timestamp
     # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
-    records_camera = _import_images(sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+    records_camera = _import_images(sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
                                     device_identifiers, timestamp_for_pose)
     trajectories = _import_trajectories(sfm_data_json, device_identifiers, timestamp_for_pose)
 
@@ -102,7 +103,7 @@ def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[str, Dict]],
     return kapture_data
 
 
-def _import_cameras(input_json) -> kapture.Sensors:  # noqa: C901
+def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
     if input_json.get(INTRINSICS):
         polymorphic_id_to_value = {}

@@ -7,7 +7,7 @@ Openmvg constants values useful for conversion from and to.
 from kapture.utils.Collections import AutoEnum
 from enum import auto
 
-DEFAULT_JSON_FILE_NAME = 'sfm_data.json'
+OPENMVG_DEFAULT_JSON_FILE_NAME = 'sfm_data.json'
 SFM_DATA_VERSION_NUMBER = "0.3"
 
 # XML names

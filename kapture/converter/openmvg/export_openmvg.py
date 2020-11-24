@@ -20,7 +20,7 @@ import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, OPENMVG_JSON_ROOT_PATH, INTRINSICS,\
+from .openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, OPENMVG_JSON_ROOT_PATH, INTRINSICS,\
     VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW,\
     ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT,\
     DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR, CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR,\
@@ -384,14 +384,14 @@ def export_openmvg(kapture_path: str, openmvg_path: str,
     """
 
     if path.isdir(openmvg_path):  # Existing directory
-        json_file = path.join(openmvg_path, DEFAULT_JSON_FILE_NAME)
+        json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
     else:
         file_ext = path.splitext(openmvg_path)[1]
         if len(file_ext) == 0:  # No extension: -> new directory
-            json_file = path.join(openmvg_path, DEFAULT_JSON_FILE_NAME)
+            json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
         elif file_ext.lower() != '.json':
             logger.warning(f'Creating output directory with file extension {file_ext}')
-            json_file = path.join(openmvg_path, DEFAULT_JSON_FILE_NAME)
+            json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
         else:  # Json file
             json_file = openmvg_path
     json_dir = path.dirname(json_file)
