@@ -8,10 +8,8 @@ on:
     types: [created]
 
 jobs:
-  deploy:
-
+  deploy_pip:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -24,13 +22,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: pypi Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload --skip-existing dist/*
+    - name: push pip package
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+
+  deploy_docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Docker build and publish
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
