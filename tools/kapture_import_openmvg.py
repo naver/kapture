@@ -35,9 +35,13 @@ def import_openmvg_command_line() -> None:
     parser.add_argument('-y', '--force', action='store_true', default=False,
                         help='silently delete kapture data if already exists.')
     # create the parser for the import command #########################################################################
-    parser.add_argument('-o', '--openmvg', required=True,
+    parser.add_argument('-i', '-s', '--sfm_data', required=True,
+                        help='path to openMVG Regions data structure.')
+    parser.add_argument('-r', '--regions',
                         help='path to openMVG JSON file.')
-    parser.add_argument('-k', '--kapture', required=True,
+    parser.add_argument('-p', '--pair_wise_matches',
+                        help='path to openMVG data structure used to store matches between pair of images.')
+    parser.add_argument('-o', '-k', '--kapture', required=True,
                         help='top directory where to save Kapture files.')
     parser.add_argument('--image_action', default='root_link', type=TransferAction,
                         help=f'''what to do with images:
@@ -59,18 +63,10 @@ def import_openmvg_command_line() -> None:
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()))
 
-    # Check that we will not try to do symbolics links on Windows
-    # because this is not possible today if the user is not admin
-    if sys.platform.startswith("win") and \
-            (args.image_link == TransferAction.link_relative or
-             args.image_link == TransferAction.link_absolute or
-             args.image_link == TransferAction.root_link):
-        logger.fatal("It is currently impossible to link files on a Windows platform")
-        logger.fatal(f"Please try another option for the image: either do nothing ({TransferAction.skip}),"
-                     f" or {TransferAction.copy}")
-        raise OSError("Image file linking not possible on Windows")
-    else:
-        import_openmvg(args.openmvg, args.kapture, args.image_action, args.force)
+    import_openmvg(args.sfm_data,
+                   args.kapture,
+                   args.image_action,
+                   args.force)
 
 
 if __name__ == '__main__':
