@@ -31,10 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Docker build and publish
+    - name: docker build and push
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
         name: kapture/kapture
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        tags: "latest,${{ env.STATE_RELEASE_VERSION }}"
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        tag_names: true
+
+    - name: docker tag latest
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: kapture/kapture
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        tags: "latest"
