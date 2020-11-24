@@ -1,6 +1,0 @@
-# kapture format: 1.0
-# timestamp, device_id, image_path
-267, testing_light_1_occlusion_1_frame_267, testing/gallery_light1_occlusion1/frames/rgb/camera_0/rgb_00267.jpg
-446, testing_light_1_occlusion_1_frame_446, testing/gallery_light1_occlusion1/frames/rgb/camera_0/rgb_00446.jpg
-481, testing_light_1_occlusion_1_frame_481, testing/gallery_light1_occlusion1/frames/rgb/camera_0/rgb_00481.jpg
-491, testing_light_1_occlusion_1_frame_491, testing/gallery_light1_occlusion1/frames/rgb/camera_0/rgb_00491.jpg

@@ -181,6 +181,14 @@ Here is a list of datasets you can directly download in kapture format with the 
 * https://europe.naverlabs.com/research/3d-vision/virtual-gallery-dataset/[Virtual Gallery] dataset
 
 
+== kapture-localization
+
+Checkout https://github.com/naver/kapture-localization[kapture-localization], our toolbox which contains implementations for various localization related algorithms. 
+
+ - mapping and localization pipelines with custom features
+ - mapping and localization pipelines with SIFT and vocabulary tree matching (default colmap pipeline)
+ - image retrieval benchmark (global sfm, local sfm, pose approximation)
+
 == Tutorial
 
 See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
@@ -188,7 +196,6 @@ See the link:doc/tutorial.adoc[kapture tutorial] for a short introduction to:
  - conversion tools
  - using kapture in your code
  - dataset download
- - localization pipelines
 
 == Contributing
 

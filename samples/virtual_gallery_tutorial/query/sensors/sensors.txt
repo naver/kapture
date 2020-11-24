@@ -1,6 +1,0 @@
-# kapture format: 1.0
-# sensor_id, name, sensor_type, [sensor_params]+
-testing_light_1_occlusion_1_frame_267, , camera, PINHOLE, 1920, 1080, 1760.185, 1760.185, 959.5, 539.5
-testing_light_1_occlusion_1_frame_446, , camera, PINHOLE, 1920, 1080, 879.8295, 879.8295, 959.5, 539.5
-testing_light_1_occlusion_1_frame_481, , camera, PINHOLE, 1920, 1080, 1348.513, 1348.513, 959.5, 539.5
-testing_light_1_occlusion_1_frame_491, , camera, PINHOLE, 1920, 1080, 1259.807, 1259.807, 959.5, 539.5
