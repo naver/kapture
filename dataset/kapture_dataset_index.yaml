@@ -364,12 +364,69 @@ RobotCar_Seasons-v2_49_mapping:
 RobotCar_Seasons-v2_49_query:
   sha256sum: 583600caae88aa2f05c238c615781bdd2d51e5dd1274a61c8cbafa17893697d5
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture//RobotCar_Seasons-v2_49_query.tar.gz
+Aachen-Day-Night-v1.1_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap:
+  sha256sum: c6f2e5dc1cf487c65c65e91e2dbc028909193cff2a23bf8627319918ebaec861
+  url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap.tar.gz
+Aachen-Day-Night-v1.1_global_features_AP-GeM-LM18_global_features:
+  sha256sum: 9321348b4485026e858040e3043cadeea77b51637a7419645d9a88819a1164b2
+  url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_global_features_AP-GeM-LM18_global_features.tar.gz
+Aachen-Day-Night-v1.1_global_features_DELG_global_features:
+  sha256sum: c3197752dffa44969435b7dc153b3e2cd9f1cb443311e1d514b8edf085b80e00
+  url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_global_features_DELG_global_features.tar.gz
+Aachen-Day-Night-v1.1_global_features_densevlad_multi_global_features:
+  sha256sum: 165daa8847cb3bb3cbb756c6aa278764aac59837eddd584a3de67701e314ae96
+  url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_global_features_densevlad_multi_global_features.tar.gz
+Aachen-Day-Night-v1.1_global_features_netvlad_vd16pitts_global_features:
+  sha256sum: 079a17ac648a5af274efdb563d11d9bc1df51fbea68a0b17a7b2ea048ee33f80
+  url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_global_features_netvlad_vd16pitts_global_features.tar.gz
 InLoc_wo_images_mapping:
   sha256sum: 02788042d9e75bb9f22dac2f7e59029329b900b812707ec0e20dca0cb5623418
   url: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_mapping.tar.gz
 InLoc_wo_images_query:
   sha256sum: 409ec8d7fee8a61211ee96e5ed29fa49bac68277b5f72839247539d1abaa2320
   url: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_query.tar.gz
+RobotCar_Seasons_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap:
+  sha256sum: e761aeff17006a4458f5bf30552778dd87acecabc7da27f0878462b8ce6df50c
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap.tar.gz
+RobotCar_Seasons_global_features_AP-GeM-LM18_global_features:
+  sha256sum: 7cc1ab3bf4ba2b5a3d667b28e65329e676bd61238d108891fc71a06017874f7f
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_AP-GeM-LM18_global_features.tar.gz
+RobotCar_Seasons_global_features_DELG_global_features:
+  sha256sum: 2e9232120efea8dd79a6a1ccf5308d267197fd0ae168b01476337bb64bae7831
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_DELG_global_features.tar.gz
+RobotCar_Seasons_global_features_densevlad_multi_global_features:
+  sha256sum: 341d12a0b50884415eadc9fb41347584ed30b1271597f7b8f728cb5ac5d4abbd
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_densevlad_multi_global_features.tar.gz
+RobotCar_Seasons_global_features_netvlad_vd16pitts_global_features:
+  sha256sum: 39028f7a0e24b2acd1d8b93cbf4f47b1d2d441564b5146149c5f617ce83360c0
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_netvlad_vd16pitts_global_features.tar.gz
+RobotCar_Seasons_mapping:
+  sha256sum: 80bd85a452eb51ad75c2bcd725fd30734c899b4d2674ed51e9bd93c6250136d2
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_mapping.tar.gz
+RobotCar_Seasons_query:
+  sha256sum: c6d6a7c56187b5fd94d7b2b0daa21091ab6c0705ee652d68dac3bf2893837d7b
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_query.tar.gz
+baidu-mall_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap:
+  sha256sum: f1e5efc0610217b98b046c63a5a2bb175bfadc7b36977c8fc3a9906cd30b655c
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap.tar.gz
+baidu-mall_global_features_AP-GeM-LM18_global_features:
+  sha256sum: 0d79c2c89d5824e0e087305992f326c17dd8ea4dcfe0a4934e3b3c9ee1da01d1
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_global_features_AP-GeM-LM18_global_features.tar.gz
+baidu-mall_global_features_DELG_global_features:
+  sha256sum: f022d7c92138b8c496680fc4591ca4146c842de98ee4c1df4430a5025d313779
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_global_features_DELG_global_features.tar.gz
+baidu-mall_global_features_densevlad_multi_global_features:
+  sha256sum: d2c39a6b977eb4ed8ffc11599981a367927cb0c0dcdf011270a1334d6e801c2f
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_global_features_densevlad_multi_global_features.tar.gz
+baidu-mall_global_features_netvlad_vd16pitts_global_features:
+  sha256sum: b1ab894d06441332583390b00d37aaf133a4e09f0ed0e6a72050e0f465641539
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_global_features_netvlad_vd16pitts_global_features.tar.gz
+baidu-mall_mapping_wo_images:
+  sha256sum: 9031c66c1f2b48c5cace92dc12b5b5bb1f1e17e797e6479bc3dc58962fa58180
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_mapping_wo_images.tar.gz
+baidu-mall_query_wo_images:
+  sha256sum: ee595de310729f2d0764c935e0da117bab6b462c367990d31753d7b1af559920
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_query_wo_images.tar.gz
 virtual_gallery_mapping:
   sha256sum: cb97b42acc7e57ebac9721aeed06a37a50ac7f2ae259af73dfc6985156febad4
   url: http://download.europe.naverlabs.com/kapture/virtual_gallery_mapping.tar.gz
