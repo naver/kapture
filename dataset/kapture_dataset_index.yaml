@@ -385,27 +385,27 @@ InLoc_wo_images_mapping:
 InLoc_wo_images_query:
   sha256sum: 409ec8d7fee8a61211ee96e5ed29fa49bac68277b5f72839247539d1abaa2320
   url: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_query.tar.gz
-RobotCar_Seasons_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap:
-  sha256sum: e761aeff17006a4458f5bf30552778dd87acecabc7da27f0878462b8ce6df50c
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap.tar.gz
-RobotCar_Seasons_global_features_AP-GeM-LM18_global_features:
-  sha256sum: 7cc1ab3bf4ba2b5a3d667b28e65329e676bd61238d108891fc71a06017874f7f
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_AP-GeM-LM18_global_features.tar.gz
-RobotCar_Seasons_global_features_DELG_global_features:
-  sha256sum: 2e9232120efea8dd79a6a1ccf5308d267197fd0ae168b01476337bb64bae7831
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_DELG_global_features.tar.gz
-RobotCar_Seasons_global_features_densevlad_multi_global_features:
-  sha256sum: 341d12a0b50884415eadc9fb41347584ed30b1271597f7b8f728cb5ac5d4abbd
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_densevlad_multi_global_features.tar.gz
-RobotCar_Seasons_global_features_netvlad_vd16pitts_global_features:
-  sha256sum: 39028f7a0e24b2acd1d8b93cbf4f47b1d2d441564b5146149c5f617ce83360c0
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_global_features_netvlad_vd16pitts_global_features.tar.gz
-RobotCar_Seasons_mapping:
-  sha256sum: 80bd85a452eb51ad75c2bcd725fd30734c899b4d2674ed51e9bd93c6250136d2
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_mapping.tar.gz
-RobotCar_Seasons_query:
-  sha256sum: c6d6a7c56187b5fd94d7b2b0daa21091ab6c0705ee652d68dac3bf2893837d7b
-  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons_query.tar.gz
+RobotCar_Seasons-v1_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap:
+  sha256sum: 2d9081202f505b3cac06bb748d2ed5cee0858e360a693fa22230c32af4600348
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_colmap-sfm_r2d2_WASF-N8_20k_frustum_topk50_far50_colmap.tar.gz
+RobotCar_Seasons-v1_global_features_AP-GeM-LM18_global_features:
+  sha256sum: 3c2eb2533f8e660847c892bcc43ae29a127001600139ed0e4acc910120d61ae5
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_global_features_AP-GeM-LM18_global_features.tar.gz
+RobotCar_Seasons-v1_global_features_DELG_global_features:
+  sha256sum: 008ed403b3c48d9ce44b73d394922740234347bc0a32d786a934dcc1dffb14ca
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_global_features_DELG_global_features.tar.gz
+RobotCar_Seasons-v1_global_features_densevlad_multi_global_features:
+  sha256sum: 103c3ad91830f3ed2ea779f7b28d1c779b46dd20e2454ef83ae640c3078064e7
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_global_features_densevlad_multi_global_features.tar.gz
+RobotCar_Seasons-v1_global_features_netvlad_vd16pitts_global_features:
+  sha256sum: 67787919350b4fd11995f846102238e5e7465a3f1515c28900cb95ff56d95d6d
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_global_features_netvlad_vd16pitts_global_features.tar.gz
+RobotCar_Seasons-v1_mapping_wo_images:
+  sha256sum: 4b962706329a1357f95ef2875c77bd88faf2ee0114c9977e55cca46e6dc6a000
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_mapping_wo_images.tar.gz
+RobotCar_Seasons-v1_query_wo_images:
+  sha256sum: 79d4138d6b19fd071457e46ee63111b8f2f34beb52b6381365f1d5a276c4e0ae
+  url: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v1_query_wo_images.tar.gz
 baidu-mall_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap:
   sha256sum: f1e5efc0610217b98b046c63a5a2bb175bfadc7b36977c8fc3a9906cd30b655c
   url: http://download.europe.naverlabs.com/kapture/baidu-mall_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap.tar.gz
