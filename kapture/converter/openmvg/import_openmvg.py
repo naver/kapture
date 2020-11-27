@@ -54,10 +54,15 @@ def import_openmvg(
     os.makedirs(kapture_path, exist_ok=True)
     kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
 
-    logger.info(f'Loading openmvg file {sfm_data_path}')
+    logger.info(f'Loading sfm_data file {sfm_data_path}')
     with open(sfm_data_path, 'r') as f:
         input_json = json.load(f)
         kapture_data = import_openmvg_sfm_data_json(input_json, kapture_path, image_action)
+
+    if region_dir_path:
+        logger.info(f'Loading regions {region_dir_path}')
+
+
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
 
@@ -95,9 +100,11 @@ def import_openmvg_sfm_data_json(
     device_identifiers = {int: str}  # Pose id -> device id
     timestamp_for_pose = {int: int}  # Pose id -> timestamp
     # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
-    records_camera = _import_images(sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
-                                    device_identifiers, timestamp_for_pose)
-    trajectories = _import_trajectories(sfm_data_json, device_identifiers, timestamp_for_pose)
+    records_camera = import_openmvg_images(
+        sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
+        device_identifiers, timestamp_for_pose)
+    trajectories = import_openmvg_trajectories(
+        sfm_data_json, device_identifiers, timestamp_for_pose)
 
     kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
     return kapture_data
@@ -207,8 +214,8 @@ def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     return kapture_cameras
 
 
-def _import_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
-                   device_identifiers, timestamp_for_pose):
+def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+                          device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
     if input_json.get(VIEWS):
         views = input_json[VIEWS]
@@ -237,8 +244,8 @@ def _import_images(input_json, image_action, kapture_images_path, openmvg_images
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
 
-            kapture_filename = _import_image_file(input_data, openmvg_images_dir, root_path,
-                                                  kapture_images_path, image_action)
+            kapture_filename = import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
+                                                         kapture_images_path, image_action)
 
             progress_bar and progress_bar.update(1)
 
@@ -248,7 +255,7 @@ def _import_images(input_json, image_action, kapture_images_path, openmvg_images
     return records_camera
 
 
-def _import_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
+def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
     # Add the common openmvg images directory in front of the filename
     filename: str
     if input_data.get(LOCAL_PATH):
@@ -285,7 +292,7 @@ def _import_image_file(input_data, openmvg_images_dir, root_path, kapture_images
     return kapture_filename
 
 
-def _import_trajectories(input_json, device_identifiers, timestamp_for_pose):
+def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
     if input_json.get(EXTRINSICS):
         extrinsics = input_json[EXTRINSICS]
