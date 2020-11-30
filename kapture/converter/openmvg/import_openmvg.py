@@ -334,24 +334,21 @@ def import_openmvg_regions(
 
     # retrieve what type of keypoints it is.
     keypoints_type = image_describer.get('regions_type', {}).get('polymorphic_name', 'UNDEFINED')
-    if 'SIFT_Regions' == keypoints_type:
-        kapture_keypoints = kapture.Keypoints(type_name='SIFT', dtype=float, dsize=4)
-    elif 'AKAZE_Float_Regions' == keypoints_type:
-        kapture_keypoints = kapture.Keypoints(type_name='AKAZE', dtype=float, dsize=4)
-        # todo: AKAZE_Float_Regions et autres
-        raise NotImplementedError('AKAZE')
-    else:
-        raise ValueError(f'conversion of {keypoints_type} keypints not implemented.')
+    keypoints_name = {
+        'SIFT_Regions': 'SIFT',
+        'AKAZE_Float_Regions': 'AKAZE'
+    }.get(keypoints_type, keypoints_type)
+    kapture_keypoints = kapture.Keypoints(type_name=keypoints_name, dtype=float, dsize=4)
+
     # retrieve what type of descriptors it is.
     descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
-    if 'SIFT_Image_describer' == descriptors_type:
-        kapture_descriptors = kapture.Descriptors(type_name='SIFT', dtype=np.uint8, dsize=128)
-    elif 'AKAZE_Image_describer_SURF' == descriptors_type:
-        # todo
-        kapture_descriptors = kapture.Descriptors(type_name='SIFT', dtype=np.uint8, dsize=128)
-        raise NotImplementedError('AKAZE')
-    else:
+    descriptors_props = {
+        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128),
+        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128),
+    }.get(descriptors_type)
+    if not descriptors_props:
         raise ValueError(f'conversion of {descriptors_type} descriptors not implemented.')
+    kapture_descriptors = kapture.Descriptors(**descriptors_props)
 
     # populate regions files in openMVG directory
     # https://github.com/openMVG/openMVG/blob/master/src/openMVG/features/scalar_regions.hpp#L23
@@ -376,7 +373,7 @@ def import_openmvg_regions(
             # assumes descriptors shape from keypoints_data shape
             descriptors_data_bytes = np.fromfile(openmvg_descriptors_filepath, dtype=np.uint8)
             nb_features = keypoints_data.shape[0]
-            descriptors_shape = descriptors_data_bytes[0:8].view(np.int32)
+            descriptors_shape = descriptors_data_bytes[0:8].view(descriptors_props['dtype'])
             assert descriptors_shape[0] == nb_features
             descriptors_data = descriptors_data_bytes[8:].view(np.uint8).reshape((nb_features, 128))
             # descriptors_data.reshape((keypoints_data.shape[0], -1))
