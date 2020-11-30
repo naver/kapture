@@ -17,7 +17,9 @@ from typing import Dict, Union
 import kapture
 import kapture.io.csv as kcsv
 import kapture.io.structure
-from kapture.io.records import TransferAction, get_image_fullpath
+from kapture.io.records import TransferAction, get_image_fullpath, transfer_files_from_dir
+from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
+from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
 from .openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
@@ -31,7 +33,7 @@ logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 def import_openmvg(
         sfm_data_path: str,
-        region_dir_path: str,
+        regions_dir_path: str,
         matches_dirpath: str,
         kapture_path: str,
         image_action: TransferAction,
@@ -42,6 +44,7 @@ def import_openmvg(
     or the image files are copied or moved.
 
     :param sfm_data_path: path to the openMVG sfm_data file.
+    :param regions_dir_path: input path to directory containing regions (*.feat, *.desc)
     :param kapture_path: path to the kapture directory where the data will be exported
     :param image_action: action to apply to the images
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
@@ -59,9 +62,9 @@ def import_openmvg(
         input_json = json.load(f)
         kapture_data = import_openmvg_sfm_data_json(input_json, kapture_path, image_action)
 
-    if region_dir_path:
-        logger.info(f'Loading regions {region_dir_path}')
-
+    if regions_dir_path:
+        logger.info(f'Loading regions from {regions_dir_path}')
+        import_openmvg_regions(regions_dir_path, kapture_data, kapture_path)
 
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
@@ -313,3 +316,72 @@ def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_po
                 continue
             trajectories[(timestamp, device_id)] = kap_pose  # tuple of int,str -> 6D pose
     return trajectories
+
+
+def import_openmvg_regions(
+        openmvg_regions_directory_path,
+        kapture_data,
+        kapture_path
+):
+    logger.debug(f'{openmvg_regions_directory_path}')
+    # look for the "image_describer.json"
+    image_describer_path = path.join(openmvg_regions_directory_path, 'image_describer.json')
+    if not path.isfile(image_describer_path):
+        return False
+
+    with open(image_describer_path) as f:
+        image_describer = json.load(f)
+
+    # retrieve what type of keypoints it is.
+    keypoints_type = image_describer.get('regions_type', {}).get('polymorphic_name', 'UNDEFINED')
+    if 'SIFT_Regions' == keypoints_type:
+        kapture_keypoints = kapture.Keypoints(type_name='SIFT', dtype=float, dsize=4)
+    elif 'AKAZE_Float_Regions' == keypoints_type:
+        kapture_keypoints = kapture.Keypoints(type_name='AKAZE', dtype=float, dsize=4)
+        # todo: AKAZE_Float_Regions et autres
+        raise NotImplementedError('AKAZE')
+    else:
+        raise ValueError(f'conversion of {keypoints_type} keypints not implemented.')
+    # retrieve what type of descriptors it is.
+    descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
+    if 'SIFT_Image_describer' == descriptors_type:
+        kapture_descriptors = kapture.Descriptors(type_name='SIFT', dtype=np.uint8, dsize=128)
+    elif 'AKAZE_Image_describer_SURF' == descriptors_type:
+        # todo
+        kapture_descriptors = kapture.Descriptors(type_name='SIFT', dtype=np.uint8, dsize=128)
+        raise NotImplementedError('AKAZE')
+    else:
+        raise ValueError(f'conversion of {descriptors_type} descriptors not implemented.')
+
+    # populate regions files in openMVG directory
+    # https://github.com/openMVG/openMVG/blob/master/src/openMVG/features/scalar_regions.hpp#L23
+    for _, _, image_name in kapture.flatten(kapture_data.records_camera):
+        openmvg_image_name = path.splitext(path.basename(image_name))[0]
+        # keypoints
+        openmvg_keypoints_filepath = path.join(openmvg_regions_directory_path, openmvg_image_name + '.feat')
+        if path.isfile(openmvg_keypoints_filepath):
+            # there is a keypoints file in openMVG, lets add it to kapture
+            keypoints_data = np.loadtxt(openmvg_keypoints_filepath)
+            assert keypoints_data.shape[1] == 4
+            kapture_keypoints.add(image_name)
+            # and convert file
+            kapture_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_name)
+            array_to_file(kapture_keypoints_filepath, keypoints_data)
+
+        # descriptors
+        openmvg_descriptors_filepath = path.join(openmvg_regions_directory_path, openmvg_image_name + '.desc')
+        if path.isfile(openmvg_descriptors_filepath):
+            assert path.isfile(openmvg_keypoints_filepath)
+            # there is a keypoints file in openMVG, lets add it to kapture
+            # assumes descriptors shape from keypoints_data shape
+            descriptors_data_bytes = np.fromfile(openmvg_descriptors_filepath, dtype=np.uint8)
+            nb_features = keypoints_data.shape[0]
+            descriptors_shape = descriptors_data_bytes[0:8].view(np.int32)
+            assert descriptors_shape[0] == nb_features
+            descriptors_data = descriptors_data_bytes[8:].view(np.uint8).reshape((nb_features, 128))
+            # descriptors_data.reshape((keypoints_data.shape[0], -1))
+            kapture_descriptors.add(image_name)
+            # and convert file
+            kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_path, image_name)
+            array_to_file(kapture_descriptors_filepath, descriptors_data)
+
