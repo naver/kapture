@@ -327,7 +327,7 @@ def import_openmvg_regions(
     # look for the "image_describer.json"
     image_describer_path = path.join(openmvg_regions_directory_path, 'image_describer.json')
     if not path.isfile(image_describer_path):
-        return False
+        return
 
     with open(image_describer_path) as f:
         image_describer = json.load(f)
@@ -382,3 +382,5 @@ def import_openmvg_regions(
             kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_path, image_name)
             array_to_file(kapture_descriptors_filepath, descriptors_data)
 
+    kapture_data.keypoints = kapture_keypoints
+    kapture_data.descriptors = kapture_descriptors
