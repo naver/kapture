@@ -22,7 +22,7 @@ from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
 from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
+from .openmvg_commons import OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
     KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, \
     ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, \
     ROTATION, CENTER
@@ -34,7 +34,7 @@ logger = logging.getLogger('openmvg')  # Using global openmvg logger
 def import_openmvg(
         sfm_data_path: str,
         regions_dir_path: str,
-        matches_dirpath: str,
+        matches_file_path: str,
         kapture_path: str,
         image_action: TransferAction,
         force_overwrite_existing: bool = False) -> None:
@@ -45,6 +45,7 @@ def import_openmvg(
 
     :param sfm_data_path: path to the openMVG sfm_data file.
     :param regions_dir_path: input path to directory containing regions (*.feat, *.desc)
+    :param matches_file_path: input path to openMVG matches file (eg. matches.f.bin)
     :param kapture_path: path to the kapture directory where the data will be exported
     :param image_action: action to apply to the images
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
@@ -65,6 +66,10 @@ def import_openmvg(
     if regions_dir_path:
         logger.info(f'Loading regions from {regions_dir_path}')
         import_openmvg_regions(regions_dir_path, kapture_data, kapture_path)
+
+    if matches_file_path:
+        logger.info(f'Loading matches from {matches_file_path}')
+        import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
 
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
@@ -323,10 +328,10 @@ def import_openmvg_regions(
         kapture_data,
         kapture_path
 ):
-    logger.debug(f'{openmvg_regions_directory_path}')
     # look for the "image_describer.json"
     image_describer_path = path.join(openmvg_regions_directory_path, 'image_describer.json')
     if not path.isfile(image_describer_path):
+        logger.debug(f'file not found : {image_describer_path}')
         return
 
     with open(image_describer_path) as f:
@@ -384,3 +389,21 @@ def import_openmvg_regions(
 
     kapture_data.keypoints = kapture_keypoints
     kapture_data.descriptors = kapture_descriptors
+
+
+def import_openmvg_matches(
+        matches_file_path,
+        kapture_data,
+        kapture_path):
+    """
+
+    :param matches_file_path:
+    :param kapture_data:
+    :param kapture_path:
+    :return:
+    """
+    # look for the "image_describer.json"
+    # matches.*.bin files use cereal over a
+    # map < pair <uint32_t, uint32_t>, std::vector<uint64_t> >
+    matches = np.fromfile(matches_file_path, dtype=np.uint8)
+    #
