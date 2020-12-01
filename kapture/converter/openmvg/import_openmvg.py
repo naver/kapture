@@ -17,11 +17,13 @@ from typing import Dict, Union
 import kapture
 import kapture.io.csv as kcsv
 import kapture.io.structure
-from kapture.io.records import TransferAction, get_image_fullpath
+from kapture.io.records import TransferAction, get_image_fullpath, transfer_files_from_dir
+from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
+from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS,\
-    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC,\
+from .openmvg_commons import OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
+    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, \
     ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, \
     ROTATION, CENTER
 from .openmvg_commons import CameraModel
@@ -29,79 +31,94 @@ from .openmvg_commons import CameraModel
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 
-def import_openmvg(input_path: str,
-                   kapture_path: str,
-                   image_action: TransferAction,
-                   force_overwrite_existing: bool = False) -> None:
+def import_openmvg(
+        sfm_data_path: str,
+        regions_dir_path: str,
+        matches_file_path: str,
+        kapture_path: str,
+        image_action: TransferAction,
+        force_overwrite_existing: bool = False) -> None:
     """
     Converts an openMVG JSON file to a kapture directory.
     If an image action is provided (link, copy or move), links to the image files are created,
     or the image files are copied or moved.
 
-    :param input_path: path to the openMVG file (or its directory)
+    :param sfm_data_path: path to the openMVG sfm_data file.
+    :param regions_dir_path: input path to directory containing regions (*.feat, *.desc)
+    :param matches_file_path: input path to openMVG matches file (eg. matches.f.bin)
     :param kapture_path: path to the kapture directory where the data will be exported
     :param image_action: action to apply to the images
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     """
 
+    # sanity check
+    if not path.isfile(sfm_data_path):
+        raise ValueError(f'OpenMVG JSON file {sfm_data_path} does not exist.')
+
     os.makedirs(kapture_path, exist_ok=True)
     kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
-    if path.isdir(input_path):
-        input_file = path.join(input_path, DEFAULT_JSON_FILE_NAME)
-    else:
-        input_file = input_path
-    if not path.isfile(input_file):
-        raise ValueError(f'OpenMVG JSON file {input_file} does not exist')
 
-    logger.info(f'Loading openmvg file {input_file}')
-
-    with open(input_file, 'r') as f:
+    logger.info(f'Loading sfm_data file {sfm_data_path}')
+    with open(sfm_data_path, 'r') as f:
         input_json = json.load(f)
-        kapture_data = openmvg_to_kapture(input_json, kapture_path, image_action)
-        logger.info(f'Saving to kapture {kapture_path}')
-        kcsv.kapture_to_dir(kapture_path, kapture_data)
+        kapture_data = import_openmvg_sfm_data_json(input_json, kapture_path, image_action)
+
+    if regions_dir_path:
+        logger.info(f'Loading regions from {regions_dir_path}')
+        import_openmvg_regions(regions_dir_path, kapture_data, kapture_path)
+
+    if matches_file_path:
+        logger.info(f'Loading matches from {matches_file_path}')
+        import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
+
+    logger.info(f'Saving to kapture {kapture_path}')
+    kcsv.kapture_to_dir(kapture_path, kapture_data)
 
 
 GET_ID_MASK = 2147483647  # 01111111 11111111 11111111 11111111
 ID_POSE_NOT_LOCALIZED = 4294967295  # 11111111 11111111 11111111 11111111
 
 
-def openmvg_to_kapture(input_json: Dict[str, Union[str, Dict]],
-                       kapture_images_path: str,
-                       image_action=TransferAction.skip) -> kapture.Kapture:
+def import_openmvg_sfm_data_json(
+        sfm_data_json: Dict[str, Union[str, Dict]],
+        kapture_images_path: str,
+        image_action=TransferAction.skip) -> kapture.Kapture:
     """
-    Convert an openMVG structure to a kapture object. Also copy, move or link the images files if necessary.
+    Imports an openMVG sfm_data json structure to a kapture object.
+    Also copy, move or link the images files if necessary.
 
-    :param input_json: the openmvg JSON parsed as a dictionary
+    :param sfm_data_json: the openmvg JSON parsed as a dictionary
     :param kapture_images_path: top directory to create the kapture images tree
     :param image_action: action to apply on images: link, copy, move or do nothing.
     :return: the constructed kapture object
     """
 
-    root_path: str = ''
+    data_root_path: str = ''
 
-    if input_json[ROOT_PATH]:
-        root_path = input_json[ROOT_PATH]
+    if sfm_data_json[OPENMVG_JSON_ROOT_PATH]:
+        data_root_path = sfm_data_json[OPENMVG_JSON_ROOT_PATH]
     elif image_action == TransferAction.skip:
-        logger.warning("No root_path in input file")
+        logger.warning('No root_path in sfm_data.')
     else:  # It is needed to execute an action with the image file
         raise ValueError(f"Missing root_path to do image action '{image_action.name}'")
-    openmvg_images_dir = path.basename(root_path)
+    openmvg_images_dir = path.basename(data_root_path)
 
     # Imports all the data from the json file to kapture objects
-    kapture_cameras = _import_cameras(input_json)
+    kapture_cameras = import_openmvg_cameras(sfm_data_json)
     device_identifiers = {int: str}  # Pose id -> device id
     timestamp_for_pose = {int: int}  # Pose id -> timestamp
     # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
-    records_camera = _import_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
-                                    device_identifiers, timestamp_for_pose)
-    trajectories = _import_trajectories(input_json, device_identifiers, timestamp_for_pose)
+    records_camera = import_openmvg_images(
+        sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
+        device_identifiers, timestamp_for_pose)
+    trajectories = import_openmvg_trajectories(
+        sfm_data_json, device_identifiers, timestamp_for_pose)
 
     kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
     return kapture_data
 
 
-def _import_cameras(input_json) -> kapture.Sensors:  # noqa: C901
+def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
     if input_json.get(INTRINSICS):
         polymorphic_id_to_value = {}
@@ -205,8 +222,8 @@ def _import_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     return kapture_cameras
 
 
-def _import_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
-                   device_identifiers, timestamp_for_pose):
+def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+                          device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
     if input_json.get(VIEWS):
         views = input_json[VIEWS]
@@ -235,8 +252,8 @@ def _import_images(input_json, image_action, kapture_images_path, openmvg_images
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
 
-            kapture_filename = _import_image_file(input_data, openmvg_images_dir, root_path,
-                                                  kapture_images_path, image_action)
+            kapture_filename = import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
+                                                         kapture_images_path, image_action)
 
             progress_bar and progress_bar.update(1)
 
@@ -246,7 +263,7 @@ def _import_images(input_json, image_action, kapture_images_path, openmvg_images
     return records_camera
 
 
-def _import_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
+def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
     # Add the common openmvg images directory in front of the filename
     filename: str
     if input_data.get(LOCAL_PATH):
@@ -283,7 +300,7 @@ def _import_image_file(input_data, openmvg_images_dir, root_path, kapture_images
     return kapture_filename
 
 
-def _import_trajectories(input_json, device_identifiers, timestamp_for_pose):
+def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
     if input_json.get(EXTRINSICS):
         extrinsics = input_json[EXTRINSICS]
@@ -304,3 +321,89 @@ def _import_trajectories(input_json, device_identifiers, timestamp_for_pose):
                 continue
             trajectories[(timestamp, device_id)] = kap_pose  # tuple of int,str -> 6D pose
     return trajectories
+
+
+def import_openmvg_regions(
+        openmvg_regions_directory_path,
+        kapture_data,
+        kapture_path
+):
+    # look for the "image_describer.json"
+    image_describer_path = path.join(openmvg_regions_directory_path, 'image_describer.json')
+    if not path.isfile(image_describer_path):
+        logger.debug(f'file not found : {image_describer_path}')
+        return
+
+    with open(image_describer_path) as f:
+        image_describer = json.load(f)
+
+    # retrieve what type of keypoints it is.
+    keypoints_type = image_describer.get('regions_type', {}).get('polymorphic_name', 'UNDEFINED')
+    keypoints_name = {
+        'SIFT_Regions': 'SIFT',
+        'AKAZE_Float_Regions': 'AKAZE'
+    }.get(keypoints_type, keypoints_type)
+    kapture_keypoints = kapture.Keypoints(type_name=keypoints_name, dtype=float, dsize=4)
+
+    # retrieve what type of descriptors it is.
+    descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
+    descriptors_props = {
+        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128),
+        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128),
+    }.get(descriptors_type)
+    if not descriptors_props:
+        raise ValueError(f'conversion of {descriptors_type} descriptors not implemented.')
+    kapture_descriptors = kapture.Descriptors(**descriptors_props)
+
+    # populate regions files in openMVG directory
+    # https://github.com/openMVG/openMVG/blob/master/src/openMVG/features/scalar_regions.hpp#L23
+    for _, _, image_name in kapture.flatten(kapture_data.records_camera):
+        openmvg_image_name = path.splitext(path.basename(image_name))[0]
+        # keypoints
+        openmvg_keypoints_filepath = path.join(openmvg_regions_directory_path, openmvg_image_name + '.feat')
+        if path.isfile(openmvg_keypoints_filepath):
+            # there is a keypoints file in openMVG, lets add it to kapture
+            keypoints_data = np.loadtxt(openmvg_keypoints_filepath)
+            assert keypoints_data.shape[1] == 4
+            kapture_keypoints.add(image_name)
+            # and convert file
+            kapture_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_name)
+            array_to_file(kapture_keypoints_filepath, keypoints_data)
+
+        # descriptors
+        openmvg_descriptors_filepath = path.join(openmvg_regions_directory_path, openmvg_image_name + '.desc')
+        if path.isfile(openmvg_descriptors_filepath):
+            assert path.isfile(openmvg_keypoints_filepath)
+            # there is a keypoints file in openMVG, lets add it to kapture
+            # assumes descriptors shape from keypoints_data shape
+            descriptors_data_bytes = np.fromfile(openmvg_descriptors_filepath, dtype=np.uint8)
+            nb_features = keypoints_data.shape[0]
+            descriptors_shape = descriptors_data_bytes[0:8].view(descriptors_props['dtype'])
+            assert descriptors_shape[0] == nb_features
+            descriptors_data = descriptors_data_bytes[8:].view(np.uint8).reshape((nb_features, 128))
+            # descriptors_data.reshape((keypoints_data.shape[0], -1))
+            kapture_descriptors.add(image_name)
+            # and convert file
+            kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_path, image_name)
+            array_to_file(kapture_descriptors_filepath, descriptors_data)
+
+    kapture_data.keypoints = kapture_keypoints
+    kapture_data.descriptors = kapture_descriptors
+
+
+def import_openmvg_matches(
+        matches_file_path,
+        kapture_data,
+        kapture_path):
+    """
+
+    :param matches_file_path:
+    :param kapture_data:
+    :param kapture_path:
+    :return:
+    """
+    # look for the "image_describer.json"
+    # matches.*.bin files use cereal over a
+    # map < pair <uint32_t, uint32_t>, std::vector<uint64_t> >
+    matches = np.fromfile(matches_file_path, dtype=np.uint8)
+    #

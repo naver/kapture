@@ -8,6 +8,7 @@ This script imports an openmvg file in the kapture format.
 import argparse
 import logging
 import sys
+import os.path as path
 
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
@@ -15,7 +16,7 @@ import kapture.utils.logging
 from kapture.io.records import TransferAction
 # openmvg
 from kapture.converter.openmvg.import_openmvg import import_openmvg
-
+from kapture.converter.openmvg.openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME
 
 logger = logging.getLogger('openmvg')
 
@@ -35,9 +36,15 @@ def import_openmvg_command_line() -> None:
     parser.add_argument('-y', '--force', action='store_true', default=False,
                         help='silently delete kapture data if already exists.')
     # create the parser for the import command #########################################################################
-    parser.add_argument('-o', '--openmvg', required=True,
-                        help='path to openMVG JSON file.')
-    parser.add_argument('-k', '--kapture', required=True,
+    parser.add_argument('-i', '--openmvg',
+                        help='path to openMVG directory, will automatically look for sfm_data, regions and pair files.')
+    parser.add_argument('-s', '--sfm_data',
+                        help='path to openMVG sfm_data data file.')
+    parser.add_argument('-r', '--regions',
+                        help='path to openMVG directory containing region files (feat, desc).')
+    parser.add_argument('-m', '--matches',
+                        help='path to openMVG matches file (eg. matches.f.bin')
+    parser.add_argument('-o', '-k', '--kapture', required=True,
                         help='top directory where to save Kapture files.')
     parser.add_argument('--image_action', default='root_link', type=TransferAction,
                         help=f'''what to do with images:
@@ -59,18 +66,35 @@ def import_openmvg_command_line() -> None:
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()))
 
-    # Check that we will not try to do symbolics links on Windows
-    # because this is not possible today if the user is not admin
-    if sys.platform.startswith("win") and \
-            (args.image_link == TransferAction.link_relative or
-             args.image_link == TransferAction.link_absolute or
-             args.image_link == TransferAction.root_link):
-        logger.fatal("It is currently impossible to link files on a Windows platform")
-        logger.fatal(f"Please try another option for the image: either do nothing ({TransferAction.skip}),"
-                     f" or {TransferAction.copy}")
-        raise OSError("Image file linking not possible on Windows")
-    else:
-        import_openmvg(args.openmvg, args.kapture, args.image_action, args.force)
+    # argument logic.
+    if args.openmvg:
+        args.openmvg = path.abspath(args.openmvg)
+        # automatically look for sfm_data, regions and pair files if not specified
+        if args.sfm_data is None:
+            args.sfm_data = path.join(args.openmvg, OPENMVG_DEFAULT_JSON_FILE_NAME)
+        if args.regions is None:
+            args.regions = args.openmvg
+        if args.matches is None:
+            args.matches = next((path.join(args.openmvg, fn) for fn in ['matches.f.bin', 'matches.putative.bin']))
+
+    # normalizes paths
+    if args.sfm_data is not None:
+        args.sfm_data = path.normpath(path.abspath(args.sfm_data))
+    if args.regions is not None:
+        args.regions = path.normpath(path.abspath(args.regions))
+    if args.matches is not None:
+        args.matches = path.normpath(path.abspath(args.matches))
+
+    # sanity check
+    if all(i is None for i in [args.sfm_data, args.regions, args.matches]):
+        raise ValueError('Need openMVG files as input.')
+
+    import_openmvg(args.sfm_data,
+                   args.regions,
+                   args.matches,
+                   args.kapture,
+                   args.image_action,
+                   args.force)
 
 
 if __name__ == '__main__':
