@@ -20,7 +20,7 @@ import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
-from .openmvg_commons import JSON_KEY, SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_JSON_FILE_NAME
+from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_JSON_FILE_NAME
 from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
@@ -87,7 +87,13 @@ def load_kapture(kapture_path: str) -> kapture.Kapture:
     return kapture_data
 
 
-def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_cur, ptr_wrapper_id_cur):  # noqa: C901
+def export_openmvg_cameras(
+        cameras,
+        used_cameras,
+        polymorphic_id_types,
+        polymorphic_id_cur,
+        ptr_wrapper_id_cur
+):  # noqa: C901
     intrinsics = []
     cam_id_to_openmvg_id = {}
     # process all cameras
@@ -191,11 +197,12 @@ def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_
     return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur, cam_id_to_openmvg_id
 
 
-def _export_images_and_poses(all_records_camera, cameras, trajectories,
-                             image_action, kapture_path,
-                             root_path, sub_root_path,
-                             polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
-                             cam_id_to_openmvg_id) -> Tuple[List, List]:
+def export_openmvg_images_and_poses(
+        all_records_camera, cameras, trajectories,
+        image_action, kapture_path,
+        root_path, sub_root_path,
+        polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
+        cam_id_to_openmvg_id) -> Tuple[List, List]:
     views = []
     extrinsics = []
     global_timestamp = 0
@@ -280,8 +287,11 @@ def _export_images_and_poses(all_records_camera, cameras, trajectories,
     return views, extrinsics
 
 
-def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
-                       image_action: TransferAction, openmvg_path: str) -> Dict:
+def kapture_to_openmvg(
+        kapture_data: kapture.Kapture,
+        kapture_path: str,
+        image_action: TransferAction,
+        openmvg_path: str) -> Dict:
     """
     Convert the kapture data into an openMVG dataset stored as a dictionary.
     The format is defined here:
@@ -296,9 +306,9 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
 
     assert kapture_data.cameras is not None
     assert kapture_data.records_camera is not None
-    cameras = kapture_data.cameras
+    kapture_cameras = kapture_data.cameras
     # Check we don't have other sensors defined
-    extra_sensor_number = len(kapture_data.sensors) - len(cameras)
+    extra_sensor_number = len(kapture_data.sensors) - len(kapture_cameras)
     if extra_sensor_number > 0:
         logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
     records_camera = kapture_data.records_camera
@@ -341,25 +351,26 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
         # beware that the paths are reverted in the symlink call
         os.symlink(kapture_records_path, root_path)
 
-    sfm_data = {JSON_KEY.SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
+    sfm_data = {JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
                 JSON_KEY.ROOT_PATH: root_path}
 
     polymorphic_id_current = 1
     ptr_wrapper_id_current = 1
     polymorphic_id_types = {}
 
-    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = _export_cameras(
-        cameras,
+    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = export_openmvg_cameras(
+        kapture_cameras,
         used_cameras,
         polymorphic_id_types,
         polymorphic_id_current,
         ptr_wrapper_id_current)
 
-    views, extrinsics = _export_images_and_poses(all_records_camera, cameras, trajectories,
-                                                 image_action, kapture_path,
-                                                 root_path, sub_root_path,
-                                                 polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
-                                                 cam_id_to_openmvg_id)
+    views, extrinsics = export_openmvg_images_and_poses(
+        all_records_camera, kapture_cameras, trajectories,
+        image_action, kapture_path,
+        root_path, sub_root_path,
+        polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
+        cam_id_to_openmvg_id)
 
     sfm_data[JSON_KEY.VIEWS] = views
     sfm_data[JSON_KEY.INTRINSICS] = intrinsics

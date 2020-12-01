@@ -9,7 +9,7 @@ from enum import auto
 from dataclasses import dataclass
 
 OPENMVG_DEFAULT_JSON_FILE_NAME = 'sfm_data.json'
-SFM_DATA_VERSION_NUMBER = "0.3"
+OPENMVG_SFM_DATA_VERSION_NUMBER = "0.3"
 
 
 # XML names
