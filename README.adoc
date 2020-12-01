@@ -157,7 +157,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 
 === Local Features
 - https://arxiv.org/abs/1906.06195[R2D2] local features can be directly generated in kapture format. See https://github.com/naver/r2d2#feature-extraction-with-kapture-datasets[here]
-- https://arxiv.org/abs/1905.03561[D2-Net] features can also be extracted in kapture format. See instructions https://github.com/yocabon/d2-net#feature-extraction-with-kapture-datasets[here].
+- https://arxiv.org/abs/1905.03561[D2-Net] features can also be extracted in kapture format. See instructions https://github.com/mihaidusmanu/d2-net#feature-extraction-with-kapture-datasets[here].
 
 
 === Global Features
