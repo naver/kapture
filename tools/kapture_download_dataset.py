@@ -411,7 +411,9 @@ def kapture_download_dataset_cli():
                                                      install_path=args.install_path,
                                                      filter_patterns=args.dataset)
             if len(dataset_index) == 0:
-                raise ValueError('no matching dataset')
+                raise ValueError('There is no matching dataset.'
+                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+
             logger.info(f'{len(dataset_index)} dataset will be installed.')
             for name, dataset in dataset_index.items():
                 logger.info(f'{name}: starting installation  ...')
@@ -424,15 +426,16 @@ def kapture_download_dataset_cli():
                                                      install_path=args.install_path,
                                                      filter_patterns=args.dataset)
             if len(dataset_index) == 0:
-                raise ValueError('no matching dataset')
+                raise ValueError('There is no matching dataset.'
+                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
             logger.info(f'{len(dataset_index)} dataset will be downloaded.')
             for name, dataset in dataset_index.items():
                 logger.info(f'downloading {name} ...')
                 dataset.download(force_overwrite=args.force)
 
     except Exception as e:
-        raise e
         logger.critical(e)
+        # raise e
 
 
 if __name__ == '__main__':
