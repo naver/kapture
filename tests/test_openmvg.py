@@ -14,13 +14,9 @@ import kapture
 from kapture.algo.compare import equal_poses
 import kapture.io.csv as kcsv
 from kapture.io.records import TransferAction, get_image_fullpath
-from kapture.converter.openmvg.import_openmvg import openmvg_to_kapture, import_openmvg  # noqa: E402
+from kapture.converter.openmvg.import_openmvg import import_openmvg, import_openmvg_sfm_data_json  # noqa: E402
 from kapture.converter.openmvg.export_openmvg import export_openmvg  # noqa: E402
-from kapture.converter.openmvg.openmvg_commons import SFM_DATA_VERSION,\
-    SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, KEY, VALUE,\
-    PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0,\
-    WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_T2,\
-    CENTER, USE_POSE_ROTATION_PRIOR, ROTATION
+from kapture.converter.openmvg.openmvg_commons import SFM_DATA_VERSION_NUMBER, JSON_KEY
 from kapture.converter.openmvg.openmvg_commons import CameraModel
 
 
@@ -86,7 +82,7 @@ class TestOpenMvg(unittest.TestCase):
         json_file = path.join(self._openmvg_sample_path, 'sfm_data_small.json')
         with open(json_file, 'r') as f:
             sfm_data = json.load(f)
-            kapture_data = openmvg_to_kapture(sfm_data, self._kapture_path)
+            kapture_data = import_openmvg_sfm_data_json(sfm_data, self._kapture_path)
             self._verify_data(kapture_data)
 
     def test_import_openmvg(self) -> None:
@@ -100,7 +96,7 @@ class TestOpenMvg(unittest.TestCase):
         # see https://docs.python.org/3.6/library/os.html#os.symlink
         logger.info(f'Running on "{sys.platform}" which is {"" if self.isWindows else "not"} a Windows platform')
         file_operation = TransferAction.skip if self.isWindows else TransferAction.link_relative
-        import_openmvg(sfm_file, self._kapture_path, file_operation, True)
+        import_openmvg(sfm_file, None, None, self._kapture_path, file_operation, True)
         #  test presence or absence of kapture files
         cameras_file_path = path.join(self._kapture_path, kcsv.CSV_FILENAMES[kapture.Sensors])
         self.assertTrue(path.isfile(cameras_file_path), "Camera file written")

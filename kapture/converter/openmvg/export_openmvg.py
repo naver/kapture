@@ -20,11 +20,7 @@ import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
-from .openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_JSON_SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, OPENMVG_JSON_ROOT_PATH, INTRINSICS,\
-    VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW, \
-    ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, \
-    DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR, CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR, \
-    ROTATION_WEIGHT, ROTATION, STRUCTURE, CONTROL_POINTS
+from .openmvg_commons import JSON_KEY, SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_JSON_FILE_NAME
 from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
@@ -36,11 +32,11 @@ DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
 def _get_data(camera_params: list) -> Dict:
     # w, h, f, cx, cy
-    data: Dict[str, Union[int, float, List[float]]] = {WIDTH: int(camera_params[0]),
-                                                       HEIGHT: int(camera_params[1]),
-                                                       FOCAL_LENGTH: float(camera_params[2]),
-                                                       PRINCIPAL_POINT: [float(camera_params[3]),
-                                                                         float(camera_params[4])]}
+    data: Dict[str, Union[int, float, List[float]]] = {JSON_KEY.WIDTH: int(camera_params[0]),
+                                                       JSON_KEY.HEIGHT: int(camera_params[1]),
+                                                       JSON_KEY.FOCAL_LENGTH: float(camera_params[2]),
+                                                       JSON_KEY.PRINCIPAL_POINT: [float(camera_params[3]),
+                                                                                  float(camera_params[4])]}
     return data
 
 
@@ -52,14 +48,14 @@ def _get_intrinsic_pinhole(camera_params: list) -> Dict:
 def _get_intrinsic_pinhole_radial_k1(camera_params: list) -> Dict:
     data = _get_data(camera_params)
     # w, h, f, cx, cy, k
-    data[DISTO_K1] = [float(camera_params[5])]
+    data[JSON_KEY.DISTO_K1] = [float(camera_params[5])]
     return data
 
 
 def _get_intrinsic_pinhole_radial_k3(camera_params: list) -> Dict:
     data = _get_data(camera_params)
     # w, h, f, cx, cy, k1, k2, k3
-    data[DISTO_K3] = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7])]
+    data[JSON_KEY.DISTO_K3] = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7])]
     return data
 
 
@@ -67,14 +63,14 @@ def _get_intrinsic_pinhole_brown_t2(camera_params: list) -> Dict:
     # w, h, f, cx, cy, k1, k2, k3, t1, t2
     disto_t2 = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7]),
                 float(camera_params[8]), float(camera_params[9])]
-    return {VALUE0: _get_data(camera_params), DISTO_T2: disto_t2}
+    return {JSON_KEY.VALUE0: _get_data(camera_params), JSON_KEY.DISTO_T2: disto_t2}
 
 
 def _get_intrinsic_fisheye(camera_params: list) -> Dict:
     # w, h, f, cx, cy, k1, k2, k3, k4
     fisheye = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7]), float(camera_params[8])]
-    return {VALUE0: _get_data(camera_params),
-            FISHEYE: fisheye}
+    return {JSON_KEY.VALUE0: _get_data(camera_params),
+            JSON_KEY.FISHEYE: fisheye}
 
 
 def load_kapture(kapture_path: str) -> kapture.Kapture:
@@ -176,22 +172,22 @@ def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_
         if model_used not in polymorphic_id_types:
             # if this is the first time model_used is encountered
             # set the first bit of polymorphic_id_current to 1
-            intrinsic[POLYMORPHIC_ID] = polymorphic_id_cur | NEW_ID_MASK
-            intrinsic[POLYMORPHIC_NAME] = model_used.name
+            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_cur | NEW_ID_MASK
+            intrinsic[JSON_KEY.POLYMORPHIC_NAME] = model_used.name
             polymorphic_id_types[model_used] = polymorphic_id_cur
             polymorphic_id_cur += 1
         else:
-            intrinsic[POLYMORPHIC_ID] = polymorphic_id_types[model_used]
+            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_types[model_used]
 
         # it is assumed that this camera is only encountered once
         # set the first bit of ptr_wrapper_id_current to 1
-        data_wrapper = {ID: ptr_wrapper_id_cur | NEW_ID_MASK,
-                        DATA: data}
+        data_wrapper = {JSON_KEY.ID: ptr_wrapper_id_cur | NEW_ID_MASK,
+                        JSON_KEY.DATA: data}
         ptr_wrapper_id_cur += 1
 
-        intrinsic[PTR_WRAPPER] = data_wrapper
+        intrinsic[JSON_KEY.PTR_WRAPPER] = data_wrapper
         cam_id_to_openmvg_id[cam_id] = n
-        intrinsics.append({KEY: n, VALUE: intrinsic})
+        intrinsics.append({JSON_KEY.KEY: n, JSON_KEY.VALUE: intrinsic})
     return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur, cam_id_to_openmvg_id
 
 
@@ -230,54 +226,54 @@ def _export_images_and_poses(all_records_camera, cameras, trajectories,
                 os.symlink(src_path, dst_path)
 
         camera_params = cameras[cam_id].camera_params
-        view_data = {LOCAL_PATH: local_path,
-                     FILENAME: filename,
-                     WIDTH: int(camera_params[0]),
-                     HEIGHT: int(camera_params[1]),
-                     ID_VIEW: global_timestamp,
-                     ID_INTRINSIC: cam_id_to_openmvg_id[cam_id],
-                     ID_POSE: global_timestamp}
+        view_data = {JSON_KEY.LOCAL_PATH: local_path,
+                     JSON_KEY.FILENAME: filename,
+                     JSON_KEY.WIDTH: int(camera_params[0]),
+                     JSON_KEY.HEIGHT: int(camera_params[1]),
+                     JSON_KEY.ID_VIEW: global_timestamp,
+                     JSON_KEY.ID_INTRINSIC: cam_id_to_openmvg_id[cam_id],
+                     JSON_KEY.ID_POSE: global_timestamp}
 
         view = {}
         # retrieve image pose from trajectories
         if timestamp not in trajectories:
-            view[POLYMORPHIC_ID] = VIEW_SPECIAL_POLYMORPHIC_ID
+            view[JSON_KEY.POLYMORPHIC_ID] = VIEW_SPECIAL_POLYMORPHIC_ID
         else:
             # there is a pose for that timestamp
             # The poses are stored both as priors (in the 'views' table) and as known poses (in the 'extrinsics' table)
             assert cam_id in trajectories[timestamp]
-            if VIEW_PRIORS not in polymorphic_id_types:
+            if JSON_KEY.VIEW_PRIORS not in polymorphic_id_types:
                 # if this is the first time view_priors is encountered
                 # set the first bit of polymorphic_id_current to 1
-                view[POLYMORPHIC_ID] = polymorphic_id_current | NEW_ID_MASK
-                view[POLYMORPHIC_NAME] = VIEW_PRIORS
-                polymorphic_id_types[VIEW_PRIORS] = polymorphic_id_current
+                view[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_current | NEW_ID_MASK
+                view[JSON_KEY.POLYMORPHIC_NAME] = JSON_KEY.VIEW_PRIORS
+                polymorphic_id_types[JSON_KEY.VIEW_PRIORS] = polymorphic_id_current
                 polymorphic_id_current += 1
             else:
-                view[POLYMORPHIC_ID] = polymorphic_id_types[VIEW_PRIORS]
+                view[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_types[JSON_KEY.VIEW_PRIORS]
 
             pose_tr = trajectories[timestamp].get(cam_id)
             prior_q = pose_tr.r
             prior_t = pose_tr.inverse().t_raw
-            pose_data = {CENTER: prior_t,
-                         ROTATION: quaternion.as_rotation_matrix(prior_q).tolist()}
+            pose_data = {JSON_KEY.CENTER: prior_t,
+                         JSON_KEY.ROTATION: quaternion.as_rotation_matrix(prior_q).tolist()}
 
-            view_data[USE_POSE_CENTER_PRIOR] = True
-            view_data[CENTER_WEIGHT] = [1.0, 1.0, 1.0]
-            view_data[CENTER] = prior_t
-            view_data[USE_POSE_ROTATION_PRIOR] = True
-            view_data[ROTATION_WEIGHT] = 1.0
-            view_data[ROTATION] = pose_data[ROTATION]
-            extrinsics.append({KEY: global_timestamp, VALUE: pose_data})
+            view_data[JSON_KEY.USE_POSE_CENTER_PRIOR] = True
+            view_data[JSON_KEY.CENTER_WEIGHT] = [1.0, 1.0, 1.0]
+            view_data[JSON_KEY.CENTER] = prior_t
+            view_data[JSON_KEY.USE_POSE_ROTATION_PRIOR] = True
+            view_data[JSON_KEY.ROTATION_WEIGHT] = 1.0
+            view_data[JSON_KEY.ROTATION] = pose_data[JSON_KEY.ROTATION]
+            extrinsics.append({JSON_KEY.KEY: global_timestamp, JSON_KEY.VALUE: pose_data})
 
         # it is assumed that this view is only encountered once
         # set the first bit of ptr_wrapper_id_current to 1
-        view_wrapper = {ID: ptr_wrapper_id_current | NEW_ID_MASK,
-                        DATA: view_data}
+        view_wrapper = {JSON_KEY.ID: ptr_wrapper_id_current | NEW_ID_MASK,
+                        JSON_KEY.DATA: view_data}
         ptr_wrapper_id_current += 1
 
-        view[PTR_WRAPPER] = view_wrapper
-        views.append({KEY: global_timestamp, VALUE: view})
+        view[JSON_KEY.PTR_WRAPPER] = view_wrapper
+        views.append({JSON_KEY.KEY: global_timestamp, JSON_KEY.VALUE: view})
 
         global_timestamp += 1
 
@@ -345,18 +341,19 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
         # beware that the paths are reverted in the symlink call
         os.symlink(kapture_records_path, root_path)
 
-    sfm_data = {OPENMVG_JSON_SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
-                OPENMVG_JSON_ROOT_PATH: root_path}
+    sfm_data = {JSON_KEY.SFM_DATA_VERSION: SFM_DATA_VERSION_NUMBER,
+                JSON_KEY.ROOT_PATH: root_path}
 
     polymorphic_id_current = 1
     ptr_wrapper_id_current = 1
     polymorphic_id_types = {}
 
-    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = _export_cameras(cameras,
-                                                                                                       used_cameras,
-                                                                                                       polymorphic_id_types,
-                                                                                                       polymorphic_id_current,
-                                                                                                       ptr_wrapper_id_current)
+    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = _export_cameras(
+        cameras,
+        used_cameras,
+        polymorphic_id_types,
+        polymorphic_id_current,
+        ptr_wrapper_id_current)
 
     views, extrinsics = _export_images_and_poses(all_records_camera, cameras, trajectories,
                                                  image_action, kapture_path,
@@ -364,11 +361,11 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
                                                  polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
                                                  cam_id_to_openmvg_id)
 
-    sfm_data[VIEWS] = views
-    sfm_data[INTRINSICS] = intrinsics
-    sfm_data[EXTRINSICS] = extrinsics
-    sfm_data[STRUCTURE] = []
-    sfm_data[CONTROL_POINTS] = []
+    sfm_data[JSON_KEY.VIEWS] = views
+    sfm_data[JSON_KEY.INTRINSICS] = intrinsics
+    sfm_data[JSON_KEY.EXTRINSICS] = extrinsics
+    sfm_data[JSON_KEY.STRUCTURE] = []
+    sfm_data[JSON_KEY.CONTROL_POINTS] = []
 
     return sfm_data
 

@@ -22,10 +22,7 @@ from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
 from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import OPENMVG_JSON_ROOT_PATH, INTRINSICS, VIEWS, EXTRINSICS, \
-    KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, DATA, LOCAL_PATH, FILENAME, ID_VIEW, ID_INTRINSIC, \
-    ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, DISTO_K1, DISTO_K3, DISTO_T2, \
-    ROTATION, CENTER
+from .openmvg_commons import JSON_KEY
 from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
@@ -95,8 +92,8 @@ def import_openmvg_sfm_data_json(
 
     data_root_path: str = ''
 
-    if sfm_data_json[OPENMVG_JSON_ROOT_PATH]:
-        data_root_path = sfm_data_json[OPENMVG_JSON_ROOT_PATH]
+    if sfm_data_json[JSON_KEY.ROOT_PATH]:
+        data_root_path = sfm_data_json[JSON_KEY.ROOT_PATH]
     elif image_action == TransferAction.skip:
         logger.warning('No root_path in sfm_data.')
     else:  # It is needed to execute an action with the image file
@@ -120,104 +117,104 @@ def import_openmvg_sfm_data_json(
 
 def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
-    if input_json.get(INTRINSICS):
+    if input_json.get(JSON_KEY.INTRINSICS):
         polymorphic_id_to_value = {}
         logger.info('Importing intrinsics')
-        for sensor in input_json[INTRINSICS]:
-            value = sensor[VALUE]
-            if POLYMORPHIC_NAME in value:
+        for sensor in input_json[JSON_KEY.INTRINSICS]:
+            value = sensor[JSON_KEY.VALUE]
+            if JSON_KEY.POLYMORPHIC_NAME in value:
                 # new type name: store it for next instances
-                polymorphic_id = value[POLYMORPHIC_ID] & GET_ID_MASK
-                polymorphic_id_to_value[polymorphic_id] = value[POLYMORPHIC_NAME]
+                polymorphic_id = value[JSON_KEY.POLYMORPHIC_ID] & GET_ID_MASK
+                polymorphic_id_to_value[polymorphic_id] = value[JSON_KEY.POLYMORPHIC_NAME]
                 logger.debug("New camera_type: " + polymorphic_id_to_value[polymorphic_id])
             else:
-                if POLYMORPHIC_ID not in value:
-                    raise ValueError(f'{POLYMORPHIC_ID} is missing (intrinsics)')
-                polymorphic_id = value[POLYMORPHIC_ID]
+                if JSON_KEY.POLYMORPHIC_ID not in value:
+                    raise ValueError(f'{JSON_KEY.POLYMORPHIC_ID} is missing (intrinsics)')
+                polymorphic_id = value[JSON_KEY.POLYMORPHIC_ID]
 
             if polymorphic_id not in polymorphic_id_to_value:
                 raise ValueError(f'Unknown polymorphic_id {polymorphic_id}')
 
             camera_model = CameraModel(polymorphic_id_to_value[polymorphic_id])
-            camera_data = value[PTR_WRAPPER][DATA]
+            camera_data = value[JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
 
             if camera_model == CameraModel.pinhole:
                 # w, h, f, cx, cy
                 camera = kapture.Camera(kapture.CameraType.SIMPLE_PINHOLE, [
-                    int(camera_data[WIDTH]),
-                    int(camera_data[HEIGHT]),
-                    camera_data[FOCAL_LENGTH],
-                    camera_data[PRINCIPAL_POINT][0],
-                    camera_data[PRINCIPAL_POINT][1],
+                    int(camera_data[JSON_KEY.WIDTH]),
+                    int(camera_data[JSON_KEY.HEIGHT]),
+                    camera_data[JSON_KEY.FOCAL_LENGTH],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][0],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][1],
                 ])
             elif camera_model == CameraModel.pinhole_radial_k1:
                 # w, h, f, cx, cy, k
                 camera = kapture.Camera(kapture.CameraType.SIMPLE_RADIAL, [
-                    int(camera_data[WIDTH]),
-                    int(camera_data[HEIGHT]),
-                    camera_data[FOCAL_LENGTH],
-                    camera_data[PRINCIPAL_POINT][0],
-                    camera_data[PRINCIPAL_POINT][1],
-                    camera_data[DISTO_K1][0]
+                    int(camera_data[JSON_KEY.WIDTH]),
+                    int(camera_data[JSON_KEY.HEIGHT]),
+                    camera_data[JSON_KEY.FOCAL_LENGTH],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][0],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][1],
+                    camera_data[JSON_KEY.DISTO_K1][0]
                 ])
             elif camera_model == CameraModel.pinhole_radial_k3:
                 # w, h, f, cx, cy, k1, k2, k3
                 camera = kapture.Camera(kapture.CameraType.RADIAL, [
-                    int(camera_data[WIDTH]),
-                    int(camera_data[HEIGHT]),
-                    camera_data[FOCAL_LENGTH],
-                    camera_data[PRINCIPAL_POINT][0],
-                    camera_data[PRINCIPAL_POINT][1],
-                    camera_data[DISTO_K3][0],
-                    camera_data[DISTO_K3][1]
+                    int(camera_data[JSON_KEY.WIDTH]),
+                    int(camera_data[JSON_KEY.HEIGHT]),
+                    camera_data[JSON_KEY.FOCAL_LENGTH],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][0],
+                    camera_data[JSON_KEY.PRINCIPAL_POINT][1],
+                    camera_data[JSON_KEY.DISTO_K3][0],
+                    camera_data[JSON_KEY.DISTO_K3][1]
                 ])
                 # camera_data["disto_k3"][2] ignored: radial model has two distortion param, while openMVG's has three
             elif camera_model == CameraModel.pinhole_brown_t2:
                 # w, h, f, cx, cy, k1, k2, k3, t1, t2
-                if float(camera_data[DISTO_T2][2]) != 0:
+                if float(camera_data[JSON_KEY.DISTO_T2][2]) != 0:
                     # if k3 not null, use FULL_OPENCV, otherwise OPENCV
                     # w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
-                    value0 = camera_data[VALUE0]
-                    disto_t2 = camera_data[DISTO_T2]
+                    value0 = camera_data[JSON_KEY.VALUE0]
+                    disto_t2 = camera_data[JSON_KEY.DISTO_T2]
                     camera = kapture.Camera(kapture.CameraType.FULL_OPENCV, [
-                        int(value0[WIDTH]),
-                        int(value0[HEIGHT]),
-                        value0[FOCAL_LENGTH],
-                        value0[FOCAL_LENGTH],
-                        value0[PRINCIPAL_POINT][0],
-                        value0[PRINCIPAL_POINT][1],
+                        int(value0[JSON_KEY.WIDTH]),
+                        int(value0[JSON_KEY.HEIGHT]),
+                        value0[JSON_KEY.FOCAL_LENGTH],
+                        value0[JSON_KEY.FOCAL_LENGTH],
+                        value0[JSON_KEY.PRINCIPAL_POINT][0],
+                        value0[JSON_KEY.PRINCIPAL_POINT][1],
                         disto_t2[0], disto_t2[1], disto_t2[3], disto_t2[4], disto_t2[2],
                         0, 0, 0
                     ])
                 else:
                     # w, h, fx, fy, cx, cy, k1, k2, p1, p2
-                    value0 = camera_data[VALUE0]
-                    disto_t2 = camera_data[DISTO_T2]
+                    value0 = camera_data[JSON_KEY.VALUE0]
+                    disto_t2 = camera_data[JSON_KEY.DISTO_T2]
                     camera = kapture.Camera(kapture.CameraType.OPENCV, [
-                        int(value0[WIDTH]),
-                        int(value0[HEIGHT]),
-                        value0[FOCAL_LENGTH],
-                        value0[FOCAL_LENGTH],
-                        value0[PRINCIPAL_POINT][0],
-                        value0[PRINCIPAL_POINT][1],
+                        int(value0[JSON_KEY.WIDTH]),
+                        int(value0[JSON_KEY.HEIGHT]),
+                        value0[JSON_KEY.FOCAL_LENGTH],
+                        value0[JSON_KEY.FOCAL_LENGTH],
+                        value0[JSON_KEY.PRINCIPAL_POINT][0],
+                        value0[JSON_KEY.PRINCIPAL_POINT][1],
                         disto_t2[0], disto_t2[1], disto_t2[3], disto_t2[4]])
             elif camera_model == CameraModel.fisheye:
                 logger.warning(
                     "OpenMVG fisheye models are not compatible with OpenCV."
                     " Using SIMPLE_RADIAL_FISHEYE and forcing distortion to 0")
                 # w, h, f, cx, cy, k
-                value0 = camera_data[VALUE0]
+                value0 = camera_data[JSON_KEY.VALUE0]
                 camera = kapture.Camera(kapture.CameraType.SIMPLE_RADIAL_FISHEYE, [
-                    int(value0[WIDTH]),
-                    int(value0[HEIGHT]),
-                    value0[FOCAL_LENGTH],
-                    value0[PRINCIPAL_POINT][0],
-                    value0[PRINCIPAL_POINT][1],
+                    int(value0[JSON_KEY.WIDTH]),
+                    int(value0[JSON_KEY.HEIGHT]),
+                    value0[JSON_KEY.FOCAL_LENGTH],
+                    value0[JSON_KEY.PRINCIPAL_POINT][0],
+                    value0[JSON_KEY.PRINCIPAL_POINT][1],
                     0])
             else:
                 raise ValueError(f'Camera model {camera_model} not supported')
 
-            kapture_cameras[str(sensor[KEY])] = camera
+            kapture_cameras[str(sensor[JSON_KEY.KEY])] = camera
 
     return kapture_cameras
 
@@ -225,8 +222,8 @@ def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
 def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
                           device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
-    if input_json.get(VIEWS):
-        views = input_json[VIEWS]
+    if input_json.get(JSON_KEY.VIEWS):
+        views = input_json[JSON_KEY.VIEWS]
         if image_action == TransferAction.root_link:
             # Do a unique images directory link
             # kapture/<records_dir>/openmvg_top_images_directory -> openmvg_root_path
@@ -241,14 +238,14 @@ def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg
         else:
             progress_bar = None
         for view in views:
-            input_data = view[VALUE][PTR_WRAPPER][DATA]
-            pose_id = input_data[ID_POSE]
+            input_data = view[JSON_KEY.VALUE][JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
+            pose_id = input_data[JSON_KEY.ID_POSE]
             # All two values should be the same (?)
-            if input_data[ID_VIEW]:
-                timestamp = input_data[ID_VIEW]
+            if input_data[JSON_KEY.ID_VIEW]:
+                timestamp = input_data[JSON_KEY.ID_VIEW]
             else:
-                timestamp = view[KEY]
-            device_id = str(input_data[ID_INTRINSIC])  # device_id must be a string for kapture
+                timestamp = view[JSON_KEY.KEY]
+            device_id = str(input_data[JSON_KEY.ID_INTRINSIC])  # device_id must be a string for kapture
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
 
@@ -266,10 +263,10 @@ def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg
 def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
     # Add the common openmvg images directory in front of the filename
     filename: str
-    if input_data.get(LOCAL_PATH):
-        filename = path.join(input_data[LOCAL_PATH], input_data[FILENAME])
+    if input_data.get(JSON_KEY.LOCAL_PATH):
+        filename = path.join(input_data[JSON_KEY.LOCAL_PATH], input_data[JSON_KEY.FILENAME])
     else:
-        filename = input_data[FILENAME]
+        filename = input_data[JSON_KEY.FILENAME]
     kapture_filename = path.join(openmvg_images_dir, filename)
     if image_action != TransferAction.skip and image_action != TransferAction.root_link:
         src_path: str
@@ -302,13 +299,13 @@ def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture
 
 def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
-    if input_json.get(EXTRINSICS):
-        extrinsics = input_json[EXTRINSICS]
+    if input_json.get(JSON_KEY.EXTRINSICS):
+        extrinsics = input_json[JSON_KEY.EXTRINSICS]
         logger.info(f'Importing {len(extrinsics)} extrinsics -> trajectories')
         for pose in extrinsics:
-            pose_id = pose[KEY]
-            center = pose[VALUE][CENTER]
-            rotation = pose[VALUE][ROTATION]
+            pose_id = pose[JSON_KEY.KEY]
+            center = pose[JSON_KEY.VALUE][JSON_KEY.CENTER]
+            rotation = pose[JSON_KEY.VALUE][JSON_KEY.ROTATION]
             kap_translation = -1 * np.matmul(rotation, center)
             kap_pose = kapture.PoseTransform(quaternion.from_rotation_matrix(rotation), kap_translation)
             timestamp = timestamp_for_pose.get(pose_id)
