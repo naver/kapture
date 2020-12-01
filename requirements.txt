@@ -11,3 +11,4 @@ requests
 pyyaml>=5.1
 wcmatch
 tabulate>=0.8.7
+pytest>=6
