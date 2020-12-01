@@ -20,17 +20,16 @@ import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
-from .openmvg_commons import DEFAULT_JSON_FILE_NAME, SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS,\
-    VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW,\
-    ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT,\
-    DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR, CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR,\
+from .openmvg_commons import DEFAULT_JSON_FILE_NAME, SFM_DATA_VERSION, SFM_DATA_VERSION_NUMBER, ROOT_PATH, INTRINSICS, \
+    VIEWS, VIEW_PRIORS, EXTRINSICS, KEY, VALUE, POLYMORPHIC_ID, PTR_WRAPPER, ID, DATA, LOCAL_PATH, FILENAME, ID_VIEW, \
+    ID_INTRINSIC, ID_POSE, POLYMORPHIC_NAME, VALUE0, WIDTH, HEIGHT, FOCAL_LENGTH, PRINCIPAL_POINT, \
+    DISTO_K1, DISTO_K3, DISTO_T2, FISHEYE, USE_POSE_CENTER_PRIOR, CENTER_WEIGHT, CENTER, USE_POSE_ROTATION_PRIOR, \
     ROTATION_WEIGHT, ROTATION, STRUCTURE, CONTROL_POINTS
 from .openmvg_commons import CameraModel
 
-
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
-NEW_ID_MASK = 1 << 31                  # 10000000 00000000 00000000 00000000
+NEW_ID_MASK = 1 << 31  # 10000000 00000000 00000000 00000000
 VIEW_SPECIAL_POLYMORPHIC_ID = 1 << 30  # 01000000 00000000 00000000 00000000
 DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
@@ -94,8 +93,9 @@ def load_kapture(kapture_path: str) -> kapture.Kapture:
 
 def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_cur, ptr_wrapper_id_cur):  # noqa: C901
     intrinsics = []
+    cam_id_to_openmvg_id = {}
     # process all cameras
-    for cam_id, camera in cameras.items():
+    for n, (cam_id, camera) in enumerate(cameras.items()):
         # Ignore not used cameras
         if not used_cameras.get(cam_id):
             logger.warning(f'Skipping camera definition {cam_id} {camera.name} without recorded images.')
@@ -190,14 +190,16 @@ def _export_cameras(cameras, used_cameras, polymorphic_id_types, polymorphic_id_
         ptr_wrapper_id_cur += 1
 
         intrinsic[PTR_WRAPPER] = data_wrapper
-        intrinsics.append({KEY: cam_id, VALUE: intrinsic})
-    return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur
+        cam_id_to_openmvg_id[cam_id] = n
+        intrinsics.append({KEY: n, VALUE: intrinsic})
+    return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur, cam_id_to_openmvg_id
 
 
 def _export_images_and_poses(all_records_camera, cameras, trajectories,
                              image_action, kapture_path,
                              root_path, sub_root_path,
-                             polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current) -> Tuple[List, List]:
+                             polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
+                             cam_id_to_openmvg_id) -> Tuple[List, List]:
     views = []
     extrinsics = []
     global_timestamp = 0
@@ -233,7 +235,7 @@ def _export_images_and_poses(all_records_camera, cameras, trajectories,
                      WIDTH: int(camera_params[0]),
                      HEIGHT: int(camera_params[1]),
                      ID_VIEW: global_timestamp,
-                     ID_INTRINSIC: cam_id,
+                     ID_INTRINSIC: cam_id_to_openmvg_id[cam_id],
                      ID_POSE: global_timestamp}
 
         view = {}
@@ -300,7 +302,7 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
     assert kapture_data.records_camera is not None
     cameras = kapture_data.cameras
     # Check we don't have other sensors defined
-    extra_sensor_number = len(kapture_data.sensors)-len(cameras)
+    extra_sensor_number = len(kapture_data.sensors) - len(cameras)
     if extra_sensor_number > 0:
         logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
     records_camera = kapture_data.records_camera
@@ -350,15 +352,17 @@ def kapture_to_openmvg(kapture_data: kapture.Kapture, kapture_path: str,
     ptr_wrapper_id_current = 1
     polymorphic_id_types = {}
 
-    intrinsics, polymorphic_id_current, ptr_wrapper_id_current = _export_cameras(cameras, used_cameras,
-                                                                                 polymorphic_id_types,
-                                                                                 polymorphic_id_current,
-                                                                                 ptr_wrapper_id_current)
+    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = _export_cameras(cameras,
+                                                                                                       used_cameras,
+                                                                                                       polymorphic_id_types,
+                                                                                                       polymorphic_id_current,
+                                                                                                       ptr_wrapper_id_current)
 
     views, extrinsics = _export_images_and_poses(all_records_camera, cameras, trajectories,
                                                  image_action, kapture_path,
                                                  root_path, sub_root_path,
-                                                 polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current)
+                                                 polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
+                                                 cam_id_to_openmvg_id)
 
     sfm_data[VIEWS] = views
     sfm_data[INTRINSICS] = intrinsics
