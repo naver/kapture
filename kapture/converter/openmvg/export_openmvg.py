@@ -12,6 +12,7 @@ import pathlib
 import shutil
 from typing import Dict, List, Tuple, Union
 import quaternion
+from dataclasses import dataclass
 # kapture
 import kapture
 import kapture.io.csv
@@ -28,6 +29,13 @@ logger = logging.getLogger('openmvg')  # Using global openmvg logger
 NEW_ID_MASK = 1 << 31  # 10000000 00000000 00000000 00000000
 VIEW_SPECIAL_POLYMORPHIC_ID = 1 << 30  # 01000000 00000000 00000000 00000000
 DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
+
+
+@dataclass
+class PolymorphicStatus:
+    id_types: dict
+    id_cur: int = 1
+    ptr_wrapper_id_cur: int = 1
 
 
 def _get_data(camera_params: list) -> Dict:
@@ -73,128 +81,139 @@ def _get_intrinsic_fisheye(camera_params: list) -> Dict:
             JSON_KEY.FISHEYE: fisheye}
 
 
-def load_kapture(kapture_path: str) -> kapture.Kapture:
+def get_openmvg_camera_id(kapture_camera_id, kapture_to_openmvg_cam_ids):
+    """ return a valid openmvg camera id for the given kapture on.
+    It keeps kapture_to_openmvg_cam_ids uptodate, and ensure there is no collision.
     """
-    Load the kapture data stored at the given path
 
-    :param kapture_path: kapture data top directory
-    :return: a kapture object
-    """
-    logger.info(f'Loading kapture data from {kapture_path}...')
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
-    logger.info('loaded')
-    assert isinstance(kapture_data, kapture.Kapture)
-    return kapture_data
+    if kapture_camera_id in kapture_to_openmvg_cam_ids:
+        # already defined
+        return kapture_to_openmvg_cam_ids[kapture_camera_id]
+
+    # its not defined, then, make up one
+    last_known_openmvg_camera_id = max(list(kapture_to_openmvg_cam_ids.values()) + [-1])
+    assert type(last_known_openmvg_camera_id) == int
+    openmvg_camera_id = last_known_openmvg_camera_id + 1
+    assert openmvg_camera_id not in kapture_to_openmvg_cam_ids
+    kapture_to_openmvg_cam_ids[kapture_camera_id] = openmvg_camera_id
+    return openmvg_camera_id
 
 
 def export_openmvg_cameras(
-        cameras,
-        used_cameras,
-        polymorphic_id_types,
-        polymorphic_id_cur,
-        ptr_wrapper_id_cur
-):  # noqa: C901
+        kapture_cameras,
+        kapture_to_openmvg_cam_ids: Dict[str, int],
+        openmvg_sfm_data,
+        polymorphic_status: PolymorphicStatus,
+):
+    """
+    Exports the given kapture cameras to the openMVG sfm_data structure.
+    In openMVGm, cameras are referred as Intrinsics camera internal parameters.
+
+    :param kapture_cameras: kapture cameras to be exported (even if not used).
+    :param kapture_to_openmvg_cam_ids: dict that maps kapture camera ids (strings) to openMVG camera ids (int).
+    :param openmvg_sfm_data:
+    :param polymorphic_status:
+    :return:
+    """
     intrinsics = []
-    cam_id_to_openmvg_id = {}
+    # kapture_to_openmvg_cam_ids = {}
     # process all cameras
-    for n, (cam_id, camera) in enumerate(cameras.items()):
-        # Ignore not used cameras
-        if not used_cameras.get(cam_id):
-            logger.warning(f'Skipping camera definition {cam_id} {camera.name} without recorded images.')
-            continue
-        cam_type = camera.camera_type
-        camera_params = camera.camera_params
-        if cam_type == kapture.CameraType.SIMPLE_PINHOLE:
+    for kapture_cam_id, kapture_camera in kapture_cameras.items():
+        openmvg_camera_id = get_openmvg_camera_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
+        kapture_cam_type = kapture_camera.camera_type
+        kapture_camera_params = kapture_camera.camera_params
+        if kapture_cam_type == kapture.CameraType.SIMPLE_PINHOLE:
             # w, h, f, cx, cy
-            model_used = CameraModel.pinhole
-            data = _get_intrinsic_pinhole(camera_params)
-        elif cam_type == kapture.CameraType.PINHOLE:
+            opnmvg_cam_type = CameraModel.pinhole
+            data = _get_intrinsic_pinhole(kapture_camera_params)
+        elif kapture_cam_type == kapture.CameraType.PINHOLE:
             # w, h, f, cx, cy
-            model_used = CameraModel.pinhole
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            (camera_params[2] + camera_params[3]) / 2,  # fx+fy/2 as f
-                            camera_params[4], camera_params[5]]  # cx cy
+            opnmvg_cam_type = CameraModel.pinhole
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            (kapture_camera_params[2] + kapture_camera_params[3]) / 2,  # fx+fy/2 as f
+                            kapture_camera_params[4], kapture_camera_params[5]]  # cx cy
             data = _get_intrinsic_pinhole(faked_params)
-        elif cam_type == kapture.CameraType.SIMPLE_RADIAL:
+        elif kapture_cam_type == kapture.CameraType.SIMPLE_RADIAL:
             # w, h, f, cx, cy, k
-            model_used = CameraModel.pinhole_radial_k1
-            data = _get_intrinsic_pinhole_radial_k1(camera_params)
-        elif cam_type == kapture.CameraType.RADIAL:
+            opnmvg_cam_type = CameraModel.pinhole_radial_k1
+            data = _get_intrinsic_pinhole_radial_k1(kapture_camera_params)
+        elif kapture_cam_type == kapture.CameraType.RADIAL:
             # w, h, f, cx, cy, k1, k2, k3
-            model_used = CameraModel.pinhole_radial_k3
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            camera_params[2],  # f
-                            camera_params[3], camera_params[4],  # cx cy
-                            camera_params[5], camera_params[6], 0  # k1, k2, k3
+            opnmvg_cam_type = CameraModel.pinhole_radial_k3
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            kapture_camera_params[2],  # f
+                            kapture_camera_params[3], kapture_camera_params[4],  # cx cy
+                            kapture_camera_params[5], kapture_camera_params[6], 0  # k1, k2, k3
                             ]
             data = _get_intrinsic_pinhole_radial_k3(faked_params)
-        elif cam_type == kapture.CameraType.FULL_OPENCV or cam_type == kapture.CameraType.OPENCV:
+        elif kapture_cam_type == kapture.CameraType.FULL_OPENCV or kapture_cam_type == kapture.CameraType.OPENCV:
             # w, h, f, cx, cy, k1, k2, k3, t1, t2
-            model_used = CameraModel.pinhole_brown_t2
-            k3 = camera_params[10] if len(camera_params) > 10 else 0
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            (camera_params[2] + camera_params[3]) / 2,  # fx+fy/2 as f
-                            camera_params[4], camera_params[5],  # cx cy
-                            camera_params[6], camera_params[7], k3,  # k1, k2, k3
-                            camera_params[8], camera_params[9]  # p1, p2 (=t1, t2)
+            opnmvg_cam_type = CameraModel.pinhole_brown_t2
+            k3 = kapture_camera_params[10] if len(kapture_camera_params) > 10 else 0
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            (kapture_camera_params[2] + kapture_camera_params[3]) / 2,  # fx+fy/2 as f
+                            kapture_camera_params[4], kapture_camera_params[5],  # cx cy
+                            kapture_camera_params[6], kapture_camera_params[7], k3,  # k1, k2, k3
+                            kapture_camera_params[8], kapture_camera_params[9]  # p1, p2 (=t1, t2)
                             ]
             data = _get_intrinsic_pinhole_brown_t2(faked_params)
-        elif cam_type == kapture.CameraType.OPENCV_FISHEYE:
+        elif kapture_cam_type == kapture.CameraType.OPENCV_FISHEYE:
             logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
             # w, h, f, cx, cy, k1, k2, k3, k4
-            model_used = CameraModel.fisheye
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            (camera_params[2] + camera_params[3]) / 2,  # fx+fy/2 as f
-                            camera_params[4], camera_params[5],  # cx cy
+            opnmvg_cam_type = CameraModel.fisheye
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            (kapture_camera_params[2] + kapture_camera_params[3]) / 2,  # fx+fy/2 as f
+                            kapture_camera_params[4], kapture_camera_params[5],  # cx cy
                             0, 0,  # k1, k2
                             0, 0  # k3, k4
                             ]
             data = _get_intrinsic_fisheye(faked_params)
-        elif cam_type == kapture.CameraType.RADIAL_FISHEYE or cam_type == kapture.CameraType.SIMPLE_RADIAL_FISHEYE:
+        elif kapture_cam_type == kapture.CameraType.RADIAL_FISHEYE or \
+                kapture_cam_type == kapture.CameraType.SIMPLE_RADIAL_FISHEYE:
             logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
             # w, h, f, cx, cy, k1, k2, k3, k4
-            model_used = CameraModel.fisheye
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            camera_params[2],  # f
-                            camera_params[3], camera_params[4],  # cx cy
+            opnmvg_cam_type = CameraModel.fisheye
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            kapture_camera_params[2],  # f
+                            kapture_camera_params[3], kapture_camera_params[4],  # cx cy
                             0, 0,  # k1, k2
                             0, 0  # k3, k4
                             ]
             data = _get_intrinsic_fisheye(faked_params)
-        elif cam_type == kapture.CameraType.UNKNOWN_CAMERA:
-            logger.info(f'Camera {cam_id}: Unknown camera model, using simple radial')
+        elif kapture_cam_type == kapture.CameraType.UNKNOWN_CAMERA:
+            logger.info(f'Camera {kapture_cam_id}: Unknown camera model, using simple radial')
             # Choose simple radial model, to allow openMVG to determine distortion param
             # w, h, f, cx, cy, k
-            model_used = CameraModel.pinhole_radial_k1
-            faked_params = [camera_params[0], camera_params[1],  # width height
-                            max(camera_params[0], camera_params[1]) * DEFAULT_FOCAL_LENGTH_FACTOR,  # max(w,h)*1.2 as f
-                            int(camera_params[0] / 2), int(camera_params[1] / 2),  # cx cy
+            opnmvg_cam_type = CameraModel.pinhole_radial_k1
+            faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
+                            max(kapture_camera_params[0], kapture_camera_params[1]) * DEFAULT_FOCAL_LENGTH_FACTOR,
+                            # max(w,h)*1.2 as f
+                            int(kapture_camera_params[0] / 2), int(kapture_camera_params[1] / 2),  # cx cy
                             0.0]  # k1
             data = _get_intrinsic_pinhole_radial_k1(faked_params)
         else:
-            raise ValueError(f'Camera model {cam_type.value} not supported')
+            raise ValueError(f'Camera model {kapture_cam_type.value} not supported')
 
         intrinsic = {}
-        if model_used not in polymorphic_id_types:
+        if opnmvg_cam_type not in polymorphic_status.id_types:
             # if this is the first time model_used is encountered
             # set the first bit of polymorphic_id_current to 1
-            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_cur | NEW_ID_MASK
-            intrinsic[JSON_KEY.POLYMORPHIC_NAME] = model_used.name
-            polymorphic_id_types[model_used] = polymorphic_id_cur
-            polymorphic_id_cur += 1
+            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_cur | NEW_ID_MASK
+            intrinsic[JSON_KEY.POLYMORPHIC_NAME] = opnmvg_cam_type.name
+            polymorphic_status.id_types[opnmvg_cam_type] = polymorphic_status.id_cur
+            polymorphic_status.id_cur += 1
         else:
-            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_id_types[model_used]
+            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_types[opnmvg_cam_type]
 
         # it is assumed that this camera is only encountered once
         # set the first bit of ptr_wrapper_id_current to 1
-        data_wrapper = {JSON_KEY.ID: ptr_wrapper_id_cur | NEW_ID_MASK,
+        data_wrapper = {JSON_KEY.ID: polymorphic_status.ptr_wrapper_id_cur | NEW_ID_MASK,
                         JSON_KEY.DATA: data}
-        ptr_wrapper_id_cur += 1
+        polymorphic_status.ptr_wrapper_id_cur += 1
 
         intrinsic[JSON_KEY.PTR_WRAPPER] = data_wrapper
-        cam_id_to_openmvg_id[cam_id] = n
+        kapture_to_openmvg_cam_ids[kapture_cam_id] = n
         intrinsics.append({JSON_KEY.KEY: n, JSON_KEY.VALUE: intrinsic})
-    return intrinsics, polymorphic_id_cur, ptr_wrapper_id_cur, cam_id_to_openmvg_id
 
 
 def export_openmvg_images_and_poses(
@@ -287,11 +306,14 @@ def export_openmvg_images_and_poses(
     return views, extrinsics
 
 
-def kapture_to_openmvg(
+def export_openmvg_sfm_data(
         kapture_data: kapture.Kapture,
         kapture_path: str,
+        openmvg_sfm_data_file_path: str,
+        openmvg_image_root_path: str,
         image_action: TransferAction,
-        openmvg_path: str) -> Dict:
+        force: bool
+) -> Dict:
     """
     Convert the kapture data into an openMVG dataset stored as a dictionary.
     The format is defined here:
@@ -299,21 +321,19 @@ def kapture_to_openmvg(
 
     :param kapture_data: the kapture data
     :param kapture_path: top directory of the kapture data and the images
+    :param openmvg_sfm_data_file_path: input path to the SfM data file to be written.
+    :param openmvg_image_root_path: input path to openMVG image directory to be created.
     :param image_action: action to apply on images: link, copy, move or do nothing.
-    :param openmvg_path: top directory of the openmvg data and images
     :return: an SfM_data, the openmvg structure, stored as a dictionary ready to be serialized
     """
 
-    assert kapture_data.cameras is not None
-    assert kapture_data.records_camera is not None
-    kapture_cameras = kapture_data.cameras
+    if kapture_data.cameras is None or kapture_data.records_camera is None:
+        raise ValueError('export_openmvg_sfm_data needs kapture camera and records_camera.')
+
     # Check we don't have other sensors defined
-    extra_sensor_number = len(kapture_data.sensors) - len(kapture_cameras)
-    if extra_sensor_number > 0:
+    if len(kapture_data.sensors) != len(kapture_data.cameras):
+        extra_sensor_number = len(kapture_data.sensors) - len(kapture_data.cameras)
         logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
-    records_camera = kapture_data.records_camera
-    all_records_camera = list(kapture.flatten(records_camera))
-    trajectories = kapture_data.trajectories
 
     # openmvg does not support rigs
     if kapture_data.rigs:
@@ -321,52 +341,54 @@ def kapture_to_openmvg(
         rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
         kapture_data.rigs.clear()
 
+    # aliases used kapture data
+    kapture_cameras = kapture_data.cameras
+    kapture_images_flat = list(kapture.flatten(kapture_data.records_camera))
+    kapture_trajectories = kapture_data.trajectories
+
     # Compute root path and camera used in records
     sub_root_path: str = ''
     image_dirs = {}
-    used_cameras = {}
-    for _, cam_id, name in all_records_camera:
-        used_cameras[cam_id] = cam_id
-        img_dir = path.dirname(name)
-        image_dirs[img_dir] = img_dir
-    if len(image_dirs) > 1:
-        # Find if they share a top path
-        image_dirs_list = list(image_dirs.keys())
-        sub_root_path = path.commonpath(image_dirs_list)
-    elif len(image_dirs) == 1:
-        sub_root_path = next(iter(image_dirs.keys()))
-    if image_action == TransferAction.skip:
-        root_path = kapture_path
-    else:  # We will create a new hierarchy of images
-        root_path = openmvg_path
-    root_path = os.path.abspath(path.join(root_path, sub_root_path))
-    if image_action == TransferAction.root_link:
-        if not sub_root_path:
-            # We can not link directly to the top destination openmvg directory
-            # We need an additional level
-            root_path = path.join(root_path, 'images')
-        kapture_records_path = get_image_fullpath(kapture_path, sub_root_path)
-        # Do a unique images directory link
-        # openmvg_root_path -> kapture/<records_dir>/openmvg_top_images_directory
-        # beware that the paths are reverted in the symlink call
-        os.symlink(kapture_records_path, root_path)
+    kapture_to_openmvg_cam_ids = dict()
 
-    sfm_data = {JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
-                JSON_KEY.ROOT_PATH: root_path}
+    # if len(image_subdirs) > 1:
+    #     # Find if they share a top path
+    #     sub_root_path = path.commonpath(image_subdirs)
+    #
+    # elif len(image_dirs) == 1:
+    #     sub_root_path = next(iter(image_dirs.keys()))
+    # if image_action == TransferAction.skip:
+    #     root_path = kapture_path
+    # else:  # We will create a new hierarchy of images
+    #     root_path = openmvg_sfm_data_file_path
+    #
+    # root_path = os.path.abspath(path.join(root_path, sub_root_path))
+    # if image_action == TransferAction.root_link:
+    #     if not sub_root_path:
+    #         # We can not link directly to the top destination openmvg directory
+    #         # We need an additional level
+    #         root_path = path.join(root_path, 'images')
+    #     kapture_records_path = get_image_fullpath(kapture_path, sub_root_path)
+    #     # Do a unique images directory link
+    #     # openmvg_root_path -> kapture/<records_dir>/openmvg_top_images_directory
+    #     # beware that the paths are reverted in the symlink call
+    #     os.symlink(kapture_records_path, root_path)
 
-    polymorphic_id_current = 1
-    ptr_wrapper_id_current = 1
-    polymorphic_id_types = {}
+    sfm_data = {
+        JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
+        # JSON_KEY.ROOT_PATH: root_path
+    }
 
-    intrinsics, polymorphic_id_current, ptr_wrapper_id_current, cam_id_to_openmvg_id = export_openmvg_cameras(
-        kapture_cameras,
-        used_cameras,
-        polymorphic_id_types,
-        polymorphic_id_current,
-        ptr_wrapper_id_current)
+    polymorphic_status = PolymorphicStatus({}, 1, 1)
+
+    export_openmvg_cameras(
+        kapture_cameras=kapture_data.cameras,
+        kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
+        openmvg_sfm_data=sfm_data,
+        polymorphic_status=polymorphic_status)
 
     views, extrinsics = export_openmvg_images_and_poses(
-        all_records_camera, kapture_cameras, trajectories,
+        kapture_images_flat, kapture_cameras, kapture_trajectories,
         image_action, kapture_path,
         root_path, sub_root_path,
         polymorphic_id_types, polymorphic_id_current, ptr_wrapper_id_current,
@@ -378,46 +400,57 @@ def kapture_to_openmvg(
     sfm_data[JSON_KEY.STRUCTURE] = []
     sfm_data[JSON_KEY.CONTROL_POINTS] = []
 
-    return sfm_data
+    logger.info(f'Saving to openmvg {json_file}...')
+    with open(json_file, "w") as fid:
+        json.dump(openmvg_data, fid, indent=4)
 
 
-def export_openmvg(kapture_path: str, openmvg_path: str,
-                   image_action: TransferAction, force: bool = False) -> None:
+def export_openmvg(
+        kapture_path: str,
+        openmvg_sfm_data_file_path: str,
+        openmvg_image_root_path: str,
+        openmvg_regions_dir_path: str,
+        openmvg_matches_file_path: str,
+        image_action: TransferAction,
+        force: bool = False
+) -> None:
     """
-    Export the kapture data to an openMVG JSON file.
+    Export the kapture data to an openMVG files.
     If the openmvg_path is a directory, it will create a JSON file (using the default name sfm_data.json)
     in that directory.
 
     :param kapture_path: full path to the top kapture directory
-    :param openmvg_path: path of the file or directory where to store the data as JSON
+    :param openmvg_sfm_data_file_path: input path to the SfM data file to be written.
+    :param openmvg_image_root_path: input path to openMVG image directory to be created.
+    :param openmvg_regions_dir_path: optional input path to openMVG regions (feat, desc) directory to be created.
+    :param openmvg_matches_file_path: optional input path to openMVG matches file to be created.
     :param image_action: an action to apply on the images: relative linking, absolute linking, copy or move. Or top
      directory linking or skip to do nothing.
     :param force: if true, will remove existing openMVG data without prompting the user.
     """
 
-    if path.isdir(openmvg_path):  # Existing directory
-        json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
-    else:
-        file_ext = path.splitext(openmvg_path)[1]
-        if len(file_ext) == 0:  # No extension: -> new directory
-            json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
-        elif file_ext.lower() != '.json':
-            logger.warning(f'Creating output directory with file extension {file_ext}')
-            json_file = path.join(openmvg_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
-        else:  # Json file
-            json_file = openmvg_path
-    json_dir = path.dirname(json_file)
-    safe_remove_file(json_file, force)
-    if path.exists(json_file):
-        raise ValueError(f'{json_file} file already exist')
-    if image_action != TransferAction.skip and path.exists(json_dir) and any(pathlib.Path(json_dir).iterdir()):
-        safe_remove_any_path(json_dir, force)
-        if path.isdir(json_dir):
-            raise ValueError(f'Images directory {json_dir} exist with remaining files')
-    os.makedirs(json_dir, exist_ok=True)
+    # clean before export
+    safe_remove_file(openmvg_sfm_data_file_path, force)
+    if path.exists(openmvg_sfm_data_file_path):
+        raise ValueError(f'{openmvg_sfm_data_file_path} file already exist')
 
-    kapture_data = load_kapture(kapture_path)
-    openmvg_data = kapture_to_openmvg(kapture_data, kapture_path, image_action, json_dir)
-    logger.info(f'Saving to openmvg file {json_file}')
-    with open(json_file, "w") as fid:
-        json.dump(openmvg_data, fid, indent=4)
+    # TODO: move this in export_openmvg_sfm_data
+    if image_action != TransferAction.skip:
+        if path.isdir(openmvg_image_root_path):
+            safe_remove_any_path(openmvg_image_root_path, force)
+            if path.isdir(openmvg_image_root_path):
+                raise ValueError(f'Images directory {openmvg_image_root_path} exist with remaining files')
+        os.makedirs(openmvg_image_root_path, exist_ok=True)
+
+    # load kapture
+    logger.info(f'loading kapture {kapture_path}...')
+    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
+    assert isinstance(kapture_data, kapture.Kapture)
+
+    export_openmvg_sfm_data(
+        kapture_data=kapture_data,
+        kapture_path=kapture_path,
+        openmvg_sfm_data_file_path=openmvg_sfm_data_file_path,
+        openmvg_image_root_path=openmvg_image_root_path,
+        image_action=image_action,
+        force=force)

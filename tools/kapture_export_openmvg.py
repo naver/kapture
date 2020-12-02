@@ -32,10 +32,16 @@ def export_openmvg_command_line():
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete output file if already exists.')
     # create the parser for the export command #########################################################################
-    parser.add_argument('-k', '--kapture', required=True,
-                        help='input path to kapture data root directory')
-    parser.add_argument('-o', '--openmvg',
-                        help='output openMVG JSON file path.')
+    parser.add_argument('-i', '-k', '--kapture', required=True,
+                        help='path to input kapture data root directory')
+    parser.add_argument('-s', '--sfm_data', required=True,
+                        help='path to output openMVG sfm_data JSON file.')
+    parser.add_argument('-im', '--images',
+                        help='path to output openMVG image directory.')
+    parser.add_argument('-r', '--regions',
+                        help='path to output openMVG regions directory (for features and descriptors).')
+    parser.add_argument('-m', '--matches',
+                        help='path to output openMVG matches file.')
     parser.add_argument('--image_action', default='root_link', type=TransferAction,
                         help=f'''what to do with images:
         {TransferAction.root_link.name}: link to the root of the images directory (default) ;
@@ -56,18 +62,21 @@ def export_openmvg_command_line():
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()))
 
-    # Check that we will not try to do symbolics links on Windows
-    # because this is not possible today if the user is not admin
-    if sys.platform.startswith("win") and \
-            (args.image_link == TransferAction.link_relative or
-             args.image_link == TransferAction.link_absolute or
-             args.image_link == TransferAction.root_link):
-        logger.fatal("It is currently impossible to link files on a Windows platform")
-        logger.fatal(f"Please try another option for the image: either do nothing ({TransferAction.skip}),"
-                     f" or {TransferAction.copy}")
-        raise OSError("Image file linking not possible on Windows")
-    else:
-        export_openmvg(args.kapture, args.openmvg, args.image_action, args.force)
+    # no image dir == sip transfer
+    if args.image_action == TransferAction.skip:
+        args.images = None
+    if args.images is None:
+        args.image_action = TransferAction.skip
+
+    export_openmvg(
+        kapture_path=args.kapture,
+        openmvg_sfm_data_file_path=args.sfm_data,
+        openmvg_image_root_path=args.images,
+        openmvg_regions_dir_path=args.regions,
+        openmvg_matches_file_path=args.matches,
+        image_action=args.image_action,
+        force=args.force
+    )
 
 
 if __name__ == '__main__':
