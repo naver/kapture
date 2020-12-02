@@ -10,11 +10,14 @@ import os
 import os.path as path
 from typing import Dict, List, Tuple, Union
 import quaternion
+import numpy as np
 # kapture
 import kapture
 import kapture.io.csv
 from kapture.io.binary import TransferAction, transfer_files_from_dir
 from kapture.io.records import get_image_fullpath
+from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file
+from kapture.io.features import descriptors_to_filepaths, image_descriptors_from_file
 import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
@@ -476,7 +479,27 @@ def export_openmvg_regions(
     with open(image_describer_file_path, 'w') as fid:
         json.dump(image_describer, fid, indent=4)
 
-    # copy files
+    # copy keypoints files
+    keypoints = keypoints_to_filepaths(kapture_data.keypoints, kapture_path)
+    for kapture_image_name, kapture_keypoint_file_path in keypoints.items():
+        openmvg_keypoint_file_name = path.splitext(path.basename(kapture_image_name))[0] + '.feat'
+        openmvg_keypoint_file_path = path.join(openmvg_regions_dir_path, openmvg_keypoint_file_name)
+        keypoints_data = image_keypoints_from_file(kapture_keypoint_file_path,
+                                                   kapture_data.keypoints.dtype,
+                                                   kapture_data.keypoints.dsize)
+        keypoints_data = keypoints_data[:, 0:4]
+        np.savetxt(openmvg_keypoint_file_path, keypoints_data)
+
+    # copy descriptors files
+    descriptors = descriptors_to_filepaths(kapture_data.descriptors, kapture_path)
+    for kapture_image_name, kapture_descriptors_file_path in descriptors.items():
+        openmvg_descriptors_file_name = path.splitext(path.basename(kapture_image_name))[0] + '.desc'
+        openmvg_descriptors_file_path = path.join(openmvg_regions_dir_path, openmvg_descriptors_file_name)
+        descriptors_data = image_descriptors_from_file(kapture_descriptors_file_path,
+                                                       kapture_data.descriptors.dtype,
+                                                       kapture_data.descriptors.dsize)
+        # descriptors_data = descriptors_data[:, 0:4]
+        np.savetxt(openmvg_descriptors_file_path, descriptors_data)
 
 
 def export_openmvg(
@@ -531,10 +554,10 @@ def export_openmvg(
     if openmvg_regions_dir_path is not None:
         try:
             export_openmvg_regions(
-                    kapture_path=kapture_path,
-                    kapture_data=kapture_data,
-                    openmvg_regions_dir_path=openmvg_regions_dir_path,
-                    image_path_flatten=image_path_flatten
+                kapture_path=kapture_path,
+                kapture_data=kapture_data,
+                openmvg_regions_dir_path=openmvg_regions_dir_path,
+                image_path_flatten=image_path_flatten
             )
         except ValueError as e:
             logger.error(e)
