@@ -470,6 +470,9 @@ def export_openmvg(
         raise ValueError(f'{openmvg_sfm_data_file_path} file already exist')
 
     # TODO: move this in export_openmvg_sfm_data
+    if image_action == TransferAction.skip:
+        openmvg_image_root_path = get_image_fullpath(kapture_path)
+
     if image_action != TransferAction.skip:
         if path.isdir(openmvg_image_root_path):
             safe_remove_any_path(openmvg_image_root_path, force)
