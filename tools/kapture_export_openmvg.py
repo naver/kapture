@@ -63,10 +63,14 @@ def export_openmvg_command_line():
         for k, v in vars(args).items()))
 
     # no image dir == sip transfer
-    if args.image_action == TransferAction.skip:
-        args.images = None
     if args.images is None:
         args.image_action = TransferAction.skip
+    if args.image_action == TransferAction.skip:
+        args.images = None
+
+    if not args.image_action == TransferAction.skip:
+        if args.images is None:
+            raise ValueError(f'You must specify an image root path for this transfer ({args.image_action})')
 
     export_openmvg(
         kapture_path=args.kapture,
