@@ -9,6 +9,7 @@ from enum import auto
 from dataclasses import dataclass
 
 OPENMVG_DEFAULT_JSON_FILE_NAME = 'sfm_data.json'
+OPENMVG_DEFAULT_REGIONS_FILE_NAME = 'image_describer.json'
 OPENMVG_SFM_DATA_VERSION_NUMBER = "0.3"
 
 

@@ -8,11 +8,8 @@ import json
 import logging
 import os
 import os.path as path
-import pathlib
-import shutil
 from typing import Dict, List, Tuple, Union
 import quaternion
-from dataclasses import dataclass
 # kapture
 import kapture
 import kapture.io.csv
@@ -32,11 +29,32 @@ VIEW_SPECIAL_POLYMORPHIC_ID = 1 << 30  # 01000000 00000000 00000000 00000000
 DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
 
-@dataclass
-class PolymorphicStatus:
-    id_types: dict
-    id_cur: int = 1
-    ptr_wrapper_id_cur: int = 1
+class CerealPointerRegistry:
+    NEW_ID_MASK = 1 << 31  # 10000000 00000000 00000000 00000000
+    NULL_ID = 1 << 30  # 01000000 00000000 00000000 00000000
+
+    def __init__(self, value_key, id_key):
+        self._value_key = value_key
+        self._id_key = id_key
+        self._ids = {}
+        self._id_current = 1
+
+    def get_ids_dict(self, value):
+        """ :return either id if known or id + name if new """
+        if isinstance(value, dict) or value not in self._ids:
+            # if this is the first time or a dict
+            new_id = self._id_current
+            if not isinstance(value, dict):
+                self._ids[value] = new_id
+            self._id_current += 1
+            return {
+                self._id_key: new_id | NEW_ID_MASK,
+                self._value_key: value,
+            }
+        else:
+            return {
+                self._id_key: self._ids[value]
+            }
 
 
 def _get_data(camera_params: list) -> Dict:
@@ -108,7 +126,8 @@ def get_openmvg_image_path(kapture_image_name: str, flatten_path: bool = False):
 def export_openmvg_intrinsics(
         kapture_cameras,
         kapture_to_openmvg_cam_ids: Dict[str, int],
-        polymorphic_status: PolymorphicStatus,
+        polymorphic_registry: CerealPointerRegistry,
+        ptr_wrapper_registry: CerealPointerRegistry,
 ):
     """
     Exports the given kapture cameras to the openMVG sfm_data structure.
@@ -116,7 +135,8 @@ def export_openmvg_intrinsics(
 
     :param kapture_cameras: input kapture cameras to be exported (even if not used).
     :param kapture_to_openmvg_cam_ids: input/output dict that maps kapture camera ids to openMVG camera ids.
-    :param polymorphic_status: input/output polymorphic IDs status
+    :param polymorphic_registry: input/output polymorphic IDs status
+    :param ptr_wrapper_registry: input/output polymorphic IDs status
     :return:
     """
     openmvg_intrinsics = []
@@ -199,21 +219,12 @@ def export_openmvg_intrinsics(
             raise ValueError(f'Camera model {kapture_cam_type.value} not supported')
 
         intrinsic = {}
-        if opnmvg_cam_type not in polymorphic_status.id_types:
-            # if this is the first time model_used is encountered
-            # set the first bit of polymorphic_id_current to 1
-            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_cur | NEW_ID_MASK
-            intrinsic[JSON_KEY.POLYMORPHIC_NAME] = opnmvg_cam_type.name
-            polymorphic_status.id_types[opnmvg_cam_type] = polymorphic_status.id_cur
-            polymorphic_status.id_cur += 1
-        else:
-            intrinsic[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_types[opnmvg_cam_type]
+        cam_type_poly_id = polymorphic_registry.get_ids_dict(opnmvg_cam_type.name)
+        intrinsic.update(cam_type_poly_id)
 
         # it is assumed that this camera is only encountered once
         # set the first bit of ptr_wrapper_id_current to 1
-        data_wrapper = {JSON_KEY.ID: polymorphic_status.ptr_wrapper_id_cur | NEW_ID_MASK,
-                        JSON_KEY.DATA: data}
-        polymorphic_status.ptr_wrapper_id_cur += 1
+        data_wrapper = ptr_wrapper_registry.get_ids_dict(data)
 
         intrinsic[JSON_KEY.PTR_WRAPPER] = data_wrapper
         openmvg_intrinsics.append({JSON_KEY.KEY: openmvg_camera_id, JSON_KEY.VALUE: intrinsic})
@@ -227,7 +238,8 @@ def export_openmvg_views(
         kapture_trajectories: kapture.Trajectories,
         kapture_to_openmvg_cam_ids: Dict[str, int],
         kapture_to_openmvg_view_ids: Dict[str, int],
-        polymorphic_status: PolymorphicStatus,
+        polymorphic_registry: CerealPointerRegistry,
+        ptr_wrapper_registry: CerealPointerRegistry,
         image_path_flatten: bool,
 ):
     """
@@ -237,7 +249,8 @@ def export_openmvg_views(
     :param kapture_trajectories:
     :param kapture_to_openmvg_cam_ids: input dict that maps kapture camera ids to openMVG camera ids.
     :param kapture_to_openmvg_view_ids: input dict that maps kapture image names to openMVG view ids.
-    :param polymorphic_status: input/output polymorphic IDs status
+    :param polymorphic_registry: input/output polymorphic IDs status
+    :param ptr_wrapper_registry: input/output polymorphic IDs status
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :return:
     """
@@ -268,15 +281,8 @@ def export_openmvg_views(
             # there is a pose for that timestamp
             # The poses are stored both as priors (in the 'views' table) and as known poses (in the 'extrinsics' table)
             assert kapture_cam_id in kapture_trajectories[timestamp]
-            if JSON_KEY.VIEW_PRIORS not in polymorphic_status.id_types:
-                # if this is the first time view_priors is encountered
-                # set the first bit of polymorphic_id_current to 1
-                view[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_cur | NEW_ID_MASK
-                view[JSON_KEY.POLYMORPHIC_NAME] = JSON_KEY.VIEW_PRIORS
-                polymorphic_status.id_types[JSON_KEY.VIEW_PRIORS] = polymorphic_status.id_cur
-                polymorphic_status.id_cur += 1
-            else:
-                view[JSON_KEY.POLYMORPHIC_ID] = polymorphic_status.id_types[JSON_KEY.VIEW_PRIORS]
+            view_priors_id = polymorphic_registry.get_ids_dict(JSON_KEY.VIEW_PRIORS)
+            view.update(view_priors_id)
 
             pose_tr = kapture_trajectories[timestamp].get(kapture_cam_id)
             prior_q = pose_tr.r
@@ -292,11 +298,7 @@ def export_openmvg_views(
             view_data[JSON_KEY.ROTATION] = pose_data[JSON_KEY.ROTATION]
 
         # it is assumed that this view is only encountered once
-        # set the first bit of ptr_wrapper_id_current to 1
-        view_wrapper = {JSON_KEY.ID: polymorphic_status.ptr_wrapper_id_cur | NEW_ID_MASK,
-                        JSON_KEY.DATA: view_data}
-        polymorphic_status.ptr_wrapper_id_cur += 1
-
+        view_wrapper = ptr_wrapper_registry.get_ids_dict(view_data)
         view[JSON_KEY.PTR_WRAPPER] = view_wrapper
         views.append({JSON_KEY.KEY: openmvg_view_id, JSON_KEY.VALUE: view})
 
@@ -384,12 +386,16 @@ def export_openmvg_sfm_data(
         for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera))
     }
 
-    polymorphic_status = PolymorphicStatus({}, 1, 1)
+    # polymorphic_status = PolymorphicStatus({}, 1, 1)
+    polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
+    ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
 
     openmvg_sfm_data_intrinsics = export_openmvg_intrinsics(
         kapture_cameras=kapture_data.cameras,
         kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
-        polymorphic_status=polymorphic_status)
+        polymorphic_registry=polymorphic_registry,
+        ptr_wrapper_registry=ptr_wrapper_registry,
+    )
 
     openmvg_sfm_data_views = export_openmvg_views(
         kapture_cameras=kapture_data.cameras,
@@ -397,7 +403,8 @@ def export_openmvg_sfm_data(
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
-        polymorphic_status=polymorphic_status,
+        polymorphic_registry=polymorphic_registry,
+        ptr_wrapper_registry=ptr_wrapper_registry,
         image_path_flatten=image_path_flatten,
     )
 
@@ -454,6 +461,8 @@ def export_openmvg_regions(
     :return:
     """
     print(kapture_data.keypoints)
+    os.makedirs(openmvg_regions_dir_path, exist_ok=True)
+    # create image_describer.json
 
 
 def export_openmvg(
