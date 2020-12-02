@@ -100,6 +100,11 @@ def get_openmvg_camera_id(kapture_camera_id, kapture_to_openmvg_cam_ids):
     return openmvg_camera_id
 
 
+def get_openmvg_image_path(kapture_image_name: str, flatten_path: bool = False):
+    """ the openmvg image sub path corresponding to the given kapture one. """
+    return kapture_image_name if not flatten_path else kapture_image_name.replace('/', '_')
+
+
 def export_openmvg_intrinsics(
         kapture_cameras,
         kapture_to_openmvg_cam_ids: Dict[str, int],
@@ -221,9 +226,9 @@ def export_openmvg_views(
         kapture_images: kapture.RecordsCamera,
         kapture_trajectories: kapture.Trajectories,
         kapture_to_openmvg_cam_ids: Dict[str, int],
-        kapture_to_openmvg_image_paths: Dict[str, str],
         kapture_to_openmvg_view_ids: Dict[str, int],
         polymorphic_status: PolymorphicStatus,
+        image_path_flatten: bool,
 ):
     """
 
@@ -231,9 +236,9 @@ def export_openmvg_views(
     :param kapture_images:
     :param kapture_trajectories:
     :param kapture_to_openmvg_cam_ids: input dict that maps kapture camera ids to openMVG camera ids.
-    :param kapture_to_openmvg_image_paths: input dict that maps kapture image path to openMVG image path.
     :param kapture_to_openmvg_view_ids: input dict that maps kapture image names to openMVG view ids.
     :param polymorphic_status: input/output polymorphic IDs status
+    :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :return:
     """
     views = []
@@ -241,10 +246,9 @@ def export_openmvg_views(
     for timestamp, kapture_cam_id, kapture_image_name in kapture.flatten(kapture_images):
         assert kapture_cam_id in kapture_to_openmvg_cam_ids
         assert kapture_image_name in kapture_to_openmvg_view_ids
-        assert kapture_image_name in kapture_to_openmvg_image_paths
         openmvg_cam_id = get_openmvg_camera_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
         openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
-        openmvg_image_filepath = kapture_to_openmvg_image_paths[kapture_image_name]
+        openmvg_image_filepath = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_image_filename = path.basename(openmvg_image_filepath)
         openmvg_image_local_path = path.dirname(openmvg_image_filepath)
         kapture_camera_params = kapture_cameras[kapture_cam_id].camera_params
@@ -336,8 +340,8 @@ def export_openmvg_sfm_data(
         kapture_data: kapture.Kapture,
         openmvg_sfm_data_file_path: str,
         openmvg_image_root_path: str,
-        image_path_flatten: bool,
         image_action: TransferAction,
+        image_path_flatten: bool,
         force: bool
 ) -> Dict:
     """
@@ -349,8 +353,10 @@ def export_openmvg_sfm_data(
     :param kapture_path: top directory of the kapture data and the images
     :param openmvg_sfm_data_file_path: input path to the SfM data file to be written.
     :param openmvg_image_root_path: input path to openMVG image directory to be created.
-    :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :param image_action: action to apply on images: link, copy, move or do nothing.
+    :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
+    :param force: if true, will remove existing openMVG data without prompting the user.
+
     :return: an SfM_data, the openmvg structure, stored as a dictionary ready to be serialized
     """
 
@@ -377,18 +383,6 @@ def export_openmvg_sfm_data(
         kapture_image_name: i
         for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera))
     }
-    kapture_to_openmvg_image_paths = {  # kapture_image_name -> openmvg_image_path
-        kapture_image_name: kapture_image_name
-        for _, _, kapture_image_name in kapture.flatten(kapture_data.records_camera)
-    }
-
-    if image_path_flatten:
-        if image_action == TransferAction.skip or image_action == TransferAction.root_link:
-            raise ValueError(f'cant flatten image filename with transfer {image_action}')
-        kapture_to_openmvg_image_paths = {
-            k: v.replace('/', '_')
-            for k, v in kapture_to_openmvg_image_paths.items()
-        }
 
     polymorphic_status = PolymorphicStatus({}, 1, 1)
 
@@ -402,9 +396,10 @@ def export_openmvg_sfm_data(
         kapture_images=kapture_data.records_camera,
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
-        kapture_to_openmvg_image_paths=kapture_to_openmvg_image_paths,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
-        polymorphic_status=polymorphic_status)
+        polymorphic_status=polymorphic_status,
+        image_path_flatten=image_path_flatten,
+    )
 
     openmvg_sfm_data_poses = export_openmvg_poses(
         kapture_images=kapture_data.records_camera,
@@ -428,8 +423,11 @@ def export_openmvg_sfm_data(
     # do the actual image transfer
     if not image_action == TransferAction.skip:
         job_copy = (
-            (get_image_fullpath(kapture_path, kapture_image_name), path.join(openmvg_image_root_path, openmvg_image_path))
-            for kapture_image_name, openmvg_image_path in kapture_to_openmvg_image_paths.items()
+            (
+                get_image_fullpath(kapture_path, kapture_image_name),
+                path.join(openmvg_image_root_path, get_openmvg_image_path(kapture_image_name, image_path_flatten))
+            )
+            for _, _, kapture_image_name in kapture.flatten(kapture_data.records_camera)
         )
         source_filepath_list, destination_filepath_list = zip(*job_copy)
         transfer_files_from_dir(
@@ -440,6 +438,24 @@ def export_openmvg_sfm_data(
         )
 
 
+def export_openmvg_regions(
+        kapture_path: str,
+        kapture_data: kapture.Kapture,
+        openmvg_regions_dir_path: str,
+        image_path_flatten: bool
+):
+    """
+    exports openMVG regions ie keypoints and descriptors.
+
+    :param kapture_path:
+    :param kapture_data:
+    :param openmvg_regions_dir_path:
+    :param image_path_flatten:
+    :return:
+    """
+    print(kapture_data.keypoints)
+
+
 def export_openmvg(
         kapture_path: str,
         openmvg_sfm_data_file_path: str,
@@ -447,6 +463,7 @@ def export_openmvg(
         openmvg_regions_dir_path: str,
         openmvg_matches_file_path: str,
         image_action: TransferAction,
+        image_path_flatten: bool = False,
         force: bool = False
 ) -> None:
     """
@@ -461,6 +478,7 @@ def export_openmvg(
     :param openmvg_matches_file_path: optional input path to openMVG matches file to be created.
     :param image_action: an action to apply on the images: relative linking, absolute linking, copy or move. Or top
      directory linking or skip to do nothing.
+    :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :param force: if true, will remove existing openMVG data without prompting the user.
     """
 
@@ -473,13 +491,6 @@ def export_openmvg(
     if image_action == TransferAction.skip:
         openmvg_image_root_path = get_image_fullpath(kapture_path)
 
-    if image_action != TransferAction.skip:
-        if path.isdir(openmvg_image_root_path):
-            safe_remove_any_path(openmvg_image_root_path, force)
-            if path.isdir(openmvg_image_root_path):
-                raise ValueError(f'Images directory {openmvg_image_root_path} exist with remaining files')
-        os.makedirs(openmvg_image_root_path, exist_ok=True)
-
     # load kapture
     logger.info(f'loading kapture {kapture_path}...')
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
@@ -491,5 +502,13 @@ def export_openmvg(
         openmvg_sfm_data_file_path=openmvg_sfm_data_file_path,
         openmvg_image_root_path=openmvg_image_root_path,
         image_action=image_action,
-        image_path_flatten=False,
+        image_path_flatten=image_path_flatten,
         force=force)
+
+    if openmvg_regions_dir_path is not None:
+        export_openmvg_regions(
+                kapture_path=kapture_path,
+                kapture_data=kapture_data,
+                openmvg_regions_dir_path=openmvg_regions_dir_path,
+                image_path_flatten=image_path_flatten
+        )

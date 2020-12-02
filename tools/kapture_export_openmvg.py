@@ -51,6 +51,8 @@ def export_openmvg_command_line():
         {TransferAction.move.name}: move file instead of creating link ;
         {TransferAction.skip.name}: do not create links
                                       ''')
+    parser.add_argument('--image_path_flatten', type=bool, default=False,
+                        help='flatten image subpath, to make sure there is no collision in image names.')
 
     args = parser.parse_args()
 
@@ -79,6 +81,7 @@ def export_openmvg_command_line():
         openmvg_regions_dir_path=args.regions,
         openmvg_matches_file_path=args.matches,
         image_action=args.image_action,
+        image_path_flatten=args.image_path_flatten,
         force=args.force
     )
 
