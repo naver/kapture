@@ -14,7 +14,6 @@ OPENMVG_SFM_DATA_VERSION_NUMBER = "0.3"
 
 
 # XML names
-@dataclass
 class JSON_KEY:
     SFM_DATA_VERSION = "sfm_data_version"
     ROOT_PATH = "root_path"

@@ -25,7 +25,6 @@ from .openmvg_commons import CameraModel
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 NEW_ID_MASK = 1 << 31  # 10000000 00000000 00000000 00000000
-VIEW_SPECIAL_POLYMORPHIC_ID = 1 << 30  # 01000000 00000000 00000000 00000000
 DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
 
@@ -276,7 +275,7 @@ def export_openmvg_views(
         view = {}
         # retrieve image pose from trajectories
         if timestamp not in kapture_trajectories:
-            view[JSON_KEY.POLYMORPHIC_ID] = VIEW_SPECIAL_POLYMORPHIC_ID
+            view[JSON_KEY.POLYMORPHIC_ID] = CerealPointerRegistry.NULL_ID
         else:
             # there is a pose for that timestamp
             # The poses are stored both as priors (in the 'views' table) and as known poses (in the 'extrinsics' table)
@@ -460,9 +459,24 @@ def export_openmvg_regions(
     :param image_path_flatten:
     :return:
     """
-    print(kapture_data.keypoints)
+    # only able to export SIFT
+    if any([f.type_name.upper() != 'SIFT' for f in [kapture_data.keypoints, kapture_data.descriptors]]):
+        raise ValueError(f'unable to export other regions than sift '
+                         f'(got {kapture_data.keypoints.type_name}/{kapture_data.descriptors.type_name})')
+
     os.makedirs(openmvg_regions_dir_path, exist_ok=True)
+    polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     # create image_describer.json
+    fake_regions_type = {"ptr_wrapper": {"valid": 1, "data": {"value0": [], "value1": []}}}
+    fake_regions_type.update(polymorphic_registry.get_ids_dict('SIFT_Regions'))
+    image_describer = {
+        'regions_type': fake_regions_type
+    }
+    image_describer_file_path = path.join(openmvg_regions_dir_path, 'image_describer.json')
+    with open(image_describer_file_path, 'w') as fid:
+        json.dump(image_describer, fid, indent=4)
+
+    # copy files
 
 
 def export_openmvg(
@@ -515,9 +529,12 @@ def export_openmvg(
         force=force)
 
     if openmvg_regions_dir_path is not None:
-        export_openmvg_regions(
-                kapture_path=kapture_path,
-                kapture_data=kapture_data,
-                openmvg_regions_dir_path=openmvg_regions_dir_path,
-                image_path_flatten=image_path_flatten
-        )
+        try:
+            export_openmvg_regions(
+                    kapture_path=kapture_path,
+                    kapture_data=kapture_data,
+                    openmvg_regions_dir_path=openmvg_regions_dir_path,
+                    image_path_flatten=image_path_flatten
+            )
+        except ValueError as e:
+            logger.error(e)
