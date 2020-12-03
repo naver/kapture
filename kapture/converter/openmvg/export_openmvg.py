@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import os.path as path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Union
 import quaternion
 import numpy as np
 # kapture
@@ -16,7 +16,7 @@ import kapture
 import kapture.io.csv
 from kapture.io.binary import TransferAction, transfer_files_from_dir, array_to_file
 from kapture.io.records import get_image_fullpath
-from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file
+from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file, get_keypoints_fullpath
 from kapture.io.features import descriptors_to_filepaths, image_descriptors_from_file
 from kapture.io.features import matches_to_filepaths, image_matches_from_file
 import kapture.io.structure
@@ -340,6 +340,44 @@ def export_openmvg_poses(
     return extrinsics
 
 
+def export_openmvg_structure(
+        kapture_points_3d: kapture.Points3d,
+        kapture_to_openmvg_view_ids: Dict[str, int],
+        kapture_observations: Optional[kapture.Observations],
+        kapture_keypoints: Optional[kapture.Keypoints],
+        kapture_path: Optional[str],
+):
+    xyz_coordinates = kapture_points_3d[:, 0:3]
+    include_2d_observations = kapture_observations is not None
+    openmvg_structure = []
+    for point_idx, coords in enumerate(xyz_coordinates):
+        single_point_structure = {
+            'key': point_idx,
+            'value': {
+                'X': coords.tolist(),
+                'observations': []
+            }
+        }
+        if include_2d_observations and point_idx in kapture_observations:
+            for kapture_image_name, feature_point_id in kapture_observations[point_idx]:
+                keypoints_file_path = get_keypoints_fullpath(kapture_path, kapture_image_name)
+                keypoints_data = image_keypoints_from_file(keypoints_file_path,
+                                                           dtype=kapture_keypoints.dtype,
+                                                           dsize=kapture_keypoints.dsize)
+
+                openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
+                single_point_structure['value']['observations'].append({
+                    'key': openmvg_view_id,
+                    'value': {
+                        'id_feat': feature_point_id,
+                        'x': keypoints_data[feature_point_id, 0:2].tolist()
+                    }
+                })
+        openmvg_structure.append(single_point_structure)
+
+    return openmvg_structure
+
+
 def export_openmvg_sfm_data(
         kapture_path: str,
         kapture_data: kapture.Kapture,
@@ -417,13 +455,22 @@ def export_openmvg_sfm_data(
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
 
+    # structure : correspond to kapture observations + 3D points
+    openmvg_sfm_data_structure = export_openmvg_structure(
+        kapture_points_3d=kapture_data.points3d,
+        kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
+        kapture_observations=kapture_data.observations,
+        kapture_keypoints=kapture_data.keypoints,
+        kapture_path=kapture_path
+        )
+
     openmvg_sfm_data = {
         JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
         JSON_KEY.ROOT_PATH: path.abspath(openmvg_image_root_path),
         JSON_KEY.INTRINSICS: openmvg_sfm_data_intrinsics,
         JSON_KEY.VIEWS: openmvg_sfm_data_views,
         JSON_KEY.EXTRINSICS: openmvg_sfm_data_poses,
-        JSON_KEY.STRUCTURE: [],
+        JSON_KEY.STRUCTURE: openmvg_sfm_data_structure,
         JSON_KEY.CONTROL_POINTS: [],
     }
 
@@ -523,7 +570,7 @@ def export_openmvg_matches(
         openmvg_matches_file_path: str,
         kapture_to_openmvg_view_ids: Dict[str, int]
 ):
-    if path.splitext(openmvg_matches_file_path)[1] != 'txt':
+    if path.splitext(openmvg_matches_file_path)[1] != '.txt':
         logger.warning('matches are exported as text format, even if file does not ends with .txt.')
 
     matches = matches_to_filepaths(kapture_data.matches, kapture_path)
