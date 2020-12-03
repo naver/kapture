@@ -482,7 +482,8 @@ def export_openmvg_regions(
     # copy keypoints files
     keypoints = keypoints_to_filepaths(kapture_data.keypoints, kapture_path)
     for kapture_image_name, kapture_keypoint_file_path in keypoints.items():
-        openmvg_keypoint_file_name = path.splitext(path.basename(kapture_image_name))[0] + '.feat'
+        openmvg_keypoint_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
+        openmvg_keypoint_file_name = path.splitext(path.basename(openmvg_keypoint_file_name))[0] + '.feat'
         openmvg_keypoint_file_path = path.join(openmvg_regions_dir_path, openmvg_keypoint_file_name)
         keypoints_data = image_keypoints_from_file(kapture_keypoint_file_path,
                                                    kapture_data.keypoints.dtype,
@@ -491,7 +492,6 @@ def export_openmvg_regions(
         np.savetxt(openmvg_keypoint_file_path, keypoints_data, fmt='%10.5f')
 
     # copy descriptors files
-    #
     """
     from openMVG regions_factory.hpp
     using SIFT_Regions = Scalar_Regions<SIOPointFeature, unsigned char, 128>;
@@ -501,7 +501,8 @@ def export_openmvg_regions(
     """
     descriptors = descriptors_to_filepaths(kapture_data.descriptors, kapture_path)
     for kapture_image_name, kapture_descriptors_file_path in descriptors.items():
-        openmvg_descriptors_file_name = path.splitext(path.basename(kapture_image_name))[0] + '.desc'
+        openmvg_descriptors_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
+        openmvg_descriptors_file_name = path.splitext(path.basename(openmvg_descriptors_file_name))[0] + '.desc'
         openmvg_descriptors_file_path = path.join(openmvg_regions_dir_path, openmvg_descriptors_file_name)
         kapture_descriptors_data = image_descriptors_from_file(kapture_descriptors_file_path,
                                                        kapture_data.descriptors.dtype,
@@ -510,7 +511,6 @@ def export_openmvg_regions(
         size_t_len = 64//8
         openmvg_descriptors_data = np.empty(dtype=np.uint8, shape=(kapture_descriptors_data.size+size_t_len, ))
         openmvg_descriptors_data[0:size_t_len].view(dtype=np.uint64)[0] = kapture_descriptors_data.shape[0]
-        print(openmvg_descriptors_data[0:size_t_len])
         openmvg_descriptors_data[size_t_len:] = kapture_descriptors_data.flatten()
         array_to_file(openmvg_descriptors_file_path, openmvg_descriptors_data)
 
