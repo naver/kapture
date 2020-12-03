@@ -18,6 +18,7 @@ from kapture.io.binary import TransferAction, transfer_files_from_dir, array_to_
 from kapture.io.records import get_image_fullpath
 from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file
 from kapture.io.features import descriptors_to_filepaths, image_descriptors_from_file
+from kapture.io.features import matches_to_filepaths, image_matches_from_file
 import kapture.io.structure
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
@@ -346,7 +347,8 @@ def export_openmvg_sfm_data(
         openmvg_image_root_path: str,
         image_action: TransferAction,
         image_path_flatten: bool,
-        force: bool
+        force: bool,
+        kapture_to_openmvg_view_ids: dict = {}
 ) -> Dict:
     """
     Convert the kapture data into an openMVG dataset stored as a dictionary.
@@ -383,10 +385,10 @@ def export_openmvg_sfm_data(
 
     # Compute root path and camera used in records
     kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
-    kapture_to_openmvg_view_ids = {
+    kapture_to_openmvg_view_ids.update({
         kapture_image_name: i
         for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera))
-    }
+    })
 
     # polymorphic_status = PolymorphicStatus({}, 1, 1)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
@@ -505,14 +507,37 @@ def export_openmvg_regions(
         openmvg_descriptors_file_name = path.splitext(path.basename(openmvg_descriptors_file_name))[0] + '.desc'
         openmvg_descriptors_file_path = path.join(openmvg_regions_dir_path, openmvg_descriptors_file_name)
         kapture_descriptors_data = image_descriptors_from_file(kapture_descriptors_file_path,
-                                                       kapture_data.descriptors.dtype,
-                                                       kapture_data.descriptors.dsize)
+                                                               kapture_data.descriptors.dtype,
+                                                               kapture_data.descriptors.dsize)
         # assign a byte array of [size_t[1] + uint8[nb features x 128]
-        size_t_len = 64//8
-        openmvg_descriptors_data = np.empty(dtype=np.uint8, shape=(kapture_descriptors_data.size+size_t_len, ))
+        size_t_len = 64 // 8
+        openmvg_descriptors_data = np.empty(dtype=np.uint8, shape=(kapture_descriptors_data.size + size_t_len,))
         openmvg_descriptors_data[0:size_t_len].view(dtype=np.uint64)[0] = kapture_descriptors_data.shape[0]
         openmvg_descriptors_data[size_t_len:] = kapture_descriptors_data.flatten()
         array_to_file(openmvg_descriptors_file_path, openmvg_descriptors_data)
+
+
+def export_openmvg_matches(
+        kapture_path: str,
+        kapture_data: kapture.Kapture,
+        openmvg_matches_file_path: str,
+        kapture_to_openmvg_view_ids: Dict[str, int]
+):
+    if path.splitext(openmvg_matches_file_path)[1] != 'txt':
+        logger.warning('matches are exported as text format, even if file does not ends with .txt.')
+
+    matches = matches_to_filepaths(kapture_data.matches, kapture_path)
+    with open(openmvg_matches_file_path, 'w') as fid:
+        for image_pair, kapture_matches_filepath in matches.items():
+            # idx image1 idx image 2
+            # nb pairs
+            # pl1 pr1 pl2 pr2 ...
+            i, j = [kapture_to_openmvg_view_ids[image_name] for image_name in image_pair]
+            fid.write(f'{i} {j}\n')
+            matches_indices = image_matches_from_file(kapture_matches_filepath)[:, 0:2].astype(int)
+            fid.write(f'{matches_indices.shape[0]}\n')
+            for indices_pair in matches_indices:
+                fid.write(f'{indices_pair[0]}  {indices_pair[1]}\n')
 
 
 def export_openmvg(
@@ -554,6 +579,7 @@ def export_openmvg(
     logger.info(f'loading kapture {kapture_path}...')
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
     assert isinstance(kapture_data, kapture.Kapture)
+    kapture_to_openmvg_view_ids = {}
 
     export_openmvg_sfm_data(
         kapture_data=kapture_data,
@@ -562,7 +588,8 @@ def export_openmvg(
         openmvg_image_root_path=openmvg_image_root_path,
         image_action=image_action,
         image_path_flatten=image_path_flatten,
-        force=force)
+        force=force,
+        kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
 
     if openmvg_regions_dir_path is not None:
         try:
@@ -571,6 +598,17 @@ def export_openmvg(
                 kapture_data=kapture_data,
                 openmvg_regions_dir_path=openmvg_regions_dir_path,
                 image_path_flatten=image_path_flatten
+            )
+        except ValueError as e:
+            logger.error(e)
+
+    if openmvg_matches_file_path is not None:
+        try:
+            export_openmvg_matches(
+                kapture_path=kapture_path,
+                kapture_data=kapture_data,
+                openmvg_matches_file_path=openmvg_matches_file_path,
+                kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids
             )
         except ValueError as e:
             logger.error(e)
