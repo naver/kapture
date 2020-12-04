@@ -351,7 +351,7 @@ def export_openmvg_structure(
     include_2d_observations = kapture_observations is not None
     openmvg_structure = []
     for point_idx, coords in enumerate(xyz_coordinates):
-        single_point_structure = {
+        point_3d_structure = {
             'key': point_idx,
             'value': {
                 'X': coords.tolist(),
@@ -360,20 +360,21 @@ def export_openmvg_structure(
         }
         if include_2d_observations and point_idx in kapture_observations:
             for kapture_image_name, feature_point_id in kapture_observations[point_idx]:
-                keypoints_file_path = get_keypoints_fullpath(kapture_path, kapture_image_name)
-                keypoints_data = image_keypoints_from_file(keypoints_file_path,
-                                                           dtype=kapture_keypoints.dtype,
-                                                           dsize=kapture_keypoints.dsize)
-
                 openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
-                single_point_structure['value']['observations'].append({
-                    'key': openmvg_view_id,
-                    'value': {
-                        'id_feat': feature_point_id,
-                        'x': keypoints_data[feature_point_id, 0:2].tolist()
-                    }
-                })
-        openmvg_structure.append(single_point_structure)
+                point_2d_observation = {'key': openmvg_view_id,
+                                        'value': {'id_feat': feature_point_id, }}
+
+                if kapture_path and kapture_keypoints is not None:
+                    # if given, load keypoints to populate 2D coordinates of the feature.
+                    keypoints_file_path = get_keypoints_fullpath(kapture_path, kapture_image_name)
+                    keypoints_data = image_keypoints_from_file(keypoints_file_path,
+                                                               dtype=kapture_keypoints.dtype,
+                                                               dsize=kapture_keypoints.dsize)
+                    point_2d_observation['value']['x'] = keypoints_data[feature_point_id, 0:2].tolist()
+
+                point_3d_structure['value']['observations'].append(point_2d_observation)
+
+        openmvg_structure.append(point_3d_structure)
 
     return openmvg_structure
 
@@ -400,7 +401,7 @@ def export_openmvg_sfm_data(
     :param image_action: action to apply on images: link, copy, move or do nothing.
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :param force: if true, will remove existing openMVG data without prompting the user.
-
+    :param kapture_to_openmvg_view_ids: input/output mapping of kapture image name to corresponding openmvg view id.
     :return: an SfM_data, the openmvg structure, stored as a dictionary ready to be serialized
     """
 
@@ -423,10 +424,9 @@ def export_openmvg_sfm_data(
 
     # Compute root path and camera used in records
     kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
-    kapture_to_openmvg_view_ids.update({
-        kapture_image_name: i
-        for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera))
-    })
+    for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera)):
+        if kapture_image_name not in kapture_to_openmvg_view_ids:
+            kapture_to_openmvg_view_ids[kapture_image_name] = i
 
     # polymorphic_status = PolymorphicStatus({}, 1, 1)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
@@ -462,7 +462,7 @@ def export_openmvg_sfm_data(
         kapture_observations=kapture_data.observations,
         kapture_keypoints=kapture_data.keypoints,
         kapture_path=kapture_path
-        )
+    )
 
     openmvg_sfm_data = {
         JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
@@ -481,7 +481,7 @@ def export_openmvg_sfm_data(
     # do the actual image transfer
     if not image_action == TransferAction.skip:
         job_copy = (
-            (
+            (  # source path -> dest path
                 get_image_fullpath(kapture_path, kapture_image_name),
                 path.join(openmvg_image_root_path, get_openmvg_image_path(kapture_image_name, image_path_flatten))
             )
@@ -570,8 +570,12 @@ def export_openmvg_matches(
         openmvg_matches_file_path: str,
         kapture_to_openmvg_view_ids: Dict[str, int]
 ):
+    if kapture_data.matches is None:
+        logger.warning('No matches to be exported.')
+        return
+
     if path.splitext(openmvg_matches_file_path)[1] != '.txt':
-        logger.warning('matches are exported as text format, even if file does not ends with .txt.')
+        logger.warning('Matches are exported as text format, even if file does not ends with .txt.')
 
     matches = matches_to_filepaths(kapture_data.matches, kapture_path)
     with open(openmvg_matches_file_path, 'w') as fid:
