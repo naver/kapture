@@ -8,6 +8,7 @@ Script to export a kapture into an openmvg file.
 import argparse
 import logging
 import sys
+import os.path as path
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture.utils.logging
@@ -34,7 +35,9 @@ def export_openmvg_command_line():
     # create the parser for the export command #########################################################################
     parser.add_argument('-i', '-k', '--kapture', required=True,
                         help='path to input kapture data root directory')
-    parser.add_argument('-s', '--sfm_data', required=True,
+    parser.add_argument('-o', '--openmvg',
+                        help='root path to openmvg data structure (subpath are guessed).')
+    parser.add_argument('-s', '--sfm_data',
                         help='path to output openMVG sfm_data JSON file.')
     parser.add_argument('-im', '--images',
                         help='path to output openMVG image directory.')
@@ -55,14 +58,31 @@ def export_openmvg_command_line():
                         help='flatten image subpath, to make sure there is no collision in image names.')
 
     args = parser.parse_args()
-
     logger.setLevel(args.verbose)
+
+    if args.openmvg is None and args.sfm_data is None:
+        raise ValueError('at least one output path should be given.')
+
     if args.verbose <= logging.DEBUG:
         # for debug, let kapture express itself.
         kapture.utils.logging.getLogger().setLevel(args.verbose)
     logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
         '--{:20} {:100}'.format(k, str(v))
         for k, v in vars(args).items()))
+
+    # auto complete using args.openmvg
+    if args.openmvg and args.sfm_data is None:
+        args.sfm_data = path.join(args.openmvg, 'sfm_Data.json')
+        logger.debug(f'guessing output sfm_data is {args.sfm_data}')
+    if args.openmvg and args.images is None:
+        args.images = path.join(args.openmvg, 'images')
+        logger.debug(f'guessing output images is {args.images}')
+    if args.openmvg and args.regions is None:
+        args.regions = path.join(args.openmvg, 'matches')
+        logger.debug(f'guessing output regions is {args.regions}')
+    if args.openmvg and args.matches is None:
+        args.matches = path.join(args.openmvg, 'matches', 'matches.txt')
+        logger.debug(f'guessing output matches is {args.matches}')
 
     # no image dir == sip transfer
     if args.images is None:
