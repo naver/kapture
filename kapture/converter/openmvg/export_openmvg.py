@@ -11,6 +11,7 @@ import os.path as path
 from typing import Dict, List, Optional, Union
 import quaternion
 import numpy as np
+from tqdm import tqdm
 # kapture
 import kapture
 import kapture.io.csv
@@ -350,7 +351,10 @@ def export_openmvg_structure(
     xyz_coordinates = kapture_points_3d[:, 0:3]
     include_2d_observations = kapture_observations is not None
     openmvg_structure = []
-    for point_idx, coords in enumerate(xyz_coordinates):
+    # this loop can be very long, lets show some progress
+    hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
+
+    for point_idx, coords in enumerate(tqdm(xyz_coordinates, disable=hide_progress_bars)):
         point_3d_structure = {
             'key': point_idx,
             'value': {
@@ -439,6 +443,7 @@ def export_openmvg_sfm_data(
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
 
+    logger.debug(f'exporting intrinsics ...')
     openmvg_sfm_data_intrinsics = export_openmvg_intrinsics(
         kapture_cameras=kapture_data.cameras,
         kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
@@ -446,6 +451,7 @@ def export_openmvg_sfm_data(
         ptr_wrapper_registry=ptr_wrapper_registry,
     )
 
+    logger.debug(f'exporting views ...')
     openmvg_sfm_data_views = export_openmvg_views(
         kapture_cameras=kapture_data.cameras,
         kapture_images=kapture_data.records_camera,
@@ -457,12 +463,14 @@ def export_openmvg_sfm_data(
         image_path_flatten=image_path_flatten,
     )
 
+    logger.debug(f'exporting poses ...')
     openmvg_sfm_data_poses = export_openmvg_poses(
         kapture_images=kapture_data.records_camera,
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
 
     # structure : correspond to kapture observations + 3D points
+    logger.debug(f'exporting structure ...')
     openmvg_sfm_data_structure = export_openmvg_structure(
         kapture_points_3d=kapture_data.points3d,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
@@ -481,7 +489,7 @@ def export_openmvg_sfm_data(
         JSON_KEY.CONTROL_POINTS: [],
     }
 
-    logger.info(f'Saving to openmvg {openmvg_sfm_data_file_path}...')
+    logger.debug(f'Saving to openmvg {openmvg_sfm_data_file_path}...')
     with open(openmvg_sfm_data_file_path, "w") as fid:
         json.dump(openmvg_sfm_data, fid, indent=4)
 
@@ -535,9 +543,12 @@ def export_openmvg_regions(
     with open(image_describer_file_path, 'w') as fid:
         json.dump(image_describer, fid, indent=4)
 
+    # this loop can be very long, lets show some progress
+    hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
+
     # copy keypoints files
     keypoints = keypoints_to_filepaths(kapture_data.keypoints, kapture_path)
-    for kapture_image_name, kapture_keypoint_file_path in keypoints.items():
+    for kapture_image_name, kapture_keypoint_file_path in tqdm(keypoints.items(), disable=hide_progress_bars):
         openmvg_keypoint_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_keypoint_file_name = path.splitext(path.basename(openmvg_keypoint_file_name))[0] + '.feat'
         openmvg_keypoint_file_path = path.join(openmvg_regions_dir_path, openmvg_keypoint_file_name)
@@ -556,7 +567,7 @@ def export_openmvg_regions(
     using AKAZE_Binary_Regions = Binary_Regions<SIOPointFeature, 64>;
     """
     descriptors = descriptors_to_filepaths(kapture_data.descriptors, kapture_path)
-    for kapture_image_name, kapture_descriptors_file_path in descriptors.items():
+    for kapture_image_name, kapture_descriptors_file_path in tqdm(descriptors.items(), disable=hide_progress_bars):
         openmvg_descriptors_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_descriptors_file_name = path.splitext(path.basename(openmvg_descriptors_file_name))[0] + '.desc'
         openmvg_descriptors_file_path = path.join(openmvg_regions_dir_path, openmvg_descriptors_file_name)
@@ -584,9 +595,10 @@ def export_openmvg_matches(
     if path.splitext(openmvg_matches_file_path)[1] != '.txt':
         logger.warning('Matches are exported as text format, even if file does not ends with .txt.')
 
+    hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
     matches = matches_to_filepaths(kapture_data.matches, kapture_path)
     with open(openmvg_matches_file_path, 'w') as fid:
-        for image_pair, kapture_matches_filepath in matches.items():
+        for image_pair, kapture_matches_filepath in tqdm(matches.items(), disable=hide_progress_bars):
             # idx image1 idx image 2
             # nb pairs
             # pl1 pr1 pl2 pr2 ...
@@ -640,6 +652,7 @@ def export_openmvg(
     assert isinstance(kapture_data, kapture.Kapture)
     kapture_to_openmvg_view_ids = {}
 
+    logger.info(f'exporting sfm data to {openmvg_sfm_data_file_path} ...')
     export_openmvg_sfm_data(
         kapture_data=kapture_data,
         kapture_path=kapture_path,
@@ -652,6 +665,7 @@ def export_openmvg(
 
     if openmvg_regions_dir_path is not None:
         try:
+            logger.info(f'exporting regions to {openmvg_regions_dir_path} ...')
             export_openmvg_regions(
                 kapture_path=kapture_path,
                 kapture_data=kapture_data,
@@ -663,6 +677,7 @@ def export_openmvg(
 
     if openmvg_matches_file_path is not None:
         try:
+            logger.info(f'exporting matches to {openmvg_matches_file_path} ...')
             export_openmvg_matches(
                 kapture_path=kapture_path,
                 kapture_data=kapture_data,
