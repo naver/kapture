@@ -348,6 +348,11 @@ def export_openmvg_structure(
         kapture_keypoints: Optional[kapture.Keypoints],
         kapture_path: Optional[str],
 ):
+    # early check
+    if kapture_points_3d is None:
+        logger.warning(f'no 3D points to export.')
+        return
+
     xyz_coordinates = kapture_points_3d[:, 0:3]
     include_2d_observations = kapture_observations is not None
     openmvg_structure = []
