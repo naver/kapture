@@ -411,6 +411,13 @@ def export_openmvg_sfm_data(
     if image_action == TransferAction.root_link:
         raise NotImplementedError('root link is not implemented, use skip instead.')
 
+    # refer to the original image dir when skipping image transfer.
+    if image_action == TransferAction.skip:
+        openmvg_image_root_path = get_image_fullpath(kapture_path)
+
+    if openmvg_image_root_path is None:
+        raise ValueError(f'openmvg_image_root_path must be defined to be able to perform {image_action}.')
+
     # Check we don't have other sensors defined
     if len(kapture_data.sensors) != len(kapture_data.cameras):
         extra_sensor_number = len(kapture_data.sensors) - len(kapture_data.cameras)
@@ -594,10 +601,10 @@ def export_openmvg_matches(
 def export_openmvg(
         kapture_path: str,
         openmvg_sfm_data_file_path: str,
-        openmvg_image_root_path: str,
-        openmvg_regions_dir_path: str,
-        openmvg_matches_file_path: str,
-        image_action: TransferAction,
+        openmvg_image_root_path: str = None,
+        openmvg_regions_dir_path: str = None,
+        openmvg_matches_file_path: str = None,
+        image_action: TransferAction = TransferAction.skip,
         image_path_flatten: bool = False,
         force: bool = False
 ) -> None:
@@ -606,25 +613,26 @@ def export_openmvg(
     If the openmvg_path is a directory, it will create a JSON file (using the default name sfm_data.json)
     in that directory.
 
-    :param kapture_path: full path to the top kapture directory
+    :param kapture_path: full path to input kapture directory
     :param openmvg_sfm_data_file_path: input path to the SfM data file to be written.
-    :param openmvg_image_root_path: input path to openMVG image directory to be created.
+    :param openmvg_image_root_path: optional input path to openMVG image directory to be created.
     :param openmvg_regions_dir_path: optional input path to openMVG regions (feat, desc) directory to be created.
     :param openmvg_matches_file_path: optional input path to openMVG matches file to be created.
     :param image_action: an action to apply on the images: relative linking, absolute linking, copy or move. Or top
-     directory linking or skip to do nothing.
+     directory linking or skip to do nothing. If not "skip" equires openmvg_image_root_path to be defined.
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :param force: if true, will remove existing openMVG data without prompting the user.
     """
+
+    if any(arg is not None and not isinstance(arg, str)
+           for arg in [kapture_path, openmvg_image_root_path, openmvg_regions_dir_path, openmvg_matches_file_path]
+           ):
+        raise ValueError('expect str (or None) as path argument.')
 
     # clean before export
     safe_remove_file(openmvg_sfm_data_file_path, force)
     if path.exists(openmvg_sfm_data_file_path):
         raise ValueError(f'{openmvg_sfm_data_file_path} file already exist')
-
-    # TODO: move this in export_openmvg_sfm_data
-    if image_action == TransferAction.skip:
-        openmvg_image_root_path = get_image_fullpath(kapture_path)
 
     # load kapture
     logger.info(f'loading kapture {kapture_path}...')
