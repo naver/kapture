@@ -531,6 +531,11 @@ def export_openmvg_regions(
     :param image_path_flatten:
     :return:
     """
+    # early check we should do
+    if kapture_data.keypoints is None or kapture_data.descriptors is None:
+        logger.warning('no keypoints or descriptors to export.')
+        return
+
     # only able to export SIFT
     if any([f.type_name.upper() != 'SIFT' for f in [kapture_data.keypoints, kapture_data.descriptors]]):
         raise ValueError(f'unable to export other regions than sift '
