@@ -123,19 +123,24 @@ class TestOpenMvg(unittest.TestCase):
         Test the kapture_to_openmvg export function on a small kapture dataset
         """
         self.assertTrue(path.exists(self._kapture_sample_path), "Kapture directory exists")
-        json_file = path.join(self._tempdir.name, 'sfm_export.json')
-        export_openmvg(self._kapture_sample_path, json_file, TransferAction.copy, force=True)
-        self.assertTrue(path.isfile(json_file), "Openmvg JSON file created")
-        with open(json_file, 'r') as f:
+        openmvg_json_file = path.join(self._tempdir.name, 'sfm_export.json')
+        openmvg_image_root_path = path.join(self._tempdir.name, 'images')
+        export_openmvg(kapture_path=self._kapture_sample_path,
+                       openmvg_sfm_data_file_path=openmvg_json_file,
+                       openmvg_image_root_path=openmvg_image_root_path,
+                       image_action=TransferAction.copy,
+                       force=True)
+        self.assertTrue(path.isfile(openmvg_json_file), "Openmvg JSON file created")
+        with open(openmvg_json_file, 'r') as f:
             sfm_data = json.load(f)
             self.assertEqual(OPENMVG_SFM_DATA_VERSION_NUMBER,
                              sfm_data.get(JSON_KEY.SFM_DATA_VERSION), "Sfm data version number")
             root_path = sfm_data.get(JSON_KEY.ROOT_PATH)
             self.assertIsNotNone(root_path, "Root path exported")
-            self.assertEqual(self._tempdir.name, root_path, "Root path correct")
+            self.assertEqual(openmvg_image_root_path, root_path, "Root path correct")
             intrinsics = sfm_data.get(JSON_KEY.INTRINSICS)
             self.assertIsNotNone(intrinsics, "Intrinsics")
-            self.assertEqual(9, len(intrinsics), "Cameras")
+            self.assertEqual(10, len(intrinsics), "Cameras")
             camera_ids = {}
             # Search for camera 22970285 and lidar1
             basler = None
@@ -148,7 +153,7 @@ class TestOpenMvg(unittest.TestCase):
                     basler = intrinsic.get(JSON_KEY.VALUE)
                 elif camera_id == LIDAR1:
                     lidar = intrinsic.get(JSON_KEY.VALUE)
-            self.assertEqual(9, len(camera_ids), "All camera identifiers are different")
+            self.assertEqual(10, len(camera_ids), "All camera identifiers are different")
             self.assertIsNotNone(basler, "First basler camera")
             self.assertEqual(CameraModel.pinhole_brown_t2.name,
                              basler.get(JSON_KEY.POLYMORPHIC_NAME), "Polymorphic name")
