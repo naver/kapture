@@ -84,8 +84,12 @@ def transfer_files_from_dir_link(
     :param do_relative_link: if True, do relative links else absolute links.
     """
     hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
-    for src, dst in tqdm(zip(source_filepath_list, destination_filepath_list), total=len(source_filepath_list),
-                         disable=hide_progress_bar):
+    jobs = zip(source_filepath_list, destination_filepath_list)
+    try:
+        total_progress_bar = max(len(source_filepath_list), len(destination_filepath_list))
+    except TypeError:
+        total_progress_bar = None
+    for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_progress_bar):
         # make sure we deal absolute full path
         src = path_secure(path.abspath(src))
         dst = path_secure(path.abspath(dst))
