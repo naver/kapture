@@ -518,28 +518,30 @@ def export_openmvg_sfm_data(
 
 def export_openmvg_regions(
         kapture_path: str,
-        kapture_data: kapture.Kapture,
+        kapture_keypoints: Optional[kapture.Keypoints],
+        kapture_descriptors: kapture.Descriptors,
         openmvg_regions_dir_path: str,
         image_path_flatten: bool
 ):
     """
     exports openMVG regions ie keypoints and descriptors.
 
-    :param kapture_path:
-    :param kapture_data:
-    :param openmvg_regions_dir_path:
-    :param image_path_flatten:
+    :param kapture_path: input path to root kapture directory.
+    :param kapture_keypoints: input kapture keypoints. Could be None if no keypoints.
+    :param kapture_descriptors: input kapture descriptors. Could be None if no descriptors.
+    :param openmvg_regions_dir_path: input path to output openMVG regions directory.
+    :param image_path_flatten: if true, it means that image path are to be flatten.
     :return:
     """
     # early check we should do
-    if kapture_data.keypoints is None or kapture_data.descriptors is None:
+    if kapture_keypoints is None or kapture_descriptors is None:
         logger.warning('no keypoints or descriptors to export.')
         return
 
     # only able to export SIFT
-    if any([f.type_name.upper() != 'SIFT' for f in [kapture_data.keypoints, kapture_data.descriptors]]):
+    if any([f.type_name.upper() != 'SIFT' for f in [kapture_keypoints, kapture_descriptors]]):
         raise ValueError(f'unable to export other regions than sift '
-                         f'(got {kapture_data.keypoints.type_name}/{kapture_data.descriptors.type_name})')
+                         f'(got {kapture_keypoints.type_name}/{kapture_descriptors.type_name})')
 
     os.makedirs(openmvg_regions_dir_path, exist_ok=True)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
@@ -557,14 +559,14 @@ def export_openmvg_regions(
     hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
 
     # copy keypoints files
-    keypoints = keypoints_to_filepaths(kapture_data.keypoints, kapture_path)
+    keypoints = keypoints_to_filepaths(kapture_keypoints, kapture_path)
     for kapture_image_name, kapture_keypoint_file_path in tqdm(keypoints.items(), disable=hide_progress_bars):
         openmvg_keypoint_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_keypoint_file_name = path.splitext(path.basename(openmvg_keypoint_file_name))[0] + '.feat'
         openmvg_keypoint_file_path = path.join(openmvg_regions_dir_path, openmvg_keypoint_file_name)
         keypoints_data = image_keypoints_from_file(kapture_keypoint_file_path,
-                                                   kapture_data.keypoints.dtype,
-                                                   kapture_data.keypoints.dsize)
+                                                   kapture_keypoints.dtype,
+                                                   kapture_keypoints.dsize)
         keypoints_data = keypoints_data[:, 0:4]
         np.savetxt(openmvg_keypoint_file_path, keypoints_data, fmt='%10.5f')
 
@@ -576,14 +578,14 @@ def export_openmvg_regions(
     using AKAZE_Liop_Regions = Scalar_Regions<SIOPointFeature, unsigned char, 144>;
     using AKAZE_Binary_Regions = Binary_Regions<SIOPointFeature, 64>;
     """
-    descriptors = descriptors_to_filepaths(kapture_data.descriptors, kapture_path)
+    descriptors = descriptors_to_filepaths(kapture_descriptors, kapture_path)
     for kapture_image_name, kapture_descriptors_file_path in tqdm(descriptors.items(), disable=hide_progress_bars):
         openmvg_descriptors_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_descriptors_file_name = path.splitext(path.basename(openmvg_descriptors_file_name))[0] + '.desc'
         openmvg_descriptors_file_path = path.join(openmvg_regions_dir_path, openmvg_descriptors_file_name)
         kapture_descriptors_data = image_descriptors_from_file(kapture_descriptors_file_path,
-                                                               kapture_data.descriptors.dtype,
-                                                               kapture_data.descriptors.dsize)
+                                                               kapture_descriptors.dtype,
+                                                               kapture_descriptors.dsize)
         # assign a byte array of [size_t[1] + uint8[nb features x 128]
         size_t_len = 64 // 8
         openmvg_descriptors_data = np.empty(dtype=np.uint8, shape=(kapture_descriptors_data.size + size_t_len,))
@@ -659,7 +661,8 @@ def export_openmvg(
     # load kapture
     logger.info(f'loading kapture {kapture_path}...')
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
-    assert isinstance(kapture_data, kapture.Kapture)
+    if kapture_data is None or not isinstance(kapture_data, kapture.Kapture):
+        raise ValueError(f'unable to load kapture from {kapture_path}')
     kapture_to_openmvg_view_ids = {}
 
     logger.info(f'exporting sfm data to {openmvg_sfm_data_file_path} ...')
@@ -678,7 +681,8 @@ def export_openmvg(
             logger.info(f'exporting regions to {openmvg_regions_dir_path} ...')
             export_openmvg_regions(
                 kapture_path=kapture_path,
-                kapture_data=kapture_data,
+                kapture_keypoints=kapture_data.keypoints,
+                kapture_descriptors=kapture_data.descriptors,
                 openmvg_regions_dir_path=openmvg_regions_dir_path,
                 image_path_flatten=image_path_flatten
             )
