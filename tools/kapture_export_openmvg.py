@@ -45,7 +45,7 @@ def export_openmvg_command_line():
                         help='path to output openMVG regions directory (for features and descriptors).')
     parser.add_argument('-m', '--matches',
                         help='path to output openMVG matches file.')
-    parser.add_argument('--image_action', default='root_link', type=TransferAction,
+    parser.add_argument('--image_action', default='skip', type=TransferAction,
                         help=f'''what to do with images:
         {TransferAction.root_link.name}: link to the root of the images directory (default) ;
         {TransferAction.link_absolute.name}: absolute individual file link ;
