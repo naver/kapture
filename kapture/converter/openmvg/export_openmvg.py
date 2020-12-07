@@ -344,9 +344,9 @@ def export_openmvg_poses(
 def export_openmvg_structure(
         kapture_points_3d: kapture.Points3d,
         kapture_to_openmvg_view_ids: Dict[str, int],
-        kapture_observations: Optional[kapture.Observations],
-        kapture_keypoints: Optional[kapture.Keypoints],
-        kapture_path: Optional[str],
+        kapture_observations: Optional[kapture.Observations] = None,
+        kapture_keypoints: Optional[kapture.Keypoints] = None,
+        kapture_path: Optional[str] = None,
 ):
     # early check
     if kapture_points_3d is None:
@@ -376,10 +376,13 @@ def export_openmvg_structure(
                 if kapture_path and kapture_keypoints is not None:
                     # if given, load keypoints to populate 2D coordinates of the feature.
                     keypoints_file_path = get_keypoints_fullpath(kapture_path, kapture_image_name)
-                    keypoints_data = image_keypoints_from_file(keypoints_file_path,
-                                                               dtype=kapture_keypoints.dtype,
-                                                               dsize=kapture_keypoints.dsize)
-                    point_2d_observation['value']['x'] = keypoints_data[feature_point_id, 0:2].tolist()
+                    try:
+                        keypoints_data = image_keypoints_from_file(keypoints_file_path,
+                                                                   dtype=kapture_keypoints.dtype,
+                                                                   dsize=kapture_keypoints.dsize)
+                        point_2d_observation['value']['x'] = keypoints_data[feature_point_id, 0:2].tolist()
+                    except FileNotFoundError:
+                        logger.warning(f'unable to load keypoints file {keypoints_file_path}')
 
                 point_3d_structure['value']['observations'].append(point_2d_observation)
 
