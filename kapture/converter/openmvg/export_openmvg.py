@@ -430,6 +430,9 @@ def export_openmvg_sfm_data(
     if openmvg_image_root_path is None:
         raise ValueError(f'openmvg_image_root_path must be defined to be able to perform {image_action}.')
 
+    # make sure directory is ready to contain openmvg_sfm_data_file_path
+    os.makedirs(path.dirname(openmvg_sfm_data_file_path), exist_ok=True)
+
     # Check we don't have other sensors defined
     if len(kapture_data.sensors) != len(kapture_data.cameras):
         extra_sensor_number = len(kapture_data.sensors) - len(kapture_data.cameras)
@@ -541,6 +544,9 @@ def export_openmvg_regions(
         logger.warning('no keypoints or descriptors to export.')
         return
 
+    # make sure output directory is ready
+    os.makedirs(openmvg_regions_dir_path, exist_ok=True)
+
     # only able to export SIFT
     if any([f.type_name.upper() != 'SIFT' for f in [kapture_keypoints, kapture_descriptors]]):
         raise ValueError(f'unable to export other regions than sift '
@@ -609,6 +615,9 @@ def export_openmvg_matches(
 
     if path.splitext(openmvg_matches_file_path)[1] != '.txt':
         logger.warning('Matches are exported as text format, even if file does not ends with .txt.')
+
+    # make sure output directory is ready
+    os.makedirs(path.dirname(openmvg_matches_file_path), exist_ok=True)
 
     hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
     matches = matches_to_filepaths(kapture_data.matches, kapture_path)

@@ -54,7 +54,7 @@ def export_openmvg_command_line():
         {TransferAction.move.name}: move file instead of creating link ;
         {TransferAction.skip.name}: do not create links
                                       ''')
-    parser.add_argument('--image_path_flatten', type=bool, default=False,
+    parser.add_argument('--image_path_flatten', type=bool, default=False, action='store_true',
                         help='flatten image subpath, to make sure there is no collision in image names.')
 
     args = parser.parse_args()
@@ -72,7 +72,7 @@ def export_openmvg_command_line():
 
     # auto complete using args.openmvg
     if args.openmvg and args.sfm_data is None:
-        args.sfm_data = path.join(args.openmvg, 'sfm_Data.json')
+        args.sfm_data = path.join(args.openmvg, 'sfm_data.json')
         logger.debug(f'guessing output sfm_data is {args.sfm_data}')
     if args.openmvg and args.images is None:
         args.images = path.join(args.openmvg, 'images')
