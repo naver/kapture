@@ -151,7 +151,7 @@ def export_openmvg_intrinsics(
         openmvg_camera_id = kapture_to_openmvg_cam_ids.get(kapture_cam_id)
         if openmvg_camera_id is None:
             # this cameras is not used, skip it to make openMVG happy
-            logger.warning(f'skip intrinsic parameters for camera {kapture_cam_id}')
+            logger.debug(f'skip intrinsic parameters for camera {kapture_cam_id}')
             continue
 
         kapture_cam_type = kapture_camera.camera_type
@@ -355,7 +355,7 @@ def export_openmvg_extrinsics(
         openmvg_view_id = kapture_to_openmvg_view_ids.get(kapture_image_name)
         if openmvg_view_id is None:
             # this pose corresponds to no views (orphan), openMVG does not want it.
-            logger.warning(f'skipping extrinsic for {kapture_image_name} (not referenced in views).')
+            logger.debug(f'skipping extrinsic for {kapture_image_name} (not referenced in views).')
             continue
 
         # retrieve image pose from trajectories
@@ -504,7 +504,7 @@ def export_openmvg_sfm_data(
         ptr_wrapper_registry=ptr_wrapper_registry,
     )
 
-    logger.debug(f'exporting poses ...')
+    logger.debug(f'exporting extrinsics ...')
     openmvg_sfm_data_extrinsics = export_openmvg_extrinsics(
         kapture_images=kapture_data.records_camera,
         kapture_trajectories=kapture_data.trajectories,
