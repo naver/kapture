@@ -309,7 +309,7 @@ def export_openmvg_views(
     return views
 
 
-def export_openmvg_poses(
+def export_openmvg_extrinsics(
         kapture_images: kapture.RecordsCamera,
         kapture_trajectories: kapture.Trajectories,
         kapture_to_openmvg_view_ids: Dict[str, int],
@@ -324,7 +324,11 @@ def export_openmvg_poses(
     extrinsics = []
     # process all images
     for timestamp, kapture_cam_id, kapture_image_name in kapture.flatten(kapture_images):
-        assert kapture_image_name in kapture_to_openmvg_view_ids
+        if kapture_image_name not in kapture_to_openmvg_view_ids:
+            # this pose corresponds to no views (orphan), openMVG does not want it.
+            logger.warning(f'skipping extrinsic for {kapture_image_name} (not referenced in views).')
+            continue
+
         openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
         # retrieve image pose from trajectories
         if timestamp in kapture_trajectories:
@@ -475,7 +479,7 @@ def export_openmvg_sfm_data(
     )
 
     logger.debug(f'exporting poses ...')
-    openmvg_sfm_data_poses = export_openmvg_poses(
+    openmvg_sfm_data_extrinsics = export_openmvg_extrinsics(
         kapture_images=kapture_data.records_camera,
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
@@ -495,7 +499,7 @@ def export_openmvg_sfm_data(
         JSON_KEY.ROOT_PATH: path.abspath(openmvg_image_root_path),
         JSON_KEY.INTRINSICS: openmvg_sfm_data_intrinsics,
         JSON_KEY.VIEWS: openmvg_sfm_data_views,
-        JSON_KEY.EXTRINSICS: openmvg_sfm_data_poses,
+        JSON_KEY.EXTRINSICS: openmvg_sfm_data_extrinsics,
         JSON_KEY.STRUCTURE: openmvg_sfm_data_structure,
         JSON_KEY.CONTROL_POINTS: [],
     }
