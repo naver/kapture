@@ -104,22 +104,23 @@ def _get_intrinsic_fisheye(camera_params: list) -> Dict:
             JSON_KEY.FISHEYE: fisheye}
 
 
-def get_openmvg_camera_id(kapture_camera_id, kapture_to_openmvg_cam_ids):
-    """ return a valid openmvg camera id for the given kapture on.
-    It keeps kapture_to_openmvg_cam_ids uptodate, and ensure there is no collision.
+def get_openmvg_id(kapture_id, kapture_to_openmvg_ids):
+    """ return a valid openmvg ID (int) for the given kapture one.
+    If kapture_id is not in kapture_to_openmvg_ids, make up a new one,
+    and keep kapture_to_openmvg_ids up to date.
     """
 
-    if kapture_camera_id in kapture_to_openmvg_cam_ids:
+    if kapture_id in kapture_to_openmvg_ids:
         # already defined
-        return kapture_to_openmvg_cam_ids[kapture_camera_id]
+        return kapture_to_openmvg_ids[kapture_id]
 
     # its not defined, then, make up one
-    last_known_openmvg_camera_id = max(list(kapture_to_openmvg_cam_ids.values()) + [-1])
-    assert type(last_known_openmvg_camera_id) == int
-    openmvg_camera_id = last_known_openmvg_camera_id + 1
-    assert openmvg_camera_id not in kapture_to_openmvg_cam_ids
-    kapture_to_openmvg_cam_ids[kapture_camera_id] = openmvg_camera_id
-    return openmvg_camera_id
+    last_known_openmvg_id = max(list(kapture_to_openmvg_ids.values()) + [-1])
+    assert type(last_known_openmvg_id) == int
+    openmvg_id = last_known_openmvg_id + 1
+    assert openmvg_id not in kapture_to_openmvg_ids
+    kapture_to_openmvg_ids[kapture_id] = openmvg_id
+    return openmvg_id
 
 
 def get_openmvg_image_path(kapture_image_name: str, flatten_path: bool = False):
@@ -147,7 +148,12 @@ def export_openmvg_intrinsics(
     # kapture_to_openmvg_cam_ids = {}
     # process all cameras
     for kapture_cam_id, kapture_camera in kapture_cameras.items():
-        openmvg_camera_id = get_openmvg_camera_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
+        openmvg_camera_id = kapture_to_openmvg_cam_ids.get(kapture_cam_id)
+        if openmvg_camera_id is None:
+            # this cameras is not used, skip it to make openMVG happy
+            logger.warning(f'skip intrinsic parameters for camera {kapture_cam_id}')
+            continue
+
         kapture_cam_type = kapture_camera.camera_type
         kapture_camera_params = kapture_camera.camera_params
         if kapture_cam_type == kapture.CameraType.SIMPLE_PINHOLE:
@@ -259,12 +265,34 @@ def export_openmvg_views(
     :return:
     """
     views = []
+
+    """
+    fills an array of views like :  
+    {
+            "key": 0,
+            "value": {
+                "polymorphic_id": 2147483650, "polymorphic_name": "view_priors", "ptr_wrapper": {
+                    "id": 2147488881,
+                    "data": {
+                        "local_path": "db",
+                        "filename": "1.jpg",
+                        "width": 1600,
+                        "height": 1063,
+                        "id_view": 0,
+                        "id_intrinsic": 3156,
+                        "id_pose": 0,
+                and optionally  
+                        "use_pose_center_prior": true, "center_weight": [1.0,1.0,1.0], "center": [...],
+                        "use_pose_rotation_prior": true, "rotation_weight": 1.0, "rotation": [[...],[...],[...]]
+                    }
+                }
+            }
+        },
+    """
     # process all images
     for timestamp, kapture_cam_id, kapture_image_name in kapture.flatten(kapture_images):
-        assert kapture_cam_id in kapture_to_openmvg_cam_ids
-        assert kapture_image_name in kapture_to_openmvg_view_ids
-        openmvg_cam_id = get_openmvg_camera_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
-        openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
+        openmvg_cam_id = get_openmvg_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
+        openmvg_view_id = get_openmvg_id(kapture_image_name, kapture_to_openmvg_view_ids)
         openmvg_image_filepath = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_image_filename = path.basename(openmvg_image_filepath)
         openmvg_image_local_path = path.dirname(openmvg_image_filepath)
@@ -324,12 +352,12 @@ def export_openmvg_extrinsics(
     extrinsics = []
     # process all images
     for timestamp, kapture_cam_id, kapture_image_name in kapture.flatten(kapture_images):
-        if kapture_image_name not in kapture_to_openmvg_view_ids:
+        openmvg_view_id = kapture_to_openmvg_view_ids.get(kapture_image_name)
+        if openmvg_view_id is None:
             # this pose corresponds to no views (orphan), openMVG does not want it.
             logger.warning(f'skipping extrinsic for {kapture_image_name} (not referenced in views).')
             continue
 
-        openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
         # retrieve image pose from trajectories
         if timestamp in kapture_trajectories:
             # there is a pose for that timestamp
@@ -450,21 +478,11 @@ def export_openmvg_sfm_data(
 
     # Compute root path and camera used in records
     kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
-    for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera)):
-        if kapture_image_name not in kapture_to_openmvg_view_ids:
-            kapture_to_openmvg_view_ids[kapture_image_name] = i
+    kapture_to_openmvg_view_ids = {}  # kapture_image_name -> openmvg_view_id
 
     # polymorphic_status = PolymorphicStatus({}, 1, 1)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
-
-    logger.debug(f'exporting intrinsics ...')
-    openmvg_sfm_data_intrinsics = export_openmvg_intrinsics(
-        kapture_cameras=kapture_data.cameras,
-        kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
-        polymorphic_registry=polymorphic_registry,
-        ptr_wrapper_registry=ptr_wrapper_registry,
-    )
 
     logger.debug(f'exporting views ...')
     openmvg_sfm_data_views = export_openmvg_views(
@@ -476,6 +494,14 @@ def export_openmvg_sfm_data(
         polymorphic_registry=polymorphic_registry,
         ptr_wrapper_registry=ptr_wrapper_registry,
         image_path_flatten=image_path_flatten,
+    )
+
+    logger.debug(f'exporting intrinsics ...')
+    openmvg_sfm_data_intrinsics = export_openmvg_intrinsics(
+        kapture_cameras=kapture_data.cameras,
+        kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
+        polymorphic_registry=polymorphic_registry,
+        ptr_wrapper_registry=ptr_wrapper_registry,
     )
 
     logger.debug(f'exporting poses ...')
@@ -496,11 +522,11 @@ def export_openmvg_sfm_data(
 
     openmvg_sfm_data = {
         JSON_KEY.SFM_DATA_VERSION: OPENMVG_SFM_DATA_VERSION_NUMBER,
-        JSON_KEY.ROOT_PATH: path.abspath(openmvg_image_root_path),
-        JSON_KEY.INTRINSICS: openmvg_sfm_data_intrinsics,
-        JSON_KEY.VIEWS: openmvg_sfm_data_views,
-        JSON_KEY.EXTRINSICS: openmvg_sfm_data_extrinsics,
-        JSON_KEY.STRUCTURE: openmvg_sfm_data_structure,
+        JSON_KEY.ROOT_PATH: openmvg_image_root_path,
+        JSON_KEY.INTRINSICS: openmvg_sfm_data_intrinsics or [],
+        JSON_KEY.VIEWS: openmvg_sfm_data_views or [],
+        JSON_KEY.EXTRINSICS: openmvg_sfm_data_extrinsics or [],
+        JSON_KEY.STRUCTURE: openmvg_sfm_data_structure or [],
         JSON_KEY.CONTROL_POINTS: [],
     }
 
@@ -679,7 +705,7 @@ def export_openmvg(
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
     if kapture_data is None or not isinstance(kapture_data, kapture.Kapture):
         raise ValueError(f'unable to load kapture from {kapture_path}')
-    kapture_to_openmvg_view_ids = {}
+    kapture_to_openmvg_view_ids = {}  # kapture image name -> openMVG view ID
 
     logger.info(f'exporting sfm data to {openmvg_sfm_data_file_path} ...')
     export_openmvg_sfm_data(
