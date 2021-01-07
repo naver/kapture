@@ -1,5 +1,6 @@
 dataclasses>=0.3
-numpy>=1.16
+# numpy 1.20 requires python 3.7
+numpy==1.19.5
 numpy-quaternion
 numba
 matplotlib
