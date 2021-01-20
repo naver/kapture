@@ -29,11 +29,6 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload --skip-existing dist/*
-    - #name: push pip package
-      #uses: pypa/gh-action-pypi-publish@master
-      #with:
-      #  password: ${{ secrets.PYPI_TOKEN }}
-
   deploy_docker:
     runs-on: ubuntu-latest
     steps:
