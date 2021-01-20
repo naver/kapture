@@ -7,6 +7,7 @@ from glob import glob
 from subprocess import check_call
 import os
 import tempfile
+import sys
 
 HERE = path.normpath(path.dirname(__file__))
 
@@ -24,12 +25,13 @@ def read_doc(filepath):
         with tempfile.TemporaryDirectory() as tmpdirname:
             xml_filepath = path.join(tmpdirname, 'README.xml')
             md_filepath = path.join(tmpdirname, 'README.md')
-            check_call(['asciidoctor', '-b', 'docbook', filepath, '-o', xml_filepath])
-            check_call(['pandoc', '-f', 'docbook', '-t', 'markdown_strict', xml_filepath, '-o', md_filepath])
+            use_shell = sys.platform.startswith("win")
+            check_call(['asciidoctor', '-b', 'docbook', filepath, '-o', xml_filepath], shell=use_shell)
+            check_call(['pandoc', '-f', 'docbook', '-t', 'markdown_strict', xml_filepath, '-o', md_filepath], shell=use_shell)
             content = read_file(md_filepath)
 
     except FileNotFoundError:
-        warnings.warn('cannot convert asciidoc to markdown.')
+        warnings.warn(f'cannot convert asciidoc to markdown.')
         content = read_file(filepath)
 
     return content
@@ -42,7 +44,7 @@ long_description = read_doc(readme_filepath)
 setuptools.setup(
     # description
     name='kapture',
-    version="1.0.12",
+    version="1.0.13",
     author="naverlabs",
     author_email="kapture@naverlabs.com",
     description="kapture: file format for SfM",
