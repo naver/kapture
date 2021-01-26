@@ -1004,9 +1004,7 @@ NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparat
 TO BE COMPLETED
 ----
 
-The `.matches` files are binary dump of numpy array of type `uint32` on 2 columns, where each row is a feature matching, first column is index of feature in first image, and second column is the index of the feature in the second image.
-
-WARNING: *Modification* to come : use a 3rd column to encode a quality score. (?)
+The `.matches` files are binary dump of numpy array of type `np.float64` on 3 columns, where each row is a feature matching, first column is index of feature in first image, second column is the index of the feature in the second image, 3rd column encodes a quality score.
 
 == Camera axis
 
