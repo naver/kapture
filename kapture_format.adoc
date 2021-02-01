@@ -1096,6 +1096,29 @@ NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparat
 [17.0, 123.0, 0.7894, .... 1678.0, 3540.0, 0.3214]
 ----
 
+== Pairsfile
+
+Kapture and Kapture localization can read text files to select/read only relevant matches.
+They are csv files that follow the same rules as the other text files in kapture.
+
+[source,txt]
+----
+query_image, map_image, score
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|      query_image | string | Path to the image file. The path is relative to `sensors/records_data/`.
+|        map_image | string | Path to the image file. The path is relative to `sensors/records_data/`.
+|            score | float  | Pairing score, depends on which method you use to pair the images, the higher the number the better the pairing.
+|===
+
+It may also optionally contains some comments (lines starting with `#`) or blank lines.
+
+
 == Camera axis
 
 Concerning camera axis, __kapture__ follows the computer vision convention (see fig below).
