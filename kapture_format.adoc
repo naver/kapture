@@ -968,7 +968,7 @@ Where:
 
 === `│ ├─ observations.txt`
 
-This file contains all 3D points observations, using one line per 3D-point.
+This file contains all 3D points observations, using one line per pair (3D-point, keypoints_type).
 
 ==== syntax
 
