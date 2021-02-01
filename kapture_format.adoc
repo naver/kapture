@@ -1,4 +1,4 @@
-= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  data format v1.0
+= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  data format v1.1
 :sectnums:
 :sectnumlevels: 1
 :toc:
@@ -32,26 +32,52 @@ my_dataset                          # Data root path
 │     ├─ query/query001.jpg         # example of image path used in records_camera.txt
 │     └─ ...
 └─ reconstruction/
-   ├─ keypoints/                    # 2D keypoints files
-   │  ├─ keypoints.txt              # type of keypoint
-   │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
-   │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
-   │  └─ ...
-   ├─ descriptors/                  # keypoint descriptors files
-   │  ├─ descriptors.txt            # type of descriptor
-   │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
-   │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
-   │  └─ ...
-   ├─ global_features/              # global feature files
-   │  ├─ global_features.txt        # type of global feature
-   │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
-   │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
-   │  └─ ...
+   ├─ keypoints/                       # 2D keypoints files
+   │  ├─ r2d2_WASF-N8_20k              # identify the type of keypoints, Optional, can be a tar: r2d2_WASF-N8_20k.tar
+   │  │  ├─ keypoints.txt              # type of keypoint (shape and dtype)
+   │  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+   │  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ d2_tf                         # identify the type of keypoints, Optional, can be a tar: d2_tf.tar
+   │  │  ├─ keypoints.txt              # type of keypoint (shape and dtype)
+   │  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+   │  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ ...
+   ├─ descriptors/                     # keypoint descriptors files
+   │  ├─ r2d2_WASF-N8_20k              # identify the type of descriptors, Optional, can be a tar: r2d2_WASF-N8_20k.tar
+   │  │  ├─ descriptors.txt            # type of descriptor (keypoints type, shape and dtype)
+   │  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
+   │  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ d2_tf                         # identify the type of descriptors, Optional, can be a tar: d2_tf.tar
+   │  │  ├─ descriptors.txt            # type of descriptor
+   │  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
+   │  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ ...
    ├─ points3d.txt                  # 3D points of the reconstruction
    ├─ observations.txt              # 2D/3D points corespondences
-   └─ matches/                      # matches root path.
-      ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example of matching file.
-      └─ ...
+   ├─ matches/                      # matches files.
+   │  ├─ r2d2_WASF-N8_20k           # identify the type of keypoints that are matched, Optional, can be a tar: r2d2_WASF-N8_20k.tar
+   │  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
+   │  │  ├─  ...
+   │  ├─ d2_tf                      # identify the type of keypoints that are matched, Optional, can be a tar: d2_tf.tar
+   │  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
+   │  │  ├─  ...
+   │  ├─ ...
+   └─ global_features/                 # global feature files
+      ├─ AP-GeM-LM18                   # identify the type of global_features, Optional, can be a tar: AP-GeM-LM18.tar
+      │  ├─ global_features.txt        # type of global feature
+      │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+      │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+      │  └─ ...
+      ├─ DELG                          # identify the type of global_features, Optional, can be a tar: DELG.tar
+      │  ├─ global_features.txt        # type of global feature
+      │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+      │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+      │  └─ ...
+      ├─ ...
 ----
 
 
@@ -644,9 +670,11 @@ This directory contains image key-points related files.
 
 ==== structure
 
-This directory is organised as follow:
+This directory is a collection of extracted keypoints.
+Each subdirectory correspond to a different type of keypoint.
+The subdirectories are organised as follow:
 
- - `keypoints.txt` files describes the type of key-points,
+ - `keypoints.txt` files describes the type of key-points (shape and dtype),
  - a set of binary `.kpt` files describes key-points of images.
    There is one key-points file per image, and the file tree must
   *strictly follow the same path and naming* as `sensors/records_data/`.
@@ -656,10 +684,17 @@ This directory is organised as follow:
 .reconstruction/keypoints/
 ----
 ├─ reconstruction/
-│  ├─ keypoints/                    # 2D keypoints files
-│  │  ├─ keypoints.txt              # type of keypoint
-│  │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
-│  │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
+│  ├─ keypoints/                       # 2D keypoints files
+│  │  ├─ r2d2_WASF-N8_20k
+│  │  │  ├─ keypoints.txt              # type of keypoint
+│  │  │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
+│  │  │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
+│  │  │  ├─ ...
+│  │  ├─ d2_tf
+│  │  │  ├─ keypoints.txt              # type of keypoint
+│  │  │  ├─ map/cam_01/00001.jpg.kpt   # example of keypoints for corresponding image
+│  │  │  ├─ query/query001.jpg.kpt     # example of keypoints for corresponding image
+│  │  │  ├─ ...
 │  │  ├─ ...
 ----
 
@@ -690,7 +725,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 
 ==== example
 
-.reconstruction/keypoints/keypoints.txt
+.reconstruction/keypoints/r2d2_WASF-N8_20k/keypoints.txt
 [source,txt]
 ----
 # name, dtype, dsize
@@ -713,7 +748,7 @@ The meaning of those values depends on the key-point type (e.g. scale and orient
 
 ==== example
 
-.reconstruction/keypoints/map/cam_01/image000.jpg.kpt (in binary format)
+.reconstruction/keypoints/r2d2_WASF-N8_20k/map/cam_01/image000.jpg.kpt (in binary format)
 [source,txt]
 ----
 #  x,   y, scale, orient.
@@ -728,9 +763,11 @@ This directory contains key-points descriptors related files.
 
 ==== structure
 
-This directory is organised as follow:
+This directory is a collection of extracted keypoints descriptors.
+Each subdirectory correspond to a different type of descriptors.
+The subdirectories are organised as follow:
 
-- `descriptors.txt` files describes the type of descriptors,
+- `descriptors.txt` files describes the type of descriptors (keypoints type, shape and dtype),
  - a set of binary `.desc` files describes key-point descriptors of images.
    There is one descriptors file per image, and the file tree must
   *strictly follow the same path and naming* as `sensors/records_data/`.
@@ -740,10 +777,17 @@ This directory is organised as follow:
 .reconstruction/descriptors/
 ----
 ├─ reconstruction/
-│  ├─ descriptors/                  # keypoint descriptors files
-│  │  ├─ descriptors.txt            # type of descriptor
-│  │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
-│  │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
+│  ├─ descriptors/                     # keypoint descriptors files
+│  │  ├─ r2d2_WASF-N8_20k
+│  │  │  ├─ descriptors.txt            # type of descriptor
+│  │  │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
+│  │  │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
+│  │  │  ├─ ...
+│  │  ├─ d2_tf
+│  │  │  ├─ descriptors.txt            # type of descriptor
+│  │  │  ├─ map/cam_01/00001.jpg.desc  # example of descriptors for corresponding image
+│  │  │  ├─ query/query001.jpg.desc    # example of descriptors for corresponding image
+│  │  │  ├─ ...
 │  │  ├─ ...
 ----
 
@@ -757,7 +801,7 @@ The file contains a single line, following this syntax:
 
 [source,txt]
 ----
-name, dtype, dsize
+name, dtype, dsize, keypoints_type
 ----
 
 with:
@@ -768,17 +812,18 @@ with:
 |             name | string | The name of the descriptor, for information only.
 |            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
 |            dsize | int    | size of a descriptor.
+|            keypoints_type | string | The name of the directory which contains the keypoints that are being described.
 |===
 
 It may also optionally contains some comments (lines starting with `#`) or blank lines.
 
 ==== example
 
-`reconstruction/descriptors/descriptors.txt`:
+`reconstruction/descriptors/r2d2_WASF-N8_20k/descriptors.txt`:
 [source,txt]
 ----
-# name, dtype, dsize
-SIFT, uint8, 128
+# name, dtype, dsize, keypoints_type
+SIFT, uint8, 128, r2d2_WASF-N8_20k
 ----
 
 === `│ │ ├─ *.desc`
@@ -796,7 +841,7 @@ Descriptors must be stored in same order than their corresponding key-points (`.
 
 ==== example
 
-.reconstruction/descriptors/map/cam_01/00001.jpg.desc (in binary format)
+.reconstruction/descriptors/r2d2_WASF-N8_20k/map/cam_01/00001.jpg.desc (in binary format)
 [source,txt]
 ----
 [5.9, 10.7, ...,  0.6, 30.0,
@@ -810,7 +855,9 @@ This directory contains global image features related files.
 
 ==== structure
 
-This directory is organised as follow:
+This directory is a collection of extracted keypoints.
+Each subdirectory correspond to a different type of keypoint.
+The subdirectories are organised as follow:
 
  - `global_features.txt` files describes the type of global features,
  - a set of binary `.gfeat` files describes global feature of images.
@@ -822,10 +869,17 @@ This directory is organised as follow:
 .reconstruction/global_features/
 ----
 ├─ reconstruction/
-│  ├─ global_features/              # global feature files
-│  │  ├─ global_features.txt        # type of global feature
-│  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
-│  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+│  ├─ global_features/                 # global feature files
+│  │  ├─ AP-GeM-LM18
+│  │  │  ├─ global_features.txt        # type of global feature
+│  │  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+│  │  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+│  │  │  └─ ...
+│  │  ├─ DELG
+│  │  │  ├─ global_features.txt        # type of global feature
+│  │  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+│  │  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+│  │  │  └─ ...
 │  │  ├─ ...
 ----
 
@@ -856,10 +910,10 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 
 ==== example
 
-.reconstruction/global_features/global_features.txt
+.reconstruction/global_features/AP-GeM-LM18/global_features.txt
 [source,txt]
 ----
-# Deep Image Retrieval - See: https://github.com/almazan/deep-image-retrieval
+# Deep Image Retrieval - See: https://github.com/naver/deep-image-retrieval
 # name, dtype, dsize
 dirtorch, float32, 2048
 ----
@@ -876,7 +930,7 @@ The length of the array is specified by `dsize` in `global_features.txt`.
 
 ==== example
 
-.reconstruction/global_features/map/cam_01/image01.jpg.gfeat (in binary format)
+.reconstruction/global_features/AP-GeM-LM18/map/cam_01/image01.jpg.gfeat (in binary format)
 [source,txt]
 ----
 [100, 100, .... 0, 0]
@@ -927,6 +981,7 @@ point3d_id, [image_path, feature_id]*
 |===
 |            field | type   | description
 |       point3d_id | uint32 | Line number (0-based index) of the 3D point in the `points3d.txt` file.
+|   keypoints_type | string | The name of the directory that contains the keypoints that the feature_id refers to
 |       image_path | path   | Path to the image file. The path is relative to `sensors/records_data/`.
 |       feature_id | uint32 | Index (0-based) of the feature in the corresponding keypoints (.kpt) file.
 |===
@@ -936,9 +991,9 @@ point3d_id, [image_path, feature_id]*
 .reconstruction/observations.txt
 [source,txt]
 ----
-# point3d_id, [image_path, feature_id]*
-0, cam_01/00002.jpg, 152, cam_01/00005.jpg, 1564
-1, cam_01/00002.jpg, 4551, cam_02/00003.jpg, 5415
+# point3d_id, [keypoints_type, image_path, feature_id]*
+0, cam_01/00002.jpg, r2d2_WASF-N8_20k, 152, r2d2_WASF-N8_20k, cam_01/00005.jpg, 1564
+1, cam_01/00002.jpg, r2d2_WASF-N8_20k, 4551, r2d2_WASF-N8_20k, cam_02/00003.jpg, 5415
 ----
 
 === `│ ├─ matches/`
@@ -950,7 +1005,7 @@ has not necessarily a 3-D consistency, and hence 3-D point.
 
 ==== syntax
 
-TO BE COMPLETED
+The `.matches` files are binary dump of numpy array of type `np.float64` on 3 columns, where each row is a feature matching, first column is index of feature in first image, second column is the index of the feature in the second image, 3rd column encodes a quality score.
 
 ==== example
 
@@ -970,9 +1025,33 @@ TO BE COMPLETED
             │     └─ 00002.jpg.matches
             └─ query/
                └─ query001.jpg.matches
+   └─ matches/                      # matches files.
+      ├─ r2d2_WASF-N8_20k
+      │  └─ cam_01/
+      │     └─ 00001.jpg.overlapping/
+      │       ├─ map/
+      │       │  ├─ cam_01/
+      │       │  │  ├─ 00002.jpg.matches
+      │       │  │  └─ 00003.jpg.matches
+      │       │  └─ cam_02/
+      │       │     ├─ 00001.jpg.matches
+      │       │     └─ 00002.jpg.matches
+      │       └─ query/
+      │          └─ query001.jpg.matches
+      ├─ d2_tf
+      │     └─ 00001.jpg.overlapping/
+      │       ├─ map/
+      │       │  ├─ cam_01/
+      │       │  │  ├─ 00002.jpg.matches
+      │       │  │  └─ 00003.jpg.matches
+      │       │  └─ cam_02/
+      │       │     ├─ 00001.jpg.matches
+      │       │     └─ 00002.jpg.matches
+      │       └─ query/
+      │          └─ query001.jpg.matches
+      ├─ ...
 ...
 ----
-
 
 === `│ | ├─ \*.overlapping/*.matches`
 
@@ -1001,10 +1080,15 @@ NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparat
 .cam1/img000.jpg.overlapping/cam1/img001.jpg.matches (binary dump)
 [source,txt]
 ----
-TO BE COMPLETED
+[17.0, 123.0, 0.7894, .... 1678.0, 3540.0, 0.3214]
 ----
 
-The `.matches` files are binary dump of numpy array of type `np.float64` on 3 columns, where each row is a feature matching, first column is index of feature in first image, second column is the index of the feature in the second image, 3rd column encodes a quality score.
+It is possible to replace some of the recontruction folders with a tar (see which at the top of the document).
+The content of the tarball should match the format described above. Read and Write operations are supported.
+Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be carefull.
+In order to use the tar files, you will have to open them before loading the kapture data:
+TO COMPLETE API IMPLICATIONS OF THAT CHANGE
+----
 
 == Camera axis
 
@@ -1058,3 +1142,7 @@ pose_kapture = kapture.PoseTransform.compose([matrix_ros_to_kapture, pose_ros, m
 ==== 1.0
 
 Initial version of the format
+
+==== 1.1
+
+Multiple feature support in observations + tarfile support
