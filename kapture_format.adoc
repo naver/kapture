@@ -127,6 +127,15 @@ Text files must comply the following:
  - for the reconstruction files, the actual data type is described in the corresponding text file
         (eg. `reconstruction/keypoints/keypoints.txt`)
 
+=== Support for tar files
+
+It is possible to replace some of the recontruction folders with a tar.
+To be precise, all subfolders of `keypoints`, `descriptors`, `global_features` and `matches` can be replaced by an archive of the same name + `.tar`. For example `reconstruction/keypoints/r2d2_WASF-N8_20k/` become `reconstruction/keypoints/r2d2_WASF-N8_20k.tar`.
+The content of the tar file should be identical to the folder it replaces. Read and Write operations are supported.
+Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be careful.
+In order to use the tar files, you will have to open them before loading the kapture data:
+TO COMPLETE API IMPLICATIONS OF THAT CHANGE
+
 == `├─ sensors/`
 
 This folder contains sensor data. Meaning the acquired data as well as the sensors characteristics.
@@ -1085,13 +1094,6 @@ NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparat
 [source,txt]
 ----
 [17.0, 123.0, 0.7894, .... 1678.0, 3540.0, 0.3214]
-----
-
-It is possible to replace some of the recontruction folders with a tar (see which at the top of the document).
-The content of the tarball should match the format described above. Read and Write operations are supported.
-Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be carefull.
-In order to use the tar files, you will have to open them before loading the kapture data:
-TO COMPLETE API IMPLICATIONS OF THAT CHANGE
 ----
 
 == Camera axis
