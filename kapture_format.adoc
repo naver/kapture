@@ -1083,15 +1083,12 @@ NOTE: by convention `image_path1 < image_path2` (with `<` lexicographic comparat
 [17.0, 123.0, 0.7894, .... 1678.0, 3540.0, 0.3214]
 ----
 
-=== tarfile
-
 It is possible to replace some of the recontruction folders with a tar (see which at the top of the document).
 The content of the tarball should match the format described above. Read and Write operations are supported.
 Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be carefull.
 In order to use the tar files, you will have to open them before loading the kapture data:
 TO COMPLETE API IMPLICATIONS OF THAT CHANGE
 ----
-
 
 == Camera axis
 

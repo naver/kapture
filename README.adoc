@@ -8,7 +8,7 @@ image::assets/kapture_logo.svg["KAPTURE", width=64px]
 
 toc::[]
 
-image::https://github.com/naver/kapture/workflows/kapture-master/badge.svg[Continuous Integration Status]
+image::https://github.com/naver/kapture/workflows/kapture-main/badge.svg[Continuous Integration Status]
 
 == Overview
 
@@ -25,7 +25,7 @@ As well as computed data:
 - 2d features
 - 3d reconstruction
 
-Finally, many popular datasets can directly be downloaded using the convenient https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset[downloader]!
+Finally, many popular datasets can directly be downloaded using the convenient https://github.com/naver/kapture/blob/main/doc/tutorial.adoc#download-a-dataset[downloader]!
 
 == Specifications
 The format specification is detailed in the link:kapture_format.adoc[kapture format specifications document].
@@ -137,7 +137,7 @@ docker run -it \
 
 === kapture Python library
 
-See the https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#using-kapture-in-your-code[tutorial]
+See the https://github.com/naver/kapture/blob/main/doc/tutorial.adoc#using-kapture-in-your-code[tutorial]
 for some examples using the kapture Python library.
 
 
