@@ -668,9 +668,9 @@ The `reconstruction` part of __kapture__ contains the result of processing.
 
 This directory contains image key-points related files.
 
+=== `│ │ ├─ keypoints_type/`
 ==== structure
 
-This directory is a collection of extracted keypoints.
 Each subdirectory correspond to a different type of keypoint.
 The subdirectories are organised as follow:
 
@@ -698,7 +698,7 @@ The subdirectories are organised as follow:
 │  │  ├─ ...
 ----
 
-=== `│ │ ├─ keypoints.txt`
+=== `│ │ │ ├─ keypoints.txt`
 
 This text file describes the type of key-points.
 
@@ -732,7 +732,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 SIFT, float32, 6
 ----
 
-=== `│ │ ├─ *.kpt`
+=== `│ │ │ ├─ *.kpt`
 
 Contains all key-points of a single image using one line per key-point.
 
@@ -761,9 +761,9 @@ The meaning of those values depends on the key-point type (e.g. scale and orient
 
 This directory contains key-points descriptors related files.
 
+=== `│ │ ├─ descriptors_type/`
 ==== structure
 
-This directory is a collection of extracted keypoints descriptors.
 Each subdirectory correspond to a different type of descriptors.
 The subdirectories are organised as follow:
 
@@ -791,7 +791,7 @@ The subdirectories are organised as follow:
 │  │  ├─ ...
 ----
 
-=== `│ │ ├─ descriptors.txt`
+=== `│ │ │ ├─ descriptors.txt`
 
 This text file describes the type of descriptors.
 
@@ -826,7 +826,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 SIFT, uint8, 128, r2d2_WASF-N8_20k
 ----
 
-=== `│ │ ├─ *.desc`
+=== `│ │ │ ├─ *.desc`
 
 Contains all key-points descriptors of a single image using one line per descriptor.
 Descriptors must be stored in same order than their corresponding key-points.
@@ -853,9 +853,9 @@ Descriptors must be stored in same order than their corresponding key-points (`.
 
 This directory contains global image features related files.
 
+=== `│ │ ├─ global_features_type/`
 ==== structure
 
-This directory is a collection of extracted keypoints.
 Each subdirectory correspond to a different type of keypoint.
 The subdirectories are organised as follow:
 
@@ -883,7 +883,7 @@ The subdirectories are organised as follow:
 │  │  ├─ ...
 ----
 
-=== `│ │ ├─ global_features.txt`
+=== `│ │ │ ├─ global_features.txt`
 
 This text file describes the type of global features.
 
@@ -918,7 +918,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 dirtorch, float32, 2048
 ----
 
-=== `│ │ ├─ *.gfeat`
+=== `│ │ │ ├─ *.gfeat`
 
 Contains all global features of a single image.
 
@@ -1003,6 +1003,8 @@ This directory contains all 2D matches of all images, using one file per *image 
 Note that matches are different than observations, since a match
 has not necessarily a 3-D consistency, and hence 3-D point.
 
+=== `│ │ ├─ keypoints_type/`
+
 ==== syntax
 
 The `.matches` files are binary dump of numpy array of type `np.float64` on 3 columns, where each row is a feature matching, first column is index of feature in first image, second column is the index of the feature in the second image, 3rd column encodes a quality score.
@@ -1053,7 +1055,7 @@ The `.matches` files are binary dump of numpy array of type `np.float64` on 3 co
 ...
 ----
 
-=== `│ | ├─ \*.overlapping/*.matches`
+=== `│ │ │ ├─ \*.overlapping/*.matches`
 
 ==== syntax
 
