@@ -991,9 +991,11 @@ point3d_id, [image_path, feature_id]*
 .reconstruction/observations.txt
 [source,txt]
 ----
-# point3d_id, [keypoints_type, image_path, feature_id]*
-0, cam_01/00002.jpg, r2d2_WASF-N8_20k, 152, r2d2_WASF-N8_20k, cam_01/00005.jpg, 1564
-1, cam_01/00002.jpg, r2d2_WASF-N8_20k, 4551, r2d2_WASF-N8_20k, cam_02/00003.jpg, 5415
+# point3d_id, keypoints_type, [image_path, feature_id]*
+0, r2d2_WASF-N8_20k, cam_01/00002.jpg, 152, cam_01/00005.jpg, 1564
+0, d2_tf, cam_01/00002.jpg, 445, cam_01/00005.jpg, 2543
+1, r2d2_WASF-N8_20k, cam_01/00002.jpg, 4551, cam_02/00003.jpg, 5415
+1, d2_tf, cam_01/00002.jpg, 457, cam_02/00003.jpg, 3568
 ----
 
 === `│ ├─ matches/`
