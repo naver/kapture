@@ -974,7 +974,7 @@ This file contains all 3D points observations, using one line per 3D-point.
 
 [source,txt]
 ----
-point3d_id, [image_path, feature_id]*
+point3d_id, keypoints_type, [image_path, feature_id]*
 ----
 
 [cols=">1m,^1e,4",options="header"]
