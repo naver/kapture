@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_device_id, name, sensor_type, [sensor_params]+
 sensor0, , camera, SIMPLE_RADIAL, 1600, 1067, 1084.59, 800, 533.5, -0.0810989
 sensor1, , camera, SIMPLE_RADIAL, 1200, 1600, 1556.98, 600, 800, -0.086426
