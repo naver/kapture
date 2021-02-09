@@ -810,18 +810,19 @@ The file contains a single line, following this syntax:
 
 [source,txt]
 ----
-name, dtype, dsize, keypoints_type
+name, dtype, dsize, keypoints_type, metric_type
 ----
 
 with:
 
 [cols=">1m,^1e,4",options="header"]
 |===
-|            field | type   | description
-|             name | string | The name of the descriptor, for information only.
-|            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
-|            dsize | int    | size of a descriptor.
+|            field          | type   | description
+|             name          | string | The name of the descriptor, for information only.
+|            dtype          | string | type of data. Can be native python type or numpy type (without the numpy prefix).
+|            dsize          | int    | size of a descriptor.
 |            keypoints_type | string | The name of the directory which contains the keypoints that are being described.
+|            metric_type    | string | The name of the metric used to compare the descriptors, for information only.
 |===
 
 It may also optionally contains some comments (lines starting with `#`) or blank lines.
@@ -831,8 +832,8 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 `reconstruction/descriptors/r2d2_WASF-N8_20k/descriptors.txt`:
 [source,txt]
 ----
-# name, dtype, dsize, keypoints_type
-SIFT, uint8, 128, r2d2_WASF-N8_20k
+# name, dtype, dsize, keypoints_type, metric_type
+SIFT, uint8, 128, r2d2_WASF-N8_20k, L2
 ----
 
 === `│ │ │ ├─ *.desc`
@@ -902,17 +903,18 @@ The file contains a single line, following this syntax:
 
 [source,txt]
 ----
-name, dtype, dsize
+name, dtype, dsize, metric_type
 ----
 
 with:
 
 [cols=">1m,^1e,4",options="header"]
 |===
-|            field | type   | description
-|             name | string | The name of the global feature, for information only.
-|            dtype | string | type of data. Can be native python type or numpy type (without the numpy prefix).
-|            dsize | int    | length of a global feature.
+|            field       | type   | description
+|             name       | string | The name of the global feature, for information only.
+|            dtype       | string | type of data. Can be native python type or numpy type (without the numpy prefix).
+|            dsize       | int    | length of a global feature.
+|            metric_type | string | The name of the metric used to compare the global features, for information only.
 |===
 
 It may also optionally contains some comments (lines starting with `#`) or blank lines.
@@ -923,8 +925,8 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 [source,txt]
 ----
 # Deep Image Retrieval - See: https://github.com/naver/deep-image-retrieval
-# name, dtype, dsize
-dirtorch, float32, 2048
+# name, dtype, dsize, metric_type
+dirtorch, float32, 2048, L2
 ----
 
 === `│ │ │ ├─ *.gfeat`
