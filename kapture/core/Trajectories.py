@@ -1,5 +1,7 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+import quaternion
+
 from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
@@ -123,7 +125,6 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
     :param trajectories: input/output Trajectories where the rigs has to be replaced
     :param rigs: input Rigs that defines the rigs/sensors relationship.
     :param max_depth: maximum nested rig depth.
-    :return:
     """
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
@@ -191,7 +192,7 @@ def rigs_recover_inplace(
     :param trajectories: input/output Trajectories.
     :param rigs: input Rigs configuration.
     :param master_sensors: input If given, only compute rig poses for the given sensors.
-    :return:
+    :param max_depth: maximum nested rig depth.
     """
 
     # sensor_id -> rig_id, pose_rig_from_sensor
@@ -231,3 +232,26 @@ def rigs_recover_inplace(
             # it may end up to inconsistent results.
             pose_rig_from_world = PoseTransform.compose([pose_rig_from_sensor, pose_sensor_from_world])
             trajectories[timestamp, rig_id] = pose_rig_from_world
+
+
+def compute_intermediate_pose(timestamp: int,
+                              low_ts: int, low_p: PoseTransform,
+                              up_ts: int, up_p: PoseTransform) -> PoseTransform:
+    """
+    Compute an intermediate pose between two poses.
+    It does not come from the recorded data, but is purely computed by interpolation based on given poses.
+    We suppose that we move at a regular speed.
+
+    :param timestamp: the timestamp at which time to compute the pose
+    :param low_ts: the first timestamp
+    :param low_p: the first pose
+    :param up_ts: the second timestamp
+    :param up_p: the second pose
+    :return: the computed pose
+    """
+    rotation = quaternion.slerp(low_p.r, up_p.r, low_ts, up_ts, timestamp)
+    # translation = t0 + (ts-ts0)/(ts1-ts0) * (t1 - t0)
+    translation = [low_p.t[0] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[0] - low_p.t[0]),
+                   low_p.t[1] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[1] - low_p.t[1]),
+                   low_p.t[2] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[2] - low_p.t[2])]
+    return PoseTransform(rotation, translation)
