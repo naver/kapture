@@ -1073,7 +1073,8 @@ def observations_from_file(
         table = table_from_file(file)
         # point3d_id, keypoints_type, [image_path, feature_id]*
         for points3d_id_str, keypoints_type, *pairs in table:
-            if keypoints_type not in loaded_keypoints or len(loaded_keypoints[keypoints_type]) == 0:
+            if loaded_keypoints is not None and \
+                    (keypoints_type not in loaded_keypoints or len(loaded_keypoints[keypoints_type]) == 0):
                 continue
             points3d_id = int(points3d_id_str)
             if len(pairs) > 1:
@@ -1142,11 +1143,19 @@ def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
         part_data = kapture_data.__getattribute__(kapture_member_name)
-        if part_data is not None:
+        if part_data is not None and kapture_class in CSV_FILENAMES:
+            filepath = path.join(dirpath, CSV_FILENAMES[kapture_class])
             # save it
             logger.debug(f'saving {kapture_member_name} ...')
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
-            write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
+            write_function(filepath, part_data)
+        elif part_data is not None and kapture_class in FEATURES_CSV_FILENAMES:
+            write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
+            for feature_type, features in part_data.items():
+                # save it
+                logger.debug(f'saving {kapture_member_name} : {feature_type} ...')
+                filepath = path.join(dirpath, FEATURES_CSV_FILENAMES[kapture_class](feature_type))
+                write_function(filepath, features)
 
 
 # Kapture Read #########################################################################################################
@@ -1352,8 +1361,21 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path, sensor_ids)
 
 
-def _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matches_pairs_file_path,
-                                        kapture_loadable_data, kapture_data) -> None:
+def list_features(kapture_type: Type[Union[kapture.Keypoints,
+                                           kapture.Descriptors,
+                                           kapture.GlobalFeatures]],
+                  kapture_dir_path: str) -> List[str]:
+    subfolders = (
+        name
+        for name in os.listdir(os.path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
+        if os.path.isfile(get_feature_csv_fullpath(kapture_type, name, kapture_dir_path))
+    )
+    return list(subfolders)
+
+
+def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: str,
+                                        matches_pairs_file_path: Optional[str],
+                                        kapture_loadable_data: set, kapture_data: kapture.Kapture) -> None:
     """
     Loads features, descriptors, key points and matches from disk to the kapture in memory
 
@@ -1373,22 +1395,49 @@ def _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matche
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.keypoints = keypoints_from_dir(kapture_dir_path, image_filenames)
+        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
+        if len(keypoints_list) > 0:
+            kapture_data.keypoints = {}
+            for keypoints_type in keypoints_list:
+                kapture_data.keypoints[keypoints_type] = keypoints_from_dir(keypoints_type,
+                                                                            kapture_dir_path,
+                                                                            image_filenames)
     # descriptors
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'loading descriptors {data_dir_paths[kapture.Descriptors]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.descriptors = descriptors_from_dir(kapture_dir_path, image_filenames)
+        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
+        if len(descriptors_list) > 0:
+            kapture_data.descriptors = {}
+            for descriptors_type in descriptors_list:
+                kapture_data.descriptors[descriptors_type] = descriptors_from_dir(descriptors_type,
+                                                                                  kapture_dir_path,
+                                                                                  image_filenames)
     # global_features
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'loading global features {data_dir_paths[kapture.GlobalFeatures]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.global_features = global_features_from_dir(kapture_dir_path, image_filenames)
+        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
+        if len(global_features_list) > 0:
+            kapture_data.global_features = {}
+            for global_features_type in global_features_list:
+                kapture_data.global_features[global_features_type] = global_features_from_dir(global_features_type,
+                                                                                              kapture_dir_path,
+                                                                                              image_filenames)
     # matches
     if kapture.Matches in kapture_loadable_data:
         logger.debug(f'loading matches {data_dir_paths[kapture.Matches]} ...')
         assert kapture_data.records_camera is not None
-        kapture_data.matches = matches_from_dir(kapture_dir_path, image_filenames, matches_pairs_file_path)
+        keypoints_list = [name
+                          for name in os.listdir(data_dir_paths[kapture.Matches])
+                          if os.path.isdir(os.path.join(data_dir_paths[kapture.Matches], name))]
+        if len(keypoints_list) > 0:
+            kapture_data.matches = {}
+            for keypoints_type in keypoints_list:
+                kapture_data.matches[keypoints_type] = matches_from_dir(keypoints_type,
+                                                                        kapture_dir_path,
+                                                                        image_filenames,
+                                                                        matches_pairs_file_path)
 
 
 def _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data: kapture.Kapture) -> None:

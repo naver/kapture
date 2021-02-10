@@ -255,7 +255,7 @@ class Kapture:
 
     @descriptors.setter
     def descriptors(self, descriptors: Optional[Dict[str, Descriptors]]):
-        if descriptors is not None and not isinstance(descriptors, Dict[str, Descriptors]):
+        if descriptors is not None and not isinstance(descriptors, dict):
             raise TypeError('dict of Descriptors expected')
         self._descriptors = descriptors
 
@@ -268,7 +268,7 @@ class Kapture:
 
     @global_features.setter
     def global_features(self, global_features: Optional[Dict[str, GlobalFeatures]]):
-        if global_features is not None and not isinstance(global_features, Dict[str, GlobalFeatures]):
+        if global_features is not None and not isinstance(global_features, dict):
             raise TypeError('dict of GlobalFeatures expected')
         self._global_features = global_features
 
@@ -281,7 +281,7 @@ class Kapture:
 
     @matches.setter
     def matches(self, matches: Optional[Dict[str, Matches]]):
-        if matches is not None and not isinstance(matches, Dict[str, Matches]):
+        if matches is not None and not isinstance(matches, dict):
             raise TypeError('dict of Matches expected')
         self._matches = matches
 
