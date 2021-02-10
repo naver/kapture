@@ -7,7 +7,7 @@ All reading and writing operations of kapture objects in CSV like files
 import os
 import os.path as path
 import re
-from typing import Any, List, Optional, Set, Type, Union
+from typing import Any, Dict, List, Optional, Set, Type, Union
 from collections import namedtuple
 import numpy as np
 
@@ -31,10 +31,13 @@ CSV_FILENAMES = {
     kapture.RecordsGyroscope: path.join('sensors', 'records_gyroscope.txt'),
     kapture.RecordsMagnetic: path.join('sensors', 'records_magnetic.txt'),
     kapture.Points3d: path.join('reconstruction', 'points3d.txt'),
-    kapture.Keypoints: path.join('reconstruction', 'keypoints', 'keypoints.txt'),
-    kapture.Descriptors: path.join('reconstruction', 'descriptors', 'descriptors.txt'),
-    kapture.GlobalFeatures: path.join('reconstruction', 'global_features', 'global_features.txt'),
     kapture.Observations: path.join('reconstruction', 'observations.txt'),
+}
+
+FEATURES_CSV_FILENAMES = {
+    kapture.Keypoints: lambda x: path.join('reconstruction', 'keypoints', x, 'keypoints.txt'),
+    kapture.Descriptors: lambda x: path.join('reconstruction', 'descriptors', x, 'descriptors.txt'),
+    kapture.GlobalFeatures: lambda x: path.join('reconstruction', 'global_features', x, 'global_features.txt'),
 }
 
 
@@ -47,7 +50,22 @@ def get_csv_fullpath(kapture_type: Any, kapture_dirpath: str = '') -> str:
     :param kapture_dirpath: root kapture path
     :return: full path of csv file for that type of data
     """
+    assert kapture_type in CSV_FILENAMES
     filename = CSV_FILENAMES[kapture_type]
+    return path.join(kapture_dirpath, filename)
+
+
+def get_feature_csv_fullpath(kapture_type: Any, feature_name: str, kapture_dirpath: str = '') -> str:
+    """
+    Returns the full path to csv kapture file for a given datastructure and root directory.
+    This path is the concatenation of the kapture root path and subpath into kapture into data structure.
+
+    :param kapture_type: type of kapture data (kapture.RecordsCamera, kapture.Trajectories, ...)
+    :param kapture_dirpath: root kapture path
+    :return: full path of csv file for that type of data
+    """
+    assert kapture_type in FEATURES_CSV_FILENAMES
+    filename = FEATURES_CSV_FILENAMES[kapture_type](feature_name)
     return path.join(kapture_dirpath, filename)
 
 
@@ -57,7 +75,7 @@ PADDINGS = {
     'pose': [4, 4, 4, 4, 4, 4, 4],
 }
 
-KAPTURE_FORMAT_1 = "# kapture format: 1.0"
+KAPTURE_FORMAT_1 = "# kapture format: 1.1"
 KAPTURE_FORMAT_PARSING_RE = '# kapture format\\:\\s*(?P<version>\\d+\\.\\d+)'
 
 
@@ -88,7 +106,7 @@ def get_version_from_csv_file(csv_file_path: str) -> Optional[str]:
     return None
 
 
-def current_format_version() -> str:
+def current_format_version() -> Optional[str]:
     """
     Get the current format version
 
@@ -478,7 +496,7 @@ def records_generic_to_file(
 
         :param filepath: path where to save records file.
         :param records:
-        """
+    """
     assert (isinstance(records, kapture.RecordsBase))
     header = '# timestamp, device_id, ' + ', '.join(f.name for f in records.record_type.fields())
     table = []
@@ -696,29 +714,64 @@ def records_magnetic_from_file(
 
 ########################################################################################################################
 # features #############################################################################################################
-ImageFeatureConfig = namedtuple('ImageFeatureConfig', ['name', 'dtype', 'dsize'])
-
-
-# config file ##########################################################################################################
-def image_features_config_to_file(config_filepath: str, config: ImageFeatureConfig) -> None:
+def image_features_set_from_dir(
+        kapture_type: Type[Union[kapture.Keypoints,
+                                 kapture.Descriptors,
+                                 kapture.GlobalFeatures]],
+        feature_type: str,
+        kapture_dirpath: str,
+        image_filenames: Optional[Set[str]]
+) -> Set[str]:
     """
-    Writes feature config files, ie. name, data type, and data size.
+    Reads and builds ImageFeatures from images_filenames if given, or directly from actual files in  root_dirpath.
 
-    :param config_filepath: input path to config file to write.
-    :param config: input config to be written.
+    :param kapture_type: kapture class type.
+    :param feature_type: name of the feature
+    :param kapture_dirpath: input path to kapture root directory.
+    :param image_filenames: None or set of image relative paths.
+    :return: Set
+    """
+
+    if image_filenames is None:
+        # images_path is empty, so populates all feature files
+        image_filenames_generator = kapture.io.features.image_ids_from_feature_dirpath(kapture_type,
+                                                                                       feature_type,
+                                                                                       kapture_dirpath)
+    else:
+        # filter only existing files
+        image_filenames_generator = (
+            image_name
+            for image_name in image_filenames
+            if path.exists(kapture.io.features.get_features_fullpath(kapture_type,
+                                                                     feature_type,
+                                                                     kapture_dirpath,
+                                                                     image_name)))
+    return set(image_filenames_generator)
+
+
+########################################################################################################################
+# keypoints ############################################################################################################
+KeypointsConfig = namedtuple('KeypointsConfig', ['name', 'dtype', 'dsize'])
+
+
+def keypoints_to_file(config_filepath: str, keypoints: kapture.Keypoints) -> None:
+    """
+    Writes keypoints to CSV file.
+
+    :param config_filepath:
+    :param keypoints:
     """
     os.makedirs(path.dirname(config_filepath), exist_ok=True)
     header = "# name, dtype, dsize"
-    dtype = str(config.dtype) if isinstance(config.dtype, np.dtype) else config.dtype.__name__
-    line = [config.name, dtype, str(config.dsize)]
+    dtype = str(keypoints.dtype) if isinstance(keypoints.dtype, np.dtype) else keypoints.dtype.__name__
+    line = [keypoints.type_name, dtype, str(keypoints.dsize)]
     with open(config_filepath, 'wt') as file:
         table_to_file(file, [line], header=header)
 
 
-def image_features_config_from_file(config_filepath: str) -> ImageFeatureConfig:
+def keypoints_config_from_file(config_filepath: str) -> KeypointsConfig:
     """
-    Reads feature config files, ie. name, data type, and data size.
-
+    Reads keypoints config files, ie. name, data type, and data size.
     :param config_filepath: input path to config file to read.
     :return: config The read config.
     """
@@ -737,111 +790,102 @@ def image_features_config_from_file(config_filepath: str) -> ImageFeatureConfig:
         dtype = eval(dtype)
     else:
         raise ValueError('Expect data type ')
-    return ImageFeatureConfig(name, dtype, dsize)
+    return KeypointsConfig(name, dtype, dsize)
 
 
-# files #########################################################################################################
-def image_feature_to_file(
-        config_filepath: str,
-        image_features: Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]
-) -> None:
-    """
-    Writes ImageFeatures config file only.
-
-    :param config_filepath: eg. /path/to/keypoints/keypoints.txt
-    :param image_features: input feature date.
-    """
-    config = ImageFeatureConfig(image_features.type_name, image_features.dtype, image_features.dsize)
-    image_features_config_to_file(config_filepath, config)
-
-
-def image_features_from_dir(
-        kapture_type: Type[Union[kapture.Keypoints,
-                                 kapture.Descriptors,
-                                 kapture.GlobalFeatures]],
-        kapture_dirpath: str,
-        image_filenames: Optional[Set[str]]
-) -> kapture.ImageFeatures:
-    """
-    Reads and builds ImageFeatures from images_filenames if given, or directly from actual files in  root_dirpath.
-
-    :param kapture_type: kapture class type.
-    :param kapture_dirpath: input path to kapture root directory.
-    :param image_filenames: None or set of image relative paths.
-    :return: Features
-    """
-
-    # make config_filepath from data_dirpath
-    config_filepath = get_csv_fullpath(kapture_type, kapture_dirpath)
-    config = image_features_config_from_file(config_filepath)
-    if image_filenames is None:
-        # images_path is empty, so populates all feature files
-        image_filenames_generator = kapture.io.features.image_ids_from_feature_dirpath(kapture_type, kapture_dirpath)
-    else:
-        # filter only existing files
-        image_filenames_generator = (
-            image_name
-            for image_name in image_filenames
-            if path.exists(kapture.io.features.get_features_fullpath(kapture_type, kapture_dirpath, image_name)))
-
-    image_filenames = set(image_filenames_generator)
-    return kapture_type(config.name, config.dtype, config.dsize, image_filenames)
-
-
-########################################################################################################################
-# keypoints ############################################################################################################
-def keypoints_to_file(config_filepath: str, keypoints: kapture.Keypoints) -> None:
-    """
-    Writes keypoints to CSV file.
-
-    :param config_filepath:
-    :param keypoints:
-    """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=keypoints)
-
-
-def keypoints_from_dir(kapture_dirpath: str, images_paths: Optional[Set[str]]) -> kapture.Keypoints:
+def keypoints_from_dir(keypoints_type: str,
+                       kapture_dirpath: str,
+                       images_paths: Optional[Set[str]]) -> kapture.Keypoints:
     """
     Reads and builds keypoints from images_filenames if given, or directly from actual files in kapture_dirpath.
 
+    :param keypoints_type: name of the keypoints
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :return: Keypoints
     """
-    return image_features_from_dir(kapture_type=kapture.Keypoints,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    # make config_filepath from data_dirpath
+    config_filepath = get_feature_csv_fullpath(kapture.Keypoints, keypoints_type, kapture_dirpath)
+    config = keypoints_config_from_file(config_filepath)
+    image_filenames = image_features_set_from_dir(kapture.Keypoints,
+                                                  keypoints_type,
+                                                  kapture_dirpath,
+                                                  images_paths)
+    return kapture.Keypoints(config.name, config.dtype, config.dsize, image_filenames)
 
 
 ########################################################################################################################
 # descriptors ##########################################################################################################
+DescriptorsConfig = namedtuple('DescriptorsConfig', ['name', 'dtype', 'dsize', 'keypoints_type', 'metric_type'])
+
+
 def descriptors_to_file(config_filepath: str, descriptors: kapture.Descriptors) -> None:
     """
     Writes descriptors to CSV file.
-
     :param config_filepath:
     :param descriptors:
     """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=descriptors)
+    os.makedirs(path.dirname(config_filepath), exist_ok=True)
+    header = "# name, dtype, dsize, keypoints_type, metric_type"
+    dtype = str(descriptors.dtype) if isinstance(descriptors.dtype, np.dtype) else descriptors.dtype.__name__
+    line = [descriptors.type_name, dtype, str(descriptors.dsize), descriptors.keypoints_type, descriptors.metric_type]
+    with open(config_filepath, 'wt') as file:
+        table_to_file(file, [line], header=header)
 
 
-def descriptors_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.Descriptors:
+def descriptors_config_from_file(config_filepath: str) -> DescriptorsConfig:
+    """
+    Reads descriptors config files.
+    :param config_filepath: input path to config file to read.
+    :return: config The read config.
+    """
+    if not path.exists(config_filepath):
+        raise FileNotFoundError(f'{path.basename(config_filepath)} file is missing')
+
+    with open(config_filepath, 'rt') as file:
+        table = table_from_file(file)
+        line = list(table)[0]
+        assert len(line) == 5
+        name, dtype, dsize, keypoints_type, metric_type = line[0], line[1], int(line[2]), line[3], line[4]
+
+    # try to list all possible type from numpy that can be used in eval(dtype)
+    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    if isinstance(type(eval(dtype)), type):
+        dtype = eval(dtype)
+    else:
+        raise ValueError('Expect data type ')
+    return DescriptorsConfig(name, dtype, dsize, keypoints_type, metric_type)
+
+
+def descriptors_from_dir(descriptors_type: str, kapture_dirpath: str, images_paths: Set[str]) -> kapture.Descriptors:
     """
     Reads and builds descriptors from images_filenames if given, or directly from actual files in kapture_dirpath.
 
+    :param descriptors_type: the name of the descriptors type
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :return: Descriptors
     """
-    return image_features_from_dir(kapture_type=kapture.Descriptors,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    # make config_filepath from data_dirpath
+    config_filepath = get_feature_csv_fullpath(kapture.Descriptors, descriptors_type, kapture_dirpath)
+    config = descriptors_config_from_file(config_filepath)
+    image_filenames = image_features_set_from_dir(kapture.Descriptors,
+                                                  descriptors_type,
+                                                  kapture_dirpath,
+                                                  images_paths)
+    return kapture.Descriptors(config.name,
+                               config.dtype,
+                               config.dsize,
+                               config.keypoints_type,
+                               config.metric_type,
+                               image_filenames)
 
 
 ########################################################################################################################
 # global_features ######################################################################################################
+GlobalFeaturesConfig = namedtuple('GlobalFeaturesConfig', ['name', 'dtype', 'dsize', 'metric_type'])
+
+
 def global_features_to_file(config_filepath: str, global_features: kapture.GlobalFeatures) -> None:
     """
     Writes global features to CSV file.
@@ -849,32 +893,77 @@ def global_features_to_file(config_filepath: str, global_features: kapture.Globa
     :param config_filepath:
     :param global_features:
     """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=global_features)
+    os.makedirs(path.dirname(config_filepath), exist_ok=True)
+    header = "# name, dtype, dsize, metric_type"
+    if isinstance(global_features.dtype, np.dtype):
+        dtype = str(global_features.dtype)
+    else:
+        dtype = global_features.dtype.__name__
+    line = [global_features.type_name, dtype, str(global_features.dsize), global_features.metric_type]
+    with open(config_filepath, 'wt') as file:
+        table_to_file(file, [line], header=header)
 
 
-def global_features_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.GlobalFeatures:
+def global_features_config_from_file(config_filepath: str) -> GlobalFeaturesConfig:
+    """
+    Reads global_features config files.
+    :param config_filepath: input path to config file to read.
+    :return: config The read config.
+    """
+    if not path.exists(config_filepath):
+        raise FileNotFoundError(f'{path.basename(config_filepath)} file is missing')
+
+    with open(config_filepath, 'rt') as file:
+        table = table_from_file(file)
+        line = list(table)[0]
+        assert len(line) == 5
+        name, dtype, dsize, metric_type = line[0], line[1], int(line[2]), line[3]
+
+    # try to list all possible type from numpy that can be used in eval(dtype)
+    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    if isinstance(type(eval(dtype)), type):
+        dtype = eval(dtype)
+    else:
+        raise ValueError('Expect data type ')
+    return GlobalFeaturesConfig(name, dtype, dsize, metric_type)
+
+
+def global_features_from_dir(global_features_type: str,
+                             kapture_dirpath: str,
+                             images_paths: Set[str]) -> kapture.GlobalFeatures:
     """
     Reads and builds Global features from images_filenames if given, or directly from actual files in kapture_dirpath.
 
+    :param global_features_type: the name of the global_features type
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :return: Global features
     """
-
-    return image_features_from_dir(kapture_type=kapture.GlobalFeatures,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    # make config_filepath from data_dirpath
+    config_filepath = get_feature_csv_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dirpath)
+    config = descriptors_config_from_file(config_filepath)
+    image_filenames = image_features_set_from_dir(kapture.GlobalFeatures,
+                                                  global_features_type,
+                                                  kapture_dirpath,
+                                                  images_paths)
+    return kapture.GlobalFeatures(config.name,
+                                  config.dtype,
+                                  config.dsize,
+                                  config.metric_type,
+                                  image_filenames)
 
 
 ########################################################################################################################
 # matches ##############################################################################################################
-def matches_from_dir(kapture_dirpath: str,
-                     image_filenames: Optional[Set[str]] = None,
-                     matches_pairsfile_path: Optional[str] = None) -> kapture.Matches:
+def matches_from_dir(
+        keypoints_type: str,
+        kapture_dirpath: str,
+        image_filenames: Optional[Set[str]] = None,
+        matches_pairsfile_path: Optional[str] = None) -> kapture.Matches:
     """
     Reads and builds Matches from images_filenames if given, or directly from actual files in kapture_dirpath.
 
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: root path of kapture
     :param image_filenames: optional list of image file names
     :param matches_pairsfile_path: text file in the csv format; where each line is image_name1, image_name2, score
@@ -883,7 +972,7 @@ def matches_from_dir(kapture_dirpath: str,
 
     if matches_pairsfile_path is None:
         # populate files from disk
-        match_pairs_generator = kapture.io.features.matching_pairs_from_dirpath(kapture_dirpath)
+        match_pairs_generator = kapture.io.features.matching_pairs_from_dirpath(keypoints_type, kapture_dirpath)
     else:
         with open(matches_pairsfile_path, 'r') as fid:
             table = table_from_file(fid)
@@ -894,6 +983,7 @@ def matches_from_dir(kapture_dirpath: str,
             match_pairs_generator = (image_pair
                                      for image_pair in match_pairs_generator
                                      if path.isfile(kapture.io.features.get_matches_fullpath(image_pair,
+                                                                                             keypoints_type,
                                                                                              kapture_dirpath))
                                      )
 
@@ -948,10 +1038,12 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     """
     assert path.basename(observations_filepath) == 'observations.txt'
     assert isinstance(observations, kapture.Observations)
-    header = '# point3d_id, [image_path, feature_id]*'
+    header = '# point3d_id, keypoints_type, [image_path, feature_id]*'
     table = (
-        [str(point3d_idx)] + [str(k) for pair in observations[point3d_idx] for k in pair]
-        for point3d_idx in sorted(observations.keys())
+        [str(point3d_idx), str(keypoints_type)] + [str(k)
+                                                   for pair in observations[point3d_idx, keypoints_type]
+                                                   for k in pair]
+        for point3d_idx, keypoints_type in sorted(observations.key_pairs(), key=lambda x: (x[0], x[1]))
     )
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
@@ -960,7 +1052,7 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
 
 def observations_from_file(
         observations_filepath: str,
-        images_paths_with_keypoints: Optional[Set[str]] = None
+        loaded_keypoints: Optional[Dict[str, Set[str]]] = None
 ) -> kapture.Observations:
     """
     Reads observations from CSV file.
@@ -972,22 +1064,26 @@ def observations_from_file(
     :return: observations
     """
     assert path.basename(observations_filepath) == 'observations.txt'
-    assert images_paths_with_keypoints is None \
-        or (isinstance(images_paths_with_keypoints, set) and len(images_paths_with_keypoints) > 0)
+    assert loaded_keypoints is None \
+        or (isinstance(loaded_keypoints, dict) and len(loaded_keypoints) > 0)
+    assert loaded_keypoints is None or all([isinstance(kpts, set) for kpts in loaded_keypoints.values()])
+
     observations = kapture.Observations()
     with open(observations_filepath) as file:
         table = table_from_file(file)
-        # point3d_id, [image_path, feature_id]*
-        for points3d_id_str, *pairs in table:
+        # point3d_id, keypoints_type, [image_path, feature_id]*
+        for points3d_id_str, keypoints_type, *pairs in table:
+            if keypoints_type not in loaded_keypoints or len(loaded_keypoints[keypoints_type]) == 0:
+                continue
             points3d_id = int(points3d_id_str)
             if len(pairs) > 1:
                 image_paths = pairs[0::2]
                 keypoints_ids = pairs[1::2]
                 for image_path, keypoint_id in zip(image_paths, keypoints_ids):
-                    if images_paths_with_keypoints is not None and image_path not in images_paths_with_keypoints:
+                    if loaded_keypoints is not None and image_path not in loaded_keypoints[keypoints_type]:
                         # image_path does not exist in kapture (perhaps it was removed), ignore it
                         continue
-                    observations.add(points3d_id, image_path, int(keypoint_id))
+                    observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
     return observations
 
 
@@ -1295,7 +1391,7 @@ def _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matche
         kapture_data.matches = matches_from_dir(kapture_dir_path, image_filenames, matches_pairs_file_path)
 
 
-def _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data) -> None:
+def _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data: kapture.Kapture) -> None:
     # points3d
     if kapture.Points3d in kapture_loadable_data:
         points3d_file_path = csv_file_paths[kapture.Points3d]
