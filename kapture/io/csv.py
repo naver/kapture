@@ -1138,8 +1138,6 @@ def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
     :param dirpath: input directory root path
     :param kapture_data: input kapture data
     """
-    kapture_subtype_to_filepaths = {kapture_class: path.join(dirpath, filename)
-                                    for kapture_class, filename in CSV_FILENAMES.items()}
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
         part_data = kapture_data.__getattribute__(kapture_member_name)
