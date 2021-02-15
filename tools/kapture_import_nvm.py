@@ -49,6 +49,7 @@ import kapture.io.features
 
 logger = logging.getLogger('nvm')
 MODEL = kapture.CameraType.SIMPLE_RADIAL
+LOCAL_FEATURE_TYPE = 'sift'
 
 
 def import_nvm(nvm_file_path: str,
@@ -105,9 +106,14 @@ def import_nvm(nvm_file_path: str,
     cameras = kapture.Sensors()
     images = kapture.RecordsCamera()
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
-    observations = kapture.Observations() if add_reconstruction else None if add_reconstruction else None
-    keypoints = kapture.Keypoints('sift', np.float32, 2) if add_reconstruction else None
-    points3d = [] if add_reconstruction else None
+    if add_reconstruction:
+        observations = kapture.Observations()
+        keypoints = {LOCAL_FEATURE_TYPE: kapture.Keypoints(LOCAL_FEATURE_TYPE, np.float32, 2)}
+        points3d = []
+    else:
+        observations = None
+        keypoints = None
+        points3d = None
 
     # break if number of cameras == 0 or reached end of file
     while True:
@@ -154,7 +160,7 @@ def import_nvm(nvm_file_path: str,
                            image_idx_to_image_name,
                            filter_list,
                            points3d,
-                           keypoints,
+                           keypoints[LOCAL_FEATURE_TYPE],
                            observations)
 
         point_id_offset += number_of_points
@@ -300,12 +306,14 @@ def parse_points3d(kapture_path: str,
                 local_keypoints[file_name].append([x, y])
             keypoint_idx = known_keypoints[(file_name, feature_index)]
             point3d_idx = i + point_id_offset
-            observations.add(point3d_idx, file_name, keypoint_idx)
+            observations.add(point3d_idx, LOCAL_FEATURE_TYPE, file_name, keypoint_idx)
 
     # finally, convert local_keypoints to np.ndarray and add them to the global keypoints variable
     for image_filename, keypoints_array in local_keypoints.items():
         keypoints_np_array = np.array(keypoints_array)
-        keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_filename)
+        keypoints_filepath = kapture.io.features.get_keypoints_fullpath(LOCAL_FEATURE_TYPE,
+                                                                        kapture_path,
+                                                                        image_filename)
         kapture.io.features.image_keypoints_to_file(keypoints_filepath, keypoints_np_array)
         keypoints.add(image_filename)
 
