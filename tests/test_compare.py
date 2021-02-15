@@ -10,10 +10,10 @@ import os.path as path
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
-from kapture.algo.compare import is_distance_within_threshold, pose_transform_distance
+from kapture.algo.compare import equal_keypoints_collections, is_distance_within_threshold, pose_transform_distance
 from kapture.algo.compare import equal_kapture, equal_sensors, equal_rigs, equal_trajectories, equal_records_camera,\
-                                 equal_records_lidar, equal_records_wifi, equal_records_gnss, equal_image_features, \
-                                 equal_poses
+    equal_records_lidar, equal_records_wifi, equal_records_gnss, equal_keypoints_collections, \
+    equal_poses
 
 
 class TestComparePoseTransform(unittest.TestCase):
@@ -78,6 +78,7 @@ class TestCompareGnss(unittest.TestCase):
     """
     Testing kapture/algorithms/compare.py
     """
+
     def setUp(self):
         self.gnss_a = kapture.RecordsGnss()
         self.gnss_b = kapture.RecordsGnss()
@@ -261,17 +262,17 @@ class TestCompareM1x(unittest.TestCase):
     def test_equal_keypoints(self):
         kapture_data_a = copy.deepcopy(self._kapture_data)
         kapture_data_b = copy.deepcopy(self._kapture_data)
-        self.assertTrue(equal_image_features(kapture_data_a.keypoints, kapture_data_b.keypoints))
+        self.assertTrue(equal_keypoints_collections(kapture_data_a.keypoints, kapture_data_b.keypoints))
 
-        kapture_data_a.keypoints.add('a/a0.pct')
-        self.assertFalse(equal_image_features(kapture_data_a.keypoints, kapture_data_b.keypoints))
+        kapture_data_a.keypoints['SIFT'].add('a/a0.pct')
+        self.assertFalse(equal_keypoints_collections(kapture_data_a.keypoints, kapture_data_b.keypoints))
 
-        kapture_data_b.keypoints.add('a/a0.pct')
-        self.assertTrue(equal_image_features(kapture_data_a.keypoints, kapture_data_b.keypoints))
+        kapture_data_b.keypoints['SIFT'].add('a/a0.pct')
+        self.assertTrue(equal_keypoints_collections(kapture_data_a.keypoints, kapture_data_b.keypoints))
 
-        kapture_data_b.keypoints.remove('a/a0.pct')
-        kapture_data_b.keypoints.add('b/b0.jpg')
-        self.assertFalse(equal_image_features(kapture_data_a.keypoints, kapture_data_b.keypoints))
+        kapture_data_b.keypoints['SIFT'].remove('a/a0.pct')
+        kapture_data_b.keypoints['SIFT'].add('b/b0.jpg')
+        self.assertFalse(equal_keypoints_collections(kapture_data_a.keypoints, kapture_data_b.keypoints))
 
 
 if __name__ == '__main__':
