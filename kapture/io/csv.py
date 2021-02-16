@@ -916,7 +916,7 @@ def global_features_config_from_file(config_filepath: str) -> GlobalFeaturesConf
     with open(config_filepath, 'rt') as file:
         table = table_from_file(file)
         line = list(table)[0]
-        assert len(line) == 5
+        assert len(line) == 4
         name, dtype, dsize, metric_type = line[0], line[1], int(line[2]), line[3]
 
     # try to list all possible type from numpy that can be used in eval(dtype)
@@ -941,7 +941,7 @@ def global_features_from_dir(global_features_type: str,
     """
     # make config_filepath from data_dirpath
     config_filepath = get_feature_csv_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dirpath)
-    config = descriptors_config_from_file(config_filepath)
+    config = global_features_config_from_file(config_filepath)
     image_filenames = image_features_set_from_dir(kapture.GlobalFeatures,
                                                   global_features_type,
                                                   kapture_dirpath,
