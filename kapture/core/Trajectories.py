@@ -1,5 +1,15 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+The trajectories points. We store for every timestamp and device a pose.
+So you can have two different devices for the same timestamp with a different pose.
+The timestamps are integers, and device identifiers strings.
+The timestamps are often epoch timestamps (in micro or milliseconds), but can be any set of integers.
+Note that the timestamps are usually ordered ascending (as the time goes), but this is not guaranteed,
+and might change if you manipulate them, save and reload them from disk.
+If you need them ordered, do it yourself.
+"""
+
 import quaternion
 
 from .PoseTransform import PoseTransform
