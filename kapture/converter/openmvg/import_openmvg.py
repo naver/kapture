@@ -402,5 +402,5 @@ def import_openmvg_matches(
     # look for the "image_describer.json"
     # matches.*.bin files use cereal over a
     # map < pair <uint32_t, uint32_t>, std::vector<uint64_t> >
-    matches = np.fromfile(matches_file_path, dtype=np.uint8)
-    #
+    # matches = np.fromfile(matches_file_path, dtype=np.uint8)
+    pass  # Ongoing work ...
