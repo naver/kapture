@@ -33,11 +33,11 @@ logger = logging.getLogger('colmap')
 
 
 def import_colmap_database(colmap_database_filepath: str,
-                           kapture_dir_path: str,
+                           kapture_dir_path: Optional[str],
+                           keypoints_type: str = 'SIFT',
+                           descriptors_type: str = 'SIFT',
                            no_geometric_filtering: bool = False,
-                           skip_reconstruction: bool = False,
-                           keypoint_name: str = 'SIFT',
-                           descriptor_name: str = 'SIFT') -> kapture.Kapture:
+                           skip_reconstruction: bool = False) -> kapture.Kapture:
     """
     Converts colmap database file to kapture data.
     If kapture_dir_path is given, it creates keypoints, descriptors, matches files (if any).
@@ -45,9 +45,9 @@ def import_colmap_database(colmap_database_filepath: str,
     :param colmap_database_filepath: path to colmap database file.
     :param kapture_dir_path: path to kapture directory. Is used to store keypoints, descriptors and matches files.
                             If not given (None), is equivalent to skip_reconstruction == True.
+    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering:
-    :param keypoint_name: name of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
-    :param descriptor_name: name of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
     :param skip_reconstruction: skip the import of the kapture/reconstruction part,
                             ie. Keypoints, Descriptors, Matches.
     :return: kapture object
@@ -71,17 +71,17 @@ def import_colmap_database(colmap_database_filepath: str,
         # keypoints
         logger.debug('parsing keypoints in database...')
         kapture_data.keypoints = get_keypoints_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, keypoint_name)
+            db, kapture_data.records_camera, kapture_dir_path, keypoints_type)
 
         # descriptors
         logger.debug('parsing descriptors in database...')
         kapture_data.descriptors = get_descriptors_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, descriptor_name)
+            db, kapture_data.records_camera, kapture_dir_path, keypoints_type, descriptors_type)
 
         # matches
         logger.debug('parsing matches in database...')
         kapture_data.matches = get_matches_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, no_geometric_filtering)
+            db, kapture_data.records_camera, kapture_dir_path, no_geometric_filtering, keypoints_type)
 
     db.close()
     return kapture_data
@@ -89,9 +89,10 @@ def import_colmap_database(colmap_database_filepath: str,
 
 def import_colmap_from_reconstruction_files(reconstruction_dir_path: str,
                                             kapture_dir_path: Optional[str],
+                                            keypoints_type: str = 'SIFT',
                                             skip: Set[Type[Union[kapture.Keypoints,
                                                                  kapture.Points3d,
-                                                                 kapture.Observations]]]
+                                                                 kapture.Observations]]] = set()
                                             ) -> kapture.Kapture:
     """
     Converts colmap reconstruction files to kapture data.
@@ -100,6 +101,7 @@ def import_colmap_from_reconstruction_files(reconstruction_dir_path: str,
     :param reconstruction_dir_path:
     :param kapture_dir_path: path to kapture directory. Is used to store keypoints files.
                             If not given (None), keypoints are automatically skipped.
+    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
     :param skip: can skip independently : Keypoints, Points3d or Observations.
                 Note that Points3d and Observations are in the same file, so you should skip both to gain its reading.
     :return: kapture object
@@ -125,18 +127,24 @@ def import_colmap_from_reconstruction_files(reconstruction_dir_path: str,
         logging.debug(f'loading images from:\n\t"{path.basename(colmap_images_filepath)}"')
         kapture_dir_path_for_keypoints = kapture_dir_path if proceed_keypoints else None
         images, trajectories, keypoints = import_from_colmap_images_txt(
-            colmap_images_filepath, kapture_dir_path_for_keypoints)
+            colmap_images_filepath, kapture_dir_path_for_keypoints, keypoints_type)
 
         kapture_data.records_camera = images
         kapture_data.trajectories = trajectories
-        kapture_data.keypoints = keypoints
+        if keypoints is not None:
+            if kapture_data.keypoints is None:
+                kapture_data.keypoints = {}
+            kapture_data.keypoints[keypoints_type] = keypoints
 
     if proceed_points3d or proceed_observations:
         assert kapture_data.records_camera is not None
         image_id_2_names = {ts: image_name
                             for ts, cam_id, image_name in kapture.flatten(kapture_data.records_camera, True)}
         logger.debug(f'parsing 3d points and observations from:\n\t"{path.basename(colmap_points3d_filepath)}"')
-        points3d, observations = import_from_colmap_points3d_txt(colmap_points3d_filepath, image_id_2_names)
+        points3d, observations = import_from_colmap_points3d_txt(colmap_points3d_filepath,
+                                                                 image_id_2_names,
+                                                                 keypoints_type,
+                                                                 skip_observations=False)
         kapture_data.points3d = points3d if proceed_points3d else None
         kapture_data.observations = observations if proceed_observations else None
 
@@ -148,6 +156,8 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
                   colmap_reconstruction_dir_path: str = None,
                   colmap_images_dir_path: str = None,
                   colmap_rig_filepath: str = None,
+                  keypoints_type: str = 'SIFT',
+                  descriptors_type: str = 'SIFT',
                   no_geometric_filtering: bool = False,
                   skip_reconstruction: bool = False,
                   force_overwrite_existing: bool = False,
@@ -162,6 +172,8 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
     :param colmap_reconstruction_dir_path: optional path to colmap reconstruction directory.
     :param colmap_images_dir_path: directory path to colmap images. If given, a link to it will be created.
     :param colmap_rig_filepath: optional path to colmap rig file.
+    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering:
     :param skip_reconstruction: skip the import of the kapture/reconstruction part,
                                 ie. Keypoints, Descriptors, Matches, Points3d, Observations.
@@ -184,7 +196,9 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
     if colmap_database_filepath:
         logger.debug(f'importing from database "{colmap_database_filepath}"')
         kapture_from_database = import_colmap_database(
-            colmap_database_filepath, kapture_dir_path, no_geometric_filtering, skip_reconstruction)
+            colmap_database_filepath, kapture_dir_path,
+            keypoints_type, descriptors_type,
+            no_geometric_filtering, skip_reconstruction)
 
     # 2: import reconstruction text files.
     kapture_data_reconstructed = None
@@ -201,7 +215,7 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
             what_to_skip_during_import_txt |= {kapture.Keypoints, kapture.Points3d, kapture.Observations}
         logger.debug(f'importing from reconstruction "{colmap_reconstruction_dir_path}"')
         kapture_data_reconstructed = import_colmap_from_reconstruction_files(
-            colmap_reconstruction_dir_path, kapture_dir_path, what_to_skip_during_import_txt)
+            colmap_reconstruction_dir_path, kapture_dir_path, keypoints_type, what_to_skip_during_import_txt)
 
     # Merge data from database and reconstruction files
     if colmap_database_filepath and colmap_reconstruction_dir_path:
@@ -257,5 +271,5 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
             filename_list,
             images_import_strategy
         )
-
+    assert kapture_data is not None
     return kapture_data
