@@ -386,6 +386,7 @@ class TestTrajectories(unittest.TestCase):
         del trajectories[2, 'cam1']
         self.assertEqual(len(trajectories), 1)
 
+
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):
     def setUp(self):
