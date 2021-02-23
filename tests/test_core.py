@@ -345,6 +345,9 @@ class TestTrajectories(unittest.TestCase):
         self.assertRaises(TypeError, traj.__contains__, valid_ts, invalid_id)
         self.assertRaises(TypeError, traj.__contains__, invalid_ts, invalid_id)
 
+        self.assertRaises(TypeError, traj.__delitem__, invalid_ts)
+        self.assertRaises(TypeError, traj.__delitem__, (valid_ts, invalid_id))
+
     def test_rig_remove(self):
         rigs = kapture.Rigs()
         rigs['rig0', 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[100, 0, 0])
@@ -365,6 +368,23 @@ class TestTrajectories(unittest.TestCase):
         self.assertAlmostEqual(trajectories_[2, 'cam1'].t_raw, [-100.0, 0.0, 20.0])
         self.assertAlmostEqual(trajectories_[2, 'cam1'].r_raw, [1.0, 0.0, 0.0, 0.0])
 
+    def test_remove(self):
+        trajectories = kapture.Trajectories()
+        trajectories[0, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        trajectories[2, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[2, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(len(trajectories[2]), 2)
+
+        del trajectories[2, 'cam0']
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(len(trajectories[2]), 1)
+
+        del trajectories[1]
+        self.assertEqual(len(trajectories), 2)
+        del trajectories[2, 'cam1']
+        self.assertEqual(len(trajectories), 1)
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):

@@ -74,6 +74,25 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
 
+    def __delitem__(self, key: Union[int, Tuple[int, str]]):
+        if isinstance(key, tuple):
+            # key is a pair of (timestamp, device_id)
+            timestamp = key[0]
+            device_id = key[1]
+            if not isinstance(timestamp, int):
+                raise TypeError('invalid timestamp')
+            if not isinstance(device_id, str):
+                raise TypeError('invalid device_id')
+            super(Trajectories, self).__getitem__(timestamp).__delitem__(device_id)
+            if len(super(Trajectories, self).__getitem__(timestamp)) == 0:
+                # Cleaning upper level
+                super(Trajectories, self).__delitem__(timestamp)
+        elif isinstance(key, int):
+            # key is a timestamp
+            super(Trajectories, self).__delitem__(key)
+        else:
+            raise TypeError('key must be Union[int, Tuple[int, str]]')
+
     def key_pairs(self) -> List[Tuple[int, str]]:
         """
         Returns the list of (timestamp, device_id) contained in trajectories.
