@@ -34,7 +34,6 @@ class RecordsBase(Dict[int, Dict[str, T]]):
 
         :param key: can be timestamp or (timestamp, sensor_id)
         :param value: can be respectively a dict{sensor_id: DataRecords} or DataRecords
-        :return:
         """
         # enforce type checking
         if isinstance(key, tuple):
@@ -80,6 +79,30 @@ class RecordsBase(Dict[int, Dict[str, T]]):
         elif isinstance(key, int):
             # key is a timestamp
             return super(RecordsBase, self).__getitem__(key)
+        else:
+            raise TypeError('key must be Union[int, Tuple[int, str]]')
+
+    def __delitem__(self, key: Union[int, Tuple[int, str]]):
+        """
+        Delete an item or items.
+
+        :param key: can be timestamp or (timestamp, sensor_id)
+        """
+        if isinstance(key, tuple):
+            # key is a pair of (timestamp, device_id)
+            timestamp = key[0]
+            device_id = key[1]
+            if not isinstance(timestamp, int):
+                raise TypeError('invalid timestamp')
+            if not isinstance(device_id, str):
+                raise TypeError('invalid device_id')
+            super(RecordsBase, self).__getitem__(timestamp).__delitem__(device_id)
+            if len(super(RecordsBase, self).__getitem__(timestamp)) == 0:
+                # Cleaning upper level
+                super(RecordsBase, self).__delitem__(timestamp)
+        elif isinstance(key, int):
+            # key is a timestamp
+            super(RecordsBase, self).__delitem__(key)
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
 

@@ -460,31 +460,46 @@ class TestRecords(unittest.TestCase):
     def test_init_camera(self):
         timestamp0, timestamp1 = 0, 1
         device_id0, device_id1 = 'cam0', 'cam1'
+        record_cam0_image0 = 'cam0/image000.jpg'
+        record_cam0_image1 = 'cam0/image001.jpg'
+        record_cam1_image0 = 'cam1/image000.jpg'
+        record_cam1_image1 = 'cam1/image001.jpg'
+        # Test insertions
         records_camera = kapture.RecordsCamera()
-        records_camera[timestamp0, device_id0] = 'cam0/image000.jpg'
+        records_camera[timestamp0, device_id0] = record_cam0_image0
         kapture_data = kapture.Kapture(records_camera=records_camera)
         self.assertEqual(1, len(kapture_data.records_camera.keys()))
         self.assertEqual(1, len(kapture_data.records_camera.key_pairs()))
         self.assertIn(timestamp0, kapture_data.records_camera)
         self.assertIn(device_id0, kapture_data.records_camera[timestamp0])
         self.assertIn((timestamp0, device_id0), kapture_data.records_camera)
-        self.assertEqual('cam0/image000.jpg', kapture_data.records_camera[timestamp0, device_id0])
-        records_camera[timestamp1, device_id0] = 'cam0/image001.jpg'
+        self.assertEqual(record_cam0_image0, kapture_data.records_camera[timestamp0, device_id0])
+        records_camera[timestamp1, device_id0] = record_cam0_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
-        kapture_data.records_camera[timestamp0][device_id1] = 'cam1/image000.jpg'
+        kapture_data.records_camera[timestamp0][device_id1] = record_cam1_image0
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
-        records_camera[timestamp1][device_id1] = 'cam1/image001.jpg'
+        records_camera[timestamp1][device_id1] = record_cam1_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(4, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual('cam0/image000.jpg', kapture_data.records_camera[timestamp0, device_id0])
-        self.assertEqual('cam1/image000.jpg', kapture_data.records_camera[timestamp0, device_id1])
-        self.assertEqual('cam0/image001.jpg', kapture_data.records_camera[timestamp1, device_id0])
-        self.assertEqual('cam1/image001.jpg', kapture_data.records_camera[timestamp1, device_id1])
+        self.assertEqual(record_cam0_image0, kapture_data.records_camera[timestamp0, device_id0])
+        self.assertEqual(record_cam1_image0, kapture_data.records_camera[timestamp0, device_id1])
+        self.assertEqual(record_cam0_image1, kapture_data.records_camera[timestamp1, device_id0])
+        self.assertEqual(record_cam1_image1, kapture_data.records_camera[timestamp1, device_id1])
 
         self.assertNotIn((timestamp1, 'cam2'), kapture_data.records_camera)
         self.assertNotIn((2, device_id0), kapture_data.records_camera)
+
+        # Test deletion
+        del kapture_data.records_camera[(timestamp0, device_id0)]
+        self.assertEqual(2, len(kapture_data.records_camera.keys()))
+        self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
+        del kapture_data.records_camera[(timestamp0, device_id1)]
+        self.assertEqual(1, len(kapture_data.records_camera.keys()))
+        self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
+
+
 
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()
