@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+Tests of the kapture core module.
+"""
+
 import unittest
 import numpy as np
 import quaternion
@@ -499,8 +503,6 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(1, len(kapture_data.records_camera.keys()))
         self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
 
-
-
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()
         self.assertIsNotNone(records_lidar, "Records Lidar created")
@@ -552,6 +554,27 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(15., records_gnss[0, gps_id1].z)
         self.assertEqual(9., records_gnss[0, gps_id1].dop)
 
+    def test_type_checking(self):
+        records_camera = kapture.RecordsCamera()
+        valid_ts, valid_id, valid_record = 0, 'cam0', 'cam0/image0.jpg'
+        invalid_ts, invalid_id, invalid_record = '0', float(0), kapture.PoseTransform()
+        self.assertRaises(TypeError, records_camera.__setitem__, (invalid_ts, valid_id), valid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (valid_ts, invalid_id), valid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (valid_ts, valid_id), invalid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (invalid_ts, invalid_id), invalid_record)
+
+        self.assertRaises(TypeError, records_camera.__setitem__, invalid_ts, {valid_id: valid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, valid_ts, {invalid_id: valid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, valid_ts, {valid_id: invalid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, invalid_ts, valid_record)
+
+        self.assertRaises(TypeError, records_camera.__contains__, invalid_ts, valid_id)
+        self.assertRaises(TypeError, records_camera.__contains__, valid_ts, invalid_id)
+        self.assertRaises(TypeError, records_camera.__contains__, invalid_ts, invalid_id)
+
+        self.assertRaises(TypeError, records_camera.__delitem__, invalid_ts)
+        self.assertRaises(TypeError, records_camera.__delitem__, (valid_ts, invalid_id))
+
 
 # Keypoints ############################################################################################################
 class TestKeypoints(unittest.TestCase):
@@ -580,11 +603,11 @@ class TestDescriptors(unittest.TestCase):
 # GlobalFeatures #######################################################################################################
 class TestGlobalFeatures(unittest.TestCase):
     def test_init_global_features_unknown(self):
-        gloabl_features = kapture.GlobalFeatures('BOW', float, 4,
+        global_features = kapture.GlobalFeatures('BOW', float, 4,
                                                  ['a/a.jpg', 'b/b.jpg', 'c/c.jpg', 'c/c.jpg'])
-        self.assertEqual('BOW', gloabl_features.type_name)
-        self.assertEqual(3, len(gloabl_features))
-        self.assertIn('a/a.jpg', gloabl_features)
+        self.assertEqual('BOW', global_features.type_name)
+        self.assertEqual(3, len(global_features))
+        self.assertIn('a/a.jpg', global_features)
 
 
 # Points3d #############################################################################################################
