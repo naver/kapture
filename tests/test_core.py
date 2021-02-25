@@ -390,6 +390,24 @@ class TestTrajectories(unittest.TestCase):
         del trajectories[2, 'cam1']
         self.assertEqual(len(trajectories), 1)
 
+    def test_timestamps_list(self):
+        trajectories = kapture.Trajectories()
+        trajectories[2, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[0, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[2, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 2])
+        trajectories[1, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 1, 2])
+
+        del trajectories[2, 'cam0']
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 1, 2])
+
+        del trajectories[1]
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 2])
+        del trajectories[2, 'cam1']
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, ])
+
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):

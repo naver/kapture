@@ -29,6 +29,10 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             with <PoseTransform> transforming points from world to device.
     """
 
+    def __init__(self):
+        super().__init__()
+        self._timestamps_sorted_list = []
+
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
                     value: Union[Dict[str, PoseTransform], PoseTransform]):
@@ -44,6 +48,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             if not isinstance(value, PoseTransform):
                 raise TypeError('invalid pose')
             self.setdefault(timestamp, {})[device_id] = value
+            self._timestamps_sorted_list = []
         elif isinstance(key, int):
             # key is a timestamp
             timestamp = key
@@ -55,6 +60,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             if not all(isinstance(v, PoseTransform) for v in value.values()):
                 raise TypeError('invalid Pose')
             super(Trajectories, self).__setitem__(timestamp, value)
+            self._timestamps_sorted_list = []
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
 
@@ -87,11 +93,22 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             if len(super(Trajectories, self).__getitem__(timestamp)) == 0:
                 # Cleaning upper level
                 super(Trajectories, self).__delitem__(timestamp)
+                self._timestamps_sorted_list = []
         elif isinstance(key, int):
             # key is a timestamp
             super(Trajectories, self).__delitem__(key)
+            self._timestamps_sorted_list = []
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
+
+    def timestamps_sorted_list(self) -> List[int]:
+        """
+        Get the list of timestamps is ascending sorted order
+        """
+        if len(self._timestamps_sorted_list) == 0:
+            # Need to sort
+            self._timestamps_sorted_list = sorted(list(self.keys()))
+        return self._timestamps_sorted_list
 
     def key_pairs(self) -> List[Tuple[int, str]]:
         """
