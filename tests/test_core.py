@@ -408,6 +408,17 @@ class TestTrajectories(unittest.TestCase):
         del trajectories[2, 'cam1']
         self.assertEqual(trajectories.timestamps_sorted_list(), [0, ])
 
+    def test_timestamps_length(self):
+        trajectories = kapture.Trajectories()
+        self.assertEqual(trajectories.timestamp_length(), -1)
+        trajectories[1614362592378, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[1614362592634, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1614362592378, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        trajectories[1614362593123, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 30])
+        self.assertEqual(trajectories.timestamp_length(), 13)
+        # Check that if we have timestamps of different precision, we can not compute a common length
+        trajectories[1614362594, 'lidar0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        self.assertEqual(trajectories.timestamp_length(), -1)
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):

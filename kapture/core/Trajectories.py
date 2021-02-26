@@ -15,8 +15,10 @@ import quaternion
 from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
-from typing import Union, Dict, List, Tuple, Optional
+import kapture.utils.computation as computation
+from bisect import bisect_left
 from copy import deepcopy
+from typing import Union, Dict, List, Tuple, Optional
 
 
 class Trajectories(Dict[int, Dict[str, PoseTransform]]):
@@ -109,6 +111,21 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             # Need to sort
             self._timestamps_sorted_list = sorted(list(self.keys()))
         return self._timestamps_sorted_list
+
+    def timestamp_length(self) -> int:
+        """
+        Compute the trajectory timestamp length, which can be 10, 13 or 16 if these are epoch values, and anything.
+
+        :return: Length of the timestamps as a positive integer, or -1 if it is variable
+        """
+        timestamps = self.timestamps_sorted_list()
+        base_length = computation.num_digits(timestamps[0]) if len(timestamps) > 0 else -1
+        indexes = [1, 2, 3, 4, 5, -1, -2, -3, -4] if len(timestamps) > 10 else list(range(1, len(timestamps)))
+        for n in indexes:
+            length = computation.num_digits(timestamps[n])
+            if length != base_length:
+                return -1
+        return base_length
 
     def key_pairs(self) -> List[Tuple[int, str]]:
         """
