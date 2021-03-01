@@ -104,7 +104,7 @@ def import_bundler(bundler_path: str,
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
     points3d = [] if add_reconstruction else None
     keypoints = kapture.Keypoints('sift', np.float32, 2) if add_reconstruction else None
-    observations = kapture.Observations() if add_reconstruction else None if add_reconstruction else None
+    observations = kapture.Observations() if add_reconstruction else None
     image_mapping = []  # bundler camera_id -> (name, width, height)
     for i in range(0, number_of_cameras):
         start_index = i * number_of_lines_per_camera + offset
