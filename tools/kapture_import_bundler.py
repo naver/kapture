@@ -173,7 +173,7 @@ def import_bundler(bundler_path: str,
                 camera_id = int(view_list[1 + 4 * j + 0])
                 keypoint_id = int(view_list[1 + 4 * j + 1])
                 x = float(view_list[1 + 4 * j + 2])
-                y = float(view_list[1 + 4 * j + 2])
+                y = float(view_list[1 + 4 * j + 3])
 
                 file_name, width, height = image_mapping[camera_id]
                 # put (0,0) in upper left corner
