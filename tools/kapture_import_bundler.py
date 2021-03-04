@@ -196,7 +196,7 @@ def import_bundler(bundler_path: str,
         # finally, convert local_keypoints to np.ndarray and add them to the global keypoints variable
         keypoints = kapture.Keypoints('sift', np.float32, 2)
         for image_filename, keypoints_array in local_keypoints.items():
-            keypoints_np_array = np.array(keypoints_array)
+            keypoints_np_array = np.array(keypoints_array).astype(np.float32)
             keypoints_out_path = kapture.io.features.get_keypoints_fullpath(kapture_dir_path, image_filename)
             kapture.io.features.image_keypoints_to_file(keypoints_out_path, keypoints_np_array)
             keypoints.add(image_filename)
