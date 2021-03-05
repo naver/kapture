@@ -1,10 +1,24 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+The trajectories points. We store for every timestamp and device a pose.
+So you can have two different devices for the same timestamp with a different pose.
+The timestamps are integers, and device identifiers strings.
+The timestamps are often epoch timestamps (in micro or milliseconds), but can be any set of integers.
+Note that the timestamps are usually ordered ascending (as the time goes), but this is not guaranteed,
+and might change if you manipulate them, save and reload them from disk.
+If you need them ordered, do it yourself.
+"""
+
+import quaternion
+
 from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
-from typing import Union, Dict, List, Tuple, Optional
+import kapture.utils.computation as computation
+from bisect import bisect_left
 from copy import deepcopy
+from typing import Union, Dict, List, Tuple, Optional
 
 
 class Trajectories(Dict[int, Dict[str, PoseTransform]]):
@@ -16,6 +30,10 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
 
             with <PoseTransform> transforming points from world to device.
     """
+
+    def __init__(self):
+        super().__init__()
+        self._timestamps_sorted_list = []
 
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
@@ -32,6 +50,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             if not isinstance(value, PoseTransform):
                 raise TypeError('invalid pose')
             self.setdefault(timestamp, {})[device_id] = value
+            self._timestamps_sorted_list = []
         elif isinstance(key, int):
             # key is a timestamp
             timestamp = key
@@ -43,6 +62,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             if not all(isinstance(v, PoseTransform) for v in value.values()):
                 raise TypeError('invalid Pose')
             super(Trajectories, self).__setitem__(timestamp, value)
+            self._timestamps_sorted_list = []
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
 
@@ -61,6 +81,51 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             return super(Trajectories, self).__getitem__(key)
         else:
             raise TypeError('key must be Union[int, Tuple[int, str]]')
+
+    def __delitem__(self, key: Union[int, Tuple[int, str]]):
+        if isinstance(key, tuple):
+            # key is a pair of (timestamp, device_id)
+            timestamp = key[0]
+            device_id = key[1]
+            if not isinstance(timestamp, int):
+                raise TypeError('invalid timestamp')
+            if not isinstance(device_id, str):
+                raise TypeError('invalid device_id')
+            super(Trajectories, self).__getitem__(timestamp).__delitem__(device_id)
+            if len(super(Trajectories, self).__getitem__(timestamp)) == 0:
+                # Cleaning upper level
+                super(Trajectories, self).__delitem__(timestamp)
+                self._timestamps_sorted_list = []
+        elif isinstance(key, int):
+            # key is a timestamp
+            super(Trajectories, self).__delitem__(key)
+            self._timestamps_sorted_list = []
+        else:
+            raise TypeError('key must be Union[int, Tuple[int, str]]')
+
+    def timestamps_sorted_list(self) -> List[int]:
+        """
+        Get the list of timestamps is ascending sorted order
+        """
+        if len(self._timestamps_sorted_list) == 0:
+            # Need to sort
+            self._timestamps_sorted_list = sorted(list(self.keys()))
+        return self._timestamps_sorted_list
+
+    def timestamp_length(self) -> int:
+        """
+        Compute the trajectory timestamp length, which can be 10, 13 or 16 if these are epoch values, and anything.
+
+        :return: Length of the timestamps as a positive integer, or -1 if it is variable
+        """
+        timestamps = self.timestamps_sorted_list()
+        base_length = computation.num_digits(timestamps[0]) if len(timestamps) > 0 else -1
+        indexes = [1, 2, 3, 4, 5, -1, -2, -3, -4] if len(timestamps) > 10 else list(range(1, len(timestamps)))
+        for n in indexes:
+            length = computation.num_digits(timestamps[n])
+            if length != base_length:
+                return -1
+        return base_length
 
     def key_pairs(self) -> List[Tuple[int, str]]:
         """
@@ -123,7 +188,6 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
     :param trajectories: input/output Trajectories where the rigs has to be replaced
     :param rigs: input Rigs that defines the rigs/sensors relationship.
     :param max_depth: maximum nested rig depth.
-    :return:
     """
     assert isinstance(rigs, Rigs)
     assert isinstance(trajectories, Trajectories)
@@ -191,7 +255,7 @@ def rigs_recover_inplace(
     :param trajectories: input/output Trajectories.
     :param rigs: input Rigs configuration.
     :param master_sensors: input If given, only compute rig poses for the given sensors.
-    :return:
+    :param max_depth: maximum nested rig depth.
     """
 
     # sensor_id -> rig_id, pose_rig_from_sensor
@@ -231,3 +295,26 @@ def rigs_recover_inplace(
             # it may end up to inconsistent results.
             pose_rig_from_world = PoseTransform.compose([pose_rig_from_sensor, pose_sensor_from_world])
             trajectories[timestamp, rig_id] = pose_rig_from_world
+
+
+def compute_intermediate_pose(timestamp: int,
+                              low_ts: int, low_p: PoseTransform,
+                              up_ts: int, up_p: PoseTransform) -> PoseTransform:
+    """
+    Compute an intermediate pose between two poses.
+    It does not come from the recorded data, but is purely computed by interpolation based on given poses.
+    We suppose that we move at a regular speed.
+
+    :param timestamp: the timestamp at which time to compute the pose
+    :param low_ts: the first timestamp
+    :param low_p: the first pose
+    :param up_ts: the second timestamp
+    :param up_p: the second pose
+    :return: the computed pose
+    """
+    rotation = quaternion.slerp(low_p.r, up_p.r, low_ts, up_ts, timestamp)
+    # translation = t0 + (ts-ts0)/(ts1-ts0) * (t1 - t0)
+    translation = [low_p.t[0] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[0] - low_p.t[0]),
+                   low_p.t[1] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[1] - low_p.t[1]),
+                   low_p.t[2] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[2] - low_p.t[2])]
+    return PoseTransform(rotation, translation)

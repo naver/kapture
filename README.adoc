@@ -245,4 +245,4 @@ If you wish to contribute, please refer to the  link:CONTRIBUTING.adoc[CONTRIBUT
 Software license is detailed in the link:LICENSE[LICENSE] file.
 
 == Contact Us
-You can contact us through https://github.com/naver/kapture[GitHub], or at kapture@naverlabs.com
+You can contact us through https://github.com/naver/kapture[GitHub], or at kapture at naverlabs + com

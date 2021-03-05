@@ -32,7 +32,7 @@ def read_doc(filepath):
             content = read_file(md_filepath)
 
     except FileNotFoundError:
-        warnings.warn(f'cannot convert asciidoc to markdown.')
+        warnings.warn('cannot convert asciidoc to markdown.')
         content = read_file(filepath)
 
     return content

@@ -5,12 +5,14 @@
 Test some of the utils functions and classes.
 """
 
+import datetime
 import os.path as path
 import tempfile
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
+import kapture.utils.computation as computation
 import kapture.utils.paths
 
 
@@ -43,6 +45,23 @@ class TestUtils(unittest.TestCase):
         with open(one_file, 'r') as f:
             first_line = f.readline()
             self.assertEqual(additional, first_line, "Successful prepend")
+
+    def testDigitsNumNotAnInt(self):
+        now = datetime.datetime.now().timestamp()
+        self.assertRaises(TypeError, computation.num_digits, now, msg="must be called with an integer")
+
+    def testDigitsZero(self):
+        number = 0
+        self.assertEqual(computation.num_digits(number), 1, "1 digit")
+
+    def testDigitsNum(self):
+        number = 1234567890
+        self.assertEqual(computation.num_digits(number), 10, "10 digits")
+
+    def testDigitsNumEpoch(self):
+        # Computes number of digits of typical epoch in microseconds
+        now = int(datetime.datetime.now().timestamp()*1000000)
+        self.assertEqual(computation.num_digits(now), 16, "Epoch now has 16 digits")
 
     def tearDown(self) -> None:
         """
