@@ -18,6 +18,7 @@ from .flatten import flatten
 import kapture.utils.computation as computation
 from bisect import bisect_left
 from copy import deepcopy
+import sys
 from typing import Union, Dict, List, Tuple, Optional
 
 
@@ -34,6 +35,8 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
     def __init__(self):
         super().__init__()
         self._timestamps_sorted_list = []
+        self._first_timestamp = 0
+        self._last_timestamp = sys.maxsize
 
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
@@ -110,6 +113,10 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
         if len(self._timestamps_sorted_list) == 0:
             # Need to sort
             self._timestamps_sorted_list = sorted(list(self.keys()))
+            if len(self._timestamps_sorted_list) > 0:
+                self._first_timestamp = self._timestamps_sorted_list[0]
+                if len(self._timestamps_sorted_list) > 1:
+                    self._last_timestamp = self._timestamps_sorted_list[-1]
         return self._timestamps_sorted_list
 
     def timestamp_length(self) -> int:
@@ -148,7 +155,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
                 raise TypeError('invalid timestamp')
             if not isinstance(device_id, str):
                 raise TypeError('invalid device_id')
-            return super(Trajectories, self).__contains__(timestamp) and device_id in self[timestamp]
+            return super(Trajectories, self).__contains__(timestamp) and self[timestamp].__contains__(device_id)
         elif isinstance(key, int):
             return super(Trajectories, self).__contains__(key)
         else:
@@ -160,6 +167,66 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
                  for timestamp, sensors in self.items()
                  for sensor_id, pose in sensors.items()]
         return '\n'.join(lines)
+
+    def intermediate_pose(self, timestamp: int, device_id: str, max_interval: int) -> Union[PoseTransform, None]:
+        """
+        Computes an intermediate pose in the trajectory of a device
+        The timestamp should be in epoch precision
+        i.e. 10, 13, 16 or 19 digits for seconds, milli-seconds, micro-seconds or nano-seconds
+        and in the same precision as the trajectories timestamps themselves to work well.
+        The timestamps interval should also be not too big (for example one second) to be of good value.
+        The max_interval parameter value should be of the same scale as the timestamps.
+
+        :param timestamp: timestamp
+        :param device_id: device identifier
+        :param max_interval: max interval between the given timestamp and the trajectory timestamps.
+        :return: a compute 6D pose if found, None otherwise
+        """
+        if not isinstance(timestamp, int):
+            raise TypeError('invalid timestamp')
+        if not isinstance(device_id, str):
+            raise TypeError('invalid device_id')
+        # In case the pose already exist: just return it
+        if self.__contains__(timestamp) and self.__getitem__(timestamp).__contains__(device_id):
+            return self.__getitem__(timestamp).__getitem__(device_id)
+        timestamps_with_poses_list = self.timestamps_sorted_list()
+        # Check if the pose is out of bounds
+        if timestamp <= self._first_timestamp or timestamp >= self._last_timestamp:
+            return None
+        # Find closest timestamps before and after
+        next_position = bisect_left(timestamps_with_poses_list, timestamp)
+        low_position = next_position - 1
+        previous_ts = timestamps_with_poses_list[low_position]
+        next_ts = timestamps_with_poses_list[next_position]
+        # We should have found the two closest timestamps
+        # Check there is a pose in the time interval for the device
+        while timestamp - previous_ts <= max_interval and not self.__getitem__(previous_ts).__contains__(device_id):
+            # Search backward for a timestamp with this device
+            low_position -= 1
+            if low_position >= 0:
+                previous_ts = timestamps_with_poses_list[low_position]
+            else:
+                # We have reached the begin of the list without solution
+                return None
+        # Check the interval for the previous timestamp
+        if timestamp - previous_ts > max_interval:
+            # We are to far in the past
+            return None
+        while next_ts - timestamp <= max_interval and not self.__getitem__(next_ts).__contains__(device_id):
+            # Search backward for a timestamp with this device
+            next_position += 1
+            if next_position < len(timestamps_with_poses_list):
+                next_ts = timestamps_with_poses_list[next_position]
+            else:
+                # We have reached the end of the list without solution
+                return None
+        # Check the interval for the next timestamp
+        if next_ts - timestamp > max_interval:
+            # We are to far in the future
+            return None
+        previous_pose = self.__getitem__(previous_ts).__getitem__(device_id)
+        next_pose = self.__getitem__(next_ts).__getitem__(device_id)
+        return compute_intermediate_pose(timestamp, previous_ts, previous_pose, next_ts, next_pose)
 
 
 def rigs_remove(trajectories: Trajectories, rigs: Rigs) -> Trajectories:

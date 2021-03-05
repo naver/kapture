@@ -437,6 +437,34 @@ class TestTrajectories(unittest.TestCase):
         trajectories[1614362594, 'lidar0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
         self.assertEqual(trajectories.timestamp_length(), -1)
 
+    def test_pose_interpolation(self):
+        trajectories = kapture.Trajectories()
+        trajectories[1614362592000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1614362592000, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 0])
+        trajectories[1614362592500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        trajectories[1614362593000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[1614362593000, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 20])
+        trajectories[1614362593500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 30])
+        trajectories[1614362594000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 40])
+        trajectories[1614362594500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 50])
+        trajectories[1614362595000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 60])
+        trajectories[1614362595500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 70])
+        self.assertEqual(trajectories.timestamp_length(), 13)
+        pose = trajectories.intermediate_pose(1614362592500, 'cam2', 1000000)
+        self.assertIsNone(pose, "unknown device")
+        pose = trajectories.intermediate_pose(1614362593000, 'cam0', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20]), "existing pose")
+        pose = trajectories.intermediate_pose(1614362500000, 'cam0', 1000000)
+        self.assertIsNone(pose, "time too far in past")
+        pose = trajectories.intermediate_pose(1614362600000, 'cam0', 1000000)
+        self.assertIsNone(pose, "time too far in future")
+        pose = trajectories.intermediate_pose(1614362595250, 'cam0', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 65]))
+        pose = trajectories.intermediate_pose(1614362592500, 'cam1', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 10]))
+        pose = trajectories.intermediate_pose(1614362595250, 'cam1', 1000000)
+        self.assertIsNone(pose, "not enough pose for cam1")
+
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):
