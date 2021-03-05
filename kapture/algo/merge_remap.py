@@ -10,7 +10,8 @@ import kapture
 from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.utils.Collections import get_new_if_not_empty
 
-from .merge_reconstruction import merge_keypoints, merge_descriptors, merge_global_features, merge_matches
+from .merge_reconstruction import merge_keypoints_collections, merge_descriptors_collections
+from .merge_reconstruction import merge_global_features_collections, merge_matches_collections
 from .merge_reconstruction import merge_points3d_and_observations, merge_points3d
 from .merge_records_data import merge_records_data
 
@@ -431,23 +432,23 @@ def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a b
         keypoints = [a_kapture.keypoints for a_kapture in kapture_list]
         keypoints_not_none = [k for k in keypoints if k is not None]
         if len(keypoints_not_none) > 0:
-            new_keypoints = merge_keypoints(keypoints, data_paths, kapture_path)
+            new_keypoints = merge_keypoints_collections(keypoints, data_paths, kapture_path)
             merged_kapture.keypoints = get_new_if_not_empty(new_keypoints, merged_kapture.keypoints)
     if kapture.Descriptors not in skip_list:
         descriptors = [a_kapture.descriptors for a_kapture in kapture_list]
         descriptors_not_none = [k for k in descriptors if k is not None]
         if len(descriptors_not_none) > 0:
-            new_descriptors = merge_descriptors(descriptors, data_paths, kapture_path)
+            new_descriptors = merge_descriptors_collections(descriptors, data_paths, kapture_path)
             merged_kapture.descriptors = get_new_if_not_empty(new_descriptors, merged_kapture.descriptors)
     if kapture.GlobalFeatures not in skip_list:
         global_features = [a_kapture.global_features for a_kapture in kapture_list]
         global_features_not_none = [k for k in global_features if k is not None]
         if len(global_features_not_none) > 0:
-            new_global_features = merge_global_features(global_features, data_paths, kapture_path)
+            new_global_features = merge_global_features_collections(global_features, data_paths, kapture_path)
             merged_kapture.global_features = get_new_if_not_empty(new_global_features, merged_kapture.global_features)
     if kapture.Matches not in skip_list:
         matches = [a_kapture.matches for a_kapture in kapture_list]
-        new_matches = merge_matches(matches, data_paths, kapture_path)
+        new_matches = merge_matches_collections(matches, data_paths, kapture_path)
         merged_kapture.matches = get_new_if_not_empty(new_matches, merged_kapture.matches)
 
     if kapture.Points3d not in skip_list and kapture.Observations not in skip_list:

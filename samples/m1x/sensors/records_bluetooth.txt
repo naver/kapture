@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp  , device_id           , Address          , RSSI, name
 1555398770307, AC01324954_bluetooth, 35:A8:4B:D9:95:06, -73 ,
 1555398770307, AC01324954_bluetooth, 6F:80:17:51:5C:16, -88 ,MyPhone

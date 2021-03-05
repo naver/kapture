@@ -623,8 +623,11 @@ class TestKeypoints(unittest.TestCase):
 class TestDescriptors(unittest.TestCase):
     def test_init_descriptors_unknown(self):
         descriptors = kapture.Descriptors('R2D2', float, 64,
+                                          'R2D2', 'L2',
                                           ['a/a.jpg', 'b/b.jpg', 'c/c.jpg', 'c/c.jpg'])
         self.assertEqual('R2D2', descriptors.type_name)
+        self.assertEqual('R2D2', descriptors.keypoints_type)
+        self.assertEqual('L2', descriptors.metric_type)
         self.assertEqual(3, len(descriptors))
         self.assertIn('a/a.jpg', descriptors)
 
@@ -632,9 +635,10 @@ class TestDescriptors(unittest.TestCase):
 # GlobalFeatures #######################################################################################################
 class TestGlobalFeatures(unittest.TestCase):
     def test_init_global_features_unknown(self):
-        global_features = kapture.GlobalFeatures('BOW', float, 4,
+        global_features = kapture.GlobalFeatures('BOW', float, 4, 'CSI',
                                                  ['a/a.jpg', 'b/b.jpg', 'c/c.jpg', 'c/c.jpg'])
         self.assertEqual('BOW', global_features.type_name)
+        self.assertEqual('CSI', global_features.metric_type)
         self.assertEqual(3, len(global_features))
         self.assertIn('a/a.jpg', global_features)
 
@@ -754,18 +758,32 @@ class TestPoints3d(unittest.TestCase):
 # OBSERVATIONS #########################################################################################################
 class TestObservations(unittest.TestCase):
     def test_init_observations(self):
-        observations = kapture.Observations({0: [('a/a.jpg', 1), ('b/b.jpg', 2)], 1: [('c/c.jpg', 1), ('c/c.jpg', 2)]})
+        observations = kapture.Observations({
+            0: {'R2D2': [('a/a.jpg', 1), ('b/b.jpg', 2)],
+                'D2NET': [('a/a.jpg', 0)]},
+            1: {'R2D2': [('c/c.jpg', 1), ('c/c.jpg', 2)],
+                'D2NET': [('c/c.jpg', 0), ('c/c.jpg', 1)]}
+        })
         self.assertTrue(0 in observations)
-        self.assertEqual(len(observations[0]), 2)
+        self.assertTrue((0, 'R2D2') in observations)
+        self.assertEqual(len(observations[0, 'R2D2']), 2)
+        self.assertTrue((0, 'D2NET') in observations)
+        self.assertEqual(len(observations[0, 'D2NET']), 1)
+
         self.assertTrue(1 in observations)
-        self.assertEqual(len(observations[1]), 2)
+        self.assertTrue((1, 'R2D2') in observations)
+        self.assertEqual(len(observations[1, 'R2D2']), 2)
+        self.assertTrue((1, 'D2NET') in observations)
+        self.assertEqual(len(observations[1, 'D2NET']), 2)
 
-        observations.add(0, 'c/c.jpg', 3)
-        self.assertEqual(len(observations[0]), 3)
+        observations.add(0, 'R2D2', 'c/c.jpg', 3)
+        self.assertEqual(len(observations[0, 'R2D2']), 3)
 
-        observations.add(2, 'a/a.jpg', 3)
+        observations.add(2, 'R2D2', 'a/a.jpg', 3)
         self.assertTrue(2 in observations)
-        self.assertEqual(len(observations[2]), 1)
+        self.assertTrue((2, 'R2D2') in observations)
+        self.assertTrue((2, 'D2NET') not in observations)
+        self.assertEqual(len(observations[2, 'R2D2']), 1)
 
 
 # MATCHES ##############################################################################################################

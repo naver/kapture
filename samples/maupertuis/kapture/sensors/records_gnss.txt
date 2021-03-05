@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, x, y, z, utc, dop
 1, gps_00001, 5.793155, 45.216783, 280.0, 514850400, 10.0
 2, gps_00001, 5.793155, 45.216783, 280.0, 514850400, 10.0

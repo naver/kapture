@@ -227,18 +227,28 @@ def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
     """
     # image features
     for feature_name in ['keypoints', 'descriptors', 'global_features']:
-        feature = getattr(kapture_data, feature_name)
-        nb_feature = None if feature is None else len(list(feature))
+        feature_collection = getattr(kapture_data, feature_name)
+        nb_feature_types = None if feature_collection is None else len(list(feature_collection.keys()))
         if not show_detail:
-            print_key_value(f'nb {feature_name}', nb_feature, file=output_stream, show_none=show_all)
-        elif feature is not None or show_all:
+            print_key_value(f'nb types {feature_name}', nb_feature_types, file=output_stream, show_none=show_all)
+            for feature_type, features in feature_collection.items():
+                print_key_value(f' └─ nb images {feature_type} ', len(features), file=output_stream, show_none=show_all)
+        elif feature_collection is not None or show_all:
             print_title(feature_name, file=output_stream)
-            if feature is not None:
-                print_key_value(' ├─ kind ', feature.type_name, file=output_stream, show_none=show_all)
-                print_key_value(' ├─ data type', feature.dtype.__name__, file=output_stream, show_none=show_all)
-                print_key_value(' ├─ data size', feature.dsize, file=output_stream, show_none=show_all)
-            nb_images = len(feature) if feature is not None else None
-            print_key_value(' └─ nb images', nb_images, file=output_stream, show_none=show_all)
+            if feature_collection is not None:
+                for feature_type, features in feature_collection.items():
+                    print_key_value(' ├─ feature_type ', feature_type, file=output_stream, show_none=show_all)
+                    print_key_value(' | ├─ kind ', features.type_name, file=output_stream, show_none=show_all)
+                    print_key_value(' | ├─ data type', features.dtype.__name__, file=output_stream, show_none=show_all)
+                    print_key_value(' | ├─ data size', features.dsize, file=output_stream, show_none=show_all)
+                    if feature_name == 'descriptors':
+                        print_key_value(' | ├─ keypoints_type', features.keypoints_type,
+                                        file=output_stream, show_none=show_all)
+                    if feature_name != 'keypoints':
+                        print_key_value(' | ├─ metric_type', features.metric_type,
+                                        file=output_stream, show_none=show_all)
+                    print_key_value(' | └─ nb images ', len(list(features)), file=output_stream, show_none=show_all)
+            print_key_value(f'nb types {feature_name}', nb_feature_types, file=output_stream, show_none=show_all)
 
 
 def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
@@ -246,12 +256,19 @@ def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
     Prints the matches to the output stream
     """
     # matches
-    nb_matches = None if kapture_data.matches is None else len(list(kapture_data.matches))
+    nb_kpts_types = None if kapture_data.matches is None else len(list(kapture_data.matches.keys()))
     if not show_detail:
-        print_key_value('nb matching pairs', nb_matches, file=output_stream, show_none=show_all)
+        print_key_value(f'nb types ', nb_kpts_types, file=output_stream, show_none=show_all)
+        for kpt_type, matches in kapture_data.matches.items():
+            print_key_value(f' └─ nb matching pairs {kpt_type} ', len(list(matches)),
+                            file=output_stream, show_none=show_all)
     elif kapture_data.matches is not None or show_all:
         print_title('matches', file=output_stream)
-        print_key_value(' └─ nb pairs', nb_matches, file=output_stream, show_none=show_all)
+        if kapture_data.matches is not None:
+            for kpt_type, matches in kapture_data.matches.items():
+                print_key_value(' ├─ keypoints_type ', kpt_type, file=output_stream, show_none=show_all)
+                print_key_value(' | └─ nb pairs ', len(list(matches)), file=output_stream, show_none=show_all)
+            print_key_value(f'nb types ', nb_kpts_types, file=output_stream, show_none=show_all)
 
 
 def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
@@ -268,7 +285,8 @@ def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
     # observations
     nb_observations_3d = len(kapture_data.observations) if kapture_data.observations is not None else None
     nb_observations_2d = len([feat
-                              for feats in kapture_data.observations.values()
+                              for observations in kapture_data.observations.values()
+                              for feats in observations.values()
                               for feat in feats]) if kapture_data.observations is not None else None
     if not show_detail:
         print_key_value('nb observed 3-D points', nb_observations_3d, file=output_stream, show_none=show_all)
