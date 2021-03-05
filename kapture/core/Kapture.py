@@ -324,10 +324,10 @@ class Kapture:
         RecordsAccelerometer,
         RecordsGyroscope,
         RecordsMagnetic,
-        Keypoints,
-        Descriptors,
-        GlobalFeatures,
-        Matches,
+        Optional[Dict[str, Keypoints]],
+        Optional[Dict[str, Descriptors]],
+        Optional[Dict[str, GlobalFeatures]],
+        Optional[Dict[str, Matches]],
         Observations,
         Points3d
     ]]:
