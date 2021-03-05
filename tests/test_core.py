@@ -206,6 +206,23 @@ class TestPoseTransformApply(unittest.TestCase):
             actual_points3d[:, 2], self.expected_points3d[:, 2])))  # Z untouched
 
 
+class TestPoseEquality(unittest.TestCase):
+    def test_equal(self):
+        pose_1 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0, 10])
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0, 10])
+        self.assertEqual(pose_1, pose_2)
+        self.assertNotEqual(pose_1, kapture.PoseTransform(t=None))
+        self.assertNotEqual(pose_1, kapture.PoseTransform(r=None))
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0.000009, 10])
+        self.assertEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0.22, 10])
+        self.assertNotEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0.011], t=[0, 0.0, 10])
+        self.assertNotEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0.01], t=[0, 0.0, 10])
+        self.assertEqual(pose_1, pose_2)
+
+
 # SENSOR ###############################################################################################################
 class TestSensor(unittest.TestCase):
     def test_init(self):
@@ -419,6 +436,7 @@ class TestTrajectories(unittest.TestCase):
         # Check that if we have timestamps of different precision, we can not compute a common length
         trajectories[1614362594, 'lidar0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
         self.assertEqual(trajectories.timestamp_length(), -1)
+
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
 class TestTrajectoriesRig(unittest.TestCase):
