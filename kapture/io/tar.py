@@ -160,14 +160,20 @@ def get_feature_tar_fullpath(kapture_type: Any, feature_name: str, kapture_dirpa
 
 
 def get_all_tar_handlers(kapture_dir_path: str,
-                         mode: str = 'r',
+                         mode: Union[str, Dict[Type, str]] = 'r',
                          skip_list: List[Type[Union[
                              kapture.Keypoints,
                              kapture.Descriptors,
                              kapture.GlobalFeatures,
                              kapture.Matches
                          ]]] = []) -> TarCollection:
-    assert mode in {'r', 'a'}
+    if isinstance(mode, str):
+        assert mode in {'r', 'a'}
+    else:
+        assert isinstance(mode, dict)
+        for _, mode_t in mode.values():
+            assert mode_t in {'r', 'a'}
+
     data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
                       for dtype, dir_name in FEATURES_DATA_DIRNAMES.items()}
     kapture_loadable_data = {
@@ -182,28 +188,31 @@ def get_all_tar_handlers(kapture_dir_path: str,
         logger.debug(f'opening keypoints tars {data_dir_paths[kapture.Keypoints]} ...')
         keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
+            mode_t = mode if isinstance(mode, str) else mode[kapture.Keypoints]
             for keypoints_type in keypoints_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Keypoints, keypoints_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
-                    tar_collection.keypoints[keypoints_type] = TarHandler(tarfile_path, mode)
+                    tar_collection.keypoints[keypoints_type] = TarHandler(tarfile_path, mode_t)
     # descriptors
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'opening descriptors tars {data_dir_paths[kapture.Descriptors]} ...')
         descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
+            mode_t = mode if isinstance(mode, str) else mode[kapture.Descriptors]
             for descriptors_type in descriptors_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Descriptors, descriptors_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
-                    tar_collection.descriptors[descriptors_type] = TarHandler(tarfile_path, mode)
+                    tar_collection.descriptors[descriptors_type] = TarHandler(tarfile_path, mode_t)
     # global_features
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'opening global_features tars {data_dir_paths[kapture.GlobalFeatures]} ...')
         global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
+            mode_t = mode if isinstance(mode, str) else mode[kapture.GlobalFeatures]
             for global_features_type in global_features_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
-                    tar_collection.global_features[global_features_type] = TarHandler(tarfile_path, mode)
+                    tar_collection.global_features[global_features_type] = TarHandler(tarfile_path, mode_t)
     # matches
     if kapture.Matches in kapture_loadable_data:
         logger.debug(f'opening matches tars {data_dir_paths[kapture.Matches]} ...')
@@ -211,8 +220,9 @@ def get_all_tar_handlers(kapture_dir_path: str,
                           for name in os.listdir(data_dir_paths[kapture.Matches])
                           if os.path.isdir(os.path.join(data_dir_paths[kapture.Matches], name))]
         if len(keypoints_list) > 0:
+            mode_t = mode if isinstance(mode, str) else mode[kapture.Matches]
             for keypoints_type in keypoints_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Matches, keypoints_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
-                    tar_collection.matches[keypoints_type] = TarHandler(tarfile_path, mode)
+                    tar_collection.matches[keypoints_type] = TarHandler(tarfile_path, mode_t)
     return tar_collection
