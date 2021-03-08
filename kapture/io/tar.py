@@ -1,13 +1,10 @@
+from kapture.utils.paths import path_secure
 import kapture
 import tarfile
 import numpy as np
 import io
-from typing import Any, Dict, List, Type, Union
-# import loop ?
-from kapture.io.csv import list_features
-from kapture.io.features import FEATURES_DATA_DIRNAMES
+from typing import Any, Dict, Iterable, List, Optional, Type, Union
 import os.path as path
-import os
 
 
 logger = kapture.logger
@@ -159,70 +156,32 @@ def get_feature_tar_fullpath(kapture_type: Any, feature_name: str, kapture_dirpa
     return path.join(kapture_dirpath, filename)
 
 
-def get_all_tar_handlers(kapture_dir_path: str,
-                         mode: Union[str, Dict[Type, str]] = 'r',
-                         skip_list: List[Type[Union[
-                             kapture.Keypoints,
-                             kapture.Descriptors,
-                             kapture.GlobalFeatures,
-                             kapture.Matches
-                         ]]] = []) -> TarCollection:
-    if isinstance(mode, str):
-        assert mode in {'r', 'a'}
-    else:
-        assert isinstance(mode, dict)
-        for _, mode_t in mode.values():
-            assert mode_t in {'r', 'a'}
+def list_files_in_tar(tar_handler: TarHandler,
+                      filename_extensions: Optional[Union[str, List[str]]] = None) -> Iterable[str]:
+    """
+    Returns the list of file path into the given tar.
+    If a list of extensions is given, returns only files with those extensions.
 
-    data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
-                      for dtype, dir_name in FEATURES_DATA_DIRNAMES.items()}
-    kapture_loadable_data = {
-        kapture_type
-        for kapture_type in KAPTURE_TARABLE_TYPES
-        if kapture_type not in skip_list and path.exists(data_dir_paths[kapture_type])
-    }
-    tar_collection = TarCollection()
+    :param tar_handler: opened tar reference
+    :param filename_extensions: optional file name extensions to filter in
+    :return: list of paths
+    """
+    # list all files
+    file_paths = tar_handler.content.keys()
 
-    # keypoints
-    if kapture.Keypoints in kapture_loadable_data:
-        logger.debug(f'opening keypoints tars {data_dir_paths[kapture.Keypoints]} ...')
-        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
-        if len(keypoints_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Keypoints]
-            for keypoints_type in keypoints_list:
-                tarfile_path = get_feature_tar_fullpath(kapture.Keypoints, keypoints_type, kapture_dir_path)
-                if path.isfile(tarfile_path):
-                    tar_collection.keypoints[keypoints_type] = TarHandler(tarfile_path, mode_t)
-    # descriptors
-    if kapture.Descriptors in kapture_loadable_data:
-        logger.debug(f'opening descriptors tars {data_dir_paths[kapture.Descriptors]} ...')
-        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
-        if len(descriptors_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Descriptors]
-            for descriptors_type in descriptors_list:
-                tarfile_path = get_feature_tar_fullpath(kapture.Descriptors, descriptors_type, kapture_dir_path)
-                if path.isfile(tarfile_path):
-                    tar_collection.descriptors[descriptors_type] = TarHandler(tarfile_path, mode_t)
-    # global_features
-    if kapture.GlobalFeatures in kapture_loadable_data:
-        logger.debug(f'opening global_features tars {data_dir_paths[kapture.GlobalFeatures]} ...')
-        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
-        if len(global_features_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.GlobalFeatures]
-            for global_features_type in global_features_list:
-                tarfile_path = get_feature_tar_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dir_path)
-                if path.isfile(tarfile_path):
-                    tar_collection.global_features[global_features_type] = TarHandler(tarfile_path, mode_t)
-    # matches
-    if kapture.Matches in kapture_loadable_data:
-        logger.debug(f'opening matches tars {data_dir_paths[kapture.Matches]} ...')
-        keypoints_list = [name
-                          for name in os.listdir(data_dir_paths[kapture.Matches])
-                          if os.path.isdir(os.path.join(data_dir_paths[kapture.Matches], name))]
-        if len(keypoints_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Matches]
-            for keypoints_type in keypoints_list:
-                tarfile_path = get_feature_tar_fullpath(kapture.Matches, keypoints_type, kapture_dir_path)
-                if path.isfile(tarfile_path):
-                    tar_collection.matches[keypoints_type] = TarHandler(tarfile_path, mode_t)
-    return tar_collection
+    # if extensions are given, keep only files that complies.
+    if filename_extensions:
+        if not isinstance(filename_extensions, list):
+            # make sure extensions is a list
+            filename_extensions = [filename_extensions]
+        # make sure given extensions are lower case.
+        filename_extensions = [ext.lower() for ext in filename_extensions]
+        # check the extension is authorized
+        file_paths = (
+            file_path for file_path in file_paths
+            if path.splitext(file_path)[1].lower() in filename_extensions
+        )
+
+    file_paths = (path_secure(file_path)
+                  for file_path in file_paths)
+    return file_paths

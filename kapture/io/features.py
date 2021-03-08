@@ -7,6 +7,7 @@ For example Keypoints are features related to 1 RecordCamera (image).
 And Matches are features related to a pair of RecordCamera (2 images).
 """
 
+from kapture.io.tar import TarHandler, list_files_in_tar
 import numpy as np
 import os.path as path
 from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable
@@ -80,13 +81,24 @@ def features_to_filepaths(
     }
 
 
+def image_ids_from_feature_tar(kapture_type: Type[Union[kapture.Keypoints,
+                                                        kapture.Descriptors,
+                                                        kapture.GlobalFeatures,
+                                                        kapture.Matches]],
+                               tar_handler: TarHandler) -> Iterable[str]:
+    feature_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture_type])
+    image_filenames = (feature_filename[:-len(FEATURE_FILE_EXTENSION[kapture_type])]
+                       for feature_filename in feature_filenames)
+    return image_filenames
+
+
 def image_ids_from_feature_dirpath(
         kapture_type: Type[Union[kapture.Keypoints,
                                  kapture.Descriptors,
                                  kapture.GlobalFeatures,
                                  kapture.Matches]],
         feature_type: str,
-        kapture_dirpath: str = '') -> Dict[str, str]:
+        kapture_dirpath: str = '') -> Iterable[str]:
     """
     Populate feature files and returns their corresponding image_filename.
 
