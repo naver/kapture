@@ -77,8 +77,7 @@ PADDINGS = {
     'pose': [4, 4, 4, 4, 4, 4, 4],
 }
 
-KAPTURE_FORMAT_1 = "# kapture format: 1.0"
-KAPTURE_FORMAT_1_1 = "# kapture format: 1.1"
+KAPTURE_FORMAT_1 = "# kapture format: 1.1"
 KAPTURE_FORMAT_PARSING_RE = '# kapture format\\:\\s*(?P<version>\\d+\\.\\d+)'
 
 
@@ -115,7 +114,7 @@ def current_format_version() -> Optional[str]:
 
     :return: format version
     """
-    return get_version_from_header(KAPTURE_FORMAT_1_1)
+    return get_version_from_header(KAPTURE_FORMAT_1)
 
 
 def kapture_format_version(kapture_dirpath: str) -> Optional[str]:
@@ -1278,7 +1277,7 @@ def kapture_from_dir(
     if sensors_file_path:
         logger.debug(f'loading sensors {sensors_file_path} ...')
         kapture_data.__version__ = get_version_from_csv_file(sensors_file_path)
-        assert kapture.__version__ == current_format_version()
+        assert kapture_data.__version__ == current_format_version()
         kapture_data.sensors = sensors_from_file(sensors_file_path)
         sensor_ids = set(kapture_data.sensors.keys()) if kapture_data.sensors is not None else set()
 
