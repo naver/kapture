@@ -141,6 +141,10 @@ def import_12scenes(d12scenes_path: str,
     for shot in shots.values():
         pose_filepath = path.join(d12images_path, shot['pose'])
         pose_mat = np.loadtxt(pose_filepath)  # camera-to-world, 4×4 matrix in homogeneous coordinates
+        if np.isnan(pose_mat).any() or np.isposinf(pose_mat).any() or np.isneginf(pose_mat).any():
+            timestamp = shot['timestamp']
+            logger.debug(f'ts={timestamp}: ignored inf pose')
+            continue
         rotation_mat = pose_mat[0:3, 0:3]
         position_vec = pose_mat[0:3, 3]
         rotation_quat = quaternion.from_rotation_matrix(rotation_mat)
