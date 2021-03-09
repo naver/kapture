@@ -67,6 +67,7 @@ class TestTar(unittest.TestCase):
                                                       kapture_data_expected.keypoints[keypoints_type].dtype,
                                                       kapture_data_expected.keypoints[keypoints_type].dsize)
         self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
+        tar_handlers.close()
 
 
 if __name__ == '__main__':
