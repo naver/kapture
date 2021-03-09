@@ -83,8 +83,7 @@ def features_to_filepaths(
 
 def image_ids_from_feature_tar(kapture_type: Type[Union[kapture.Keypoints,
                                                         kapture.Descriptors,
-                                                        kapture.GlobalFeatures,
-                                                        kapture.Matches]],
+                                                        kapture.GlobalFeatures]],
                                tar_handler: TarHandler) -> Iterable[str]:
     feature_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture_type])
     image_filenames = (feature_filename[:-len(FEATURE_FILE_EXTENSION[kapture_type])]
@@ -95,8 +94,7 @@ def image_ids_from_feature_tar(kapture_type: Type[Union[kapture.Keypoints,
 def image_ids_from_feature_dirpath(
         kapture_type: Type[Union[kapture.Keypoints,
                                  kapture.Descriptors,
-                                 kapture.GlobalFeatures,
-                                 kapture.Matches]],
+                                 kapture.GlobalFeatures]],
         feature_type: str,
         kapture_dirpath: str = '') -> Iterable[str]:
     """
@@ -382,15 +380,7 @@ def matches_to_filepaths(matches: kapture.Matches,
     }
 
 
-def matching_pairs_from_dirpath(keypoints_type: str, kapture_dirpath: str) -> Iterable[Tuple[str, str]]:
-    """
-    Read and build Matches from kapture directory tree.
-    """
-    matches_dirpath = get_matches_fullpath(None, keypoints_type, kapture_dirpath)
-    # list all files there is
-    # filter only match files (the ones endings with .matches)
-    matches_filenames = populate_files_in_dirpath(matches_dirpath, FEATURE_FILE_EXTENSION[kapture.Matches])
-
+def _matches_filenames_remove_extensions_and_cut(matches_filenames: Iterable[str]) -> Iterable[Tuple[str, str]]:
     # remove the extensions and cut
     matching_pairs = (
         path_secure(matches_filename)[:-len(FEATURE_FILE_EXTENSION[kapture.Matches])
@@ -399,6 +389,22 @@ def matching_pairs_from_dirpath(keypoints_type: str, kapture_dirpath: str) -> It
     )
     matching_pairs = ((matches[0], matches[1]) for matches in matching_pairs if len(matches) == 2)
     return matching_pairs
+
+
+def matching_pairs_from_tar(tar_handler: TarHandler) -> Iterable[Tuple[str, str]]:
+    matches_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture.Matches])
+    return _matches_filenames_remove_extensions_and_cut(matches_filenames)
+
+
+def matching_pairs_from_dirpath(keypoints_type: str, kapture_dirpath: str) -> Iterable[Tuple[str, str]]:
+    """
+    Read and build Matches from kapture directory tree.
+    """
+    matches_dirpath = get_matches_fullpath(None, keypoints_type, kapture_dirpath)
+    # list all files there is
+    # filter only match files (the ones endings with .matches)
+    matches_filenames = populate_files_in_dirpath(matches_dirpath, FEATURE_FILE_EXTENSION[kapture.Matches])
+    return _matches_filenames_remove_extensions_and_cut(matches_filenames)
 
 
 def matches_check_dir(matches: kapture.Matches, keypoints_type: str, kapture_dirpath: str) -> bool:

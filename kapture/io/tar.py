@@ -1,3 +1,5 @@
+from kapture.core.Matches import Matches
+from re import M
 from kapture.utils.paths import path_secure
 import kapture
 import tarfile
@@ -185,3 +187,28 @@ def list_files_in_tar(tar_handler: TarHandler,
     file_paths = (path_secure(file_path)
                   for file_path in file_paths)
     return file_paths
+
+
+def retrieve_tar_handler_from_collection(kapture_type: Type[Union[kapture.Keypoints,
+                                                                  kapture.Descriptors,
+                                                                  kapture.GlobalFeatures,
+                                                                  kapture.Matches]],
+                                         feature_type: str,
+                                         tar_handlers: Optional[Union[TarCollection,
+                                                                      TarHandler]] = None) -> Optional[TarHandler]:
+    tar_local_handler = None
+    if tar_handlers is not None:
+        if isinstance(tar_handlers, TarCollection):
+            if kapture_type == kapture.Keypoints and feature_type in tar_handlers.keypoints:
+                tar_local_handler = tar_handlers.keypoints[feature_type]
+            elif kapture_type == kapture.Descriptors and feature_type in tar_handlers.descriptors:
+                tar_local_handler = tar_handlers.descriptors[feature_type]
+            elif kapture_type == kapture.GlobalFeatures and feature_type in tar_handlers.global_features:
+                tar_local_handler = tar_handlers.global_features[feature_type]
+            elif kapture_type == kapture.Matches and feature_type in tar_handlers.matches:
+                tar_local_handler = tar_handlers.matches[feature_type]
+        elif isinstance(tar_handlers, TarHandler):
+            tar_local_handler = tar_handlers
+        else:
+            raise TypeError(f'unknown {tar_handlers}')
+    return tar_local_handler
