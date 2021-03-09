@@ -1,0 +1,5 @@
+# kapture format: 1.1
+# timestamp, device_id, x, y, z, utc, dop
+0, GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 13.400294444444445, 52.51891666666666, 27.0, 0, 5.0
+1, GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 13.40038888888889, 52.518924999999996, 30.0, 0, 5.0
+2, GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 13.400447222222223, 52.51904722222222, 39.0, 0, 5.0

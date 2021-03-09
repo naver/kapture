@@ -1,0 +1,5 @@
+# kapture format: 1.1
+# timestamp, device_id, image_path
+0, v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 01.jpg
+1, v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 02.jpg
+2, v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, 03.jpg

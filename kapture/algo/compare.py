@@ -257,7 +257,7 @@ def equal_sets(data_a: Set[Any], data_b: Set[Any], func_name: str = 'equal_sets'
     set_difference = data_a.difference(data_b)
     are_equal = len(set_difference) == 0
     if not are_equal:
-        getLogger().debug('{}:\n{}'.format(func_name, '\n'.join(set_difference)))
+        getLogger().debug('{}:\n{}'.format(func_name, '\n'.join((str(s) for s in set_difference))))
     return are_equal
 
 

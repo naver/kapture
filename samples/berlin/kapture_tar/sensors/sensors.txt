@@ -1,0 +1,4 @@
+# kapture format: 1.1
+# sensor_id, name, sensor_type, [sensor_params]+
+v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, camera, RADIAL, 3264, 2448, 3147.3191028463957, 1632, 1224, 0.022672104712876825, -0.0009966053789495556
+GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722, , gnss, EPSG:4326
