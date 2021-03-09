@@ -135,7 +135,7 @@ Text files must comply the following:
 
 It is possible to replace some of the recontruction folders with a tar.
 To be precise, all subfolders of `keypoints`, `descriptors`, `global_features` and `matches` can be replaced by an archive of the same name + `.tar`. For example `reconstruction/keypoints/r2d2_WASF-N8_20k/` become `reconstruction/keypoints/r2d2_WASF-N8_20k.tar`.
-The content of the tar file should be identical to the folder it replaces. Read and Write operations are supported.
+The content of the tar file should be identical to the folder it replaces. Read or Append operations are supported.
 Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be careful.
 In order to use the tar files, you will have to open them before loading the kapture data:
 TO COMPLETE API IMPLICATIONS OF THAT CHANGE
