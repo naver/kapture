@@ -23,7 +23,6 @@ import quaternion
 from typing import Optional
 from PIL import Image
 from tqdm import tqdm
-import quaternion
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
