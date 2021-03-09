@@ -16,7 +16,7 @@ There are many ways to contribute to the kapture project:
 * provide scripts to create data in kapture format (e.g. local/global feature extraction)
 * propose a new feature and implement it
 
-We're happy to help you make kapture better, so please mailto:kapture@naverlabs.com[contact us] for additional information.
+We're happy to help you make kapture better, so please mail us at kapture at naverlabs+com for additional information.
 
 The rest of the document concerns software contributions.
 

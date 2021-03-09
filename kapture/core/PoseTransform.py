@@ -1,5 +1,10 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+Represents a 6 dimensions pose.
+"""
+
+import math
 import numpy as np
 import quaternion
 from typing import List, Optional
@@ -134,3 +139,22 @@ class PoseTransform:
 
     def __repr__(self) -> str:
         return 'r:{},  t:{}'.format(self.r_raw, self.t_raw)
+
+    def __eq__(self, other) -> bool:
+        if (self._t is None and other.t is not None) or (self._t is not None and other.t is None):
+            return False
+        if (self._r is None and other.r is not None) or (self._r is not None and other.r is None):
+            return False
+        self_trans = self.t_raw
+        other_trans = other.t_raw
+        for left, right in zip(self_trans, other_trans):
+            # Check distances at 10-2 millimeters
+            if not math.isclose(left, right, rel_tol=1.e-05, abs_tol=1.e-05):
+                return False
+        self_rot = self.r_raw
+        other_rot = other.r_raw
+        for left, right in zip(self_rot, other_rot):
+            # Check angles at 10-2 degrees
+            if not math.isclose(left, right, rel_tol=1.e-02, abs_tol=1.e-02):
+                return False
+        return True

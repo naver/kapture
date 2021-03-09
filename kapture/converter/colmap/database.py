@@ -204,7 +204,9 @@ class COLMAPDatabase(sqlite3.Connection):
             (pair_id,) + matches.shape + (array_to_blob(matches),))
 
     def add_two_view_geometry(self, image_id1, image_id2, matches,
-                              F=np.eye(3), E=np.eye(3), H=np.eye(3), config=2):
+                              F=np.eye(3), E=np.eye(3), H=np.eye(3),
+                              qvec=np.array([1.0, 0.0, 0.0, 0.0]),
+                              tvec=np.zeros(3), config=2):
         assert(len(matches.shape) == 2)
         assert(matches.shape[1] == 2)
 
@@ -216,10 +218,19 @@ class COLMAPDatabase(sqlite3.Connection):
         F = np.asarray(F, dtype=np.float64)
         E = np.asarray(E, dtype=np.float64)
         H = np.asarray(H, dtype=np.float64)
-        self.execute(
-            "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (pair_id,) + matches.shape + (array_to_blob(matches), config,
-                                          array_to_blob(F), array_to_blob(E), array_to_blob(H)))
+        qvec = np.asarray(qvec, dtype=np.float64)
+        tvec = np.asarray(tvec, dtype=np.float64)
+        try:
+            self.execute(
+                "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (pair_id,) + matches.shape + (array_to_blob(matches), config,
+                                              array_to_blob(F), array_to_blob(E), array_to_blob(H)))
+        except sqlite3.OperationalError:
+            self.execute(
+                "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (pair_id,) + matches.shape + (array_to_blob(matches), config,
+                                              array_to_blob(F), array_to_blob(E), array_to_blob(H),
+                                              array_to_blob(qvec), array_to_blob(tvec)))
 
 
 def example_usage():
@@ -244,10 +255,8 @@ def example_usage():
 
     # Create dummy cameras.
 
-    model1, width1, height1, params1 = \
-        0, 1024, 768, np.array((1024., 512., 384.))
-    model2, width2, height2, params2 = \
-        2, 1024, 768, np.array((1024., 512., 384., 0.1))
+    model1, width1, height1, params1 = 0, 1024, 768, np.array((1024., 512., 384.))
+    model2, width2, height2, params2 = 2, 1024, 768, np.array((1024., 512., 384., 0.1))
 
     camera_id1 = db.add_camera(model1, width1, height1, params1)
     camera_id2 = db.add_camera(model2, width2, height2, params2)

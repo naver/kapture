@@ -8,7 +8,7 @@ This section explains how to convert some existing datasets to __kapture__ forma
 
 Note that there are already many datasets (including the ones from visuallocalization.net) directly available in kapture
 (no need to manually convert them).
-See : https://github.com/naver/kapture/blob/master/doc/tutorial.adoc#download-a-dataset
+See : https://github.com/naver/kapture/blob/main/doc/tutorial.adoc#download-a-dataset
 
 Please also note that __kapture__ provides some generic importers and exporters for some formats
 (COLMAP, OpenMVG, OpenSfm, NVM, Bundler, ROSbag...).
@@ -390,7 +390,7 @@ For the new training images of v2, we only included the poses for the original d
 It is possible to get the poses for the other 2 cameras by leveraging the known rig configuration with the function:
 [source,python]
 ----
-# in https://github.com/naver/kapture/blob/master/kapture/core/Trajectories.py
+# in https://github.com/naver/kapture/blob/main/kapture/core/Trajectories.py
 kapture.rigs_recover_inplace(kdata_mapping.trajectories, kdata_mapping.rigs, 'rear') 
 ----
 

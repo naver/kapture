@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+Tests of the kapture core module.
+"""
+
 import unittest
 import numpy as np
 import quaternion
@@ -202,6 +206,23 @@ class TestPoseTransformApply(unittest.TestCase):
             actual_points3d[:, 2], self.expected_points3d[:, 2])))  # Z untouched
 
 
+class TestPoseEquality(unittest.TestCase):
+    def test_equal(self):
+        pose_1 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0, 10])
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0, 10])
+        self.assertEqual(pose_1, pose_2)
+        self.assertNotEqual(pose_1, kapture.PoseTransform(t=None))
+        self.assertNotEqual(pose_1, kapture.PoseTransform(r=None))
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0.000009, 10])
+        self.assertEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0], t=[0, 0.22, 10])
+        self.assertNotEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0.011], t=[0, 0.0, 10])
+        self.assertNotEqual(pose_1, pose_2)
+        pose_2 = kapture.PoseTransform(r=[1, 10, 0, 0.01], t=[0, 0.0, 10])
+        self.assertEqual(pose_1, pose_2)
+
+
 # SENSOR ###############################################################################################################
 class TestSensor(unittest.TestCase):
     def test_init(self):
@@ -345,6 +366,9 @@ class TestTrajectories(unittest.TestCase):
         self.assertRaises(TypeError, traj.__contains__, valid_ts, invalid_id)
         self.assertRaises(TypeError, traj.__contains__, invalid_ts, invalid_id)
 
+        self.assertRaises(TypeError, traj.__delitem__, invalid_ts)
+        self.assertRaises(TypeError, traj.__delitem__, (valid_ts, invalid_id))
+
     def test_rig_remove(self):
         rigs = kapture.Rigs()
         rigs['rig0', 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[100, 0, 0])
@@ -364,6 +388,82 @@ class TestTrajectories(unittest.TestCase):
         self.assertIn((2, 'cam1'), trajectories_.key_pairs())
         self.assertAlmostEqual(trajectories_[2, 'cam1'].t_raw, [-100.0, 0.0, 20.0])
         self.assertAlmostEqual(trajectories_[2, 'cam1'].r_raw, [1.0, 0.0, 0.0, 0.0])
+
+    def test_remove(self):
+        trajectories = kapture.Trajectories()
+        trajectories[0, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        trajectories[2, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[2, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(len(trajectories[2]), 2)
+
+        del trajectories[2, 'cam0']
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(len(trajectories[2]), 1)
+
+        del trajectories[1]
+        self.assertEqual(len(trajectories), 2)
+        del trajectories[2, 'cam1']
+        self.assertEqual(len(trajectories), 1)
+
+    def test_timestamps_list(self):
+        trajectories = kapture.Trajectories()
+        trajectories[2, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[0, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[2, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 2])
+        trajectories[1, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        self.assertEqual(len(trajectories), 3)
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 1, 2])
+
+        del trajectories[2, 'cam0']
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 1, 2])
+
+        del trajectories[1]
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, 2])
+        del trajectories[2, 'cam1']
+        self.assertEqual(trajectories.timestamps_sorted_list(), [0, ])
+
+    def test_timestamps_length(self):
+        trajectories = kapture.Trajectories()
+        self.assertEqual(trajectories.timestamp_length(), -1)
+        trajectories[1614362592378, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[1614362592634, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1614362592378, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 20])
+        trajectories[1614362593123, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[10, 0, 30])
+        self.assertEqual(trajectories.timestamp_length(), 13)
+        # Check that if we have timestamps of different precision, we can not compute a common length
+        trajectories[1614362594, 'lidar0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        self.assertEqual(trajectories.timestamp_length(), -1)
+
+    def test_pose_interpolation(self):
+        trajectories = kapture.Trajectories()
+        trajectories[1614362592000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 0])
+        trajectories[1614362592000, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 0])
+        trajectories[1614362592500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 10])
+        trajectories[1614362593000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20])
+        trajectories[1614362593000, 'cam1'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 20])
+        trajectories[1614362593500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 30])
+        trajectories[1614362594000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 40])
+        trajectories[1614362594500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 50])
+        trajectories[1614362595000, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 60])
+        trajectories[1614362595500, 'cam0'] = kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 70])
+        self.assertEqual(trajectories.timestamp_length(), 13)
+        pose = trajectories.intermediate_pose(1614362592500, 'cam2', 1000000)
+        self.assertIsNone(pose, "unknown device")
+        pose = trajectories.intermediate_pose(1614362593000, 'cam0', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 20]), "existing pose")
+        pose = trajectories.intermediate_pose(1614362500000, 'cam0', 1000000)
+        self.assertIsNone(pose, "time too far in past")
+        pose = trajectories.intermediate_pose(1614362600000, 'cam0', 1000000)
+        self.assertIsNone(pose, "time too far in future")
+        pose = trajectories.intermediate_pose(1614362595250, 'cam0', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 0, 65]))
+        pose = trajectories.intermediate_pose(1614362592500, 'cam1', 1000000)
+        self.assertEqual(pose, kapture.PoseTransform(r=[1, 0, 0, 0], t=[0, 10, 10]))
+        pose = trajectories.intermediate_pose(1614362595250, 'cam1', 1000000)
+        self.assertIsNone(pose, "not enough pose for cam1")
 
 
 # REMOVE/RESTORE RIGS in TRAJECTORIES ##################################################################################
@@ -439,31 +539,44 @@ class TestRecords(unittest.TestCase):
     def test_init_camera(self):
         timestamp0, timestamp1 = 0, 1
         device_id0, device_id1 = 'cam0', 'cam1'
+        record_cam0_image0 = 'cam0/image000.jpg'
+        record_cam0_image1 = 'cam0/image001.jpg'
+        record_cam1_image0 = 'cam1/image000.jpg'
+        record_cam1_image1 = 'cam1/image001.jpg'
+        # Test insertions
         records_camera = kapture.RecordsCamera()
-        records_camera[timestamp0, device_id0] = 'cam0/image000.jpg'
+        records_camera[timestamp0, device_id0] = record_cam0_image0
         kapture_data = kapture.Kapture(records_camera=records_camera)
         self.assertEqual(1, len(kapture_data.records_camera.keys()))
         self.assertEqual(1, len(kapture_data.records_camera.key_pairs()))
         self.assertIn(timestamp0, kapture_data.records_camera)
         self.assertIn(device_id0, kapture_data.records_camera[timestamp0])
         self.assertIn((timestamp0, device_id0), kapture_data.records_camera)
-        self.assertEqual('cam0/image000.jpg', kapture_data.records_camera[timestamp0, device_id0])
-        records_camera[timestamp1, device_id0] = 'cam0/image001.jpg'
+        self.assertEqual(record_cam0_image0, kapture_data.records_camera[timestamp0, device_id0])
+        records_camera[timestamp1, device_id0] = record_cam0_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
-        kapture_data.records_camera[timestamp0][device_id1] = 'cam1/image000.jpg'
+        kapture_data.records_camera[timestamp0][device_id1] = record_cam1_image0
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
-        records_camera[timestamp1][device_id1] = 'cam1/image001.jpg'
+        records_camera[timestamp1][device_id1] = record_cam1_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(4, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual('cam0/image000.jpg', kapture_data.records_camera[timestamp0, device_id0])
-        self.assertEqual('cam1/image000.jpg', kapture_data.records_camera[timestamp0, device_id1])
-        self.assertEqual('cam0/image001.jpg', kapture_data.records_camera[timestamp1, device_id0])
-        self.assertEqual('cam1/image001.jpg', kapture_data.records_camera[timestamp1, device_id1])
+        self.assertEqual(record_cam0_image0, kapture_data.records_camera[timestamp0, device_id0])
+        self.assertEqual(record_cam1_image0, kapture_data.records_camera[timestamp0, device_id1])
+        self.assertEqual(record_cam0_image1, kapture_data.records_camera[timestamp1, device_id0])
+        self.assertEqual(record_cam1_image1, kapture_data.records_camera[timestamp1, device_id1])
 
         self.assertNotIn((timestamp1, 'cam2'), kapture_data.records_camera)
         self.assertNotIn((2, device_id0), kapture_data.records_camera)
+
+        # Test deletion
+        del kapture_data.records_camera[(timestamp0, device_id0)]
+        self.assertEqual(2, len(kapture_data.records_camera.keys()))
+        self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
+        del kapture_data.records_camera[(timestamp0, device_id1)]
+        self.assertEqual(1, len(kapture_data.records_camera.keys()))
+        self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
 
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()
@@ -516,6 +629,27 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(15., records_gnss[0, gps_id1].z)
         self.assertEqual(9., records_gnss[0, gps_id1].dop)
 
+    def test_type_checking(self):
+        records_camera = kapture.RecordsCamera()
+        valid_ts, valid_id, valid_record = 0, 'cam0', 'cam0/image0.jpg'
+        invalid_ts, invalid_id, invalid_record = '0', float(0), kapture.PoseTransform()
+        self.assertRaises(TypeError, records_camera.__setitem__, (invalid_ts, valid_id), valid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (valid_ts, invalid_id), valid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (valid_ts, valid_id), invalid_record)
+        self.assertRaises(TypeError, records_camera.__setitem__, (invalid_ts, invalid_id), invalid_record)
+
+        self.assertRaises(TypeError, records_camera.__setitem__, invalid_ts, {valid_id: valid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, valid_ts, {invalid_id: valid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, valid_ts, {valid_id: invalid_record})
+        self.assertRaises(TypeError, records_camera.__setitem__, invalid_ts, valid_record)
+
+        self.assertRaises(TypeError, records_camera.__contains__, invalid_ts, valid_id)
+        self.assertRaises(TypeError, records_camera.__contains__, valid_ts, invalid_id)
+        self.assertRaises(TypeError, records_camera.__contains__, invalid_ts, invalid_id)
+
+        self.assertRaises(TypeError, records_camera.__delitem__, invalid_ts)
+        self.assertRaises(TypeError, records_camera.__delitem__, (valid_ts, invalid_id))
+
 
 # Keypoints ############################################################################################################
 class TestKeypoints(unittest.TestCase):
@@ -544,11 +678,11 @@ class TestDescriptors(unittest.TestCase):
 # GlobalFeatures #######################################################################################################
 class TestGlobalFeatures(unittest.TestCase):
     def test_init_global_features_unknown(self):
-        gloabl_features = kapture.GlobalFeatures('BOW', float, 4,
+        global_features = kapture.GlobalFeatures('BOW', float, 4,
                                                  ['a/a.jpg', 'b/b.jpg', 'c/c.jpg', 'c/c.jpg'])
-        self.assertEqual('BOW', gloabl_features.type_name)
-        self.assertEqual(3, len(gloabl_features))
-        self.assertIn('a/a.jpg', gloabl_features)
+        self.assertEqual('BOW', global_features.type_name)
+        self.assertEqual(3, len(global_features))
+        self.assertIn('a/a.jpg', global_features)
 
 
 # Points3d #############################################################################################################

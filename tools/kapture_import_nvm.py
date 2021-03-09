@@ -304,7 +304,7 @@ def parse_points3d(kapture_path: str,
 
     # finally, convert local_keypoints to np.ndarray and add them to the global keypoints variable
     for image_filename, keypoints_array in local_keypoints.items():
-        keypoints_np_array = np.array(keypoints_array)
+        keypoints_np_array = np.array(keypoints_array, dtype=np.float32)
         keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_filename)
         kapture.io.features.image_keypoints_to_file(keypoints_filepath, keypoints_np_array)
         keypoints.add(image_filename)

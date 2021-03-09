@@ -245,7 +245,7 @@ def export_openmvg_views(
         polymorphic_registry: CerealPointerRegistry,
         ptr_wrapper_registry: CerealPointerRegistry,
         image_path_flatten: bool,
-):
+) -> List:
     """
 
     :param kapture_cameras:
@@ -256,7 +256,7 @@ def export_openmvg_views(
     :param polymorphic_registry: input/output polymorphic IDs status
     :param ptr_wrapper_registry: input/output polymorphic IDs status
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
-    :return:
+    :return: views to be serialized
     """
     views = []
     # process all images
@@ -313,13 +313,13 @@ def export_openmvg_poses(
         kapture_images: kapture.RecordsCamera,
         kapture_trajectories: kapture.Trajectories,
         kapture_to_openmvg_view_ids: Dict[str, int],
-):
+) -> List:
     """
 
     :param kapture_images:
     :param kapture_trajectories:
     :param kapture_to_openmvg_view_ids: input dict that maps kapture image ids to openMVG view ids.
-    :return:
+    :return: extrinsics to be serialized
     """
     extrinsics = []
     # process all images
@@ -350,7 +350,7 @@ def export_openmvg_structure(
 ):
     # early check
     if kapture_points_3d is None:
-        logger.warning(f'no 3D points to export.')
+        logger.warning('no 3D points to export.')
         return
 
     xyz_coordinates = kapture_points_3d[:, 0:3]
@@ -454,7 +454,7 @@ def export_openmvg_sfm_data(
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
 
-    logger.debug(f'exporting intrinsics ...')
+    logger.debug('exporting intrinsics ...')
     openmvg_sfm_data_intrinsics = export_openmvg_intrinsics(
         kapture_cameras=kapture_data.cameras,
         kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
@@ -462,7 +462,7 @@ def export_openmvg_sfm_data(
         ptr_wrapper_registry=ptr_wrapper_registry,
     )
 
-    logger.debug(f'exporting views ...')
+    logger.debug('exporting views ...')
     openmvg_sfm_data_views = export_openmvg_views(
         kapture_cameras=kapture_data.cameras,
         kapture_images=kapture_data.records_camera,
@@ -474,14 +474,14 @@ def export_openmvg_sfm_data(
         image_path_flatten=image_path_flatten,
     )
 
-    logger.debug(f'exporting poses ...')
+    logger.debug('exporting poses ...')
     openmvg_sfm_data_poses = export_openmvg_poses(
         kapture_images=kapture_data.records_camera,
         kapture_trajectories=kapture_data.trajectories,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
 
     # structure : correspond to kapture observations + 3D points
-    logger.debug(f'exporting structure ...')
+    logger.debug('exporting structure ...')
     openmvg_sfm_data_structure = export_openmvg_structure(
         kapture_points_3d=kapture_data.points3d,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,

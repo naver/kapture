@@ -104,7 +104,7 @@ def import_bundler(bundler_path: str,
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
     points3d = [] if add_reconstruction else None
     keypoints = kapture.Keypoints('sift', np.float32, 2) if add_reconstruction else None
-    observations = kapture.Observations() if add_reconstruction else None if add_reconstruction else None
+    observations = kapture.Observations() if add_reconstruction else None
     image_mapping = []  # bundler camera_id -> (name, width, height)
     for i in range(0, number_of_cameras):
         start_index = i * number_of_lines_per_camera + offset
@@ -173,7 +173,7 @@ def import_bundler(bundler_path: str,
                 camera_id = int(view_list[1 + 4 * j + 0])
                 keypoint_id = int(view_list[1 + 4 * j + 1])
                 x = float(view_list[1 + 4 * j + 2])
-                y = float(view_list[1 + 4 * j + 2])
+                y = float(view_list[1 + 4 * j + 3])
 
                 file_name, width, height = image_mapping[camera_id]
                 # put (0,0) in upper left corner
@@ -196,7 +196,7 @@ def import_bundler(bundler_path: str,
         # finally, convert local_keypoints to np.ndarray and add them to the global keypoints variable
         keypoints = kapture.Keypoints('sift', np.float32, 2)
         for image_filename, keypoints_array in local_keypoints.items():
-            keypoints_np_array = np.array(keypoints_array)
+            keypoints_np_array = np.array(keypoints_array).astype(np.float32)
             keypoints_out_path = kapture.io.features.get_keypoints_fullpath(kapture_dir_path, image_filename)
             kapture.io.features.image_keypoints_to_file(keypoints_out_path, keypoints_np_array)
             keypoints.add(image_filename)

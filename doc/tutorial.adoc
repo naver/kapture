@@ -42,7 +42,7 @@ kapture_download_dataset.py install "RobotCar_Seasons-v2_49_*"      # <1>
 
 While we provide many datasets in __kapture__ format, you may want to convert datasets you already downloaded.
 
-See https://github.com/naver/kapture/blob/master/doc/datasets.adoc for more details.
+See https://github.com/naver/kapture/blob/main/doc/datasets.adoc for more details.
 
 == Using kapture in your code
 
@@ -274,4 +274,4 @@ image::image_keypoints.jpg[]
 == Mapping and Localization pipelines
 
 Mapping and localization pipelines are available in https://github.com/naver/kapture-localization[kapture-localization].
-See https://github.com/naver/kapture-localization/blob/master/doc/tutorial.adoc for more details.
+See https://github.com/naver/kapture-localization/blob/main/doc/tutorial.adoc for more details.

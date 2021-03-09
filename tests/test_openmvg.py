@@ -146,7 +146,7 @@ class TestOpenMvg(unittest.TestCase):
             basler = None
             lidar = None
             for intrinsic in intrinsics:
-                camera_num = intrinsic.get(JSON_KEY.KEY)
+                # camera_num = intrinsic.get(JSON_KEY.KEY)
                 camera_id = intrinsic.get(JSON_KEY.VALUE, {}).get(JSON_KEY.PTR_WRAPPER, {}).get(JSON_KEY.ID)
                 camera_ids[camera_id] = camera_id
                 if camera_id == FIRST_BASLER_ID:
@@ -179,7 +179,8 @@ class TestOpenMvg(unittest.TestCase):
             self.assertIsNotNone(image_record, "4th image record")
             local_path = image_record.get(JSON_KEY.LOCAL_PATH)
             # self.assertEqual(FIRST_BASLER_ID, local_path, "Local path is the camera id")
-            # self.assertEqual(FIRST_BASLER_ID, image_record.get(JSON_KEY.ID_INTRINSIC), "id_intrinsic is the camera id")
+            # self.assertEqual(FIRST_BASLER_ID, image_record.get(JSON_KEY.ID_INTRINSIC),
+            #                  "id_intrinsic is the camera id")
             self.assertEqual(camera_params.get(JSON_KEY.WIDTH), image_record.get(JSON_KEY.WIDTH),
                              "Image has camera width")
             self.assertEqual(camera_params.get(JSON_KEY.HEIGHT), image_record.get(JSON_KEY.HEIGHT),
