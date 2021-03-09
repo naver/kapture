@@ -1,5 +1,3 @@
-from kapture.core.Matches import Matches
-from re import M
 from kapture.utils.paths import path_secure
 import kapture
 import tarfile
