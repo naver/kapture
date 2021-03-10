@@ -1,14 +1,26 @@
 # kapture format: 1.0
 # timestamp, device_id, depth_map_path
 0, kinect_depth, seq-01/frame-000000.depth
+0, kinect_depth_reg, seq-01/frame-000000.depth.reg
 1, kinect_depth, seq-01/frame-000001.depth
+1, kinect_depth_reg, seq-01/frame-000001.depth.reg
 2, kinect_depth, seq-01/frame-000002.depth
+2, kinect_depth_reg, seq-01/frame-000002.depth.reg
 3, kinect_depth, seq-02/frame-000000.depth
+3, kinect_depth_reg, seq-02/frame-000000.depth.reg
 4, kinect_depth, seq-02/frame-000001.depth
+4, kinect_depth_reg, seq-02/frame-000001.depth.reg
 5, kinect_depth, seq-02/frame-000002.depth
+5, kinect_depth_reg, seq-02/frame-000002.depth.reg
 6, kinect_depth, seq-03/frame-000000.depth
+6, kinect_depth_reg, seq-03/frame-000000.depth.reg
 7, kinect_depth, seq-03/frame-000001.depth
+7, kinect_depth_reg, seq-03/frame-000001.depth.reg
 8, kinect_depth, seq-03/frame-000002.depth
+8, kinect_depth_reg, seq-03/frame-000002.depth.reg
 9, kinect_depth, seq-04/frame-000000.depth
+9, kinect_depth_reg, seq-04/frame-000000.depth.reg
 10, kinect_depth, seq-04/frame-000001.depth
+10, kinect_depth_reg, seq-04/frame-000001.depth.reg
 11, kinect_depth, seq-04/frame-000002.depth
+11, kinect_depth_reg, seq-04/frame-000002.depth.reg
