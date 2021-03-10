@@ -23,6 +23,7 @@ import quaternion
 from typing import Optional
 from PIL import Image
 from tqdm import tqdm
+from scipy import ndimage
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
@@ -41,7 +42,62 @@ RGB_SUFFIX = 'color'
 DEPTH_SUFFIX = 'depth'
 RGB_SENSOR_ID = 'ipad_camera'
 DEPTH_SENSOR_ID = 'structure_io_depth_camera'
+REG_DEPTH_SENSOR_ID = 'structure_io_depth_camera_reg'
 RGBD_SENSOR_ID = 'rgbd_rig'
+
+
+def get_camera_matrix(fx: float, fy: float, cx: float, cy: float):
+    return np.array([[fx, 0, cx],
+                     [0, fy, cy],
+                     [0, 0, 1]])
+
+
+def get_K(camera_type: kapture.CameraType, camera_params):
+    if camera_type == kapture.CameraType.UNKNOWN_CAMERA:
+        focal = 1.2 * max(width, height)
+        return get_camera_matrix(focal, focal, camera_params[0] / 2, camera_params[1] / 2)
+    elif camera_type in [kapture.CameraType.PINHOLE, kapture.CameraType.OPENCV,
+                         kapture.CameraType.OPENCV_FISHEYE, kapture.CameraType.FULL_OPENCV,
+                         kapture.CameraType.FOV, kapture.CameraType.THIN_PRISM_FISHEYE]:
+        return get_camera_matrix(camera_params[2], camera_params[3], camera_params[4], camera_params[5])
+    else:
+        return get_camera_matrix(camera_params[2], camera_params[3], camera_params[4], camera_params[4])
+
+
+def dilate(x, k):
+  m,n = x.shape
+  y = np.empty_like(x)
+  for i in range(0, m):
+    for j in range(0, n):
+      currmax = x[i,j]
+      for ii in range(int(max(0, i-k/2)), int(min(m, i+k/2+1))):
+        for jj in range(int(max(0, j-k/2)), int(min(n, j+k/2+1))):
+          elt = x[ii,jj]
+          if elt > currmax:
+            currmax = elt
+      y[i,j] = currmax
+  return y
+
+
+def register_depth(Kdepth, Kcolor, Rt, depth, width_color, height_color):
+    reg_depth = np.zeros((height_color, width_color), dtype=np.float32)
+    y, x = np.meshgrid(np.arange(depth.shape[0]), np.arange(depth.shape[1]), indexing='ij')
+    x = x.reshape(1, -1)
+    y = y.reshape(1, -1)
+    z = depth.reshape(1, -1)
+    x = (x - Kdepth[0, 2]) / Kdepth[0, 0]
+    y = (y - Kdepth[1, 2]) / Kdepth[1, 1]
+    pts = np.vstack((x * z, y * z, z))
+    pts = Rt[:3, :3] @ pts + Rt[:3, 3:]
+    pts = Kcolor @ pts
+    px = np.round(pts[0, :] / pts[2, :])
+    py = np.round(pts[1, :] / pts[2, :])
+    mask = (px >= 0) * (py >= 0) * (px < width_color) * (py < height_color)
+    reg_depth[py[mask].astype(int), px[mask].astype(int)] = pts[2, mask]
+
+    reg_depth = ndimage.grey_dilation(reg_depth, size=(3,3))
+
+    return reg_depth
 
 
 def import_12scenes(d12scenes_path: str,
@@ -134,6 +190,8 @@ def import_12scenes(d12scenes_path: str,
         snapshots[shot['timestamp'], RGB_SENSOR_ID] = shot['color']
         kapture_depth_map_filename = shot['depth'][:-len('.png')]  # kapture depth files are not png
         depth_maps[shot['timestamp'], DEPTH_SENSOR_ID] = kapture_depth_map_filename
+        kapture_registered_depth_map_filename = shot['depth'][:-len('.png')] + '.reg'  # kapture depth files are not png
+        depth_maps[shot['timestamp'], REG_DEPTH_SENSOR_ID] = kapture_registered_depth_map_filename
 
     # poses
     logger.info('import poses files ...')
@@ -197,11 +255,19 @@ def import_12scenes(d12scenes_path: str,
         sensor_type='depth'
     )
 
+    sensors[REG_DEPTH_SENSOR_ID] = kapture.Camera(
+        name=REG_DEPTH_SENSOR_ID,
+        camera_type=camera_type,
+        camera_params=rgb_camera_params,
+        sensor_type='depth'
+    )
+
     # bind camera and depth sensor into a rig
     logger.info('building rig with camera and depth sensor ...')
     rigs = kapture.Rigs()
     rigs[RGBD_SENSOR_ID, RGB_SENSOR_ID] = kapture.PoseTransform()
     rigs[RGBD_SENSOR_ID, DEPTH_SENSOR_ID] = kapture.PoseTransform()
+    rigs[RGBD_SENSOR_ID, REG_DEPTH_SENSOR_ID] = kapture.PoseTransform()
 
     # import (copy) image files.
     logger.info('copying image files ...')
@@ -213,11 +279,17 @@ def import_12scenes(d12scenes_path: str,
     depth_map_filenames = kapture.io.records.records_to_filepaths(depth_maps, kapture_dir_path)
     hide_progress = logger.getEffectiveLevel() > logging.INFO
     for depth_map_filename, depth_map_filepath_kapture in tqdm(depth_map_filenames.items(), disable=hide_progress):
+        if '.reg' in depth_map_filename:
+            continue
         depth_map_filepath_12scenes = path.join(d12images_path, depth_map_filename + '.png')
         depth_map = np.array(Image.open(depth_map_filepath_12scenes))
         # depth maps is in mm in 12scenes, convert it to meters
         depth_map = depth_map.astype(np.float32) * 1.0e-3
         kapture.io.records.records_depth_to_file(depth_map_filepath_kapture, depth_map)
+        # register depth to rgb
+        reg_depth_map = register_depth(get_K(camera_type, depth_camera_params), get_K(camera_type, rgb_camera_params),
+                                       np.eye(4), depth_map, rgb_camera_params[0], rgb_camera_params[1])
+        kapture.io.records.records_depth_to_file(depth_map_filepath_kapture + '.reg', reg_depth_map)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(
