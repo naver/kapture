@@ -54,6 +54,8 @@ def get_camera_matrix(fx: float, fy: float, cx: float, cy: float):
 
 def get_K(camera_type: kapture.CameraType, camera_params):
     if camera_type == kapture.CameraType.UNKNOWN_CAMERA:
+        width = camera_params[0]
+        height = camera_params[1]
         focal = 1.2 * max(width, height)
         return get_camera_matrix(focal, focal, camera_params[0] / 2, camera_params[1] / 2)
     elif camera_type in [kapture.CameraType.PINHOLE, kapture.CameraType.OPENCV,
