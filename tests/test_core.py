@@ -533,6 +533,11 @@ class TestTrajectoriesRig(unittest.TestCase):
         # plt.plot(x[:, 0], x[:, 2], 'x--')
         # plt.show()
 
+    def test_rig_sensors_ids(self):
+        sensors_ids = self._trajectories_cams.sensors_ids
+        self.assertEqual(len(sensors_ids), 2)
+        self.assertIn('cam2', sensors_ids)
+
 
 # RECORDS ##############################################################################################################
 class TestRecords(unittest.TestCase):

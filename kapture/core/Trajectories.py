@@ -19,7 +19,7 @@ import kapture.utils.computation as computation
 from bisect import bisect_left
 from copy import deepcopy
 import sys
-from typing import Union, Dict, List, Tuple, Optional
+from typing import Union, Dict, List, Optional, Set, Tuple
 
 
 class Trajectories(Dict[int, Dict[str, PoseTransform]]):
@@ -146,6 +146,17 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             for sensor_id in sensors.keys()
         ]
 
+    @property
+    def sensors_ids(self) -> Set[str]:
+        """
+        :return: the set of unique sensors identifiers in the trajectories
+        """
+        return set(
+            sensor_id
+            for timestamp, sensors in self.items()
+            for sensor_id in sensors.keys()
+        )
+
     def __contains__(self, key: Union[int, Tuple[int, str]]):
         if isinstance(key, tuple):
             # key is a pair of (timestamp, device_id)
@@ -168,7 +179,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
                  for sensor_id, pose in sensors.items()]
         return '\n'.join(lines)
 
-    def intermediate_pose(self, timestamp: int, device_id: str, max_interval: int) -> Union[PoseTransform, None]:
+    def intermediate_pose(self, timestamp: int, device_id: str, max_interval: int) -> Optional[PoseTransform]:
         """
         Computes an intermediate pose in the trajectory of a device
         The timestamp should be in epoch precision
