@@ -21,10 +21,9 @@ import kapture.io.csv
 
 logger = logging.getLogger('kapture_print')
 
-VALID_TIME_RANGE = [
-    time.mktime(datetime(year=year, month=1, day=1, hour=0, minute=0, second=0).timetuple())
-    for year in [1980, 2100]
-]
+# Consider as valid timestamps only if between these two dates
+LOWER_RECORD_DATE_TIMESTAMP = time.mktime(datetime(year=1980, month=1, day=1, hour=0, minute=0, second=0).timetuple())
+UPPER_RECORD_DATE_TIMESTAMP = time.mktime(datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0).timetuple())
 
 
 @contextlib.contextmanager
@@ -116,6 +115,7 @@ FACTOR_TO_SECONDS = {
     'second': 1.0,
     'millisecond': 1.e-3,
     'microsecond': 1.e-6,
+    'nanoseconds': 1.e-9
 }
 
 
@@ -129,7 +129,7 @@ def guess_timestamp_posix_unit(timestamp: int) -> Optional[str]:
     assert isinstance(timestamp, int)
 
     for unit, factor in FACTOR_TO_SECONDS.items():
-        if VALID_TIME_RANGE[0] < factor * float(timestamp) < VALID_TIME_RANGE[1]:
+        if LOWER_RECORD_DATE_TIMESTAMP < factor * float(timestamp) < UPPER_RECORD_DATE_TIMESTAMP:
             return unit
 
     # none worked, its not posix
