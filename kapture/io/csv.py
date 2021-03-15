@@ -332,6 +332,7 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
     trajectories = kapture.Trajectories()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
         for timestamp, device_id, qw, qx, qy, qz, tx, ty, tz in table:
             if device_ids is not None and device_id not in device_ids:
@@ -341,6 +342,8 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
             trans = float_array_or_none([tx, ty, tz])
             pose = kapture.PoseTransform(rotation, trans)
             trajectories[(int(timestamp), str(device_id))] = pose
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.Trajectories}')
     return trajectories
 
 
@@ -376,12 +379,15 @@ def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = Non
     records_camera = kapture.RecordsCamera()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, image_path
         for timestamp, device_id, image_path in table:
             if camera_ids is not None and device_id not in camera_ids:
                 # just ignore
                 continue
             records_camera[(int(timestamp), str(device_id))] = image_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsCamera}')
     return records_camera
 
 
@@ -417,12 +423,15 @@ def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None
     records_depth = kapture.RecordsDepth()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, image_path
         for timestamp, device_id, depth_map_path in table:
             if camera_ids is not None and device_id not in camera_ids:
                 # just ignore
                 continue
             records_depth[(int(timestamp), str(device_id))] = depth_map_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsDepth}')
     return records_depth
 
 
@@ -460,12 +469,15 @@ def records_lidar_from_file(
     records_lidar = kapture.RecordsLidar()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, point_cloud_path
         for timestamp, device_id, point_cloud_path in table:
             if lidar_ids is not None and device_id not in lidar_ids:
                 # just ignore
                 continue
             records_lidar[(int(timestamp), str(device_id))] = point_cloud_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsLidar}')
     return records_lidar
 
 
@@ -510,6 +522,7 @@ def records_generic_from_file(
     with open(filepath) as file:
         table = table_from_file(file)
         # timestamp, device_id, *
+        nb_records = 0
         for timestamp, device_id, *data in table:
             timestamp = int(timestamp)
             device_id = str(device_id)
@@ -517,7 +530,9 @@ def records_generic_from_file(
                 # just ignore
                 continue
             records[timestamp, device_id] = records_type.record_type(*data)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {records_type}')
     return records
 
 
@@ -554,6 +569,7 @@ def records_wifi_from_file(
     records_wifi = kapture.RecordsWifi()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
         for timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end in table:
             timestamp, device_id = int(timestamp), str(device_id)
@@ -564,7 +580,9 @@ def records_wifi_from_file(
                 records_wifi[timestamp, device_id] = kapture.RecordWifi()
             records_wifi[timestamp, device_id][BSSID] = kapture.RecordWifiSignal(
                 frequency, RSSI, SSID, scan_time_start, scan_time_end)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {kapture.RecordsWifi}')
     return records_wifi
 
 
@@ -604,6 +622,7 @@ def records_bluetooth_from_file(
     records_bluetooth = kapture.RecordsBluetooth()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, address, RSSI, name
         for timestamp, device_id, address, RSSI, name in table:
             timestamp, device_id = int(timestamp), str(device_id)
@@ -612,9 +631,10 @@ def records_bluetooth_from_file(
                 continue
             if (timestamp, device_id) not in records_bluetooth:
                 records_bluetooth[timestamp, device_id] = kapture.RecordBluetooth()
-            records_bluetooth[timestamp, device_id][address] = kapture.RecordBluetoothSignal(
-                rssi=RSSI, name=name)
+            records_bluetooth[timestamp, device_id][address] = kapture.RecordBluetoothSignal(rssi=RSSI, name=name)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {kapture.RecordsBluetooth}')
     return records_bluetooth
 
 
