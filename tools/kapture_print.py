@@ -201,19 +201,20 @@ def print_records(
     # records (+trajectories)
     for record_name in ['trajectories', 'records_camera', 'records_lidar', 'records_wifi', 'records_bluetooth',
                         'records_gnss', 'records_accelerometer', 'records_gyroscope', 'records_magnetic']:
-        record = getattr(kapture_data, record_name)
-        nb_record = None if record is None else len(list(kapture.flatten(record)))
+        records_field = getattr(kapture_data, record_name)
+        records = list(kapture.flatten(records_field))
+        nb_record = None if records_field is None else len(records)
         if not show_detail:
-            print_key_value(f'nb {record_name}', nb_record, file=output_stream, show_none=show_all)
-        elif record is not None or show_all:
-            print_title(f'{record_name}', file=output_stream)
-            if record is not None and len(record) > 0:
-                timestamp_range = (min(record), max(record))
+            print_key_value(f'nb {record_name}', nb_record, output_stream, show_none=show_all)
+        elif records_field is not None or show_all:
+            print_title(f'{record_name}', output_stream)
+            if records_field is not None and nb_record > 0:
+                timestamp_range = (min(records_field), max(records_field))
                 timestamp_range_str = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
-                nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
-                print_key_value(' ├─ timestamp range', timestamp_range_str, file=output_stream, show_none=show_all)
-                print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
-            print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=show_all)
+                sensors_ids = records_field.sensors_ids
+                print_key_value(' ├─ timestamp range', timestamp_range_str, output_stream, show_none=show_all)
+                print_key_value(' ├─ sensors', f'{len(sensors_ids)}: {sensors_ids}', output_stream, show_none=show_all)
+            print_key_value(' └─ nb total', nb_record, output_stream, show_none=show_all)
 
 
 def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
