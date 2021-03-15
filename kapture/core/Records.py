@@ -2,7 +2,7 @@
 
 import numpy as np
 from dataclasses import dataclass, astuple, asdict, fields
-from typing import Union, Dict, List, Tuple, TypeVar
+from typing import Dict, List, Set, Tuple, TypeVar, Union
 
 """
 Records contains sensor recordings.
@@ -118,6 +118,17 @@ class RecordsBase(Dict[int, Dict[str, T]]):
             for timestamp, sensors in self.items()
             for sensor_id in sensors.keys()
         ]
+
+    @property
+    def sensors_ids(self) -> Set[str]:
+        """
+        :return: the set of unique sensors identifiers in the records data
+        """
+        return set(
+            sensor_id
+            for timestamp, sensors in self.items()
+            for sensor_id in sensors.keys()
+        )
 
     def __contains__(self, key: Union[int, Tuple[int, str]]):
         if isinstance(key, tuple):

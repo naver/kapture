@@ -574,6 +574,7 @@ class TestRecords(unittest.TestCase):
 
         self.assertNotIn((timestamp1, 'cam2'), kapture_data.records_camera)
         self.assertNotIn((2, device_id0), kapture_data.records_camera)
+        self.assertEqual(kapture_data.records_camera.sensors_ids, {device_id0, device_id1})
 
         # Test deletion
         del kapture_data.records_camera[(timestamp0, device_id0)]
