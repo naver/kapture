@@ -88,8 +88,7 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=show_all)
 
 
-def print_rigs(
-        kapture_data, output_stream, show_detail, show_all) -> None:
+def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
     """
     Prints the rigs to the output stream
     """
@@ -120,9 +119,7 @@ FACTOR_TO_SECONDS = {
 }
 
 
-def guess_timestamp_posix_unit(
-        timestamp: int,
-) -> Optional[float]:
+def guess_timestamp_posix_unit(timestamp: int) -> Optional[str]:
     """
     Guess the unit of a timestamp based on its value.
 
@@ -130,10 +127,9 @@ def guess_timestamp_posix_unit(
     :return: 'posix' or 'posix-ms' or 'index'
     """
     assert isinstance(timestamp, int)
-    timestamp = float(timestamp)
 
     for unit, factor in FACTOR_TO_SECONDS.items():
-        if VALID_TIME_RANGE[0] < factor * timestamp < VALID_TIME_RANGE[1]:
+        if VALID_TIME_RANGE[0] < factor * float(timestamp) < VALID_TIME_RANGE[1]:
             return unit
 
     # none worked, its not posix
@@ -212,11 +208,10 @@ def print_records(
         elif record is not None or show_all:
             print_title(f'{record_name}', file=output_stream)
             if record is not None and len(record) > 0:
-                timestamp_range = [min(record), max(record)]
-                timestamp_range = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
+                timestamp_range = (min(record), max(record))
+                timestamp_range_str = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
                 nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
-                print_key_value(' ├─ timestamp range', f'{timestamp_range}',
-                                file=output_stream, show_none=show_all)
+                print_key_value(' ├─ timestamp range', timestamp_range_str, file=output_stream, show_none=show_all)
                 print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
             print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=show_all)
 
@@ -304,7 +299,7 @@ def print_command_line() -> None:
     parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'second', 'millisecond', 'microsecond'],
                         default='auto',
                         help='Force what timestamp really are (eg. millisecond) to display them nicely.'
-                             'Auto means the program try do guess. [auto]')
+                             'Auto means the program tries to guess. [auto]')
     parser.add_argument('-f', '--timestamp_formatting',
                         help='Tells what timestamp are, helps human display.')
     args = parser.parse_args()
