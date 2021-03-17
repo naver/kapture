@@ -32,6 +32,57 @@ class TestCsvPose(unittest.TestCase):
 
 
 ########################################################################################################################
+# File read/write ######################################################################################################
+class TestCsvFile(unittest.TestCase):
+    def setUp(self):
+        self._tempdir = tempfile.TemporaryDirectory()
+        self._temp_filepath = path.join(self._tempdir.name, 'timestamps_data.txt')
+
+    def tearDown(self):
+        self._tempdir.cleanup()
+
+    def test_last_line_empty(self):
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write('')
+
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, '')
+
+    def test_last_line_small_file(self):
+        content = os.linesep.join([csv.KAPTURE_FORMAT_1,
+                                   '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz',
+                                   '0001, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0',
+                                   '0002, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0'
+                                   ])
+        last_line = '1000, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write(content)
+            fw.write(os.linesep + last_line)
+
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, last_line)
+
+    def test_last_line_big_file(self):
+        content = os.linesep.join([csv.KAPTURE_FORMAT_1,
+                                   '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz',
+                                   '0001, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+                                   ])
+        some_line = '0002, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0'
+        last_line = '1000, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+        # Generate a big file
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write(content)
+            for i in range(0, 100000):
+                fw.write(os.linesep + some_line)
+            fw.write(os.linesep + last_line)
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, last_line)
+
+
+########################################################################################################################
 # Sensors ##############################################################################################################
 class TestCsvSensors(unittest.TestCase):
     def setUp(self):
@@ -504,8 +555,6 @@ class TestCsvKapture(unittest.TestCase):
 
 ########################################################################################################################
 # M1X ##################################################################################################################
-
-
 class TestCsvM1x(unittest.TestCase):
     def setUp(self):
         self._tempdir = tempfile.TemporaryDirectory()
