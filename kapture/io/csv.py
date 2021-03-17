@@ -4,11 +4,12 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
+import io
 import os
 import os.path as path
 import re
-from typing import Any, List, Optional, Set, Type, Union
 from collections import namedtuple
+from typing import Any, List, Optional, Set, Type, Union
 import numpy as np
 
 import kapture
@@ -40,7 +41,7 @@ CSV_FILENAMES = {
 
 def get_csv_fullpath(kapture_type: Any, kapture_dirpath: str = '') -> str:
     """
-    Returns the full path to csv kapture file for a given datastructure and root directory.
+    Returns the full path to csv kapture file for a given data structure and root directory.
     This path is the concatenation of the kapture root path and subpath into kapture into data structure.
 
     :param kapture_type: type of kapture data (kapture.RecordsCamera, kapture.Trajectories, ...)
@@ -173,6 +174,36 @@ def table_from_file(file):
     # split comma (and trim afterwards spaces)
     table = (re.split(r'\s*,\s*', l4) for l4 in table)
     return table
+
+
+def get_last_line(opened_file: io.TextIOBase, max_line_size: int = 128) -> str:
+    """
+    Get the last line of an opened text file
+
+    :param opened_file: an opened file (as returned by the builtin open)
+    :param max_line_size: the maximum size of a line
+    :return: last line if found, empty string otherwise
+    """
+    distance_to_end = 2 * max_line_size
+    current_pos = opened_file.tell()
+    # Check file size
+    opened_file.seek(0, os.SEEK_END)
+    file_size = opened_file.tell()
+    if file_size > distance_to_end:
+        # If we have a big file: skip towards the end
+        opened_file.seek(file_size - distance_to_end, os.SEEK_SET)
+    else:
+        # back to start of file
+        opened_file.seek(0, os.SEEK_SET)
+    line = opened_file.readline()
+    last_line = line
+    while line:
+        line = opened_file.readline()
+        if line:
+            last_line = line
+    # back to position at the call of the function
+    opened_file.seek(current_pos, os.SEEK_SET)
+    return last_line
 
 
 ########################################################################################################################
@@ -1245,7 +1276,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
                       for sensor_id, sensor in kapture_data.sensors.items()
                       if sensor.sensor_type == 'gnss'}
         if len(epsg_codes) > 0:
-            kapture_data.records_gnss = records_gnss_from_file(records_gnss_file_path, epsg_codes)
+            kapture_data.records_gnss = records_gnss_from_file(records_gnss_file_path, set(epsg_codes.keys()))
         else:
             logger.warning('no declared GNSS sensors: all GNSS data will be ignored')
 
