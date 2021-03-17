@@ -651,12 +651,11 @@ class TestCsvMaupertuis(unittest.TestCase):
         )
 
     def test_overall_read(self):
-        return
         # check the overall loading went fine
-        self.assertEqual(1, len(self._kapture_data.sensors))
+        self.assertEqual(2, len(self._kapture_data.sensors))
         self.assertEqual(4, len(self._kapture_data.trajectories))
         self.assertEqual(4, len(self._kapture_data.records_camera))
-        self.assertEqual(4, len(self._kapture_data.records_gps))
+        self.assertEqual(4, len(self._kapture_data.records_gnss))
         self.assertEqual(4, len(self._kapture_data.keypoints))
         self.assertEqual(4, len(self._kapture_data.descriptors))
         self.assertEqual(6, len(self._kapture_data.matches))
