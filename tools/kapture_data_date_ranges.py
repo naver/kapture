@@ -51,17 +51,14 @@ def format_timestamp_range(first_timestamp: int, last_timestamp: int) -> str:
             }
             for dt in dts
         ]
-        timestamp_str = timestamp_parts[0]['date']
-        timestamp_str += ' '
-        timestamp_str += timestamp_parts[0]['time']
-        timestamp_str += '  :  '
+        timestamp_str = timestamp_parts[0]['date'] + ' ' + timestamp_parts[0]['time']
+        timestamp_str += ' -> '
         if timestamp_parts[0]['date'] != timestamp_parts[1]['date']:
-            timestamp_str = timestamp_parts[0]['date']
-            timestamp_str += ' '
-        timestamp_str += timestamp_parts[1]['time']
+            timestamp_str = timestamp_parts[0]['date'] + ' '
+        timestamp_str += timestamp_parts[1]['time'] + ' GMT'
         return timestamp_str
     except ValueError as _:  # noqa: F841
-        return ' : '.join(str(ts) for ts in timestamp_range) \
+        return f'{first_timestamp} -> {last_timestamp}' \
                + f' ** FAIL to parse as posix timestamp of {timestamp_len} digits'
 
 
@@ -99,7 +96,7 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
             pass
         if first_timestamp > 0 and last_timestamp > 0:
             timestamp_range_str = format_timestamp_range(first_timestamp, last_timestamp)
-            print(f'{kapture_filename:42s} timestamp range {timestamp_range_str}')
+            print(f'{kapture_filename:42s} timestamp from {timestamp_range_str}')
 
 
 def do_print(kapture_path: str) -> None:
