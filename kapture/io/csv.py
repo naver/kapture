@@ -1109,7 +1109,7 @@ def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
     saving_elapsed = datetime.datetime.now() - saving_start
-    logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in {kapture_dirpath}')
+    logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in "{kapture_dirpath}"')
 
 
 # Kapture Read #########################################################################################################
@@ -1218,7 +1218,7 @@ def kapture_from_dir(
     _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
 
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'Loaded in {loading_elapsed.total_seconds()} seconds from {"kapture_dir_path"}')
+    logger.debug(f'Loaded in {loading_elapsed.total_seconds()} seconds from "{kapture_dir_path}"')
     return kapture_data
 
 
