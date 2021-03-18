@@ -352,7 +352,7 @@ def trajectories_to_file(filepath: str, trajectories: kapture.Trajectories) -> N
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header, padding=padding)
-        logger.debug(f'Wrote {nb_records} {type(trajectories)}')
+        logger.debug(f'wrote {nb_records} {type(trajectories)}')
 
 
 def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None) -> kapture.Trajectories:
@@ -400,7 +400,7 @@ def records_camera_to_file(filepath: str, records_camera: kapture.RecordsCamera)
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records_camera)}')
+        logger.debug(f'wrote {nb_records} {type(records_camera)}')
 
 
 def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsCamera:
@@ -445,7 +445,7 @@ def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) ->
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records_depth)}')
+        logger.debug(f'wrote {nb_records} {type(records_depth)}')
 
 
 def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsDepth:
@@ -490,7 +490,7 @@ def records_lidar_to_file(filepath: str, records_lidar: kapture.RecordsLidar) ->
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records_lidar)}')
+        logger.debug(f'wrote {nb_records} {type(records_lidar)}')
 
 
 def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
@@ -533,7 +533,7 @@ def records_generic_to_file(filepath: str, records: kapture.RecordsBase) -> None
         table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records)}')
+        logger.debug(f'wrote {nb_records} {type(records)}')
 
 
 def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -585,7 +585,7 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
             table.append([timestamp, sensor_id, bssid] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records_wifi)}')
+        logger.debug(f'wrote {nb_records} {type(records_wifi)}')
 
 
 def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -634,7 +634,7 @@ def records_bluetooth_to_file(filepath: str, records_bluetooth: kapture.RecordsB
             table.append([timestamp, sensor_id, address] + [str(v) for v in bt_record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(records_bluetooth)}')
+        logger.debug(f'wrote {nb_records} {type(records_bluetooth)}')
 
 
 def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -1013,7 +1013,7 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'Wrote {nb_records} {type(observations)}')
+        logger.debug(f'wrote {nb_records} {type(observations)}')
 
 
 def observations_from_file(observations_filepath: str, images_paths_with_keypoints: Optional[Set[str]] = None
