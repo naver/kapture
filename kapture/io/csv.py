@@ -4,6 +4,7 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
+import datetime
 import io
 import os
 import os.path as path
@@ -109,7 +110,7 @@ def kapture_format_version(kapture_dirpath: str) -> Optional[str]:
     return get_version_from_csv_file(sensors_file_path)
 
 
-def float_safe(representation) -> Union[float, None]:
+def float_safe(representation) -> Optional[float]:
     """
     Safe float cast
     https://stackoverflow.com/questions/6330071/safe-casting-in-python
@@ -123,7 +124,7 @@ def float_safe(representation) -> Union[float, None]:
         return None
 
 
-def float_array_or_none(representation_list) -> Union[List[float], None]:
+def float_array_or_none(representation_list) -> Optional[List[float]]:
     """
     Safe cast of list of float representations
     https://stackoverflow.com/questions/6330071/safe-casting-in-python
@@ -135,7 +136,7 @@ def float_array_or_none(representation_list) -> Union[List[float], None]:
     return array if not any(v is None for v in array) else None
 
 
-def table_to_file(file, table, header=None, padding=None) -> None:
+def table_to_file(file, table, header=None, padding=None) -> int:
     """
     Writes the given table (list of list) into a file.
             The file must be previously open as write mode.
@@ -145,15 +146,18 @@ def table_to_file(file, table, header=None, padding=None) -> None:
     :param table: an iterable of iterable
     :param header: row added at the beginning of the file (+\n)
     :param padding: the padding of each column as a list of int of same size of the rows of the table.
-    :return:
+    :return: number of records written
     """
     if header:
         file.write(KAPTURE_FORMAT_1 + '\n')
         file.write(header + '\n')
+    nb_records = 0
     for row in table:
         if padding:
             row = [str(v).rjust(padding[i]) for i, v in enumerate(row)]
         file.write(', '.join(f'{v}' for v in row) + '\n')
+        nb_records += 1
+    return nb_records
 
 
 def table_from_file(file):
@@ -347,7 +351,8 @@ def trajectories_to_file(filepath: str, trajectories: kapture.Trajectories) -> N
 
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header, padding=padding)
+        nb_records = table_to_file(file, table, header=header, padding=padding)
+        logger.debug(f'Wrote {nb_records} {type(trajectories)}')
 
 
 def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None) -> kapture.Trajectories:
@@ -394,7 +399,8 @@ def records_camera_to_file(filepath: str, records_camera: kapture.RecordsCamera)
         for timestamp, sensor_id in sorted(records_camera.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records_camera)}')
 
 
 def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsCamera:
@@ -438,7 +444,8 @@ def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) ->
         for timestamp, sensor_id in sorted(records_depth.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records_depth)}')
 
 
 def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsDepth:
@@ -482,13 +489,12 @@ def records_lidar_to_file(filepath: str, records_lidar: kapture.RecordsLidar) ->
         for timestamp, sensor_id in sorted(records_lidar.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records_lidar)}')
 
 
-def records_lidar_from_file(
-        filepath: str,
-        lidar_ids: Optional[Set[str]] = None
-) -> kapture.RecordsLidar:
+def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
+                            ) -> kapture.RecordsLidar:
     """
     Reads records_lidar from CSV file.
 
@@ -513,9 +519,7 @@ def records_lidar_from_file(
 
 
 ########################################################################################################################
-def records_generic_to_file(
-        filepath: str,
-        records: kapture.RecordsBase) -> None:
+def records_generic_to_file(filepath: str, records: kapture.RecordsBase) -> None:
     """
         Writes records_wifi to file
 
@@ -528,18 +532,16 @@ def records_generic_to_file(
     for timestamp, sensor_id, record in kapture.flatten(records, is_sorted=True):
         table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records)}')
 
 
-def records_generic_from_file(
-        records_type: Type,
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> Union[kapture.RecordsBase,
-           kapture.RecordsGnss,
-           kapture.RecordsGyroscope,
-           kapture.RecordsAccelerometer,
-           kapture.RecordsMagnetic]:
+def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Optional[Set[str]] = None
+                              ) -> Union[kapture.RecordsBase,
+                                         kapture.RecordsGnss,
+                                         kapture.RecordsGyroscope,
+                                         kapture.RecordsAccelerometer,
+                                         kapture.RecordsMagnetic]:
     """
     Reads Records data from CSV file.
 
@@ -582,13 +584,12 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
         for bssid, record in records_wifi[timestamp, sensor_id].items():
             table.append([timestamp, sensor_id, bssid] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records_wifi)}')
 
 
-def records_wifi_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsWifi:
+def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                           ) -> kapture.RecordsWifi:
     """
     Reads RecordsWifi from CSV file.
 
@@ -618,15 +619,12 @@ def records_wifi_from_file(
 
 
 # Records Bluetooth ####################################################################################################
-def records_bluetooth_to_file(
-        filepath: str,
-        records_bluetooth: kapture.RecordsBluetooth
-) -> None:
+def records_bluetooth_to_file(filepath: str, records_bluetooth: kapture.RecordsBluetooth) -> None:
     """
-    Writes records_wifi to file
+    Writes Bluetooth records to file
 
     :param filepath: output file path.
-    :param records_bluetooth:
+    :param records_bluetooth: records to save
     """
     assert (isinstance(records_bluetooth, kapture.RecordsBluetooth))
     header = '# timestamp, device_id, address, RSSI, name'
@@ -635,20 +633,19 @@ def records_bluetooth_to_file(
         for address, bt_record in records_bluetooth[timestamp, sensor_id].items():
             table.append([timestamp, sensor_id, address] + [str(v) for v in bt_record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(records_bluetooth)}')
 
 
-def records_bluetooth_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsBluetooth:
+def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                ) -> kapture.RecordsBluetooth:
     """
-    Reads RecordsWifi from CSV file.
+    Reads Bluetooth records from CSV file.
 
     :param filepath: input file path
     :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
                         If omitted, then it loads all devices.
-    :return: Wifi records
+    :return: Bluetooth records
     """
     records_bluetooth = kapture.RecordsBluetooth()
     with open(filepath) as file:
@@ -670,79 +667,99 @@ def records_bluetooth_from_file(
 
 
 # GNSS #################################################################################################################
-def records_gnss_to_file(
-        filepath: str,
-        records_gnss: kapture.RecordsGnss
-) -> None:
+def records_gnss_to_file(filepath: str, records_gnss: kapture.RecordsGnss) -> None:
+    """
+    Writes Gnss records to file
+
+    :param filepath: output file path.
+    :param records_gnss: records to save
+    """
     records_generic_to_file(filepath, records_gnss)
 
 
-def records_gnss_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsGnss:
-    return records_generic_from_file(
-        records_type=kapture.RecordsGnss,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_gnss_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                           ) -> kapture.RecordsGnss:
+    """
+    Reads Gnss records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: Gnss records
+    """
+    return records_generic_from_file(kapture.RecordsGnss, filepath, sensor_ids)
 
 
 # Accelerometer ########################################################################################################
-def records_accelerometer_to_file(
-        filepath: str,
-        records_accelerometer: kapture.RecordsAccelerometer
-) -> None:
+def records_accelerometer_to_file(filepath: str, records_accelerometer: kapture.RecordsAccelerometer) -> None:
+    """
+    Writes accelerometer records to file
+
+    :param filepath: output file path.
+    :param records_accelerometer: records to save
+    """
     records_generic_to_file(filepath, records_accelerometer)
 
 
-def records_accelerometer_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsAccelerometer:
-    return records_generic_from_file(
-        records_type=kapture.RecordsAccelerometer,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_accelerometer_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                    ) -> kapture.RecordsAccelerometer:
+    """
+    Reads accelerometer records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: accelerometer records
+    """
+    return records_generic_from_file(kapture.RecordsAccelerometer, filepath, sensor_ids)
 
 
 # Gyroscope ########################################################################################################
-def records_gyroscope_to_file(
-        filepath: str,
-        records_gyroscope: kapture.RecordsGyroscope
-) -> None:
+def records_gyroscope_to_file(filepath: str, records_gyroscope: kapture.RecordsGyroscope) -> None:
+    """
+    Writes gyroscope records to file
+
+    :param filepath: output file path.
+    :param records_gyroscope: records to save
+    """
     records_generic_to_file(filepath, records_gyroscope)
 
 
-def records_gyroscope_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsGyroscope:
-    return records_generic_from_file(
-        records_type=kapture.RecordsGyroscope,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_gyroscope_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                ) -> kapture.RecordsGyroscope:
+    """
+    Reads gyroscope records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: gyroscope records
+    """
+    return records_generic_from_file(kapture.RecordsGyroscope, filepath, sensor_ids)
 
 
 # Magnetic ########################################################################################################
-def records_magnetic_to_file(
-        filepath: str,
-        records_magnetic: kapture.RecordsMagnetic
-) -> None:
+def records_magnetic_to_file(filepath: str, records_magnetic: kapture.RecordsMagnetic) -> None:
+    """
+    Writes magnetic records to file
+
+    :param filepath: output file path.
+    :param records_magnetic: records to save
+    """
     records_generic_to_file(filepath, records_magnetic)
 
 
-def records_magnetic_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsMagnetic:
-    return records_generic_from_file(
-        records_type=kapture.RecordsMagnetic,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_magnetic_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                               ) -> kapture.RecordsMagnetic:
+    """
+    Reads magnetic records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: magnetic records
+    """
+    return records_generic_from_file(kapture.RecordsMagnetic, filepath, sensor_ids)
 
 
 ########################################################################################################################
@@ -792,10 +809,9 @@ def image_features_config_from_file(config_filepath: str) -> ImageFeatureConfig:
 
 
 # files #########################################################################################################
-def image_feature_to_file(
-        config_filepath: str,
-        image_features: Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]
-) -> None:
+def image_feature_to_file(config_filepath: str,
+                          image_features: Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]
+                          ) -> None:
     """
     Writes ImageFeatures config file only.
 
@@ -806,13 +822,12 @@ def image_feature_to_file(
     image_features_config_to_file(config_filepath, config)
 
 
-def image_features_from_dir(
-        kapture_type: Type[Union[kapture.Keypoints,
-                                 kapture.Descriptors,
-                                 kapture.GlobalFeatures]],
-        kapture_dirpath: str,
-        image_filenames: Optional[Set[str]]
-) -> kapture.ImageFeatures:
+def image_features_from_dir(kapture_type: Type[Union[kapture.Keypoints,
+                                                     kapture.Descriptors,
+                                                     kapture.GlobalFeatures]],
+                            kapture_dirpath: str,
+                            image_filenames: Optional[Set[str]]
+                            ) -> kapture.ImageFeatures:
     """
     Reads and builds ImageFeatures from images_filenames if given, or directly from actual files in  root_dirpath.
 
@@ -848,8 +863,7 @@ def keypoints_to_file(config_filepath: str, keypoints: kapture.Keypoints) -> Non
     :param config_filepath:
     :param keypoints:
     """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=keypoints)
+    return image_feature_to_file(config_filepath, keypoints)
 
 
 def keypoints_from_dir(kapture_dirpath: str, images_paths: Optional[Set[str]]) -> kapture.Keypoints:
@@ -860,9 +874,7 @@ def keypoints_from_dir(kapture_dirpath: str, images_paths: Optional[Set[str]]) -
     :param images_paths: optional list of image file names
     :return: Keypoints
     """
-    return image_features_from_dir(kapture_type=kapture.Keypoints,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    return image_features_from_dir(kapture.Keypoints, kapture_dirpath, images_paths)
 
 
 ########################################################################################################################
@@ -874,8 +886,7 @@ def descriptors_to_file(config_filepath: str, descriptors: kapture.Descriptors) 
     :param config_filepath:
     :param descriptors:
     """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=descriptors)
+    return image_feature_to_file(config_filepath, descriptors)
 
 
 def descriptors_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.Descriptors:
@@ -886,9 +897,7 @@ def descriptors_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kaptur
     :param images_paths: optional list of image file names
     :return: Descriptors
     """
-    return image_features_from_dir(kapture_type=kapture.Descriptors,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    return image_features_from_dir(kapture.Descriptors, kapture_dirpath, images_paths)
 
 
 ########################################################################################################################
@@ -900,8 +909,7 @@ def global_features_to_file(config_filepath: str, global_features: kapture.Globa
     :param config_filepath:
     :param global_features:
     """
-    return image_feature_to_file(config_filepath=config_filepath,
-                                 image_features=global_features)
+    return image_feature_to_file(config_filepath, global_features)
 
 
 def global_features_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> kapture.GlobalFeatures:
@@ -913,9 +921,7 @@ def global_features_from_dir(kapture_dirpath: str, images_paths: Set[str]) -> ka
     :return: Global features
     """
 
-    return image_features_from_dir(kapture_type=kapture.GlobalFeatures,
-                                   kapture_dirpath=kapture_dirpath,
-                                   image_filenames=images_paths)
+    return image_features_from_dir(kapture.GlobalFeatures, kapture_dirpath, images_paths)
 
 
 ########################################################################################################################
@@ -1006,13 +1012,12 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     )
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'Wrote {nb_records} {type(observations)}')
 
 
-def observations_from_file(
-        observations_filepath: str,
-        images_paths_with_keypoints: Optional[Set[str]] = None
-) -> kapture.Observations:
+def observations_from_file(observations_filepath: str, images_paths_with_keypoints: Optional[Set[str]] = None
+                           ) -> kapture.Observations:
     """
     Reads observations from CSV file.
 
@@ -1085,15 +1090,16 @@ KAPTURE_ATTRIBUTE_NAMES = {  # used to list attributes to be saved
 }
 
 
-def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
+def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
     """
     Saves kapture data to given directory.
 
-    :param dirpath: input directory root path
+    :param kapture_dirpath: kapture directory root path
     :param kapture_data: input kapture data
     """
-    kapture_subtype_to_filepaths = {kapture_class: path.join(dirpath, filename)
+    kapture_subtype_to_filepaths = {kapture_class: path.join(kapture_dirpath, filename)
                                     for kapture_class, filename in CSV_FILENAMES.items()}
+    saving_start = datetime.datetime.now()
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
         part_data = kapture_data.__getattribute__(kapture_member_name)
@@ -1102,6 +1108,8 @@ def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
             logger.debug(f'saving {kapture_member_name} ...')
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
+    saving_elapsed = datetime.datetime.now() - saving_start
+    logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in {kapture_dirpath}')
 
 
 # Kapture Read #########################################################################################################
@@ -1174,6 +1182,7 @@ def kapture_from_dir(
     }
 
     kapture_data = kapture.Kapture()
+    loading_start = datetime.datetime.now()
     # sensors
     sensor_ids = None
     sensors_file_path = csv_file_paths[kapture.Sensors]
@@ -1208,10 +1217,19 @@ def kapture_from_dir(
                                         kapture_loadable_data, kapture_data)
     _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
 
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'Loaded in {loading_elapsed.total_seconds()} seconds from {"kapture_dir_path"}')
     return kapture_data
 
 
 def get_sensor_ids_of_type(sensor_type: str, sensors: kapture.Sensors) -> Set[str]:
+    """
+    Get the sensors of a certain kapture type ('camera', 'lidar', ...)
+
+    :param sensor_type: type of sensor
+    :param sensors: sensors to process
+    :return: sensors identifiers
+    """
     return set([sensor_id
                 for sensor_id in sensors.keys()
                 if sensors[sensor_id].sensor_type == sensor_type])
