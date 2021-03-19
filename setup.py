@@ -62,7 +62,7 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[
         'dataclasses>=0.3'
-        'numpy>=1.16,<1.20',
+        'numpy>=1.16',
         'numpy-quaternion>=2019.3.18.14.33.20',
         'numba>=0.42',
         'matplotlib>=3.0',
