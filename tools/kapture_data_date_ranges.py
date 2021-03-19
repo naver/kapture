@@ -96,7 +96,11 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
             pass
         if first_timestamp > 0 and last_timestamp > 0:
             timestamp_range_str = format_timestamp_range(first_timestamp, last_timestamp)
-            print(f'{kapture_filename:42s} timestamp from {timestamp_range_str}')
+            timestamp_len1 = computation.num_digits(first_timestamp)
+            timestamp_len2 = computation.num_digits(last_timestamp)
+            timestamp_len_str = f'{timestamp_len1}' if timestamp_len1 == timestamp_len2\
+                else f'{timestamp_len1}-{timestamp_len2}'
+            print(f'{kapture_filename:42s} timestamp {timestamp_len_str} digits from {timestamp_range_str}')
 
 
 def do_print(kapture_path: str) -> None:
