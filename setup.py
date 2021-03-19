@@ -68,7 +68,7 @@ setuptools.setup(
         'matplotlib>=3.0',
         'scipy>=1.4',
         'tqdm>=4.30',
-        'Pillow==7.2.0',
+        'Pillow>=8.1.1',
         'piexif==1.1.3',
         'requests>=2.21',
         'pyyaml>=5.1',

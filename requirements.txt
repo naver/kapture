@@ -6,7 +6,7 @@ numba
 matplotlib
 scipy
 tqdm
-Pillow==7.2.0
+Pillow>=8.1.1
 piexif==1.1.3
 requests
 pyyaml>=5.1
