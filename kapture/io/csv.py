@@ -62,6 +62,9 @@ PADDINGS = {
 KAPTURE_FORMAT_1 = "# kapture format: 1.0"
 KAPTURE_FORMAT_PARSING_RE = '# kapture format\\:\\s*(?P<version>\\d+\\.\\d+)'
 
+# Line separator for the kapture csv files
+kapture_linesep = '\n'
+
 
 def get_version_from_header(header_string: str) -> Optional[str]:
     """
@@ -149,13 +152,13 @@ def table_to_file(file, table, header=None, padding=None) -> int:
     :return: number of records written
     """
     if header:
-        file.write(KAPTURE_FORMAT_1 + '\n')
-        file.write(header + '\n')
+        file.write(KAPTURE_FORMAT_1 + kapture_linesep)
+        file.write(header + kapture_linesep)
     nb_records = 0
     for row in table:
         if padding:
             row = [str(v).rjust(padding[i]) for i, v in enumerate(row)]
-        file.write(', '.join(f'{v}' for v in row) + '\n')
+        file.write(', '.join(f'{v}' for v in row) + kapture_linesep)
         nb_records += 1
     return nb_records
 

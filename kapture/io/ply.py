@@ -7,9 +7,10 @@ from typing import Dict
 import numpy as np
 
 import kapture
+from .csv import kapture_linesep
 from .features import image_keypoints_from_file
 
-PLY_HEADER_TEMPLATE = '\n'.join([
+PLY_HEADER_TEMPLATE = kapture_linesep.join([
     'ply',
     'format ascii 1.0',
     'element vertex {nb_vertex}',
@@ -64,7 +65,7 @@ def header_to_ply_stream(stream, nb_vertex: int = 0, nb_edges: int = 0) -> None:
     """
     stream.write(PLY_HEADER_TEMPLATE.format(nb_vertex=nb_vertex,
                                             nb_edges=nb_edges))
-    stream.write('\n')
+    stream.write(kapture_linesep)
 
 
 def rig_to_ply_stream(stream, rig: Dict[str, kapture.PoseTransform], axis_length: float = 1.) -> None:
@@ -96,10 +97,10 @@ def rig_to_ply_stream(stream, rig: Dict[str, kapture.PoseTransform], axis_length
     for p3d in points_colored_list:
         line = ['{:<25}'.format(i) for i in p3d[0:3]]
         line += ['{:03}'.format(int(i)) for i in p3d[3:6]]
-        stream.write(' '.join(line) + '\n')
+        stream.write(' '.join(line) + kapture_linesep)
     for e in edges_list:
         line = ['{:2}'.format(i) for i in e]
-        stream.write(' '.join(line) + '\n')
+        stream.write(' '.join(line) + kapture_linesep)
 
 
 def rig_to_ply(filepath: str, rig: Dict[str, kapture.PoseTransform], axis_length: float = 1.) -> None:
@@ -139,7 +140,7 @@ def trajectories_to_ply_stream(stream, trajectories: kapture.Trajectories, axis_
     for p3d in points_colored_list:
         line = ['{:<25}'.format(i) for i in p3d[0:3]]
         line += ['{:<4}'.format(i) for i in p3d[3:6]]
-        stream.write(' '.join(line) + '\n')
+        stream.write(' '.join(line) + kapture_linesep)
 
 
 def trajectories_to_ply(
@@ -172,7 +173,7 @@ def points3d_to_stream(stream, points3d: kapture.Points3d) -> None:
     header_to_ply_stream(stream, nb_vertex=len(points3d))
     for p3d in points3d:
         line = ['{:20}'.format(i) for i in p3d[0:3]] + ['{:03d}'.format(int(i)) for i in p3d[3:6]]
-        stream.write('  '.join(line) + '\n')
+        stream.write('  '.join(line) + kapture_linesep)
 
 
 def points3d_to_ply(filepath: str, points3d: kapture.Points3d) -> None:
@@ -198,7 +199,7 @@ def image_keypoints_to_stream(stream, image_keypoints: np.array) -> None:
     for kpt in image_keypoints:
         coords = kpt[0:2]
         line = ['{:20}'.format(i) for i in coords] + ['0.0'] + ['{:03d}'.format(randint(0, 255)) for _ in range(3)]
-        stream.write('  '.join(line) + '\n')
+        stream.write('  '.join(line) + kapture_linesep)
 
 
 def image_keypoints_to_ply(ply_filepath: str, image_keypoints_filepath: str, keypoint_dtype, keypoint_dsize) -> None:
