@@ -32,7 +32,8 @@ def export_colmap(kapture_dir_path: str,
                   colmap_database_filepath: str,
                   colmap_reconstruction_dir_path: Optional[str],
                   colmap_rig_filepath: str = None,
-                  force_overwrite_existing: bool = False) -> None:
+                  force_overwrite_existing: bool = False,
+                  pairsfile_path: Optional[str] = None) -> None:
     """
     Exports kapture data to colmap database and or reconstruction text files.
 
@@ -41,6 +42,7 @@ def export_colmap(kapture_dir_path: str,
     :param colmap_reconstruction_dir_path: path to colmap reconstruction directory
     :param colmap_rig_filepath: path to colmap rig file
     :param force_overwrite_existing: Silently overwrite colmap files if already exists.
+    :param pairsfile_path: Filter matches to load
     """
 
     os.makedirs(path.dirname(colmap_database_filepath), exist_ok=True)
@@ -56,7 +58,7 @@ def export_colmap(kapture_dir_path: str,
         raise ValueError('the existing colmap database is not empty : {}'.format(colmap_database_filepath))
 
     logger.info('loading kapture files...')
-    kapture_data = csv.kapture_from_dir(kapture_dir_path)
+    kapture_data = csv.kapture_from_dir(kapture_dir_path, pairsfile_path)
     assert isinstance(kapture_data, kapture.Kapture)
 
     # COLMAP does not fully support rigs.
