@@ -273,7 +273,8 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
     for iteration in range(max_depth):
         # repeat the operation while there is so rig remaining (nested rigs)
         jobs = [(timestamp, rig_id, pose_rig_from_world)
-                for timestamp, rig_id, pose_rig_from_world in flatten(trajectories)
+                for timestamp, poses_for_timestamp in trajectories.items()
+                for rig_id, pose_rig_from_world in poses_for_timestamp.items()
                 if rig_id in rigs.keys()]
 
         if len(jobs) == 0:
