@@ -163,6 +163,9 @@ def table_to_file(file, table, header=None, padding=None) -> int:
     return nb_records
 
 
+SPLIT_PATTERN = re.compile(r'\s*,\s*')
+
+
 def table_from_file(file):
     """
     Returns an iterable of iterable (generator) on the opened file.
@@ -172,14 +175,9 @@ def table_from_file(file):
     :return: an iterable of iterable on kapture objects values
     """
     table = file.readlines()
-    # remove comment lines
-    table = (l1 for l1 in table if not l1.startswith('#'))
-    # remove empty lines
-    table = (l2 for l2 in table if l2.strip())
-    # trim trailing EOL
-    table = (l3.rstrip("\n\r") for l3 in table)
-    # split comma (and trim afterwards spaces)
-    table = (re.split(r'\s*,\s*', l4) for l4 in table)
+    # remove comment lines, empty lines and trim trailing EOL
+    # then split comma (and trim afterwards spaces)
+    table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
     return table
 
 
@@ -369,6 +367,7 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
     :return: trajectories
     """
     trajectories = kapture.Trajectories()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -382,7 +381,8 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
             pose = kapture.PoseTransform(rotation, trans)
             trajectories[(int(timestamp), str(device_id))] = pose
             nb_records += 1
-    logger.debug(f'{nb_records} {kapture.Trajectories}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.Trajectories} in {loading_elapsed.total_seconds()} seconds')
     return trajectories
 
 
