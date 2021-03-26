@@ -10,11 +10,14 @@ and might change if you manipulate them, save and reload them from disk.
 If you need them ordered, do it yourself.
 """
 
+import logging
 import quaternion
+from tqdm import tqdm
 
 from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
+from kapture.utils.logging import getLogger
 import kapture.utils.computation as computation
 from bisect import bisect_left
 from copy import deepcopy
@@ -275,26 +278,21 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
         jobs = [(timestamp, rig_id, pose_rig_from_world)
                 for timestamp, poses_for_timestamp in trajectories.items()
                 for rig_id, pose_rig_from_world in poses_for_timestamp.items()
-                if rig_id in rigs.keys()]
+                if rig_id in rigs]
 
         if len(jobs) == 0:
             # we are done
             break
 
-        # replace those rigs poses by the one of the sensors
-        for timestamp, rig_id, pose_rig_from_world in jobs:
-            # its a rig, add every sensors in it instead.
+        getLogger().debug(f'rigs_remove {len(jobs)} jobs at depth {iteration}')
+        for timestamp, rig_id, pose_rig_from_world in tqdm(jobs, disable=getLogger().level >= logging.CRITICAL):
             for device_id, pose_device_from_rig in rigs[rig_id].items():
                 pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
-                trajectories[timestamp, device_id] = pose_cam_from_world
-            # then remove this rig pose
+                trajectories.setdefault(timestamp, {})[device_id] = pose_cam_from_world
             del trajectories[timestamp][rig_id]
-
-    # remove useless (empty) timestamp (if any) from trajectories
-    for timestamp in trajectories.keys():
-        if len(trajectories[timestamp]) == 0:
-            del trajectories[timestamp]
-
+        for timestamp in trajectories.keys():
+            if len(trajectories[timestamp]) == 0:
+                del trajectories[timestamp]
     # Do not clear, the rigs : so easy to do outside, and so easy
 
 

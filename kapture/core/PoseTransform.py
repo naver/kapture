@@ -8,6 +8,7 @@ import math
 import numpy as np
 import quaternion
 from typing import List, Optional
+from numba import njit
 
 
 class PoseTransform:
@@ -96,7 +97,10 @@ class PoseTransform:
         assert self._r is not None
         assert self._t is not None
         r_inv = self.r.inverse()
-        t_inv = np.matmul(quaternion.as_rotation_matrix(r_inv), self.t * -1.0)
+        rotation_inv_matrix = np.empty((3, 3), dtype=np.float)
+        rotation_inv_as_np = np.array([r_inv.w, r_inv.x, r_inv.y, r_inv.z])
+        _as_rotation_matrix_njit(rotation_inv_as_np, rotation_inv_matrix)
+        t_inv = np.matmul(rotation_inv_matrix, self.t * -1.0)
         return PoseTransform(r_inv, t_inv)
 
     @staticmethod
@@ -111,12 +115,18 @@ class PoseTransform:
         pose_composed = pose_list[0]
         for pose_current in pose_list[1:]:
             # shrink the poses from the left
-            assert pose_current._r is not None
-            assert pose_current._t is not None
+            # assert pose_current._r is not None
+            # assert pose_current._t is not None
             new_r = pose_composed.r * pose_current.r
-            new_t = np.add(np.matmul(quaternion.as_rotation_matrix(
-                pose_composed.r), pose_current.t), pose_composed.t)
-            pose_composed = PoseTransform(new_r, new_t)
+            rotation_matrix = np.empty((3, 3), dtype=np.float)
+            rotation_composed_as_np = np.array([pose_composed.r.w, pose_composed.r.x,
+                                                pose_composed.r.y, pose_composed.r.z])
+            _as_rotation_matrix_njit(rotation_composed_as_np, rotation_matrix)
+            new_t = np.add(np.matmul(rotation_matrix, pose_current.t), pose_composed.t)
+
+            pose_composed = PoseTransform.__new__(PoseTransform)
+            pose_composed._r = new_r
+            pose_composed._t = new_t
         return pose_composed
 
     def transform_points(self, points3d: np.ndarray) -> np.ndarray:
@@ -133,7 +143,9 @@ class PoseTransform:
         if points3d.shape[1] == 6:  # expunge RGB
             points3d = points3d[:, 0:3]
         points3d = points3d.transpose()
-        rotation_matrix = quaternion.as_rotation_matrix(self.r)
+        rotation_matrix = np.empty((3, 3), dtype=np.float)
+        rotation_as_np = np.array([self.r.w, self.r.x, self.r.y, self.r.z])
+        _as_rotation_matrix_njit(rotation_as_np, rotation_matrix)
         points3d = np.add(np.matmul(rotation_matrix, points3d), self.t)
         return points3d.transpose()
 
@@ -158,3 +170,30 @@ class PoseTransform:
             if not math.isclose(left, right, rel_tol=1.e-02, abs_tol=1.e-02):
                 return False
         return True
+
+
+# https://github.com/moble/quaternion/blob/main/src/quaternion/__init__.py#L200
+@njit
+def _as_rotation_matrix_njit(q, rot_mat):
+    q_norm = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]
+    if abs(q_norm-1.0) < 1e-14:
+        rot_mat[0, 0] = 1 - 2*(q[2]**2 + q[3]**2)
+        rot_mat[0, 1] = 2*(q[1]*q[2] - q[3]*q[0])
+        rot_mat[0, 2] = 2*(q[1]*q[3] + q[2]*q[0])
+        rot_mat[1, 0] = 2*(q[1]*q[2] + q[3]*q[0])
+        rot_mat[1, 1] = 1 - 2*(q[1]**2 + q[3]**2)
+        rot_mat[1, 2] = 2*(q[2]*q[3] - q[1]*q[0])
+        rot_mat[2, 0] = 2*(q[1]*q[3] - q[2]*q[0])
+        rot_mat[2, 1] = 2*(q[2]*q[3] + q[1]*q[0])
+        rot_mat[2, 2] = 1 - 2*(q[1]**2 + q[2]**2)
+    else:
+        rot_mat[0, 0] = 1 - 2*(q[2]**2 + q[3]**2)/q_norm
+        rot_mat[0, 1] = 2*(q[1]*q[2] - q[3]*q[0])/q_norm
+        rot_mat[0, 2] = 2*(q[1]*q[3] + q[2]*q[0])/q_norm
+        rot_mat[1, 0] = 2*(q[1]*q[2] + q[3]*q[0])/q_norm
+        rot_mat[1, 1] = 1 - 2*(q[1]**2 + q[3]**2)/q_norm
+        rot_mat[1, 2] = 2*(q[2]*q[3] - q[1]*q[0])/q_norm
+        rot_mat[2, 0] = 2*(q[1]*q[3] - q[2]*q[0])/q_norm
+        rot_mat[2, 1] = 2*(q[2]*q[3] + q[1]*q[0])/q_norm
+        rot_mat[2, 2] = 1 - 2*(q[1]**2 + q[2]**2)/q_norm
+    return

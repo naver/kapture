@@ -4,6 +4,7 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
+import time
 import datetime
 import io
 import os
@@ -12,6 +13,7 @@ import re
 from collections import namedtuple
 from typing import Any, List, Optional, Set, Type, Union
 import numpy as np
+import quaternion
 
 import kapture
 import kapture.io.features
@@ -366,20 +368,29 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
                         If no device_ids given, everything is loaded.
     :return: trajectories
     """
-    trajectories = kapture.Trajectories()
     loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
+        trajectories = kapture.Trajectories()
         # timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
         for timestamp, device_id, qw, qx, qy, qz, tx, ty, tz in table:
             if device_ids is not None and device_id not in device_ids:
                 # just ignore
                 continue
-            rotation = float_array_or_none([qw, qx, qy, qz])
-            trans = float_array_or_none([tx, ty, tz])
-            pose = kapture.PoseTransform(rotation, trans)
-            trajectories[(int(timestamp), str(device_id))] = pose
+            pose = kapture.PoseTransform.__new__(kapture.PoseTransform)
+            if qw != '' and qx != '' and qy != '' and qz != '':
+                rotation = quaternion.from_float_array([float(qw), float(qx), float(qy), float(qz)])
+            else:
+                rotation = None
+            pose._r = rotation
+
+            if tx != '' and ty != '' and tz != '':
+                trans = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=np.float)
+            else:
+                trans = None
+            pose._t = trans
+            trajectories.setdefault(int(timestamp), {})[device_id] = pose
             nb_records += 1
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'{nb_records} {kapture.Trajectories} in {loading_elapsed.total_seconds()} seconds')
