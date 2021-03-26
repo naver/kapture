@@ -4,7 +4,6 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
-import time
 import datetime
 import io
 import os
