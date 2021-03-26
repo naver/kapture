@@ -101,7 +101,10 @@ class PoseTransform:
         rotation_inv_as_np = np.array([r_inv.w, r_inv.x, r_inv.y, r_inv.z])
         _as_rotation_matrix_njit(rotation_inv_as_np, rotation_inv_matrix)
         t_inv = np.matmul(rotation_inv_matrix, self.t * -1.0)
-        return PoseTransform(r_inv, t_inv)
+        pose_inv = PoseTransform.__new__(PoseTransform)
+        pose_inv._r = r_inv
+        pose_inv._t = t_inv
+        return pose_inv
 
     @staticmethod
     def compose(pose_list: List['PoseTransform']) -> 'PoseTransform':
