@@ -290,9 +290,10 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
                 pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
                 trajectories.setdefault(timestamp, {})[device_id] = pose_cam_from_world
             del trajectories[timestamp][rig_id]
-        for timestamp in trajectories.keys():
-            if len(trajectories[timestamp]) == 0:
-                del trajectories[timestamp]
+
+    for timestamp in trajectories.keys():
+        if len(trajectories[timestamp]) == 0:
+            del trajectories[timestamp]
     # Do not clear, the rigs : so easy to do outside, and so easy
 
 
