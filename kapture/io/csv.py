@@ -164,9 +164,6 @@ def table_to_file(file, table, header=None, padding=None) -> int:
     return nb_records
 
 
-SPLIT_PATTERN = re.compile(r'\s*,\s*')
-
-
 def table_from_file(file):
     """
     Returns an iterable of iterable (generator) on the opened file.
@@ -177,9 +174,14 @@ def table_from_file(file):
     """
     table = file.readlines()
     # remove comment lines, empty lines and trim trailing EOL
+    table = (l1.rstrip("\n\r") for l1 in table if l1.strip() and not l1.startswith('#'))
     # then split comma (and trim afterwards spaces)
-    table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
-    return table
+    content = []
+    for line in table:
+        words = line.split(',')
+        words = list(word.strip() for word in words)
+        content.append(words)
+    return content
 
 
 def get_last_line(opened_file: io.TextIOBase, max_line_size: int = 128) -> str:
