@@ -21,10 +21,9 @@ import kapture.io.csv
 
 logger = logging.getLogger('kapture_print')
 
-VALID_TIME_RANGE = [
-    time.mktime(datetime(year=year, month=1, day=1, hour=0, minute=0, second=0).timetuple())
-    for year in [1980, 2100]
-]
+# Consider as valid timestamps only if between these two dates
+LOWER_RECORD_DATE_TIMESTAMP = time.mktime(datetime(year=1980, month=1, day=1, hour=0, minute=0, second=0).timetuple())
+UPPER_RECORD_DATE_TIMESTAMP = time.mktime(datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0).timetuple())
 
 
 @contextlib.contextmanager
@@ -88,8 +87,7 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=show_all)
 
 
-def print_rigs(
-        kapture_data, output_stream, show_detail, show_all) -> None:
+def print_rigs(kapture_data, output_stream, show_detail, show_all) -> None:
     """
     Prints the rigs to the output stream
     """
@@ -117,12 +115,11 @@ FACTOR_TO_SECONDS = {
     'second': 1.0,
     'millisecond': 1.e-3,
     'microsecond': 1.e-6,
+    'nanoseconds': 1.e-9
 }
 
 
-def guess_timestamp_posix_unit(
-        timestamp: int,
-) -> Optional[float]:
+def guess_timestamp_posix_unit(timestamp: int) -> Optional[str]:
     """
     Guess the unit of a timestamp based on its value.
 
@@ -130,10 +127,9 @@ def guess_timestamp_posix_unit(
     :return: 'posix' or 'posix-ms' or 'index'
     """
     assert isinstance(timestamp, int)
-    timestamp = float(timestamp)
 
     for unit, factor in FACTOR_TO_SECONDS.items():
-        if VALID_TIME_RANGE[0] < factor * timestamp < VALID_TIME_RANGE[1]:
+        if LOWER_RECORD_DATE_TIMESTAMP < factor * float(timestamp) < UPPER_RECORD_DATE_TIMESTAMP:
             return unit
 
     # none worked, its not posix
@@ -205,20 +201,20 @@ def print_records(
     # records (+trajectories)
     for record_name in ['trajectories', 'records_camera', 'records_lidar', 'records_wifi', 'records_bluetooth',
                         'records_gnss', 'records_accelerometer', 'records_gyroscope', 'records_magnetic']:
-        record = getattr(kapture_data, record_name)
-        nb_record = None if record is None else len(list(kapture.flatten(record)))
+        records_field = getattr(kapture_data, record_name)
+        records = list(kapture.flatten(records_field))
+        nb_record = None if records_field is None else len(records)
         if not show_detail:
-            print_key_value(f'nb {record_name}', nb_record, file=output_stream, show_none=show_all)
-        elif record is not None or show_all:
-            print_title(f'{record_name}', file=output_stream)
-            if record is not None and len(record) > 0:
-                timestamp_range = [min(record), max(record)]
-                timestamp_range = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
-                nb_sensors = len(set(s_id for _, s_id, *x in kapture.flatten(record)))
-                print_key_value(' ├─ timestamp range', f'{timestamp_range}',
-                                file=output_stream, show_none=show_all)
-                print_key_value(' ├─ nb sensors', f'{nb_sensors}', file=output_stream, show_none=show_all)
-            print_key_value(' └─ nb total', nb_record, file=output_stream, show_none=show_all)
+            print_key_value(f'nb {record_name}', nb_record, output_stream, show_none=show_all)
+        elif records_field is not None or show_all:
+            print_title(f'{record_name}', output_stream)
+            if records_field is not None and nb_record > 0:
+                timestamp_range = (min(records_field), max(records_field))
+                timestamp_range_str = format_timestamp_range(timestamp_range, timestamp_unit, timestamp_formatting)
+                sensors_ids = records_field.sensors_ids
+                print_key_value(' ├─ timestamp range', timestamp_range_str, output_stream, show_none=show_all)
+                print_key_value(' ├─ sensors', f'{len(sensors_ids)}: {sensors_ids}', output_stream, show_none=show_all)
+            print_key_value(' └─ nb total', nb_record, output_stream, show_none=show_all)
 
 
 def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
@@ -322,7 +318,7 @@ def print_command_line() -> None:
     parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'second', 'millisecond', 'microsecond'],
                         default='auto',
                         help='Force what timestamp really are (eg. millisecond) to display them nicely.'
-                             'Auto means the program try do guess. [auto]')
+                             'Auto means the program tries to guess. [auto]')
     parser.add_argument('-f', '--timestamp_formatting',
                         help='Tells what timestamp are, helps human display.')
     args = parser.parse_args()

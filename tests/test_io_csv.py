@@ -11,6 +11,7 @@ import warnings
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
+from kapture.io.csv import kapture_linesep
 import kapture.io.features
 import kapture.algo.compare
 from kapture.utils.paths import path_secure
@@ -29,6 +30,57 @@ class TestCsvPose(unittest.TestCase):
         pose = kapture.PoseTransform(r=[0.5, 0.5, 0.5, 0.5], t=[4., 2., -2.])
         fields = csv.pose_to_list(pose)
         self.assertListEqual(fields, [0.5, 0.5, 0.5, 0.5, 4., 2., -2.])
+
+
+########################################################################################################################
+# File read/write ######################################################################################################
+class TestCsvFile(unittest.TestCase):
+    def setUp(self):
+        self._tempdir = tempfile.TemporaryDirectory()
+        self._temp_filepath = path.join(self._tempdir.name, 'timestamps_data.txt')
+
+    def tearDown(self):
+        self._tempdir.cleanup()
+
+    def test_last_line_empty(self):
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write('')
+
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, '')
+
+    def test_last_line_small_file(self):
+        content = kapture_linesep.join([csv.KAPTURE_FORMAT_1,
+                                        '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz',
+                                        '0001, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0',
+                                        '0002, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0'
+                                        ])
+        last_line = '1000, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write(content)
+            fw.write(kapture_linesep + last_line)
+
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, last_line)
+
+    def test_last_line_big_file(self):
+        content = kapture_linesep.join([csv.KAPTURE_FORMAT_1,
+                                        '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz',
+                                        '0001, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+                                        ])
+        some_line = '0002, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0'
+        last_line = '1000, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
+        # Generate a big file
+        with open(self._temp_filepath, 'wt') as fw:
+            fw.write(content)
+            for i in range(0, 100000):
+                fw.write(kapture_linesep + some_line)
+            fw.write(kapture_linesep + last_line)
+        with open(self._temp_filepath, 'r') as fr:
+            line = csv.get_last_line(fr)
+        self.assertEqual(line, last_line)
 
 
 ########################################################################################################################
@@ -61,11 +113,11 @@ class TestCsvSensors(unittest.TestCase):
     def test_sensors_write(self):
         cam0 = kapture.Camera(name='cam0', camera_type='SIMPLE_PINHOLE', camera_params=[640, 480, 100, 320, 240])
         cam1 = kapture.Camera(name='cam1', camera_type='SIMPLE_PINHOLE', camera_params=[640, 480, 100, 320, 240])
-        formatted_expected = '\n'.join([csv.KAPTURE_FORMAT_1,
-                                        '# sensor_id, name, sensor_type, [sensor_params]+',
-                                        'cam0, cam0, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
-                                        'cam1, cam1, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
-                                        ''])
+        formatted_expected = kapture_linesep.join([csv.KAPTURE_FORMAT_1,
+                                                   '# sensor_id, name, sensor_type, [sensor_params]+',
+                                                   'cam0, cam0, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
+                                                   'cam1, cam1, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
+                                                   ''])
         sensors = kapture.Sensors()
         sensors['cam0'] = cam0
         sensors['cam1'] = cam1
@@ -76,14 +128,14 @@ class TestCsvSensors(unittest.TestCase):
         self.assertEqual(formatted_actual, formatted_expected)
 
     def test_sensors_read(self):
-        formated_expected = '\n'.join([
+        formatted_expected = kapture_linesep.join([
             '# sensor_id, name, sensor_type, [sensor_params]+',
             'cam0, cam0, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
             'cam1, cam1, camera, SIMPLE_PINHOLE, 640, 480, 100, 320, 240',
             ''])
 
         with open(self._temp_filepath, 'wt') as f:
-            f.write(formated_expected)
+            f.write(formatted_expected)
 
         sensors = csv.sensors_from_file(self._temp_filepath)
         self.assertIsInstance(sensors, kapture.Sensors)
@@ -112,11 +164,11 @@ class TestCsvRigs(unittest.TestCase):
         rigs = kapture.Rigs()
         rigs['rig1', 'cam0'] = kapture.PoseTransform()
         rigs['rig1', 'cam1'] = kapture.PoseTransform(r=[0.5, 0.5, 0.5, 0.5])
-        content_expected = '\n'.join([csv.KAPTURE_FORMAT_1,
-                                      '# rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz',
-                                      'rig1, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0',
-                                      'rig1, cam1,  0.5,  0.5,  0.5,  0.5,  0.0,  0.0,  0.0',
-                                      ''])
+        content_expected = kapture_linesep.join([csv.KAPTURE_FORMAT_1,
+                                                 '# rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz',
+                                                 'rig1, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0',
+                                                 'rig1, cam1,  0.5,  0.5,  0.5,  0.5,  0.0,  0.0,  0.0',
+                                                 ''])
 
         csv.rigs_to_file(self._temp_filepath, rigs)
         with open(self._temp_filepath, 'rt') as f:
@@ -137,11 +189,11 @@ class TestCsvTrajectories(unittest.TestCase):
     def test_trajectories_write(self):
         pose1 = kapture.PoseTransform(r=[1.0, 0.0, 0.0, 0.0], t=[0.0, 0.0, 0.0])
         pose2 = kapture.PoseTransform(r=[0.5, 0.5, 0.5, 0.5], t=[4., 2., -2.])
-        content_expected = [csv.KAPTURE_FORMAT_1 + '\n',
-                            '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz\n',
-                            '       0, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0\n',
-                            '       0, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0\n',
-                            '     100, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0\n'
+        content_expected = [csv.KAPTURE_FORMAT_1 + kapture_linesep,
+                            '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz' + kapture_linesep,
+                            '       0, cam0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0' + kapture_linesep,
+                            '       0, cam1,  0.5,  0.5,  0.5,  0.5,  4.0,  2.0, -2.0' + kapture_linesep,
+                            '     100, cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0' + kapture_linesep
                             ]
         trajectories = kapture.Trajectories()
         timestamp1, timestamp2 = 0, 100
@@ -161,11 +213,11 @@ class TestCsvTrajectories(unittest.TestCase):
             '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz',
             '0, cam0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0',
             '    0, cam1, 0.5, 0.5, 0.5, 0.5, 4.0, 2.0, -2.0',
-            '     100,  cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0\n'
+            '     100,  cam2,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0'
         ]
 
         with open(self._temp_filepath, 'wt') as f:
-            f.write('\n'.join(content))
+            f.write(kapture_linesep.join(content))
         device_ids = {'cam0', 'cam1', 'cam2'}
         trajectories = csv.trajectories_from_file(self._temp_filepath, device_ids)
         self.assertIsInstance(trajectories, kapture.Trajectories)
@@ -193,7 +245,7 @@ class TestCsvGnss(unittest.TestCase):
             'gps2, gps_02, gnss, EPSG:4326',
         ]
         with open(self._sensors_filepath, 'wt') as f:
-            f.write('\n'.join(sensors_content))
+            f.write(kapture_linesep.join(sensors_content))
 
         self._gnss_filepath = path.join(self._tempdir.name, 'records_gnss.txt')
         gnss_content = [
@@ -201,10 +253,10 @@ class TestCsvGnss(unittest.TestCase):
             '0, gps1, 28.099134, 49.38892, 8.0, 514850398, 3.0',
             '  1, gps1, 29.099134, 50.38892, 9.0, 514850399, 2.0',
             '  1, gps2, 29.099134, 50.38892, 9.0, 514850399, 2.0',
-            '     2,   gps1, 30.099134, 51.38892, 10.0, 514850400, 1.0\n'
+            '     2,   gps1, 30.099134, 51.38892, 10.0, 514850400, 1.0'
         ]
         with open(self._gnss_filepath, 'wt') as f:
-            f.write('\n'.join(gnss_content))
+            f.write(kapture_linesep.join(gnss_content))
 
     def tearDown(self):
         self._tempdir.cleanup()
@@ -388,7 +440,7 @@ class TestCsvPoints3d(unittest.TestCase):
     def test_points_from_empty_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
-            file.write('# X, Y, Z, R, G, B\n')
+            file.write('# X, Y, Z, R, G, B' + kapture_linesep)
         # prevent numpy showing warning
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -398,8 +450,8 @@ class TestCsvPoints3d(unittest.TestCase):
     def test_points_from_single_line_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
-            file.write('# X, Y, Z, R, G, B\n')
-            file.write('0, 1.0, 0.0, 255, .0, 150\n')
+            file.write('# X, Y, Z, R, G, B' + kapture_linesep)
+            file.write('0, 1.0, 0.0, 255, .0, 150' + kapture_linesep)
         points3d = csv.points3d_from_file(filepath)
         self.assertEqual(1, points3d.shape[0])
         self.assertAlmostEqual([0.0, 1.0, 0.0, 255.0, .0, 150.0], points3d[0])
@@ -407,10 +459,10 @@ class TestCsvPoints3d(unittest.TestCase):
     def test_points_from_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
-            file.write('# X, Y, Z, R, G, B\n')
-            file.write('0, 1.0, 0.0, 255, .0, 150\n')
-            file.write('-10, 0, 0.0, 25, .0, 150\n')
-            file.write('1545, 0, 0.0, 25, .0, 150\n')
+            file.write('# X, Y, Z, R, G, B' + kapture_linesep)
+            file.write('0, 1.0, 0.0, 255, .0, 150' + kapture_linesep)
+            file.write('-10, 0, 0.0, 25, .0, 150' + kapture_linesep)
+            file.write('1545, 0, 0.0, 25, .0, 150' + kapture_linesep)
         points3d = csv.points3d_from_file(filepath)
         self.assertEqual(3, points3d.shape[0])
         self.assertAlmostEqual([0.0, 1.0, 0.0, 255.0, .0, 150.0], points3d[0])
@@ -429,10 +481,10 @@ class TestCsvObservations(unittest.TestCase):
             0: {'SIFT': [('image1.jpg', 0), ('image2.jpg', 0)]},
             2: {'SIFT': [('image1.jpg', 2), ('image2.jpg', 3)]}
         })
-        self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + "\n"
-        self._observations_csv_expected += ''.join(["# point3d_id, keypoints_type, [image_path, feature_id]*\n",
-                                                    "0, SIFT, image1.jpg, 0, image2.jpg, 0\n",
-                                                    "2, SIFT, image1.jpg, 2, image2.jpg, 3\n"])
+        self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + kapture_linesep
+        self._observations_csv_expected += kapture_linesep.join(["# point3d_id, keypoints_type, [image_path, feature_id]*",
+                                                    "0, SIFT, image1.jpg, 0, image2.jpg, 0",
+                                                    "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
@@ -510,8 +562,6 @@ class TestCsvKapture(unittest.TestCase):
 
 ########################################################################################################################
 # M1X ##################################################################################################################
-
-
 class TestCsvM1x(unittest.TestCase):
     def setUp(self):
         self._tempdir = tempfile.TemporaryDirectory()
@@ -658,12 +708,11 @@ class TestCsvMaupertuis(unittest.TestCase):
         )
 
     def test_overall_read(self):
-        return
         # check the overall loading went fine
-        self.assertEqual(1, len(self._kapture_data.sensors))
+        self.assertEqual(2, len(self._kapture_data.sensors))
         self.assertEqual(4, len(self._kapture_data.trajectories))
         self.assertEqual(4, len(self._kapture_data.records_camera))
-        self.assertEqual(4, len(self._kapture_data.records_gps))
+        self.assertEqual(4, len(self._kapture_data.records_gnss))
         self.assertEqual(4, len(self._kapture_data.keypoints))
         self.assertEqual(4, len(self._kapture_data.descriptors))
         self.assertEqual(6, len(self._kapture_data.matches))

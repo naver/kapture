@@ -45,7 +45,7 @@ long_description = read_doc(readme_filepath)
 setuptools.setup(
     # description
     name='kapture',
-    version="1.0.16",
+    version="1.0.17",
     author="naverlabs",
     author_email="kapture@naverlabs.com",
     description="kapture: file format for SfM",
@@ -62,13 +62,13 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[
         'dataclasses>=0.3'
-        'numpy>=1.16,<1.20',
+        'numpy>=1.16',
         'numpy-quaternion>=2019.3.18.14.33.20',
         'numba>=0.42',
         'matplotlib>=3.0',
         'scipy>=1.4',
         'tqdm>=4.30',
-        'Pillow==7.2.0',
+        'Pillow>=8.1.1',
         'piexif==1.1.3',
         'requests>=2.21',
         'pyyaml>=5.1',

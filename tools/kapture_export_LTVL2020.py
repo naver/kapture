@@ -29,7 +29,8 @@ logger = logging.getLogger('LTVL2020')
 
 def export_ltvl(kapture_dirpath: str,
                 ltvl_filepath: str,
-                prepend_camera_name: bool = False) -> None:
+                prepend_camera_name: bool = False,
+                keep_full_file_name: bool = False) -> None:
     """
     Export kapture data to a Long-term Visual Localization challenge format file.
 
@@ -49,7 +50,11 @@ def export_ltvl(kapture_dirpath: str,
     # 3: find (timestamp, camera_id) that are both in records and trajectories.
     valid_keys = set(records_cameras.key_pairs()).intersection(set(trajectories.key_pairs()))
     # collect data for those timestamps.
-    image_poses = ((k[1], path.basename(records_cameras[k]), trajectories[k]) for k in valid_keys)
+    if keep_full_file_name:
+        image_poses = ((k[1], records_cameras[k], trajectories[k]) for k in valid_keys)
+    else:
+        image_poses = ((k[1], path.basename(records_cameras[k]), trajectories[k]) for k in valid_keys)
+
     # prepend the camera name or drop it.
     if prepend_camera_name:
         image_poses = ((path.join(camera_id, image_filename), pose) for camera_id, image_filename, pose in image_poses)
@@ -89,6 +94,8 @@ def export_ltvl2020_command_line() -> None:
     parser.add_argument('-o', '--output', required=True, help='output file.')
     parser.add_argument('-p', '--prepend_cam', action='store_true', default=False,
                         help='prepend camera names to filename (required for some dataset).')
+    parser.add_argument('--full_file_name', action='store_true', default=False,
+                        help='keep the full file name (default: seq-0/image1.png -> image1.png).')
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -97,7 +104,7 @@ def export_ltvl2020_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    export_ltvl(args.input, args.output, args.prepend_cam)
+    export_ltvl(args.input, args.output, args.prepend_cam, args.full_file_name)
 
 
 if __name__ == '__main__':

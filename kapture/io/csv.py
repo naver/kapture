@@ -4,6 +4,8 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
+import datetime
+import io
 from kapture.utils.logging import getLogger
 from kapture.io.tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler, get_feature_tar_fullpath, retrieve_tar_handler_from_collection
 import os
@@ -11,7 +13,9 @@ import os.path as path
 import re
 from typing import Any, Dict, List, Optional, Set, Type, Union
 from collections import namedtuple
+from typing import Any, List, Optional, Set, Type, Union
 import numpy as np
+import quaternion
 
 import kapture
 import kapture.io.features
@@ -45,7 +49,7 @@ FEATURES_CSV_FILENAMES = {
 
 def get_csv_fullpath(kapture_type: Any, kapture_dirpath: str = '') -> str:
     """
-    Returns the full path to csv kapture file for a given datastructure and root directory.
+    Returns the full path to csv kapture file for a given data structure and root directory.
     This path is the concatenation of the kapture root path and subpath into kapture into data structure.
 
     :param kapture_type: type of kapture data (kapture.RecordsCamera, kapture.Trajectories, ...)
@@ -79,6 +83,9 @@ PADDINGS = {
 
 KAPTURE_FORMAT_1 = "# kapture format: 1.1"
 KAPTURE_FORMAT_PARSING_RE = '# kapture format\\:\\s*(?P<version>\\d+\\.\\d+)'
+
+# Line separator for the kapture csv files
+kapture_linesep = '\n'
 
 
 def get_version_from_header(header_string: str) -> Optional[str]:
@@ -128,7 +135,7 @@ def kapture_format_version(kapture_dirpath: str) -> Optional[str]:
     return get_version_from_csv_file(sensors_file_path)
 
 
-def float_safe(representation) -> Union[float, None]:
+def float_safe(representation) -> Optional[float]:
     """
     Safe float cast
     https://stackoverflow.com/questions/6330071/safe-casting-in-python
@@ -142,7 +149,7 @@ def float_safe(representation) -> Union[float, None]:
         return None
 
 
-def float_array_or_none(representation_list) -> Union[List[float], None]:
+def float_array_or_none(representation_list) -> Optional[List[float]]:
     """
     Safe cast of list of float representations
     https://stackoverflow.com/questions/6330071/safe-casting-in-python
@@ -154,7 +161,7 @@ def float_array_or_none(representation_list) -> Union[List[float], None]:
     return array if not any(v is None for v in array) else None
 
 
-def table_to_file(file, table, header=None, padding=None) -> None:
+def table_to_file(file, table, header=None, padding=None) -> int:
     """
     Writes the given table (list of list) into a file.
             The file must be previously open as write mode.
@@ -164,15 +171,21 @@ def table_to_file(file, table, header=None, padding=None) -> None:
     :param table: an iterable of iterable
     :param header: row added at the beginning of the file (+\n)
     :param padding: the padding of each column as a list of int of same size of the rows of the table.
-    :return:
+    :return: number of records written
     """
     if header:
-        file.write(KAPTURE_FORMAT_1 + '\n')
-        file.write(header + '\n')
+        file.write(KAPTURE_FORMAT_1 + kapture_linesep)
+        file.write(header + kapture_linesep)
+    nb_records = 0
     for row in table:
         if padding:
             row = [str(v).rjust(padding[i]) for i, v in enumerate(row)]
-        file.write(', '.join(f'{v}' for v in row) + '\n')
+        file.write(', '.join(f'{v}' for v in row) + kapture_linesep)
+        nb_records += 1
+    return nb_records
+
+
+SPLIT_PATTERN = re.compile(r'\s*,\s*')
 
 
 def table_from_file(file):
@@ -184,15 +197,40 @@ def table_from_file(file):
     :return: an iterable of iterable on kapture objects values
     """
     table = file.readlines()
-    # remove comment lines
-    table = (l1 for l1 in table if not l1.startswith('#'))
-    # remove empty lines
-    table = (l2 for l2 in table if l2.strip())
-    # trim trailing EOL
-    table = (l3.rstrip("\n\r") for l3 in table)
-    # split comma (and trim afterwards spaces)
-    table = (re.split(r'\s*,\s*', l4) for l4 in table)
+    # remove comment lines, empty lines and trim trailing EOL
+    # then split comma (and trim afterwards spaces)
+    table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
     return table
+
+
+def get_last_line(opened_file: io.TextIOBase, max_line_size: int = 128) -> str:
+    """
+    Get the last line of an opened text file
+
+    :param opened_file: an opened file (as returned by the builtin open)
+    :param max_line_size: the maximum size of a line
+    :return: last line if found, empty string otherwise
+    """
+    distance_to_end = 2 * max_line_size
+    current_pos = opened_file.tell()
+    # Check file size
+    opened_file.seek(0, os.SEEK_END)
+    file_size = opened_file.tell()
+    if file_size > distance_to_end:
+        # If we have a big file: skip towards the end
+        opened_file.seek(file_size - distance_to_end, os.SEEK_SET)
+    else:
+        # back to start of file
+        opened_file.seek(0, os.SEEK_SET)
+    line = opened_file.readline()
+    last_line = line
+    while line:
+        line = opened_file.readline()
+        if line:
+            last_line = line
+    # back to position at the call of the function
+    opened_file.seek(current_pos, os.SEEK_SET)
+    return last_line
 
 
 ########################################################################################################################
@@ -336,7 +374,8 @@ def trajectories_to_file(filepath: str, trajectories: kapture.Trajectories) -> N
 
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header, padding=padding)
+        nb_records = table_to_file(file, table, header=header, padding=padding)
+        logger.debug(f'wrote {nb_records} {type(trajectories)}')
 
 
 def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None) -> kapture.Trajectories:
@@ -349,18 +388,32 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
                         If no device_ids given, everything is loaded.
     :return: trajectories
     """
-    trajectories = kapture.Trajectories()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
+        trajectories = kapture.Trajectories()
         # timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
         for timestamp, device_id, qw, qx, qy, qz, tx, ty, tz in table:
             if device_ids is not None and device_id not in device_ids:
                 # just ignore
                 continue
-            rotation = float_array_or_none([qw, qx, qy, qz])
-            trans = float_array_or_none([tx, ty, tz])
-            pose = kapture.PoseTransform(rotation, trans)
-            trajectories[(int(timestamp), str(device_id))] = pose
+            pose = kapture.PoseTransform.__new__(kapture.PoseTransform)
+            if qw != '' and qx != '' and qy != '' and qz != '':
+                rotation = quaternion.from_float_array([float(qw), float(qx), float(qy), float(qz)])
+            else:
+                rotation = None
+            pose._r = rotation
+
+            if tx != '' and ty != '' and tz != '':
+                trans = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=np.float)
+            else:
+                trans = None
+            pose._t = trans
+            trajectories.setdefault(int(timestamp), {})[device_id] = pose
+            nb_records += 1
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.Trajectories} in {loading_elapsed.total_seconds()} seconds')
     return trajectories
 
 
@@ -380,7 +433,8 @@ def records_camera_to_file(filepath: str, records_camera: kapture.RecordsCamera)
         for timestamp, sensor_id in sorted(records_camera.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records_camera)}')
 
 
 def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsCamera:
@@ -396,12 +450,15 @@ def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = Non
     records_camera = kapture.RecordsCamera()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, image_path
         for timestamp, device_id, image_path in table:
             if camera_ids is not None and device_id not in camera_ids:
                 # just ignore
                 continue
             records_camera[(int(timestamp), str(device_id))] = image_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsCamera}')
     return records_camera
 
 
@@ -421,7 +478,8 @@ def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) ->
         for timestamp, sensor_id in sorted(records_depth.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records_depth)}')
 
 
 def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsDepth:
@@ -437,12 +495,15 @@ def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None
     records_depth = kapture.RecordsDepth()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, image_path
         for timestamp, device_id, depth_map_path in table:
             if camera_ids is not None and device_id not in camera_ids:
                 # just ignore
                 continue
             records_depth[(int(timestamp), str(device_id))] = depth_map_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsDepth}')
     return records_depth
 
 
@@ -462,13 +523,12 @@ def records_lidar_to_file(filepath: str, records_lidar: kapture.RecordsLidar) ->
         for timestamp, sensor_id in sorted(records_lidar.key_pairs())
     )
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records_lidar)}')
 
 
-def records_lidar_from_file(
-        filepath: str,
-        lidar_ids: Optional[Set[str]] = None
-) -> kapture.RecordsLidar:
+def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
+                            ) -> kapture.RecordsLidar:
     """
     Reads records_lidar from CSV file.
 
@@ -480,19 +540,20 @@ def records_lidar_from_file(
     records_lidar = kapture.RecordsLidar()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, point_cloud_path
         for timestamp, device_id, point_cloud_path in table:
             if lidar_ids is not None and device_id not in lidar_ids:
                 # just ignore
                 continue
             records_lidar[(int(timestamp), str(device_id))] = point_cloud_path
+            nb_records += 1
+    logger.debug(f'{nb_records} {kapture.RecordsLidar}')
     return records_lidar
 
 
 ########################################################################################################################
-def records_generic_to_file(
-        filepath: str,
-        records: kapture.RecordsBase) -> None:
+def records_generic_to_file(filepath: str, records: kapture.RecordsBase) -> None:
     """
         Writes records_wifi to file
 
@@ -505,18 +566,16 @@ def records_generic_to_file(
     for timestamp, sensor_id, record in kapture.flatten(records, is_sorted=True):
         table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records)}')
 
 
-def records_generic_from_file(
-        records_type: Type,
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> Union[kapture.RecordsBase,
-           kapture.RecordsGnss,
-           kapture.RecordsGyroscope,
-           kapture.RecordsAccelerometer,
-           kapture.RecordsMagnetic]:
+def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Optional[Set[str]] = None
+                              ) -> Union[kapture.RecordsBase,
+                                         kapture.RecordsGnss,
+                                         kapture.RecordsGyroscope,
+                                         kapture.RecordsAccelerometer,
+                                         kapture.RecordsMagnetic]:
     """
     Reads Records data from CSV file.
 
@@ -530,6 +589,7 @@ def records_generic_from_file(
     with open(filepath) as file:
         table = table_from_file(file)
         # timestamp, device_id, *
+        nb_records = 0
         for timestamp, device_id, *data in table:
             timestamp = int(timestamp)
             device_id = str(device_id)
@@ -537,7 +597,9 @@ def records_generic_from_file(
                 # just ignore
                 continue
             records[timestamp, device_id] = records_type.record_type(*data)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {records_type}')
     return records
 
 
@@ -556,13 +618,12 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
         for bssid, record in records_wifi[timestamp, sensor_id].items():
             table.append([timestamp, sensor_id, bssid] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records_wifi)}')
 
 
-def records_wifi_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsWifi:
+def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                           ) -> kapture.RecordsWifi:
     """
     Reads RecordsWifi from CSV file.
 
@@ -574,6 +635,7 @@ def records_wifi_from_file(
     records_wifi = kapture.RecordsWifi()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
         for timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end in table:
             timestamp, device_id = int(timestamp), str(device_id)
@@ -584,20 +646,19 @@ def records_wifi_from_file(
                 records_wifi[timestamp, device_id] = kapture.RecordWifi()
             records_wifi[timestamp, device_id][BSSID] = kapture.RecordWifiSignal(
                 frequency, RSSI, SSID, scan_time_start, scan_time_end)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {kapture.RecordsWifi}')
     return records_wifi
 
 
 # Records Bluetooth ####################################################################################################
-def records_bluetooth_to_file(
-        filepath: str,
-        records_bluetooth: kapture.RecordsBluetooth
-) -> None:
+def records_bluetooth_to_file(filepath: str, records_bluetooth: kapture.RecordsBluetooth) -> None:
     """
-    Writes records_wifi to file
+    Writes Bluetooth records to file
 
     :param filepath: output file path.
-    :param records_bluetooth:
+    :param records_bluetooth: records to save
     """
     assert (isinstance(records_bluetooth, kapture.RecordsBluetooth))
     header = '# timestamp, device_id, address, RSSI, name'
@@ -606,24 +667,24 @@ def records_bluetooth_to_file(
         for address, bt_record in records_bluetooth[timestamp, sensor_id].items():
             table.append([timestamp, sensor_id, address] + [str(v) for v in bt_record.astuple()])
     with open(filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(records_bluetooth)}')
 
 
-def records_bluetooth_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsBluetooth:
+def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                ) -> kapture.RecordsBluetooth:
     """
-    Reads RecordsWifi from CSV file.
+    Reads Bluetooth records from CSV file.
 
     :param filepath: input file path
     :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
                         If omitted, then it loads all devices.
-    :return: Wifi records
+    :return: Bluetooth records
     """
     records_bluetooth = kapture.RecordsBluetooth()
     with open(filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # timestamp, device_id, address, RSSI, name
         for timestamp, device_id, address, RSSI, name in table:
             timestamp, device_id = int(timestamp), str(device_id)
@@ -632,86 +693,107 @@ def records_bluetooth_from_file(
                 continue
             if (timestamp, device_id) not in records_bluetooth:
                 records_bluetooth[timestamp, device_id] = kapture.RecordBluetooth()
-            records_bluetooth[timestamp, device_id][address] = kapture.RecordBluetoothSignal(
-                rssi=RSSI, name=name)
+            records_bluetooth[timestamp, device_id][address] = kapture.RecordBluetoothSignal(rssi=RSSI, name=name)
+            nb_records += 1
 
+    logger.debug(f'{nb_records} {kapture.RecordsBluetooth}')
     return records_bluetooth
 
 
 # GNSS #################################################################################################################
-def records_gnss_to_file(
-        filepath: str,
-        records_gnss: kapture.RecordsGnss
-) -> None:
+def records_gnss_to_file(filepath: str, records_gnss: kapture.RecordsGnss) -> None:
+    """
+    Writes Gnss records to file
+
+    :param filepath: output file path.
+    :param records_gnss: records to save
+    """
     records_generic_to_file(filepath, records_gnss)
 
 
-def records_gnss_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsGnss:
-    return records_generic_from_file(
-        records_type=kapture.RecordsGnss,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_gnss_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                           ) -> kapture.RecordsGnss:
+    """
+    Reads Gnss records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: Gnss records
+    """
+    return records_generic_from_file(kapture.RecordsGnss, filepath, sensor_ids)
 
 
 # Accelerometer ########################################################################################################
-def records_accelerometer_to_file(
-        filepath: str,
-        records_accelerometer: kapture.RecordsAccelerometer
-) -> None:
+def records_accelerometer_to_file(filepath: str, records_accelerometer: kapture.RecordsAccelerometer) -> None:
+    """
+    Writes accelerometer records to file
+
+    :param filepath: output file path.
+    :param records_accelerometer: records to save
+    """
     records_generic_to_file(filepath, records_accelerometer)
 
 
-def records_accelerometer_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsAccelerometer:
-    return records_generic_from_file(
-        records_type=kapture.RecordsAccelerometer,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_accelerometer_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                    ) -> kapture.RecordsAccelerometer:
+    """
+    Reads accelerometer records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: accelerometer records
+    """
+    return records_generic_from_file(kapture.RecordsAccelerometer, filepath, sensor_ids)
 
 
 # Gyroscope ########################################################################################################
-def records_gyroscope_to_file(
-        filepath: str,
-        records_gyroscope: kapture.RecordsGyroscope
-) -> None:
+def records_gyroscope_to_file(filepath: str, records_gyroscope: kapture.RecordsGyroscope) -> None:
+    """
+    Writes gyroscope records to file
+
+    :param filepath: output file path.
+    :param records_gyroscope: records to save
+    """
     records_generic_to_file(filepath, records_gyroscope)
 
 
-def records_gyroscope_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsGyroscope:
-    return records_generic_from_file(
-        records_type=kapture.RecordsGyroscope,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_gyroscope_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                                ) -> kapture.RecordsGyroscope:
+    """
+    Reads gyroscope records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: gyroscope records
+    """
+    return records_generic_from_file(kapture.RecordsGyroscope, filepath, sensor_ids)
 
 
 # Magnetic ########################################################################################################
-def records_magnetic_to_file(
-        filepath: str,
-        records_magnetic: kapture.RecordsMagnetic
-) -> None:
+def records_magnetic_to_file(filepath: str, records_magnetic: kapture.RecordsMagnetic) -> None:
+    """
+    Writes magnetic records to file
+
+    :param filepath: output file path.
+    :param records_magnetic: records to save
+    """
     records_generic_to_file(filepath, records_magnetic)
 
 
-def records_magnetic_from_file(
-        filepath: str,
-        sensor_ids: Optional[Set[str]] = None
-) -> kapture.RecordsMagnetic:
-    return records_generic_from_file(
-        records_type=kapture.RecordsMagnetic,
-        filepath=filepath,
-        sensor_ids=sensor_ids
-    )
+def records_magnetic_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
+                               ) -> kapture.RecordsMagnetic:
+    """
+    Reads magnetic records from CSV file.
+
+    :param filepath: input file path
+    :param sensor_ids: input set of valid device ids. Any record of other than the given ones will be ignored.
+                        If omitted, then it loads all devices.
+    :return: magnetic records
+    """
+    return records_generic_from_file(kapture.RecordsMagnetic, filepath, sensor_ids)
 
 
 ########################################################################################################################
@@ -1125,7 +1207,8 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     )
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
-        table_to_file(file, table, header=header)
+        nb_records = table_to_file(file, table, header=header)
+        logger.debug(f'wrote {nb_records} {type(observations)}')
 
 
 def observations_from_file(
@@ -1209,13 +1292,16 @@ KAPTURE_ATTRIBUTE_NAMES = {  # used to list attributes to be saved
 }
 
 
-def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
+def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
     """
     Saves kapture data to given directory.
 
-    :param dirpath: input directory root path
+    :param kapture_dirpath: kapture directory root path
     :param kapture_data: input kapture data
     """
+    kapture_subtype_to_filepaths = {kapture_class: path.join(kapture_dirpath, filename)
+                                    for kapture_class, filename in CSV_FILENAMES.items()}
+    saving_start = datetime.datetime.now()
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
         part_data = kapture_data.__getattribute__(kapture_member_name)
@@ -1223,7 +1309,9 @@ def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
             filepath = path.join(dirpath, CSV_FILENAMES[kapture_class])
             # save it
             logger.debug(f'saving {kapture_member_name} ...')
-            write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
+            write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
+            saving_elapsed = datetime.datetime.now() - saving_start
+            logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in "{kapture_dirpath}"')
             write_function(filepath, part_data)
         elif part_data is not None and kapture_class in FEATURES_CSV_FILENAMES:
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
@@ -1232,7 +1320,7 @@ def kapture_to_dir(dirpath: str, kapture_data: kapture.Kapture) -> None:
                 logger.debug(f'saving {kapture_member_name} : {feature_type} ...')
                 filepath = path.join(dirpath, FEATURES_CSV_FILENAMES[kapture_class](feature_type))
                 write_function(filepath, features)
-
+                
 
 # Kapture Read #########################################################################################################
 # list all data members of kapture.
@@ -1305,6 +1393,7 @@ def kapture_from_dir(
     }
 
     kapture_data = kapture.Kapture()
+    loading_start = datetime.datetime.now()
     # sensors
     sensor_ids = None
     sensors_file_path = csv_file_paths[kapture.Sensors]
@@ -1340,10 +1429,19 @@ def kapture_from_dir(
                                         kapture_loadable_data, kapture_data, tar_handlers)
     _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
 
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'Loaded in {loading_elapsed.total_seconds()} seconds from "{kapture_dir_path}"')
     return kapture_data
 
 
 def get_sensor_ids_of_type(sensor_type: str, sensors: kapture.Sensors) -> Set[str]:
+    """
+    Get the sensors of a certain kapture type ('camera', 'lidar', ...)
+
+    :param sensor_type: type of sensor
+    :param sensors: sensors to process
+    :return: sensors identifiers
+    """
     return set([sensor_id
                 for sensor_id in sensors.keys()
                 if sensors[sensor_id].sensor_type == sensor_type])
@@ -1408,7 +1506,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
                       for sensor_id, sensor in kapture_data.sensors.items()
                       if sensor.sensor_type == 'gnss'}
         if len(epsg_codes) > 0:
-            kapture_data.records_gnss = records_gnss_from_file(records_gnss_file_path, epsg_codes)
+            kapture_data.records_gnss = records_gnss_from_file(records_gnss_file_path, set(epsg_codes.keys()))
         else:
             logger.warning('no declared GNSS sensors: all GNSS data will be ignored')
 

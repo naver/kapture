@@ -10,15 +10,19 @@ and might change if you manipulate them, save and reload them from disk.
 If you need them ordered, do it yourself.
 """
 
+import logging
 import quaternion
+from tqdm import tqdm
 
 from .PoseTransform import PoseTransform
 from .Rigs import Rigs
 from .flatten import flatten
+from kapture.utils.logging import getLogger
 import kapture.utils.computation as computation
 from bisect import bisect_left
 from copy import deepcopy
-from typing import Union, Dict, List, Tuple, Optional
+import sys
+from typing import Union, Dict, List, Optional, Set, Tuple
 
 
 class Trajectories(Dict[int, Dict[str, PoseTransform]]):
@@ -34,6 +38,8 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
     def __init__(self):
         super().__init__()
         self._timestamps_sorted_list = []
+        self._first_timestamp = 0
+        self._last_timestamp = sys.maxsize
 
     def __setitem__(self,
                     key: Union[int, Tuple[int, str]],
@@ -110,6 +116,10 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
         if len(self._timestamps_sorted_list) == 0:
             # Need to sort
             self._timestamps_sorted_list = sorted(list(self.keys()))
+            if len(self._timestamps_sorted_list) > 0:
+                self._first_timestamp = self._timestamps_sorted_list[0]
+                if len(self._timestamps_sorted_list) > 1:
+                    self._last_timestamp = self._timestamps_sorted_list[-1]
         return self._timestamps_sorted_list
 
     def timestamp_length(self) -> int:
@@ -139,6 +149,17 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
             for sensor_id in sensors.keys()
         ]
 
+    @property
+    def sensors_ids(self) -> Set[str]:
+        """
+        :return: the set of unique sensors identifiers in the trajectories
+        """
+        return set(
+            sensor_id
+            for timestamp, sensors in self.items()
+            for sensor_id in sensors.keys()
+        )
+
     def __contains__(self, key: Union[int, Tuple[int, str]]):
         if isinstance(key, tuple):
             # key is a pair of (timestamp, device_id)
@@ -148,7 +169,7 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
                 raise TypeError('invalid timestamp')
             if not isinstance(device_id, str):
                 raise TypeError('invalid device_id')
-            return super(Trajectories, self).__contains__(timestamp) and device_id in self[timestamp]
+            return super(Trajectories, self).__contains__(timestamp) and self[timestamp].__contains__(device_id)
         elif isinstance(key, int):
             return super(Trajectories, self).__contains__(key)
         else:
@@ -160,6 +181,66 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
                  for timestamp, sensors in self.items()
                  for sensor_id, pose in sensors.items()]
         return '\n'.join(lines)
+
+    def intermediate_pose(self, timestamp: int, device_id: str, max_interval: int) -> Optional[PoseTransform]:
+        """
+        Computes an intermediate pose in the trajectory of a device
+        The timestamp should be in epoch precision
+        i.e. 10, 13, 16 or 19 digits for seconds, milli-seconds, micro-seconds or nano-seconds
+        and in the same precision as the trajectories timestamps themselves to work well.
+        The timestamps interval should also be not too big (for example one second) to be of good value.
+        The max_interval parameter value should be of the same scale as the timestamps.
+
+        :param timestamp: timestamp
+        :param device_id: device identifier
+        :param max_interval: max interval between the given timestamp and the trajectory timestamps.
+        :return: a compute 6D pose if found, None otherwise
+        """
+        if not isinstance(timestamp, int):
+            raise TypeError('invalid timestamp')
+        if not isinstance(device_id, str):
+            raise TypeError('invalid device_id')
+        # In case the pose already exist: just return it
+        if self.__contains__(timestamp) and self.__getitem__(timestamp).__contains__(device_id):
+            return self.__getitem__(timestamp).__getitem__(device_id)
+        timestamps_with_poses_list = self.timestamps_sorted_list()
+        # Check if the pose is out of bounds
+        if timestamp <= self._first_timestamp or timestamp >= self._last_timestamp:
+            return None
+        # Find closest timestamps before and after
+        next_position = bisect_left(timestamps_with_poses_list, timestamp)
+        low_position = next_position - 1
+        previous_ts = timestamps_with_poses_list[low_position]
+        next_ts = timestamps_with_poses_list[next_position]
+        # We should have found the two closest timestamps
+        # Check there is a pose in the time interval for the device
+        while timestamp - previous_ts <= max_interval and not self.__getitem__(previous_ts).__contains__(device_id):
+            # Search backward for a timestamp with this device
+            low_position -= 1
+            if low_position >= 0:
+                previous_ts = timestamps_with_poses_list[low_position]
+            else:
+                # We have reached the begin of the list without solution
+                return None
+        # Check the interval for the previous timestamp
+        if timestamp - previous_ts > max_interval:
+            # We are to far in the past
+            return None
+        while next_ts - timestamp <= max_interval and not self.__getitem__(next_ts).__contains__(device_id):
+            # Search backward for a timestamp with this device
+            next_position += 1
+            if next_position < len(timestamps_with_poses_list):
+                next_ts = timestamps_with_poses_list[next_position]
+            else:
+                # We have reached the end of the list without solution
+                return None
+        # Check the interval for the next timestamp
+        if next_ts - timestamp > max_interval:
+            # We are to far in the future
+            return None
+        previous_pose = self.__getitem__(previous_ts).__getitem__(device_id)
+        next_pose = self.__getitem__(next_ts).__getitem__(device_id)
+        return compute_intermediate_pose(timestamp, previous_ts, previous_pose, next_ts, next_pose)
 
 
 def rigs_remove(trajectories: Trajectories, rigs: Rigs) -> Trajectories:
@@ -195,27 +276,24 @@ def rigs_remove_inplace(trajectories: Trajectories, rigs: Rigs, max_depth: int =
     for iteration in range(max_depth):
         # repeat the operation while there is so rig remaining (nested rigs)
         jobs = [(timestamp, rig_id, pose_rig_from_world)
-                for timestamp, rig_id, pose_rig_from_world in flatten(trajectories)
-                if rig_id in rigs.keys()]
+                for timestamp, poses_for_timestamp in trajectories.items()
+                for rig_id, pose_rig_from_world in poses_for_timestamp.items()
+                if rig_id in rigs]
 
         if len(jobs) == 0:
             # we are done
             break
 
-        # replace those rigs poses by the one of the sensors
-        for timestamp, rig_id, pose_rig_from_world in jobs:
-            # its a rig, add every sensors in it instead.
+        getLogger().debug(f'rigs_remove {len(jobs)} jobs at depth {iteration}')
+        for timestamp, rig_id, pose_rig_from_world in tqdm(jobs, disable=getLogger().level >= logging.CRITICAL):
             for device_id, pose_device_from_rig in rigs[rig_id].items():
                 pose_cam_from_world = PoseTransform.compose([pose_device_from_rig, pose_rig_from_world])
-                trajectories[timestamp, device_id] = pose_cam_from_world
-            # then remove this rig pose
+                trajectories.setdefault(timestamp, {})[device_id] = pose_cam_from_world
             del trajectories[timestamp][rig_id]
 
-    # remove useless (empty) timestamp (if any) from trajectories
     for timestamp in trajectories.keys():
         if len(trajectories[timestamp]) == 0:
             del trajectories[timestamp]
-
     # Do not clear, the rigs : so easy to do outside, and so easy
 
 
