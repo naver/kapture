@@ -1,3 +1,0 @@
-# kapture format: 1.0
-# name, dtype, dsize
-HOG, uint8, 128

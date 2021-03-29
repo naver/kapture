@@ -7,6 +7,7 @@ For example Keypoints are features related to 1 RecordCamera (image).
 And Matches are features related to a pair of RecordCamera (2 images).
 """
 
+from kapture.io.tar import TarHandler, list_files_in_tar
 import numpy as np
 import os.path as path
 from typing import Tuple, Any, Dict, Type, Optional, Union, Iterable
@@ -41,6 +42,7 @@ FEATURE_PAIR_PATH_SEPARATOR = {
 # get file path for binary files in kapture ############################################################################
 def get_features_fullpath(
         data_type: Any,
+        feature_type: str,
         kapture_dirpath: str = '',
         image_filename: Optional[str] = None) -> str:
     """
@@ -54,7 +56,7 @@ def get_features_fullpath(
     """
     subdir = FEATURES_DATA_DIRNAMES[data_type]
     feature_filename = image_filename + FEATURE_FILE_EXTENSION[data_type] if image_filename else ''
-    return path_secure(path.join(kapture_dirpath, subdir, feature_filename))
+    return path_secure(path.join(kapture_dirpath, subdir, feature_type, feature_filename))
 
 
 def features_to_filepaths(
@@ -62,6 +64,7 @@ def features_to_filepaths(
                             kapture.Keypoints,
                             kapture.Descriptors,
                             kapture.GlobalFeatures],
+        feature_type: str,
         kapture_dirpath: str = '') -> Dict[str, str]:
     """
     Returns a dict mapping image_id to path to feature file.
@@ -73,17 +76,27 @@ def features_to_filepaths(
     """
     data_type = type(kapture_data)
     return {
-        image_filename: get_features_fullpath(data_type, kapture_dirpath, image_filename)
+        image_filename: get_features_fullpath(data_type, feature_type, kapture_dirpath, image_filename)
         for image_filename in kapture_data
     }
+
+
+def image_ids_from_feature_tar(kapture_type: Type[Union[kapture.Keypoints,
+                                                        kapture.Descriptors,
+                                                        kapture.GlobalFeatures]],
+                               tar_handler: TarHandler) -> Iterable[str]:
+    feature_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture_type])
+    image_filenames = (feature_filename[:-len(FEATURE_FILE_EXTENSION[kapture_type])]
+                       for feature_filename in feature_filenames)
+    return image_filenames
 
 
 def image_ids_from_feature_dirpath(
         kapture_type: Type[Union[kapture.Keypoints,
                                  kapture.Descriptors,
-                                 kapture.GlobalFeatures,
-                                 kapture.Matches]],
-        kapture_dirpath: str = '') -> Dict[str, str]:
+                                 kapture.GlobalFeatures]],
+        feature_type: str,
+        kapture_dirpath: str = '') -> Iterable[str]:
     """
     Populate feature files and returns their corresponding image_filename.
 
@@ -91,7 +104,7 @@ def image_ids_from_feature_dirpath(
     :param kapture_dirpath:
     :return: image file path
     """
-    feature_dirpath = get_features_fullpath(kapture_type, kapture_dirpath)
+    feature_dirpath = get_features_fullpath(kapture_type, feature_type, kapture_dirpath)
     # filter only files with proper extension and
     feature_filenames = populate_files_in_dirpath(feature_dirpath, FEATURE_FILE_EXTENSION[kapture_type])
     # remove file extensions to retrieve image name.
@@ -105,6 +118,7 @@ def features_check_dir(
                             kapture.Descriptors,
                             kapture.GlobalFeatures,
                             kapture.Matches],
+        feature_type: str,
         kapture_dirpath: str) -> bool:
     """
     Makes sure all files actually exists.
@@ -113,7 +127,7 @@ def features_check_dir(
     :param kapture_dirpath:
     :return: True only if all exist, false otherwise
     """
-    file_list = features_to_filepaths(kapture_data, kapture_dirpath).values()
+    file_list = features_to_filepaths(kapture_data, feature_type, kapture_dirpath).values()
     all_files_exists = all(path.exists(feature_filepath) for feature_filepath in file_list)
     return all_files_exists
 
@@ -141,37 +155,40 @@ def image_keypoints_to_file(filepath: str, image_keypoints: np.array) -> None:
     array_to_file(filepath, image_keypoints)
 
 
-def get_keypoints_fullpath(kapture_dirpath: str, image_filename: Optional[str] = None) -> str:
+def get_keypoints_fullpath(keypoints_type: str, kapture_dirpath: str, image_filename: Optional[str] = None) -> str:
     """
     Computes the full path of the keypoints file
 
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: top kapture directory path
     :param image_filename: image file name
     :return: full path of the keypoints file
     """
-    return get_features_fullpath(kapture.Keypoints, kapture_dirpath, image_filename)
+    return get_features_fullpath(kapture.Keypoints, keypoints_type, kapture_dirpath, image_filename)
 
 
-def keypoints_to_filepaths(keypoints: kapture.Keypoints, kapture_dirpath: str) -> Dict[str, str]:
+def keypoints_to_filepaths(keypoints: kapture.Keypoints, keypoints_type: str, kapture_dirpath: str) -> Dict[str, str]:
     """
     Computes keypoints files paths
 
     :param keypoints: keypoints
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: top kapture directory path
     :return: keypoint to keypoint file dictionary
     """
-    return features_to_filepaths(keypoints, kapture_dirpath)
+    return features_to_filepaths(keypoints, keypoints_type, kapture_dirpath)
 
 
-def keypoints_check_dir(keypoints: kapture.Keypoints, kapture_dirpath: str) -> bool:
+def keypoints_check_dir(keypoints: kapture.Keypoints, keypoints_type: str, kapture_dirpath: str) -> bool:
     """
     Checks that all keypoints file exist.
 
     :param keypoints: keypoints
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: top kapture directory path
     :return: True if they all exist, false otherwise.
     """
-    return features_check_dir(keypoints, kapture_dirpath)
+    return features_check_dir(keypoints, keypoints_type, kapture_dirpath)
 
 
 # image_descriptors ####################################################################################################
@@ -197,37 +214,42 @@ def image_descriptors_to_file(filepath: str, image_descriptors: np.array) -> Non
     array_to_file(filepath, image_descriptors)
 
 
-def get_descriptors_fullpath(kapture_dirpath: str, image_filename: Optional[str] = None) -> str:
+def get_descriptors_fullpath(descriptors_type: str, kapture_dirpath: str, image_filename: Optional[str] = None) -> str:
     """
     Computes the full path of the descriptors file
 
     :param kapture_dirpath: top kapture directory path
+    :param descriptors_type: the name of the descriptors type
     :param image_filename: image file name
     :return: full path of the descriptors file
     """
-    return get_features_fullpath(kapture.Descriptors, kapture_dirpath, image_filename)
+    return get_features_fullpath(kapture.Descriptors, descriptors_type, kapture_dirpath, image_filename)
 
 
-def descriptors_to_filepaths(descriptors: kapture.Descriptors, kapture_dirpath: str) -> Dict[str, str]:
+def descriptors_to_filepaths(descriptors: kapture.Descriptors,
+                             descriptors_type: str,
+                             kapture_dirpath: str) -> Dict[str, str]:
     """
     Computes descriptors files paths
 
     :param descriptors: descriptors
+    :param descriptors_type: the name of the descriptors type
     :param kapture_dirpath: top kapture directory path
     :return: descriptors to descriptors file dictionary
     """
-    return features_to_filepaths(descriptors, kapture_dirpath)
+    return features_to_filepaths(descriptors, descriptors_type, kapture_dirpath)
 
 
-def descriptors_check_dir(descriptors: kapture.Descriptors, kapture_dirpath: str) -> bool:
+def descriptors_check_dir(descriptors: kapture.Descriptors, descriptors_type: str, kapture_dirpath: str) -> bool:
     """
     Checks that all descriptors file exist.
 
     :param descriptors: descriptors
+    :param descriptors_type: the name of the descriptors type
     :param kapture_dirpath: top kapture directory path
     :return: True if they all exist, false otherwise.
     """
-    return features_check_dir(descriptors, kapture_dirpath)
+    return features_check_dir(descriptors, descriptors_type, kapture_dirpath)
 
 
 # global_features ######################################################################################################
@@ -253,37 +275,46 @@ def image_global_features_to_file(filepath: str, image_global_descriptor: np.arr
     array_to_file(filepath, image_global_descriptor)
 
 
-def get_global_features_fullpath(kapture_dirpath: str, image_filename: Optional[str] = None) -> str:
+def get_global_features_fullpath(global_features_type: str,
+                                 kapture_dirpath: str,
+                                 image_filename: Optional[str] = None) -> str:
     """
     Computes the full path of the global features file
 
     :param kapture_dirpath: top kapture directory path
+    :param global_features_type: the name of the global_features type
     :param image_filename: image file name
     :return: full path of the global features file
     """
-    return get_features_fullpath(kapture.GlobalFeatures, kapture_dirpath, image_filename)
+    return get_features_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dirpath, image_filename)
 
 
-def global_features_to_filepaths(global_features: kapture.GlobalFeatures, kapture_dirpath: str) -> Dict[str, str]:
+def global_features_to_filepaths(global_features: kapture.GlobalFeatures,
+                                 global_features_type: str,
+                                 kapture_dirpath: str) -> Dict[str, str]:
     """
     Computes global features files paths
 
     :param global_features: global features
+    :param global_features_type: the name of the global_features type
     :param kapture_dirpath: top kapture directory path
     :return: global features to global features file dictionary
     """
-    return features_to_filepaths(global_features, kapture_dirpath)
+    return features_to_filepaths(global_features, global_features_type, kapture_dirpath)
 
 
-def global_features_check_dir(global_features: kapture.GlobalFeatures, kapture_dirpath: str) -> bool:
+def global_features_check_dir(global_features: kapture.GlobalFeatures,
+                              global_features_type: str,
+                              kapture_dirpath: str) -> bool:
     """
     Checks that all keypoints file exist.
 
     :param global_features: global features
+    :param global_features_type: the name of the global_features type
     :param kapture_dirpath: top kapture directory path
     :return: True if they all exist, false otherwise.
     """
-    return features_check_dir(global_features, kapture_dirpath)
+    return features_check_dir(global_features, global_features_type, kapture_dirpath)
 
 
 # matches ##############################################################################################################
@@ -311,12 +342,16 @@ def image_matches_to_file(filepath: str, image_matches: np.array) -> None:
     array_to_file(filepath, image_matches)
 
 
-def get_matches_fullpath(image_filename_pair: Optional[Tuple[str, str]] = None, kapture_dirpath: str = '') -> str:
+def get_matches_fullpath(
+        image_filename_pair: Optional[Tuple[str, str]] = None,
+        keypoints_type: str = '',
+        kapture_dirpath: str = '') -> str:
     """
     Computes the full path of the matches file between two images
 
-    :param kapture_dirpath: top kapture directory path
     :param image_filename_pair: image file names
+    :param keypoints_type: the name of the keypoints type
+    :param kapture_dirpath: top kapture directory path
     :return: full path of the matches file
     """
 
@@ -325,32 +360,27 @@ def get_matches_fullpath(image_filename_pair: Optional[Tuple[str, str]] = None, 
                              image_filename_pair[1])
     else:
         filename = None
-    return get_features_fullpath(kapture.Matches, kapture_dirpath, filename)
+    return get_features_fullpath(kapture.Matches, keypoints_type, kapture_dirpath, filename)
 
 
-def matches_to_filepaths(matches: kapture.Matches, kapture_dirpath: str = '') -> Dict[Tuple[str, str], str]:
+def matches_to_filepaths(matches: kapture.Matches,
+                         keypoints_type: str,
+                         kapture_dirpath: str = '') -> Dict[Tuple[str, str], str]:
     """
     Computes matches files paths
 
     :param matches: matches
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: top kapture directory path
     :return: file to file matches to matches file dictionary
     """
     return {
-        image_filename_pair: get_matches_fullpath(image_filename_pair, kapture_dirpath)
+        image_filename_pair: get_matches_fullpath(image_filename_pair, keypoints_type, kapture_dirpath)
         for image_filename_pair in matches
     }
 
 
-def matching_pairs_from_dirpath(kapture_dirpath: str) -> Iterable[Tuple[str, str]]:
-    """
-    Read and build Matches from kapture directory tree.
-    """
-    matches_dirpath = get_matches_fullpath(None, kapture_dirpath)
-    # list all files there is
-    # filter only match files (the ones endings with .matches)
-    matches_filenames = populate_files_in_dirpath(matches_dirpath, FEATURE_FILE_EXTENSION[kapture.Matches])
-
+def _matches_filenames_remove_extensions_and_cut(matches_filenames: Iterable[str]) -> Iterable[Tuple[str, str]]:
     # remove the extensions and cut
     matching_pairs = (
         path_secure(matches_filename)[:-len(FEATURE_FILE_EXTENSION[kapture.Matches])
@@ -361,14 +391,31 @@ def matching_pairs_from_dirpath(kapture_dirpath: str) -> Iterable[Tuple[str, str
     return matching_pairs
 
 
-def matches_check_dir(matches: kapture.Matches, kapture_dirpath: str) -> bool:
+def matching_pairs_from_tar(tar_handler: TarHandler) -> Iterable[Tuple[str, str]]:
+    matches_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture.Matches])
+    return _matches_filenames_remove_extensions_and_cut(matches_filenames)
+
+
+def matching_pairs_from_dirpath(keypoints_type: str, kapture_dirpath: str) -> Iterable[Tuple[str, str]]:
+    """
+    Read and build Matches from kapture directory tree.
+    """
+    matches_dirpath = get_matches_fullpath(None, keypoints_type, kapture_dirpath)
+    # list all files there is
+    # filter only match files (the ones endings with .matches)
+    matches_filenames = populate_files_in_dirpath(matches_dirpath, FEATURE_FILE_EXTENSION[kapture.Matches])
+    return _matches_filenames_remove_extensions_and_cut(matches_filenames)
+
+
+def matches_check_dir(matches: kapture.Matches, keypoints_type: str, kapture_dirpath: str) -> bool:
     """
     Checks that all matches file exist.
 
     :param matches: matches
+    :param keypoints_type: the name of the keypoints type
     :param kapture_dirpath: top kapture directory path
     :return: True if they all exist, false otherwise.
     """
-    file_list = (get_matches_fullpath(pair, kapture_dirpath) for pair in matches)
+    file_list = (get_matches_fullpath(pair, keypoints_type, kapture_dirpath) for pair in matches)
     all_files_exists = all(path.exists(filepath) for filepath in file_list)
     return all_files_exists

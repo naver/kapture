@@ -47,7 +47,8 @@ def import_from_colmap_cameras_txt(colmap_cameras_filepath: str) -> kapture.Sens
 
 
 def import_from_colmap_images_txt(colmap_images_filepath: str,
-                                  kapture_dirpath: Optional[str] = None
+                                  kapture_dirpath: Optional[str] = None,
+                                  keypoints_type: str = 'SIFT'
                                   ) -> Tuple[kapture.RecordsCamera, kapture.Trajectories, Optional[kapture.Keypoints]]:
     """
     Imports RecordsCamera, Trajectories and Keypoints from colmap images.txt
@@ -55,6 +56,7 @@ def import_from_colmap_images_txt(colmap_images_filepath: str,
     :param colmap_images_filepath: path to colmap images.txt file
     :param kapture_dirpath: path to kapture root path.
                             If not given (None), keypoints are not created.
+    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
     :return: kapture images, trajectories and keypoints
     """
 
@@ -106,19 +108,22 @@ def import_from_colmap_images_txt(colmap_images_filepath: str,
                 image_keypoints_colmap = np.array(fields).reshape((-1, 3))[:, 0:2].astype(np.float32)
                 # register as keypoints if there is at least one
                 if image_keypoints_colmap.shape[0] > 0:
-                    keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_dirpath, image_name)
+                    keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
+                                                                                    kapture_dirpath,
+                                                                                    image_name)
                     kapture.io.features.image_keypoints_to_file(keypoints_filepath, image_keypoints_colmap)
                     image_names_with_keypoints.add(image_name)
                     # TODO: observations
 
         if image_names_with_keypoints:
-            keypoints = kapture.Keypoints('SIFT', np.float32, 2, image_names_with_keypoints)
+            keypoints = kapture.Keypoints(keypoints_type, np.float32, 2, image_names_with_keypoints)
 
     return images, trajectories, keypoints
 
 
 def import_from_colmap_points3d_txt(colmap_points3d_filepath: str,
                                     image_names: Dict[int, str] = None,
+                                    keypoints_type: str = 'SIFT',
                                     skip_observations: bool = False
                                     ) -> Tuple[kapture.Points3d, Optional[kapture.Observations]]:
     """
@@ -127,6 +132,7 @@ def import_from_colmap_points3d_txt(colmap_points3d_filepath: str,
     :param colmap_points3d_filepath: path to the colmap file named "points3d.txt"
     :param image_names: dict of image names matching the colmap image id to the kapture image name
                         colmap_image_idx -> kapture_image_filename
+    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
     :param skip_observations: skip import of observations id true.
     :return: kapture 3D points and observations
     """
@@ -148,7 +154,7 @@ def import_from_colmap_points3d_txt(colmap_points3d_filepath: str,
             if not skip_observations and len(values) > 8 and len(image_names) > 0:
                 for image_idx, point_2d_idx in zip(values[8::2], values[9::2]):
                     filename = image_names.get(int(image_idx), 'unknown')
-                    observations.add(index, filename, int(point_2d_idx))
+                    observations.add(index, keypoints_type, filename, int(point_2d_idx))
 
     points3d = kapture.Points3d(np.array(points3d)) if points3d else kapture.Points3d()
     observations = None if len(observations) == 0 else observations

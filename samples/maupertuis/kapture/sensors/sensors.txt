@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_id, name, sensor_type, [sensor_params]+
 cam_00001, , camera, SIMPLE_PINHOLE, 1919, 1079, 1847.53, 959.5, 539.5
 gps_00001, gps, gnss, EPSG:4326

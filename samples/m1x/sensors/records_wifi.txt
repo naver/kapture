@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp  , device_id      , BSSID            , frequency, RSSI, SSID          , scan_time_start, scan_time_end
 1555398770307, AC01324954_wifi, 68:72:51:80:52:df, 2417     ,-33.0, M1X_PicoM2    , 0              , 0
 1555398770307, AC01324954_wifi, 68:9c:e2:e1:b0:60, 5765     ,-49.0, @HYUNDAI-WiFi , 0              , 0

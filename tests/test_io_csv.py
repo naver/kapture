@@ -313,6 +313,7 @@ class TestCsvKeypoints(unittest.TestCase):
         self._tempdir = tempfile.TemporaryDirectory()
         self._kapture_dirpath = self._tempdir.name
         self._keypoints_dirpath = path.join(self._kapture_dirpath, 'reconstruction', 'keypoints')
+        self._keypoints_type = 'SIFT'
 
     def tearDown(self):
         self._tempdir.cleanup()
@@ -322,12 +323,12 @@ class TestCsvKeypoints(unittest.TestCase):
                          for cam in range(2)
                          for timestamp in range(2))
         # make up keypoints files
-        keypoints_config_filepath = path.join(self._keypoints_dirpath, 'keypoints.txt')
+        keypoints_config_filepath = path.join(self._keypoints_dirpath, self._keypoints_type, 'keypoints.txt')
         os.makedirs(path.dirname(keypoints_config_filepath), exist_ok=True)
         with open(keypoints_config_filepath, 'wt') as f:
             f.write('SIFT, float, 4')
         keypoints_fullpaths = [
-            path_secure(path.join(self._keypoints_dirpath, image_id + '.kpt'))
+            path_secure(path.join(self._keypoints_dirpath, self._keypoints_type, image_id + '.kpt'))
             for image_id in images_ids
         ]
         for keypoints_fullpath in keypoints_fullpaths:
@@ -336,20 +337,22 @@ class TestCsvKeypoints(unittest.TestCase):
                 f.write(' ')
 
         # lock and load
-        keypoints = csv.keypoints_from_dir(self._kapture_dirpath, None)
+        keypoints = csv.keypoints_from_dir(self._keypoints_type, self._kapture_dirpath, None)
 
         # check
         self.assertEqual('SIFT', keypoints.type_name)
         self.assertEqual(4, len(keypoints))
-        keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints, self._kapture_dirpath)
+        keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints,
+                                                                         self._keypoints_type,
+                                                                         self._kapture_dirpath)
         image_filenames_expected = {path_secure(os.path.join(f'cam{ci}', f'{ts:05d}.jpg'))
                                     for ci in [0, 1] for ts in [0, 1]}
         feature_filepaths_expected = {
             path_secure(os.path.join(f'{self._kapture_dirpath}', 'reconstruction',
-                                     'keypoints', f'cam{ci}', f'{ts:05d}.jpg.kpt'))
+                                     'keypoints', self._keypoints_type, f'cam{ci}', f'{ts:05d}.jpg.kpt'))
             for ci in [0, 1] for ts in [0, 1]}
 
-        self.assertEqual(image_filenames_expected, set(keypoints_filepaths))
+        self.assertEqual(image_filenames_expected, set(keypoints_filepaths.keys()))
         self.assertEqual(feature_filepaths_expected, set(keypoints_filepaths.values()))
 
     def test_keypoints_read_from_images(self):
@@ -357,49 +360,52 @@ class TestCsvKeypoints(unittest.TestCase):
         images_ids = set(f'cam{cam}/{timestamp:05d}.jpg'
                          for cam in range(2)
                          for timestamp in range(2))
-        keypoints_config_filepath = path.join(self._keypoints_dirpath, 'keypoints.txt')
+        keypoints_config_filepath = path.join(self._keypoints_dirpath, self._keypoints_type, 'keypoints.txt')
         os.makedirs(path.dirname(keypoints_config_filepath), exist_ok=True)
         with open(keypoints_config_filepath, 'wt') as f:
             f.write('SIFT, float, 4')
 
         # lock and load
-        keypoints = csv.keypoints_from_dir(self._kapture_dirpath, images_ids)
+        keypoints = csv.keypoints_from_dir(self._keypoints_type, self._kapture_dirpath, images_ids)
 
         # check its empty
         self.assertEqual('SIFT', keypoints.type_name)
         self.assertEqual(0, len(keypoints))
 
-        valid = kapture.io.features.keypoints_check_dir(keypoints, self._kapture_dirpath)
+        valid = kapture.io.features.keypoints_check_dir(keypoints, self._keypoints_type, self._kapture_dirpath)
         self.assertTrue(valid)
 
         # create actual files
         for images_id in images_ids:
-            keypoint_filepath = path.join(self._keypoints_dirpath, images_id + '.kpt')
+            keypoint_filepath = path.join(self._keypoints_dirpath, self._keypoints_type, images_id + '.kpt')
             os.makedirs(path.dirname(keypoint_filepath), exist_ok=True)
             with open(keypoint_filepath, 'wt') as f:
                 f.write('')
 
         # lock and load again
-        keypoints = csv.keypoints_from_dir(self._kapture_dirpath, images_ids)
+        keypoints = csv.keypoints_from_dir(self._keypoints_type, self._kapture_dirpath, images_ids)
         self.assertEqual('SIFT', keypoints.type_name)
         self.assertEqual(4, len(keypoints))
 
-        keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints, self._kapture_dirpath)
+        keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints,
+                                                                         self._keypoints_type,
+                                                                         self._kapture_dirpath)
         image_filenames_expected = {f'cam{ci}/{ts:05d}.jpg'
                                     for ci in [0, 1] for ts in [0, 1]}
         feature_filepaths_expected = {
-            path_secure(f'{self._kapture_dirpath}/reconstruction/keypoints/cam{ci}/{ts:05d}.jpg.kpt')
+            path_secure(f'{self._kapture_dirpath}/reconstruction/keypoints'
+                        f'/{self._keypoints_type}/cam{ci}/{ts:05d}.jpg.kpt')
             for ci in [0, 1] for ts in [0, 1]}
 
         self.assertEqual(image_filenames_expected, set(keypoints_filepaths))
         self.assertEqual(feature_filepaths_expected, set(keypoints_filepaths.values()))
 
-        valid = kapture.io.features.keypoints_check_dir(keypoints, self._kapture_dirpath)
+        valid = kapture.io.features.keypoints_check_dir(keypoints, self._keypoints_type, self._kapture_dirpath)
         self.assertTrue(valid)
 
         # destroy files and check
-        os.remove(path.join(self._keypoints_dirpath, 'cam0/00000.jpg.kpt'))
-        valid = kapture.io.features.keypoints_check_dir(keypoints, self._kapture_dirpath)
+        os.remove(path.join(self._keypoints_dirpath, self._keypoints_type, 'cam0/00000.jpg.kpt'))
+        valid = kapture.io.features.keypoints_check_dir(keypoints, self._keypoints_type, self._kapture_dirpath)
         self.assertFalse(valid)
 
 
@@ -472,13 +478,13 @@ class TestCsvObservations(unittest.TestCase):
         self._observations_actual_filepath = path.join(self._tempdir.name, 'actual', 'observations.txt')
         # creates ground truth couple data/file
         self._observations_expected = kapture.Observations({
-            0: [('image1.jpg', 0), ('image2.jpg', 0)],
-            2: [('image1.jpg', 2), ('image2.jpg', 3)]
+            0: {'SIFT': [('image1.jpg', 0), ('image2.jpg', 0)]},
+            2: {'SIFT': [('image1.jpg', 2), ('image2.jpg', 3)]}
         })
         self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + kapture_linesep
-        self._observations_csv_expected += kapture_linesep.join(["# point3d_id, [image_path, feature_id]*",
-                                                                 "0, image1.jpg, 0, image2.jpg, 0",
-                                                                 "2, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
+        self._observations_csv_expected += kapture_linesep.join(["# point3d_id, keypoints_type, [image_path, feature_id]*",
+                                                    "0, SIFT, image1.jpg, 0, image2.jpg, 0",
+                                                    "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
@@ -498,7 +504,7 @@ class TestCsvObservations(unittest.TestCase):
         self.assertEqual(self._observations_expected, observations_actual)
 
     def test_observations_from_file_limited(self):
-        observations_actual = csv.observations_from_file(self._observations_expected_filepath, {'image1.jpg'})
+        observations_actual = csv.observations_from_file(self._observations_expected_filepath, {'SIFT': {'image1.jpg'}})
         self.assertEqual(2, len(observations_actual))
         self.assertNotEqual(self._observations_expected, observations_actual)
 
@@ -664,37 +670,38 @@ class TestCsvMaupertuis(unittest.TestCase):
         self._tempdir = tempfile.TemporaryDirectory()
         self._samples_folder = path.abspath(path.join(path.dirname(__file__), '..', 'samples', 'maupertuis'))
         self._kapture_dirpath = path.join(self._samples_folder, 'kapture')
+        self._features_type = 'SIFT'
         self._kapture_data = csv.kapture_from_dir(self._kapture_dirpath)
 
     def tearDown(self):
         self._tempdir.cleanup()
 
     def test_keypoints_from_dir(self):
-        keypoints = kapture.io.csv.keypoints_from_dir(self._kapture_dirpath, None)
+        keypoints = kapture.io.csv.keypoints_from_dir(self._features_type, self._kapture_dirpath, None)
         self.assertEqual(keypoints.dtype, np.float32)
         self.assertEqual(keypoints.dsize, 6)
         self.assertEqual(set(keypoints), {'03.jpg', '01.jpg', '02.jpg', '00.jpg'})
 
     def test_descriptors_from_dir(self):
-        descriptors = kapture.io.csv.descriptors_from_dir(self._kapture_dirpath, None)
+        descriptors = kapture.io.csv.descriptors_from_dir(self._features_type, self._kapture_dirpath, None)
         self.assertEqual(descriptors.dtype, np.uint8)
         self.assertEqual(descriptors.dsize, 128)
         self.assertEqual(set(descriptors), {'03.jpg', '01.jpg', '02.jpg', '00.jpg'})
 
     def test_matches_from_dir(self):
-        matches = kapture.io.csv.matches_from_dir(self._kapture_dirpath)
+        matches = kapture.io.csv.matches_from_dir(self._features_type, self._kapture_dirpath)
         self.assertEqual({('00.jpg', '03.jpg'), ('01.jpg', '03.jpg'),
                           ('00.jpg', '02.jpg'), ('02.jpg', '03.jpg'),
                           ('01.jpg', '02.jpg'), ('00.jpg', '01.jpg')},
                          set(matches))
 
     def test_observations_from_file(self):
-        image_filenames_with_keypoints = {'03.jpg', '01.jpg', '02.jpg', '00.jpg'}
+        image_filenames_with_keypoints = {self._features_type: {'03.jpg', '01.jpg', '02.jpg', '00.jpg'}}
         observations_filepath = kapture.io.csv.get_csv_fullpath(kapture.Observations, self._kapture_dirpath)
         observations = kapture.io.csv.observations_from_file(observations_filepath, image_filenames_with_keypoints)
         self.assertEqual(1039, len(observations))
-        # observations[point3d_idx]= [(image_filename, keypoint_id), (image_filename, keypoint_id), ...]
-        observation0 = observations[0]
+        # observations[point3d_idx, keypoints_type]= [(image_filename, keypoint_id), (image_filename, keypoint_id), ...]
+        observation0 = observations[0, self._features_type]
         self.assertEqual(
             [('01.jpg', 4561), ('02.jpg', 3389), ('00.jpg', 4975), ('03.jpg', 3472)],
             observation0
