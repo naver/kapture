@@ -483,8 +483,8 @@ class TestCsvObservations(unittest.TestCase):
         })
         self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + kapture_linesep
         self._observations_csv_expected += kapture_linesep.join(["# point3d_id, keypoints_type, [image_path, feature_id]*",
-                                                    "0, SIFT, image1.jpg, 0, image2.jpg, 0",
-                                                    "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
+                                                                 "0, SIFT, image1.jpg, 0, image2.jpg, 0",
+                                                                 "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
@@ -713,9 +713,9 @@ class TestCsvMaupertuis(unittest.TestCase):
         self.assertEqual(4, len(self._kapture_data.trajectories))
         self.assertEqual(4, len(self._kapture_data.records_camera))
         self.assertEqual(4, len(self._kapture_data.records_gnss))
-        self.assertEqual(4, len(self._kapture_data.keypoints))
-        self.assertEqual(4, len(self._kapture_data.descriptors))
-        self.assertEqual(6, len(self._kapture_data.matches))
+        self.assertEqual(4, len(self._kapture_data.keypoints[self._features_type]))
+        self.assertEqual(4, len(self._kapture_data.descriptors[self._features_type]))
+        self.assertEqual(6, len(self._kapture_data.matches[self._features_type]))
         self.assertEqual(1039, len(self._kapture_data.observations))
         self.assertEqual(1039, len(self._kapture_data.points3d))
 

@@ -1305,22 +1305,21 @@ def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
         part_data = kapture_data.__getattribute__(kapture_member_name)
-        if part_data is not None and kapture_class in CSV_FILENAMES:
-            filepath = path.join(dirpath, CSV_FILENAMES[kapture_class])
+        if part_data is not None and kapture_class in kapture_subtype_to_filepaths:
             # save it
             logger.debug(f'saving {kapture_member_name} ...')
+            write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
             saving_elapsed = datetime.datetime.now() - saving_start
             logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in "{kapture_dirpath}"')
-            write_function(filepath, part_data)
         elif part_data is not None and kapture_class in FEATURES_CSV_FILENAMES:
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             for feature_type, features in part_data.items():
                 # save it
                 logger.debug(f'saving {kapture_member_name} : {feature_type} ...')
-                filepath = path.join(dirpath, FEATURES_CSV_FILENAMES[kapture_class](feature_type))
+                filepath = path.join(kapture_dirpath, FEATURES_CSV_FILENAMES[kapture_class](feature_type))
                 write_function(filepath, features)
-                
+
 
 # Kapture Read #########################################################################################################
 # list all data members of kapture.
