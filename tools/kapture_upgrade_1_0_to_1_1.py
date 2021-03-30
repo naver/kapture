@@ -42,6 +42,22 @@ CSV_FILENAMES_1_0 = [
     path.join('reconstruction', 'points3d.txt')]
 
 
+def read_old_image_features_csv(csv_filepath):
+    with open(csv_filepath, 'r') as source_file:
+        table = kapture.io.csv.table_from_file(source_file)
+        line = list(table)[0]
+        assert len(line) == 3
+        name, dtype, dsize = line[0], line[1], int(line[2])
+
+    # try to list all possible type from numpy that can be used in eval(dtype)
+    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    if isinstance(type(eval(dtype)), type):
+        dtype = eval(dtype)
+    else:
+        raise ValueError('Expect data type ')
+    return name, dtype, dsize
+
+
 def upgrade_1_0_to_1_1(kapture_dirpath: str,
                        output_path: str,
                        keypoints_type: Optional[str],
@@ -59,6 +75,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     for csv_filename in CSV_FILENAMES_1_0:
         csv_fullpath = path.join(kapture_dirpath, csv_filename)
         if path.isfile(csv_fullpath):
+            logger.debug(f'converting {csv_fullpath}...')
             old_version = kapture.io.csv.get_version_from_csv_file(csv_fullpath)
             assert old_version == '1.0'
             csv_output_path = path.join(output_path, csv_filename)
@@ -73,17 +90,14 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     keypoints_dir_path = path.join(kapture_dirpath, 'reconstruction', 'keypoints')
     keypoints_csv_path = path.join(keypoints_dir_path, 'keypoints.txt')
     if path.isdir(keypoints_dir_path) and path.isfile(keypoints_csv_path):
+        logger.debug(f'converting {keypoints_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(keypoints_csv_path)
         assert old_version == '1.0'
-        with open(keypoints_csv_path, 'r') as source_file:
-            table = kapture.io.csv.table_from_file(source_file)
-            line = list(table)[0]
-            assert len(line) == 3
-            name, dtype, dsize = line[0], line[1], int(line[2])
+        name, dtype, dsize = read_old_image_features_csv(keypoints_csv_path)
         if keypoints_type is None:
             assert name != ''
             keypoints_type = name
-        keypoints = kapture.Keypoints(keypoints_type, dtype, dsize)
+        keypoints = kapture.Keypoints(name, dtype, dsize)
         keypoints_csv_output_path = path.join(output_path,
                                               kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Keypoints](keypoints_type))
         keypoints_output_dir = path.basename(keypoints_csv_output_path)
@@ -99,18 +113,15 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     descriptors_dir_path = path.join(kapture_dirpath, 'reconstruction', 'descriptors')
     descriptors_csv_path = path.join(descriptors_dir_path, 'descriptors.txt')
     if path.isdir(descriptors_dir_path) and path.isfile(descriptors_csv_path):
+        logger.debug(f'converting {descriptors_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(descriptors_csv_path)
         assert old_version == '1.0'
         assert keypoints_type is not None
-        with open(descriptors_csv_path, 'r') as source_file:
-            table = kapture.io.csv.table_from_file(source_file)
-            line = list(table)[0]
-            assert len(line) == 3
-            name, dtype, dsize = line[0], line[1], int(line[2])
+        name, dtype, dsize = read_old_image_features_csv(descriptors_csv_path)
         if descriptors_type is None:
             assert name != ''
             descriptors_type = name
-        descriptors = kapture.Descriptors(descriptors_type, dtype, dsize, keypoints_type, descriptors_metric_type)
+        descriptors = kapture.Descriptors(name, dtype, dsize, keypoints_type, descriptors_metric_type)
         descriptors_csv_output_path = path.join(output_path,
                                                 kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Descriptors](
                                                     descriptors_type)
@@ -127,6 +138,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     # matches
     matches_dir_path = path.join(kapture_dirpath, 'reconstruction', 'matches')
     if path.isdir(matches_dir_path):
+        logger.debug(f'converting {matches_dir_path}...')
         assert keypoints_type is not None
         matches_output_dir = kapture.io.features.get_matches_fullpath(None, output_path, keypoints_type)
         # now copy all .matches files
@@ -140,18 +152,15 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     global_features_dir_path = path.join(kapture_dirpath, 'reconstruction', 'global_features')
     global_features_csv_path = path.join(global_features_dir_path, 'global_features.txt')
     if path.isdir(global_features_dir_path) and path.isfile(global_features_csv_path):
+        logger.debug(f'converting {global_features_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(global_features_csv_path)
         assert old_version == '1.0'
         assert keypoints_type is not None
-        with open(global_features_csv_path, 'r') as source_file:
-            table = kapture.io.csv.table_from_file(source_file)
-            line = list(table)[0]
-            assert len(line) == 3
-            name, dtype, dsize = line[0], line[1], int(line[2])
+        name, dtype, dsize = read_old_image_features_csv(global_features_csv_path)
         if global_features_type is None:
             assert name != ''
             global_features_type = name
-        global_features = kapture.GlobalFeatures(global_features_type, dtype, dsize, global_features_metric_type)
+        global_features = kapture.GlobalFeatures(name, dtype, dsize, global_features_metric_type)
         global_features_csv_output_path = path.join(output_path,
                                                     kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.GlobalFeatures](
                                                         global_features_type)
@@ -169,6 +178,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     observations_csv_filename = path.join('sensors', 'observations.txt')
     observations_csv_path = path.join(kapture_dirpath, observations_csv_filename)
     if path.isfile(observations_csv_path):
+        logger.debug(f'converting {observations_csv_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(observations_csv_path)
         assert old_version == '1.0'
         assert keypoints_type is not None
@@ -188,8 +198,10 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
 
     # records_data
     records_data_path = path.join(kapture_dirpath, 'sensors', 'records_data')
+    logger.debug(f'converting {records_data_path}...')
     filename_list = list(populate_files_in_dirpath(records_data_path))
     import_record_data_from_dir_auto(records_data_path, output_path, filename_list, images_import_strategy)
+    logger.debug('all done!')
 
 
 def upgrade_1_0_to_1_12020_command_line() -> None:
