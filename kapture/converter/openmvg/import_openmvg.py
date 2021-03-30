@@ -12,7 +12,7 @@ import os
 import os.path as path
 import shutil
 from tqdm import tqdm
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 # kapture
 import kapture
 import kapture.io.csv as kcsv
@@ -30,8 +30,8 @@ logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 def import_openmvg(
         sfm_data_path: str,
-        regions_dir_path: str,
-        matches_file_path: str,
+        regions_dir_path: Optional[str],
+        matches_file_path: Optional[str],
         kapture_path: str,
         image_action: TransferAction,
         force_overwrite_existing: bool = False) -> None:
@@ -62,11 +62,11 @@ def import_openmvg(
 
     if regions_dir_path:
         logger.info(f'Loading regions from {regions_dir_path}')
-        import_openmvg_regions(regions_dir_path, kapture_data, kapture_path)
+        _import_openmvg_regions(regions_dir_path, kapture_data, kapture_path)
 
     if matches_file_path:
         logger.info(f'Loading matches from {matches_file_path}')
-        import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
+        _import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
 
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
@@ -101,21 +101,21 @@ def import_openmvg_sfm_data_json(
     openmvg_images_dir = path.basename(data_root_path)
 
     # Imports all the data from the json file to kapture objects
-    kapture_cameras = import_openmvg_cameras(sfm_data_json)
+    kapture_cameras = _import_openmvg_cameras(sfm_data_json)
     device_identifiers = {int: str}  # Pose id -> device id
     timestamp_for_pose = {int: int}  # Pose id -> timestamp
     # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
-    records_camera = import_openmvg_images(
+    records_camera = _import_openmvg_images(
         sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
         device_identifiers, timestamp_for_pose)
-    trajectories = import_openmvg_trajectories(
+    trajectories = _import_openmvg_trajectories(
         sfm_data_json, device_identifiers, timestamp_for_pose)
 
     kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
     return kapture_data
 
 
-def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
+def _import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
     if input_json.get(JSON_KEY.INTRINSICS):
         polymorphic_id_to_value = {}
@@ -219,8 +219,8 @@ def import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     return kapture_cameras
 
 
-def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
-                          device_identifiers, timestamp_for_pose):
+def _import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
+                           device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
     if input_json.get(JSON_KEY.VIEWS):
         views = input_json[JSON_KEY.VIEWS]
@@ -249,8 +249,8 @@ def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
 
-            kapture_filename = import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
-                                                         kapture_images_path, image_action)
+            kapture_filename = _import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
+                                                          kapture_images_path, image_action)
 
             progress_bar and progress_bar.update(1)
 
@@ -260,7 +260,7 @@ def import_openmvg_images(input_json, image_action, kapture_images_path, openmvg
     return records_camera
 
 
-def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
+def _import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture_images_path, image_action) -> str:
     # Add the common openmvg images directory in front of the filename
     filename: str
     if input_data.get(JSON_KEY.LOCAL_PATH):
@@ -297,7 +297,7 @@ def import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kapture
     return kapture_filename
 
 
-def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
+def _import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
     if input_json.get(JSON_KEY.EXTRINSICS):
         extrinsics = input_json[JSON_KEY.EXTRINSICS]
@@ -320,7 +320,7 @@ def import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_po
     return trajectories
 
 
-def import_openmvg_regions(
+def _import_openmvg_regions(
         openmvg_regions_directory_path,
         kapture_data,
         kapture_path
@@ -388,17 +388,10 @@ def import_openmvg_regions(
     kapture_data.descriptors = kapture_descriptors
 
 
-def import_openmvg_matches(
+def _import_openmvg_matches(
         matches_file_path,
         kapture_data,
         kapture_path):
-    """
-
-    :param matches_file_path:
-    :param kapture_data:
-    :param kapture_path:
-    :return:
-    """
     # look for the "image_describer.json"
     # matches.*.bin files use cereal over a
     # map < pair <uint32_t, uint32_t>, std::vector<uint64_t> >
