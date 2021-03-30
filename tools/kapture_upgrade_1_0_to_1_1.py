@@ -100,10 +100,10 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
         keypoints = kapture.Keypoints(name, dtype, dsize)
         keypoints_csv_output_path = path.join(output_path,
                                               kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Keypoints](keypoints_type))
-        keypoints_output_dir = path.basename(keypoints_csv_output_path)
+        keypoints_output_dir = path.dirname(keypoints_csv_output_path)
         kapture.io.csv.keypoints_to_file(keypoints_csv_output_path, keypoints)
         # now copy all .kpt files
-        keypoints_filenames = populate_files_in_dirpath(keypoints_dir_path, '.kpt')
+        keypoints_filenames = list(populate_files_in_dirpath(keypoints_dir_path, '.kpt'))
         for keypoints_filename in keypoints_filenames:
             keypoints_output_file = path.join(keypoints_output_dir, keypoints_filename)
             os.makedirs(path.dirname(keypoints_output_file), exist_ok=True)
@@ -126,7 +126,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
                                                 kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Descriptors](
                                                     descriptors_type)
                                                 )
-        descriptors_output_dir = path.basename(descriptors_csv_output_path)
+        descriptors_output_dir = path.dirname(descriptors_csv_output_path)
         kapture.io.csv.descriptors_to_file(descriptors_csv_output_path, descriptors)
         # now copy all .desc files
         descriptors_filenames = populate_files_in_dirpath(descriptors_dir_path, '.desc')
@@ -140,7 +140,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     if path.isdir(matches_dir_path):
         logger.debug(f'converting {matches_dir_path}...')
         assert keypoints_type is not None
-        matches_output_dir = kapture.io.features.get_matches_fullpath(None, output_path, keypoints_type)
+        matches_output_dir = kapture.io.features.get_matches_fullpath(None, keypoints_type, output_path)
         # now copy all .matches files
         matches_filenames = populate_files_in_dirpath(matches_dir_path, '.matches')
         for matches_filename in matches_filenames:
@@ -165,7 +165,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
                                                     kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.GlobalFeatures](
                                                         global_features_type)
                                                     )
-        global_features_output_dir = path.basename(global_features_csv_output_path)
+        global_features_output_dir = path.dirname(global_features_csv_output_path)
         kapture.io.csv.global_features_to_file(global_features_csv_output_path, global_features)
         # now copy all .gfeat files
         global_features_filenames = populate_files_in_dirpath(global_features_dir_path, '.gfeat')
