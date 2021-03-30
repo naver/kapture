@@ -103,7 +103,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
         keypoints_output_dir = path.dirname(keypoints_csv_output_path)
         kapture.io.csv.keypoints_to_file(keypoints_csv_output_path, keypoints)
         # now copy all .kpt files
-        keypoints_filenames = list(populate_files_in_dirpath(keypoints_dir_path, '.kpt'))
+        keypoints_filenames = populate_files_in_dirpath(keypoints_dir_path, '.kpt')
         for keypoints_filename in keypoints_filenames:
             keypoints_output_file = path.join(keypoints_output_dir, keypoints_filename)
             os.makedirs(path.dirname(keypoints_output_file), exist_ok=True)
