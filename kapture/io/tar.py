@@ -194,6 +194,14 @@ def retrieve_tar_handler_from_collection(kapture_type: Type[Union[kapture.Keypoi
                                          feature_type: str,
                                          tar_handlers: Optional[Union[TarCollection,
                                                                       TarHandler]] = None) -> Optional[TarHandler]:
+    """
+    get a tar_handler from a collection of tar_handlers. the result will be None if it's not in a Tar
+
+    :param kapture_type: kapture class type.
+    :param feature_type: the name of the features type
+    :param tar_handler: None or collection of preloaded tar archives, defaults to None
+    :return: a TarHandler if the combo kapture_type/feature_type is in a tar, or None if it's in a directory
+    """
     tar_local_handler = None
     if tar_handlers is not None:
         if isinstance(tar_handlers, TarCollection):

@@ -67,6 +67,7 @@ def get_feature_csv_fullpath(kapture_type: Any, feature_name: str, kapture_dirpa
     This path is the concatenation of the kapture root path and subpath into kapture into data structure.
 
     :param kapture_type: type of kapture data (kapture.RecordsCamera, kapture.Trajectories, ...)
+    :param feature_name: type of keypoints, descriptors, global_features, used to infer the path...
     :param kapture_dirpath: root kapture path
     :return: full path of csv file for that type of data
     """
@@ -910,6 +911,7 @@ def keypoints_from_dir(keypoints_type: str,
     :param keypoints_type: name of the keypoints
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
+    :param tar_handler: collection of preloaded tar archives
     :return: Keypoints
     """
     # make config_filepath from data_dirpath
@@ -984,6 +986,7 @@ def descriptors_from_dir(descriptors_type: str, kapture_dirpath: str, images_pat
     :param descriptors_type: the name of the descriptors type
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
+    :param tar_handler: collection of preloaded tar archives
     :return: Descriptors
     """
     # make config_filepath from data_dirpath
@@ -1069,6 +1072,7 @@ def global_features_from_dir(global_features_type: str,
     :param global_features_type: the name of the global_features type
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
+    :param tar_handler: collection of preloaded tar archives
     :return: Global features
     """
     # make config_filepath from data_dirpath
@@ -1111,6 +1115,7 @@ def matches_from_dir(
     :param kapture_dirpath: root path of kapture
     :param image_filenames: optional list of image file names
     :param matches_pairsfile_path: text file in the csv format; where each line is image_name1, image_name2, score
+    :param tar_handler: collection of preloaded tar archives
     :return: Matches
     """
     # exist as tar ?
@@ -1374,6 +1379,7 @@ def kapture_from_dir(
     :param kapture_dir_path: kapture directory root path
     :param matches_pairs_file_path: text file in the csv format; where each line is image_name1, image_name2, score
     :param skip_list: Input option for expert only. Skip the load of specified parts.
+    :param tar_handler: collection of preloaded tar archives
     :return: kapture data read
     """
     if not path.isdir(kapture_dir_path):
@@ -1560,6 +1566,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     :param matches_pairs_file_path: text file in the csv format; where each line is image_name1, image_name2, score
     :param kapture_loadable_data: the data to load
     :param kapture_data: to the kapture object to load into
+    :param tar_handler: collection of preloaded tar archives
     """
 
     # features
@@ -1643,6 +1650,14 @@ def get_all_tar_handlers(kapture_dir_path: str,
                              kapture.GlobalFeatures,
                              kapture.Matches
                          ]]] = []) -> TarCollection:
+    """
+    Preloads all tars for the kapture data in kapture_dir_path. can be either read of append.
+
+    :param kapture_dir_path: kapture top directory path
+    :param mode: 'r' or 'a', defaults to 'r'
+    :param skip_list: Input option for expert only. Skip the load of specified parts, defaults to []
+    :return: collection of preloaded tar archives, don't forget to call close() when you're done with it
+    """
     if isinstance(mode, str):
         assert mode in {'r', 'a'}
     else:

@@ -16,6 +16,7 @@ class Observations(Dict[int, Dict[str, List[Tuple[str, int]]]]):
         Adds a 2-D observation (image, keypoint) of a 3D point.
 
         :param point3d_idx: index of the 3D point to add an observation of.
+        :param keypoints_type: the type of keypoints in which keypoint_idx can be found
         :param image_filename: name of the image where the 3D points is observed
         :param keypoint_idx: index of the keypoints in the image that correspond to the 3D point.
         :return:

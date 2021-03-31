@@ -14,16 +14,16 @@ import kapture.io.features
 from kapture.utils.logging import getLogger
 
 
-def merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
-                                                        kapture.Descriptors,
-                                                        kapture.GlobalFeatures]],
-                         feature_type: str,
-                         features_list: Union[List[Optional[kapture.Keypoints]],
-                                              List[Optional[kapture.Descriptors]],
-                                              List[Optional[kapture.GlobalFeatures]]],
-                         features_paths: List[str],
-                         output_path: str
-                         ) -> Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]:
+def _merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
+                                                         kapture.Descriptors,
+                                                         kapture.GlobalFeatures]],
+                          feature_type: str,
+                          features_list: Union[List[Optional[kapture.Keypoints]],
+                                               List[Optional[kapture.Descriptors]],
+                                               List[Optional[kapture.GlobalFeatures]]],
+                          features_paths: List[str],
+                          output_path: str
+                          ) -> Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]:
     """
     Merge several features_list (keypoints, descriptors or global features_list) (of same type) in one.
 
@@ -77,17 +77,17 @@ def merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
     return merged_features
 
 
-def merge_image_features_collection(feature_class_type: Type[Union[kapture.Keypoints,
-                                                                   kapture.Descriptors,
-                                                                   kapture.GlobalFeatures]],
-                                    features_list: Union[List[Optional[Dict[str, kapture.Keypoints]]],
-                                                         List[Optional[Dict[str, kapture.Descriptors]]],
-                                                         List[Optional[Dict[str, kapture.GlobalFeatures]]]],
-                                    features_paths: List[str],
-                                    output_path: str
-                                    ) -> Union[Dict[str, kapture.Keypoints],
-                                               Dict[str, kapture.Descriptors],
-                                               Dict[str, kapture.GlobalFeatures]]:
+def _merge_image_features_collection(feature_class_type: Type[Union[kapture.Keypoints,
+                                                                    kapture.Descriptors,
+                                                                    kapture.GlobalFeatures]],
+                                     features_list: Union[List[Optional[Dict[str, kapture.Keypoints]]],
+                                                          List[Optional[Dict[str, kapture.Descriptors]]],
+                                                          List[Optional[Dict[str, kapture.GlobalFeatures]]]],
+                                     features_paths: List[str],
+                                     output_path: str
+                                     ) -> Union[Dict[str, kapture.Keypoints],
+                                                Dict[str, kapture.Descriptors],
+                                                Dict[str, kapture.GlobalFeatures]]:
     assert len(features_list) > 0
     assert len(features_paths) == len(features_list)
     # get the union
@@ -97,9 +97,9 @@ def merge_image_features_collection(feature_class_type: Type[Union[kapture.Keypo
     for features_type in features_types:
         image_features_list = [features[features_type] if features is not None and features_type in features else None
                                for features in features_list]
-        image_features = merge_image_features(feature_class_type, features_type,
-                                              image_features_list,
-                                              features_paths, output_path)
+        image_features = _merge_image_features(feature_class_type, features_type,
+                                               image_features_list,
+                                               features_paths, output_path)
         assert isinstance(image_features, feature_class_type)
         out_collection[features_type] = image_features
     return out_collection
@@ -117,7 +117,7 @@ def merge_keypoints(feature_type: str,
     :param output_path: root path of the merged features files
     :return: merged keypoints
     """
-    keypoints = merge_image_features(kapture.Keypoints, feature_type, keypoints_list, keypoints_paths, output_path)
+    keypoints = _merge_image_features(kapture.Keypoints, feature_type, keypoints_list, keypoints_paths, output_path)
     assert isinstance(keypoints, kapture.Keypoints)
     return keypoints
 
@@ -125,8 +125,16 @@ def merge_keypoints(feature_type: str,
 def merge_keypoints_collections(keypoints_collections_list: List[Optional[Dict[str, kapture.Keypoints]]],
                                 keypoints_paths: List[str],
                                 output_path: str) -> Dict[str, kapture.Keypoints]:
-    return merge_image_features_collection(kapture.Keypoints, keypoints_collections_list,
-                                           keypoints_paths, output_path)
+    """
+    Merge several keypoints collections in one.
+
+    :param keypoints_collections_list: list of keypoints collections to merge
+    :param keypoints_paths: keypoints files paths
+    :param output_path: root path of the merged features files
+    :return: merged keypoints collection
+    """
+    return _merge_image_features_collection(kapture.Keypoints, keypoints_collections_list,
+                                            keypoints_paths, output_path)
 
 
 def merge_descriptors(feature_type: str,
@@ -140,8 +148,8 @@ def merge_descriptors(feature_type: str,
     :param output_path: root path of the merged features files
     :return: merged descriptors
     """
-    descriptors = merge_image_features(kapture.Descriptors, feature_type,
-                                       descriptors_list, descriptors_paths, output_path)
+    descriptors = _merge_image_features(kapture.Descriptors, feature_type,
+                                        descriptors_list, descriptors_paths, output_path)
     assert isinstance(descriptors, kapture.Descriptors)
     return descriptors
 
@@ -149,8 +157,16 @@ def merge_descriptors(feature_type: str,
 def merge_descriptors_collections(descriptors_collections_list: List[Optional[Dict[str, kapture.Descriptors]]],
                                   descriptors_paths: List[str],
                                   output_path: str) -> Dict[str, kapture.Descriptors]:
-    return merge_image_features_collection(kapture.Descriptors, descriptors_collections_list,
-                                           descriptors_paths, output_path)
+    """
+    Merge several descriptors collections in one.
+
+    :param descriptors_collections_list: list of descriptors collections to merge
+    :param descriptors_paths: descriptors files paths
+    :param output_path: root path of the merged features files
+    :return: merged descriptors collections
+    """
+    return _merge_image_features_collection(kapture.Descriptors, descriptors_collections_list,
+                                            descriptors_paths, output_path)
 
 
 def merge_global_features(global_features_list: List[Optional[kapture.GlobalFeatures]],
@@ -163,7 +179,7 @@ def merge_global_features(global_features_list: List[Optional[kapture.GlobalFeat
     :param output_path: root path of the merged features files
     :return: merged global features
     """
-    features = merge_image_features(kapture.GlobalFeatures, global_features_list, global_features_paths, output_path)
+    features = _merge_image_features(kapture.GlobalFeatures, global_features_list, global_features_paths, output_path)
     assert isinstance(features, kapture.GlobalFeatures)
     return features
 
@@ -172,8 +188,16 @@ def merge_global_features_collections(global_features_collections_list: List[Opt
                                                                                            kapture.GlobalFeatures]]],
                                       global_features_paths: List[str],
                                       output_path: str) -> Dict[str, kapture.GlobalFeatures]:
-    return merge_image_features_collection(kapture.GlobalFeatures, global_features_collections_list,
-                                           global_features_paths, output_path)
+    """
+    Merge several global features collections in one.
+
+    :param global_features_collections_list: list of global features collections to merge
+    :param global_features_paths: global features files paths
+    :param output_path: root path of the merged features files
+    :return: merged global features collection
+    """
+    return _merge_image_features_collection(kapture.GlobalFeatures, global_features_collections_list,
+                                            global_features_paths, output_path)
 
 
 def merge_matches(keypoints_type: str,
@@ -214,12 +238,12 @@ def merge_matches_collections(matches_list: List[Optional[Dict[str,  kapture.Mat
                               matches_paths: List[str],
                               output_path: str) -> Dict[str,  kapture.Matches]:
     """
-    Merge several matches lists in one.
+    Merge several matches collections in one.
 
-    :param matches_list: list of matches to merge
+    :param matches_list: list of matches collections to merge
     :param matches_paths: matches files paths
     :param output_path: root path of the merged matches files
-    :return: merged matches
+    :return: merged matches collection
     """
     assert len(matches_list) > 0
     assert len(matches_paths) == len(matches_list)

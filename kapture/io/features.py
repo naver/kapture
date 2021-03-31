@@ -50,6 +50,7 @@ def get_features_fullpath(
             Optionally, can give a the image file name, and add the feature file name (with proper extension).
 
     :param data_type:
+    :param feature_type: name of the feature
     :param kapture_dirpath: input path to kapture directory.
     :param image_filename: optional input image filename (id).
     :return: Feature full path
@@ -71,6 +72,7 @@ def features_to_filepaths(
         Eg.{image_id: full/path/to/feature.jpg.kpt}
 
     :param kapture_data: input kapture data.
+    :param feature_type: name of the feature
     :param kapture_dirpath: input path to kapture directory.
     :return: image id to image file path dictionary
     """
@@ -85,6 +87,13 @@ def image_ids_from_feature_tar(kapture_type: Type[Union[kapture.Keypoints,
                                                         kapture.Descriptors,
                                                         kapture.GlobalFeatures]],
                                tar_handler: TarHandler) -> Iterable[str]:
+    """
+     Populate feature files in tar and returns their corresponding image_filename
+
+    :param kapture_type: kapture class type.
+    :param tar_handler: opened tar reference
+    :return: image file paths
+    """
     feature_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture_type])
     image_filenames = (feature_filename[:-len(FEATURE_FILE_EXTENSION[kapture_type])]
                        for feature_filename in feature_filenames)
@@ -100,9 +109,10 @@ def image_ids_from_feature_dirpath(
     """
     Populate feature files and returns their corresponding image_filename.
 
-    :param kapture_type:
-    :param kapture_dirpath:
-    :return: image file path
+    :param kapture_type: kapture class type.
+    :param feature_type: name of the feature
+    :param kapture_dirpath: root path of kapture
+    :return: image file paths
     """
     feature_dirpath = get_features_fullpath(kapture_type, feature_type, kapture_dirpath)
     # filter only files with proper extension and
@@ -123,8 +133,9 @@ def features_check_dir(
     """
     Makes sure all files actually exists.
 
-    :param kapture_data:
-    :param kapture_dirpath:
+    :param kapture_data: input kapture data
+    :param feature_type: name of the feature
+    :param kapture_dirpath: root path of kapture
     :return: True only if all exist, false otherwise
     """
     file_list = features_to_filepaths(kapture_data, feature_type, kapture_dirpath).values()
@@ -392,6 +403,9 @@ def _matches_filenames_remove_extensions_and_cut(matches_filenames: Iterable[str
 
 
 def matching_pairs_from_tar(tar_handler: TarHandler) -> Iterable[Tuple[str, str]]:
+    """
+    Read and build Matches from a tar file.
+    """
     matches_filenames = list_files_in_tar(tar_handler, FEATURE_FILE_EXTENSION[kapture.Matches])
     return _matches_filenames_remove_extensions_and_cut(matches_filenames)
 

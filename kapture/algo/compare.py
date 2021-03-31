@@ -282,6 +282,12 @@ def equal_keypoints(
 
 def equal_keypoints_collections(data_a: Optional[Dict[str, kapture.Keypoints]],
                                 data_b: Optional[Dict[str, kapture.Keypoints]]):
+    """
+    Compare two keypoints collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
+    :return: True if they are identical, False otherwise.
+    """
     # early check if one is None
     if data_a is None and data_b is None:
         return True
@@ -325,6 +331,12 @@ def equal_descriptors(
 
 def equal_descriptors_collections(data_a: Optional[Dict[str, kapture.Descriptors]],
                                   data_b: Optional[Dict[str, kapture.Descriptors]]):
+    """
+    Compare two descriptors collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
+    :return: True if they are identical, False otherwise.
+    """
     # early check if one is None
     if data_a is None and data_b is None:
         return True
@@ -368,6 +380,12 @@ def equal_global_features(
 
 def equal_global_features_collections(data_a: Optional[Dict[str, kapture.GlobalFeatures]],
                                       data_b: Optional[Dict[str, kapture.GlobalFeatures]]):
+    """
+    Compare two global_features collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
+    :return: True if they are identical, False otherwise.
+    """
     # early check if one is None
     if data_a is None and data_b is None:
         return True
@@ -527,6 +545,12 @@ def equal_matches(
 
 def equal_matches_collections(data_a: Optional[Dict[str, kapture.Matches]],
                               data_b: Optional[Dict[str, kapture.Matches]]):
+    """
+    Compare two matches collections.
+    :param data_a: first collection of matches
+    :param data_b: second collection of matches
+    :return: True if they are identical, False otherwise.
+    """
     # early check if one is None
     if data_a is None and data_b is None:
         return True

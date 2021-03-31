@@ -236,7 +236,7 @@ class Kapture:
     @property
     def keypoints(self) -> Optional[Dict[str, Keypoints]]:
         """
-        :return: the keypoints
+        :return: the keypoints collection
         """
         return self._keypoints
 
@@ -249,7 +249,7 @@ class Kapture:
     @property
     def descriptors(self) -> Optional[Dict[str, Descriptors]]:
         """
-        :return: the descriptors
+        :return: the descriptors collection
         """
         return self._descriptors
 
@@ -262,7 +262,7 @@ class Kapture:
     @property
     def global_features(self) -> Optional[Dict[str, GlobalFeatures]]:
         """
-        :return: the global features
+        :return: the global features collection
         """
         return self._global_features
 
@@ -275,7 +275,7 @@ class Kapture:
     @property
     def matches(self) -> Optional[Dict[str, Matches]]:
         """
-        :return: the matches
+        :return: the matches collection
         """
         return self._matches
 
