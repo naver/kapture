@@ -19,7 +19,7 @@ logger = getLogger()
 
 
 # Binary data File IO ##################################################################################################
-def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.array:
+def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.ndarray:
     """
     Reads a binary file of given type(dtype) and columns (dsize) into a numpy array.
 
@@ -39,7 +39,7 @@ def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.array:
     return data_array
 
 
-def array_to_file(filepath: str, data_array: np.array) -> None:
+def array_to_file(filepath: str, data_array: np.ndarray) -> None:
     """
     Writes the numpy array into a binary file.
 
