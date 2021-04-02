@@ -84,13 +84,16 @@ def plot_ply(kapture_path: str,  # noqa: C901
                         f'{kapture.io.features.get_keypoints_fullpath(keypoints_type, ply_path)}')
             keypoints_dsize = kapture_data.keypoints[keypoints_type].dsize
             keypoints_dtype = kapture_data.keypoints[keypoints_type].dtype
-            keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints,
+            keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints[keypoints_type],
                                                                              keypoints_type,
-                                                                             kapture_path)
+                                                                             kapture_path,
+                                                                             tar_handlers)
             for image_filename, keypoints_filepath in tqdm(keypoints_filepaths.items(),
                                                            disable=logger.level >= logging.CRITICAL):
                 image_filepath = kapture.io.records.get_image_fullpath(kapture_path, image_filename)
-                image_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(ply_path, image_filename) + '.jpg'
+                image_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
+                                                                                      ply_path,
+                                                                                      image_filename) + '.jpg'
                 image.image_keypoints_to_image_file(
                     image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
 
