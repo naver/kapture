@@ -67,6 +67,16 @@ class TestTar(unittest.TestCase):
                                                       kapture_data_expected.keypoints[keypoints_type].dtype,
                                                       kapture_data_expected.keypoints[keypoints_type].dsize)
         self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
+
+        kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
+                                                            kapture_dirpath=self._kapture_sample_path,
+                                                            image_filename=image_name,
+                                                            tar_handler=tar_handlers)
+        kpts_expected = image_keypoints_from_file(kapture_keypoints_filepath,
+                                                  kapture_data_expected.keypoints[keypoints_type].dtype,
+                                                  kapture_data_expected.keypoints[keypoints_type].dsize)
+        self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
+
         tar_handlers.close()
 
 
