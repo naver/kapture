@@ -116,7 +116,7 @@ def plot_ply(kapture_path: str,  # noqa: C901
                 depth_map = (depth_map * 255.).astype(np.uint8)
                 depth_image = Image.fromarray(depth_map)
                 depth_image.save(depth_png_filepath)
-
+        tar_handlers.close()
         logger.info('done.')
 
     except Exception as e:
