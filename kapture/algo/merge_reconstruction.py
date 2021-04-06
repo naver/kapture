@@ -4,6 +4,8 @@
 Merge kapture objects for reconstructions.
 """
 
+from kapture.io.binary import array_to_file
+from kapture.io.tar import TarCollection
 import numpy as np
 import os
 import shutil
@@ -22,7 +24,8 @@ def _merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
                                                List[Optional[kapture.Descriptors]],
                                                List[Optional[kapture.GlobalFeatures]]],
                           features_paths: List[str],
-                          output_path: str
+                          output_path: str,
+                          tar_handlers: List[TarCollection]
                           ) -> Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]:
     """
     Merge several features_list (keypoints, descriptors or global features_list) (of same type) in one.
@@ -32,6 +35,7 @@ def _merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
     :param features_list: the list of values
     :param features_paths: the paths
     :param output_path: root path of the features to construct
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged features object of the corresponding type
     """
     assert len(features_list) > 0
@@ -65,7 +69,8 @@ def _merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
                     in_path = kapture.io.features.get_features_fullpath(feature_class_type,
                                                                         feature_type,
                                                                         features_paths[i],
-                                                                        name)
+                                                                        name,
+                                                                        tar_handlers[i])
                     out_path = kapture.io.features.get_features_fullpath(feature_class_type,
                                                                          feature_type,
                                                                          output_path,
@@ -73,7 +78,13 @@ def _merge_image_features(feature_class_type: Type[Union[kapture.Keypoints,
                     if in_path != out_path:
                         # skip actual copy if file does not actually move.
                         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-                        shutil.copy(in_path, out_path)
+                        if isinstance(in_path, str):
+                            shutil.copy(in_path, out_path)
+                        else:
+                            # in_path is a tuple [str, TarHandler]
+                            # keypoints are not stored in a file, have to read them to be able to copy them
+                            array = in_path[1].get_array_from_tar(in_path[0], features.dtype, features.dsize)
+                            array_to_file(out_path, array)
     return merged_features
 
 
@@ -84,7 +95,8 @@ def _merge_image_features_collection(feature_class_type: Type[Union[kapture.Keyp
                                                           List[Optional[Dict[str, kapture.Descriptors]]],
                                                           List[Optional[Dict[str, kapture.GlobalFeatures]]]],
                                      features_paths: List[str],
-                                     output_path: str
+                                     output_path: str,
+                                     tar_handlers: List[TarCollection]
                                      ) -> Union[Dict[str, kapture.Keypoints],
                                                 Dict[str, kapture.Descriptors],
                                                 Dict[str, kapture.GlobalFeatures]]:
@@ -99,7 +111,8 @@ def _merge_image_features_collection(feature_class_type: Type[Union[kapture.Keyp
                                for features in features_list]
         image_features = _merge_image_features(feature_class_type, features_type,
                                                image_features_list,
-                                               features_paths, output_path)
+                                               features_paths, output_path,
+                                               tar_handlers)
         assert isinstance(image_features, feature_class_type)
         out_collection[features_type] = image_features
     return out_collection
@@ -108,78 +121,90 @@ def _merge_image_features_collection(feature_class_type: Type[Union[kapture.Keyp
 def merge_keypoints(feature_type: str,
                     keypoints_list: List[Optional[kapture.Keypoints]],
                     keypoints_paths: List[str],
-                    output_path: str) -> kapture.Keypoints:
+                    output_path: str,
+                    tar_handlers: List[TarCollection]) -> kapture.Keypoints:
     """
     Merge several keypoints in one.
 
     :param keypoints_list: list of keypoints to merge
     :param keypoints_paths: keypoints files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged keypoints
     """
-    keypoints = _merge_image_features(kapture.Keypoints, feature_type, keypoints_list, keypoints_paths, output_path)
+    keypoints = _merge_image_features(kapture.Keypoints, feature_type, keypoints_list, keypoints_paths,
+                                      output_path, tar_handlers)
     assert isinstance(keypoints, kapture.Keypoints)
     return keypoints
 
 
 def merge_keypoints_collections(keypoints_collections_list: List[Optional[Dict[str, kapture.Keypoints]]],
                                 keypoints_paths: List[str],
-                                output_path: str) -> Dict[str, kapture.Keypoints]:
+                                output_path: str,
+                                tar_handlers: List[TarCollection]) -> Dict[str, kapture.Keypoints]:
     """
     Merge several keypoints collections in one.
 
     :param keypoints_collections_list: list of keypoints collections to merge
     :param keypoints_paths: keypoints files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged keypoints collection
     """
     return _merge_image_features_collection(kapture.Keypoints, keypoints_collections_list,
-                                            keypoints_paths, output_path)
+                                            keypoints_paths, output_path, tar_handlers)
 
 
 def merge_descriptors(feature_type: str,
                       descriptors_list: List[Optional[kapture.Descriptors]],
-                      descriptors_paths: List[str], output_path: str) -> kapture.Descriptors:
+                      descriptors_paths: List[str], output_path: str,
+                      tar_handlers: List[TarCollection]) -> kapture.Descriptors:
     """
     Merge several descriptors in one.
 
     :param descriptors_list: list of descriptors to merge
     :param descriptors_paths: descriptors files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged descriptors
     """
     descriptors = _merge_image_features(kapture.Descriptors, feature_type,
-                                        descriptors_list, descriptors_paths, output_path)
+                                        descriptors_list, descriptors_paths, output_path, tar_handlers)
     assert isinstance(descriptors, kapture.Descriptors)
     return descriptors
 
 
 def merge_descriptors_collections(descriptors_collections_list: List[Optional[Dict[str, kapture.Descriptors]]],
                                   descriptors_paths: List[str],
-                                  output_path: str) -> Dict[str, kapture.Descriptors]:
+                                  output_path: str,
+                                  tar_handlers: List[TarCollection]) -> Dict[str, kapture.Descriptors]:
     """
     Merge several descriptors collections in one.
 
     :param descriptors_collections_list: list of descriptors collections to merge
     :param descriptors_paths: descriptors files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged descriptors collections
     """
     return _merge_image_features_collection(kapture.Descriptors, descriptors_collections_list,
-                                            descriptors_paths, output_path)
+                                            descriptors_paths, output_path, tar_handlers)
 
 
 def merge_global_features(global_features_list: List[Optional[kapture.GlobalFeatures]],
-                          global_features_paths: List[str], output_path: str) -> kapture.GlobalFeatures:
+                          global_features_paths: List[str], output_path: str,
+                          tar_handlers: List[TarCollection]) -> kapture.GlobalFeatures:
     """
     Merge several global features in one.
 
     :param global_features_list: list of global features to merge
     :param global_features_paths: global features files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged global features
     """
-    features = _merge_image_features(kapture.GlobalFeatures, global_features_list, global_features_paths, output_path)
+    features = _merge_image_features(kapture.GlobalFeatures, global_features_list, global_features_paths,
+                                     output_path, tar_handlers)
     assert isinstance(features, kapture.GlobalFeatures)
     return features
 
@@ -187,36 +212,40 @@ def merge_global_features(global_features_list: List[Optional[kapture.GlobalFeat
 def merge_global_features_collections(global_features_collections_list: List[Optional[Dict[str,
                                                                                            kapture.GlobalFeatures]]],
                                       global_features_paths: List[str],
-                                      output_path: str) -> Dict[str, kapture.GlobalFeatures]:
+                                      output_path: str,
+                                      tar_handlers: List[TarCollection]) -> Dict[str, kapture.GlobalFeatures]:
     """
     Merge several global features collections in one.
 
     :param global_features_collections_list: list of global features collections to merge
     :param global_features_paths: global features files paths
     :param output_path: root path of the merged features files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged global features collection
     """
     return _merge_image_features_collection(kapture.GlobalFeatures, global_features_collections_list,
-                                            global_features_paths, output_path)
+                                            global_features_paths, output_path, tar_handlers)
 
 
 def merge_matches(keypoints_type: str,
                   matches_list: List[Optional[kapture.Matches]],
                   matches_paths: List[str],
-                  output_path: str) -> kapture.Matches:
+                  output_path: str,
+                  tar_handlers: List[TarCollection]) -> kapture.Matches:
     """
     Merge several matches lists in one.
 
     :param matches_list: list of matches to merge
     :param matches_paths: matches files paths
     :param output_path: root path of the merged matches files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged matches
     """
     assert len(matches_list) > 0
     assert len(matches_paths) == len(matches_list)
 
     merged_matches = kapture.Matches()
-    for matches, matches_path in zip(matches_list, matches_paths):
+    for matches, matches_path, tar_handler in zip(matches_list, matches_paths, tar_handlers):
         if matches is None:
             continue
         for pair in matches:
@@ -225,24 +254,32 @@ def merge_matches(keypoints_type: str,
             else:
                 merged_matches.add(pair[0], pair[1])
                 if output_path:
-                    in_path = kapture.io.features.get_matches_fullpath(pair, keypoints_type, matches_path)
+                    in_path = kapture.io.features.get_matches_fullpath(pair, keypoints_type, matches_path, tar_handler)
                     out_path = kapture.io.features.get_matches_fullpath(pair, keypoints_type, output_path)
                     if in_path != out_path:
                         # skip actual copy if file does not actually move.
                         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-                        shutil.copy(in_path, out_path)
+                        if isinstance(in_path, str):
+                            shutil.copy(in_path, out_path)
+                        else:
+                            # in_path is a tuple [str, TarHandler]
+                            # keypoints are not stored in a file, have to read them to be able to copy them
+                            array = kapture.io.features.image_matches_from_file(in_path)
+                            kapture.io.features.image_matches_to_file(out_path, array)
     return merged_matches
 
 
 def merge_matches_collections(matches_list: List[Optional[Dict[str,  kapture.Matches]]],
                               matches_paths: List[str],
-                              output_path: str) -> Dict[str,  kapture.Matches]:
+                              output_path: str,
+                              tar_handlers: List[TarCollection]) -> Dict[str,  kapture.Matches]:
     """
     Merge several matches collections in one.
 
     :param matches_list: list of matches collections to merge
     :param matches_paths: matches files paths
     :param output_path: root path of the merged matches files
+    :param tar_handlers: collection of preloaded tar archives
     :return: merged matches collection
     """
     assert len(matches_list) > 0
@@ -258,7 +295,8 @@ def merge_matches_collections(matches_list: List[Optional[Dict[str,  kapture.Mat
         merged_matches = merge_matches(keypoints_type,
                                        kmatches_list,
                                        matches_paths,
-                                       output_path)
+                                       output_path,
+                                       tar_handlers)
         assert isinstance(merged_matches, kapture.Matches)
         out_collection[keypoints_type] = merged_matches
     return out_collection

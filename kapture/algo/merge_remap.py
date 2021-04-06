@@ -4,6 +4,7 @@
 Merge kapture objects with remapping of identifiers.
 """
 
+from kapture.io.tar import TarCollection
 from typing import List, Optional, Type, Dict
 
 import kapture
@@ -341,6 +342,7 @@ def merge_records_magnetic(
 def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a bit long but not too complex
                 skip_list: List[Type],
                 data_paths: List[str],
+                tarcollection_list: List[TarCollection],
                 kapture_path: str,
                 images_import_method: TransferAction) -> kapture.Kapture:
     """
@@ -349,6 +351,7 @@ def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a b
     :param kapture_list: list of kapture to merge.
     :param skip_list: input optional types to not merge. sensors and rigs are unskippable
     :param data_paths: list of path to root path directory in same order as mentioned in kapture_list.
+    :param tarcollection_list: list of opened tar archives same order as mentioned in kapture_list.
     :param kapture_path: directory root path to the merged kapture.
     :param images_import_method: method to transfer image files
     :return: merged kapture object
@@ -432,23 +435,24 @@ def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a b
         keypoints = [a_kapture.keypoints for a_kapture in kapture_list]
         keypoints_not_none = [k for k in keypoints if k is not None]
         if len(keypoints_not_none) > 0:
-            new_keypoints = merge_keypoints_collections(keypoints, data_paths, kapture_path)
+            new_keypoints = merge_keypoints_collections(keypoints, data_paths, kapture_path, tarcollection_list)
             merged_kapture.keypoints = get_new_if_not_empty(new_keypoints, merged_kapture.keypoints)
     if kapture.Descriptors not in skip_list:
         descriptors = [a_kapture.descriptors for a_kapture in kapture_list]
         descriptors_not_none = [k for k in descriptors if k is not None]
         if len(descriptors_not_none) > 0:
-            new_descriptors = merge_descriptors_collections(descriptors, data_paths, kapture_path)
+            new_descriptors = merge_descriptors_collections(descriptors, data_paths, kapture_path, tarcollection_list)
             merged_kapture.descriptors = get_new_if_not_empty(new_descriptors, merged_kapture.descriptors)
     if kapture.GlobalFeatures not in skip_list:
         global_features = [a_kapture.global_features for a_kapture in kapture_list]
         global_features_not_none = [k for k in global_features if k is not None]
         if len(global_features_not_none) > 0:
-            new_global_features = merge_global_features_collections(global_features, data_paths, kapture_path)
+            new_global_features = merge_global_features_collections(global_features, data_paths,
+                                                                    kapture_path, tarcollection_list)
             merged_kapture.global_features = get_new_if_not_empty(new_global_features, merged_kapture.global_features)
     if kapture.Matches not in skip_list:
         matches = [a_kapture.matches for a_kapture in kapture_list]
-        new_matches = merge_matches_collections(matches, data_paths, kapture_path)
+        new_matches = merge_matches_collections(matches, data_paths, kapture_path, tarcollection_list)
         merged_kapture.matches = get_new_if_not_empty(new_matches, merged_kapture.matches)
 
     if kapture.Points3d not in skip_list and kapture.Observations not in skip_list:
