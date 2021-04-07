@@ -1143,7 +1143,7 @@ def matches_from_dir(
     """
     # exist as tar ?
     tar_local_handler = retrieve_tar_handler_from_collection(kapture.Matches, keypoints_type, tar_handler)
-
+    loading_start = datetime.datetime.now()
     if tar_local_handler is not None:
         match_pairs_generator = kapture.io.features.matching_pairs_from_tar(tar_local_handler)
         if matches_pairsfile_path is not None:
@@ -1155,7 +1155,6 @@ def matches_from_dir(
                                          for image_pair in match_pairs_generator
                                          if image_pair in valid_pairs)
     else:
-        loading_start = datetime.datetime.now()
         # exist tar ? -> fire warning
         tar_path = get_feature_tar_fullpath(kapture.Matches, keypoints_type, kapture_dirpath)
         if os.path.isfile(tar_path):
@@ -1176,8 +1175,6 @@ def matches_from_dir(
                                                                                                  keypoints_type,
                                                                                                  kapture_dirpath))
                                          )
-        loading_elapsed = datetime.datetime.now() - loading_start
-        logger.debug(f'{len(table)} {kapture.Matches} in {loading_elapsed.total_seconds():.3f} seconds')
     if image_filenames is not None:
         # retains only files that correspond to known images
         match_pairs_generator = (
@@ -1186,6 +1183,8 @@ def matches_from_dir(
             if image_pair[0] in image_filenames and image_pair[1] in image_filenames
         )
     match_pairs = set(match_pairs_generator)
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{len(match_pairs)} {kapture.Matches} in {loading_elapsed.total_seconds():.3f} seconds')
     return kapture.Matches(match_pairs)
 
 
