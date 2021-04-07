@@ -77,7 +77,13 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
     else:
         # Read the file
         last_data_line = ''
+        nb_lines = 0
         with open(kapture_file_path) as f:
+            # Count lines
+            for _ in f:
+                nb_lines += 1
+            # Reset to read some important lines
+            f.seek(0, os.SEEK_SET)
             # Skip header
             f.readline()
             f.readline()
@@ -100,7 +106,8 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
             timestamp_len2 = computation.num_digits(last_timestamp)
             timestamp_len_str = f'{timestamp_len1}' if timestamp_len1 == timestamp_len2\
                 else f'{timestamp_len1}-{timestamp_len2}'
-            print(f'{kapture_filename:42s} timestamp {timestamp_len_str} digits from {timestamp_range_str}')
+            print(f'{kapture_filename:42s} timestamp {timestamp_len_str} digits from {timestamp_range_str}'
+                  f' : {(nb_lines-2):12,d} records'.replace(',',' '))
 
 
 def do_print(kapture_path: str) -> None:
