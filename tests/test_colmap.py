@@ -185,7 +185,8 @@ class TestColmapMaupertuis(unittest.TestCase):
                          set(matches))
 
     def test_maupertuis_import_txt_only(self):
-        kapture_data = import_colmap_from_reconstruction_files(self._reconstruction_path, self._temp_dirpath, set())
+        kapture_data = import_colmap_from_reconstruction_files(
+            self._reconstruction_path, self._temp_dirpath, skip=set())
 
         # check the numbers
         self.assertEqual(1, len(kapture_data.sensors))

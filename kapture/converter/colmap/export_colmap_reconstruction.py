@@ -208,8 +208,10 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
             keypoints_type = next(iter(kapture_data.keypoints.keys()))
         if keypoints_type is not None and keypoints_type in kapture_data.keypoints:
             observations_reversed = {(image_filename, keypoint_idx): point3d_idx
-                                     for point3d_idx, (image_filename, keypoint_idx) in
-                                     kapture.flatten(kapture_data.observations)}
+                                     for point3d_idx, per_keypoints_type_subdict in kapture_data.observations.items()
+                                     for obs_keypoints_type, observations_list in per_keypoints_type_subdict.items()
+                                     for image_filename, keypoint_idx in observations_list
+                                     if obs_keypoints_type == keypoints_type}
 
             # prepare images.txt even lines
             # POINTS2D[] as (X, Y, POINT3D_ID)

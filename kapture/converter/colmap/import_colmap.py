@@ -70,18 +70,18 @@ def import_colmap_database(colmap_database_filepath: str,
 
         # keypoints
         logger.debug('parsing keypoints in database...')
-        kapture_data.keypoints = get_keypoints_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, keypoints_type)
+        kapture_data.keypoints = {keypoints_type: get_keypoints_from_database(
+            db, kapture_data.records_camera, kapture_dir_path, keypoints_type)}
 
         # descriptors
         logger.debug('parsing descriptors in database...')
-        kapture_data.descriptors = get_descriptors_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, keypoints_type, descriptors_type)
+        kapture_data.descriptors = {descriptors_type: get_descriptors_from_database(
+            db, kapture_data.records_camera, kapture_dir_path, keypoints_type, descriptors_type)}
 
         # matches
         logger.debug('parsing matches in database...')
-        kapture_data.matches = get_matches_from_database(
-            db, kapture_data.records_camera, kapture_dir_path, no_geometric_filtering, keypoints_type)
+        kapture_data.matches = {keypoints_type: get_matches_from_database(
+            db, kapture_data.records_camera, kapture_dir_path, no_geometric_filtering, keypoints_type)}
 
     db.close()
     return kapture_data
