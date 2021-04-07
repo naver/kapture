@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
+"""
+OpenMVG import and export to kapture unit tests.
+"""
+
 import json
 import logging
 import sys

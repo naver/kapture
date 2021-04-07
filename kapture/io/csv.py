@@ -16,11 +16,13 @@ from collections import namedtuple
 from typing import Any, List, Optional, Set, Type, Union
 import numpy as np
 import quaternion
+import sys
 
 import kapture
 import kapture.io.features
 
 logger = kapture.logger
+gettrace = getattr(sys, 'gettrace', None)
 
 # file names conventions
 CSV_FILENAMES = {
@@ -198,10 +200,19 @@ def table_from_file(file):
     :return: an iterable of iterable on kapture objects values
     """
     table = file.readlines()
+    if gettrace is not None and gettrace():
+        table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
+        return list(table)
+
     # remove comment lines, empty lines and trim trailing EOL
+    table = (l1.rstrip("\n\r") for l1 in table if l1.strip() and not l1.startswith('#'))
     # then split comma (and trim afterwards spaces)
-    table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
-    return table
+    content = []
+    for line in table:
+        words = line.split(',')
+        words = list(word.strip() for word in words)
+        content.append(words)
+    return content
 
 
 def get_last_line(opened_file: io.TextIOBase, max_line_size: int = 128) -> str:
@@ -414,7 +425,7 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
             trajectories.setdefault(int(timestamp), {})[device_id] = pose
             nb_records += 1
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'{nb_records} {kapture.Trajectories} in {loading_elapsed.total_seconds()} seconds')
+    logger.debug(f'{nb_records} {kapture.Trajectories} in {loading_elapsed.total_seconds():.3f} seconds')
     return trajectories
 
 
@@ -449,6 +460,7 @@ def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = Non
     :return: camera records
     """
     records_camera = kapture.RecordsCamera()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -459,7 +471,8 @@ def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = Non
                 continue
             records_camera[(int(timestamp), str(device_id))] = image_path
             nb_records += 1
-    logger.debug(f'{nb_records} {kapture.RecordsCamera}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.RecordsCamera} in {loading_elapsed.total_seconds():.3f} seconds')
     return records_camera
 
 
@@ -494,6 +507,7 @@ def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None
     :return: camera records
     """
     records_depth = kapture.RecordsDepth()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -504,7 +518,8 @@ def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None
                 continue
             records_depth[(int(timestamp), str(device_id))] = depth_map_path
             nb_records += 1
-    logger.debug(f'{nb_records} {kapture.RecordsDepth}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.RecordsDepth} in {loading_elapsed.total_seconds():.3f} seconds')
     return records_depth
 
 
@@ -539,6 +554,7 @@ def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
     :return: Lidar records
     """
     records_lidar = kapture.RecordsLidar()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -549,7 +565,8 @@ def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
                 continue
             records_lidar[(int(timestamp), str(device_id))] = point_cloud_path
             nb_records += 1
-    logger.debug(f'{nb_records} {kapture.RecordsLidar}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.RecordsLidar} in {loading_elapsed.total_seconds():.3f} seconds')
     return records_lidar
 
 
@@ -587,6 +604,7 @@ def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Opt
     :return: records
     """
     records = records_type()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         # timestamp, device_id, *
@@ -600,7 +618,8 @@ def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Opt
             records[timestamp, device_id] = records_type.record_type(*data)
             nb_records += 1
 
-    logger.debug(f'{nb_records} {records_type}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {records_type} in {loading_elapsed.total_seconds():.3f} seconds')
     return records
 
 
@@ -634,6 +653,7 @@ def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
     :return: Wifi records
     """
     records_wifi = kapture.RecordsWifi()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -649,7 +669,8 @@ def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
                 frequency, RSSI, SSID, scan_time_start, scan_time_end)
             nb_records += 1
 
-    logger.debug(f'{nb_records} {kapture.RecordsWifi}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.RecordsWifi} in {loading_elapsed.total_seconds():.3f} seconds')
     return records_wifi
 
 
@@ -683,6 +704,7 @@ def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = 
     :return: Bluetooth records
     """
     records_bluetooth = kapture.RecordsBluetooth()
+    loading_start = datetime.datetime.now()
     with open(filepath) as file:
         table = table_from_file(file)
         nb_records = 0
@@ -697,7 +719,8 @@ def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = 
             records_bluetooth[timestamp, device_id][address] = kapture.RecordBluetoothSignal(rssi=RSSI, name=name)
             nb_records += 1
 
-    logger.debug(f'{nb_records} {kapture.RecordsBluetooth}')
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.RecordsBluetooth} in {loading_elapsed.total_seconds():.3f} seconds')
     return records_bluetooth
 
 
@@ -1132,6 +1155,7 @@ def matches_from_dir(
                                          for image_pair in match_pairs_generator
                                          if image_pair in valid_pairs)
     else:
+        loading_start = datetime.datetime.now()
         # exist tar ? -> fire warning
         tar_path = get_feature_tar_fullpath(kapture.Matches, keypoints_type, kapture_dirpath)
         if os.path.isfile(tar_path):
@@ -1152,6 +1176,8 @@ def matches_from_dir(
                                                                                                  keypoints_type,
                                                                                                  kapture_dirpath))
                                          )
+        loading_elapsed = datetime.datetime.now() - loading_start
+        logger.debug(f'{len(table)} {kapture.Matches} in {loading_elapsed.total_seconds():.3f} seconds')
     if image_filenames is not None:
         # retains only files that correspond to known images
         match_pairs_generator = (
@@ -1186,8 +1212,11 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
     :return: the 3d points
     """
 
+    loading_start = datetime.datetime.now()
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
     data = data.reshape((-1, 6))  # make sure of the shape, even if single line file.
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds')
     return kapture.Points3d(data)
 
 
@@ -1235,8 +1264,10 @@ def observations_from_file(
     assert loaded_keypoints is None or all([isinstance(kpts, set) for kpts in loaded_keypoints.values()])
 
     observations = kapture.Observations()
+    loading_start = datetime.datetime.now()
     with open(observations_filepath) as file:
         table = table_from_file(file)
+        nb_records = 0
         # point3d_id, keypoints_type, [image_path, feature_id]*
         for points3d_id_str, keypoints_type, *pairs in table:
             if loaded_keypoints is not None and \
@@ -1251,6 +1282,9 @@ def observations_from_file(
                         # image_path does not exist in kapture (perhaps it was removed), ignore it
                         continue
                     observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
+                    nb_records += 1
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records} {kapture.Observations} in {loading_elapsed.total_seconds():.3f} seconds')
     return observations
 
 
@@ -1315,8 +1349,6 @@ def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
             logger.debug(f'saving {kapture_member_name} ...')
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             write_function(kapture_subtype_to_filepaths[kapture_class], part_data)
-            saving_elapsed = datetime.datetime.now() - saving_start
-            logger.info(f'Saved in {saving_elapsed.total_seconds()} seconds in "{kapture_dirpath}"')
         elif part_data is not None and kapture_class in FEATURES_CSV_FILENAMES:
             write_function = KAPTURE_ATTRIBUTE_WRITERS[kapture_class]
             for feature_type, features in part_data.items():
@@ -1324,6 +1356,8 @@ def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
                 logger.debug(f'saving {kapture_member_name} : {feature_type} ...')
                 filepath = path.join(kapture_dirpath, FEATURES_CSV_FILENAMES[kapture_class](feature_type))
                 write_function(filepath, features)
+    saving_elapsed = datetime.datetime.now() - saving_start
+    logger.info(f'Saved in {saving_elapsed.total_seconds():.3f} seconds in "{kapture_dirpath}"')
 
 
 # Kapture Read #########################################################################################################
@@ -1435,7 +1469,7 @@ def kapture_from_dir(
     _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
 
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'Loaded in {loading_elapsed.total_seconds()} seconds from "{kapture_dir_path}"')
+    logger.debug(f'Loaded in {loading_elapsed.total_seconds():.3f} seconds from "{kapture_dir_path}"')
     return kapture_data
 
 
