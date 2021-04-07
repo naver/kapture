@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz
 training_rig, training_camera_0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.1
 training_rig, training_camera_1, -0.8660254037844386,  0.0,  0.5,  0.0,  0.0,  0.0, -0.1

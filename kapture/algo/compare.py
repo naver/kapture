@@ -6,7 +6,7 @@ Distances computation and comparison of kapture objects
 
 import math
 import numpy as np
-from typing import List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Set, Tuple, Any, Union
 import inspect
 
 import kapture
@@ -253,15 +253,39 @@ def equal_nested_dict_or_set(data_a, data_b, name_to_log, expected_type=None) ->
     return are_equal
 
 
-def equal_image_features(
-        data_a: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]],
-        data_b: Optional[Union[kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures]]
+def equal_sets(data_a: Set[Any], data_b: Set[Any], func_name: str = 'equal_sets'):
+    set_difference = data_a.difference(data_b)
+    are_equal = len(set_difference) == 0
+    if not are_equal:
+        getLogger().debug('{}:\n{}'.format(func_name, '\n'.join((str(s) for s in set_difference))))
+    return are_equal
+
+
+def equal_keypoints(
+        data_a: kapture.Keypoints,
+        data_b: kapture.Keypoints
 ) -> bool:
     """
-    Compare two instances of kapture features (keypoints, descriptors or global features).
+    Compare two instances of kapture keypoints.
 
     :param data_a: first set of features
     :param data_b: second set of features
+    :return: True if they are identical, False otherwise.
+    """
+    assert isinstance(data_a, kapture.Keypoints)
+    assert isinstance(data_b, kapture.Keypoints)
+    if data_a.type_name != data_b.type_name or data_a.dtype != data_b.dtype or data_a.dsize != data_b.dsize:
+        return False
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_sets(data_a, data_b, current_function_name)
+
+
+def equal_keypoints_collections(data_a: Optional[Dict[str, kapture.Keypoints]],
+                                data_b: Optional[Dict[str, kapture.Keypoints]]):
+    """
+    Compare two keypoints collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
     :return: True if they are identical, False otherwise.
     """
     # early check if one is None
@@ -276,14 +300,111 @@ def equal_image_features(
     assert data_a is not None
     assert data_b is not None
 
-    if data_a.type_name != data_b.type_name or data_a.dtype != data_b.dtype or data_a.dsize != data_b.dsize:
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    if not equal_sets(set(data_a.keys()), set(data_b.keys()), current_function_name):
         return False
-    flattened_a = list(flatten(data_a, is_sorted=True))
-    flattened_b = list(flatten(data_b, is_sorted=True))
-    are_equal = (flattened_a == flattened_b)
-    if not are_equal:
-        log_difference(flattened_a, flattened_b, 'equal_image_features')
-    return are_equal
+    for keypoint_type in data_a.keys():
+        if not equal_keypoints(data_a[keypoint_type], data_b[keypoint_type]):
+            return False
+    return True
+
+
+def equal_descriptors(
+        data_a: kapture.Descriptors,
+        data_b: kapture.Descriptors
+) -> bool:
+    """
+    Compare two instances of kapture descriptors.
+
+    :param data_a: first set of features
+    :param data_b: second set of features
+    :return: True if they are identical, False otherwise.
+    """
+    assert isinstance(data_a, kapture.Descriptors)
+    assert isinstance(data_b, kapture.Descriptors)
+    if data_a.type_name != data_b.type_name or data_a.dtype != data_b.dtype or data_a.dsize != data_b.dsize \
+            or data_a.keypoints_type != data_b.keypoints_type or data_a.metric_type != data_b.metric_type:
+        return False
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_sets(data_a, data_b, current_function_name)
+
+
+def equal_descriptors_collections(data_a: Optional[Dict[str, kapture.Descriptors]],
+                                  data_b: Optional[Dict[str, kapture.Descriptors]]):
+    """
+    Compare two descriptors collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
+    :return: True if they are identical, False otherwise.
+    """
+    # early check if one is None
+    if data_a is None and data_b is None:
+        return True
+    elif data_a is None and data_b is not None:
+        return False
+    elif data_a is not None and data_b is None:
+        return False
+
+    # should not happen because of previous lines, use assert to help your ide figure out the type of data
+    assert data_a is not None
+    assert data_b is not None
+
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    if not equal_sets(set(data_a.keys()), set(data_b.keys()), current_function_name):
+        return False
+    for descriptors_type in data_a.keys():
+        if not equal_descriptors(data_a[descriptors_type], data_b[descriptors_type]):
+            return False
+    return True
+
+
+def equal_global_features(
+        data_a: kapture.GlobalFeatures,
+        data_b: kapture.GlobalFeatures
+) -> bool:
+    """
+    Compare two instances of kapture global features.
+
+    :param data_a: first set of features
+    :param data_b: second set of features
+    :return: True if they are identical, False otherwise.
+    """
+    assert isinstance(data_a, kapture.GlobalFeatures)
+    assert isinstance(data_b, kapture.GlobalFeatures)
+    if data_a.type_name != data_b.type_name or data_a.dtype != data_b.dtype or data_a.dsize != data_b.dsize \
+            or data_a.metric_type != data_b.metric_type:
+        return False
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    return equal_sets(data_a, data_b, current_function_name)
+
+
+def equal_global_features_collections(data_a: Optional[Dict[str, kapture.GlobalFeatures]],
+                                      data_b: Optional[Dict[str, kapture.GlobalFeatures]]):
+    """
+    Compare two global_features collections.
+    :param data_a: first collection of features
+    :param data_b: second collection of features
+    :return: True if they are identical, False otherwise.
+    """
+    # early check if one is None
+    if data_a is None and data_b is None:
+        return True
+    elif data_a is None and data_b is not None:
+        return False
+    elif data_a is not None and data_b is None:
+        return False
+
+    # should not happen because of previous lines, use assert to help your ide figure out the type of data
+    assert data_a is not None
+    assert data_b is not None
+
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    if not equal_sets(set(data_a.keys()), set(data_b.keys()), current_function_name):
+        return False
+    for global_features_type in data_a.keys():
+        if not equal_global_features(data_a[global_features_type], data_b[global_features_type]):
+            return False
+    return True
 
 
 def equal_records_camera(
@@ -407,8 +528,8 @@ def equal_records_magnetic(
 
 
 def equal_matches(
-        matches_a: Optional[kapture.Matches],
-        matches_b: Optional[kapture.Matches]) -> bool:
+        matches_a: kapture.Matches,
+        matches_b: kapture.Matches) -> bool:
     """
     Compare two instances of kapture.Matches.
 
@@ -416,9 +537,39 @@ def equal_matches(
     :param matches_b: second set of matches
     :return: True if they are identical, False otherwise.
     """
-    expected_type = kapture.Matches
+    assert isinstance(matches_a, kapture.Matches)
+    assert isinstance(matches_b, kapture.Matches)
     current_function_name = inspect.getframeinfo(inspect.currentframe()).function
-    return equal_nested_dict_or_set(matches_a, matches_b, current_function_name, expected_type)
+    return equal_sets(matches_a, matches_b, current_function_name)
+
+
+def equal_matches_collections(data_a: Optional[Dict[str, kapture.Matches]],
+                              data_b: Optional[Dict[str, kapture.Matches]]):
+    """
+    Compare two matches collections.
+    :param data_a: first collection of matches
+    :param data_b: second collection of matches
+    :return: True if they are identical, False otherwise.
+    """
+    # early check if one is None
+    if data_a is None and data_b is None:
+        return True
+    elif data_a is None and data_b is not None:
+        return False
+    elif data_a is not None and data_b is None:
+        return False
+
+    # should not happen because of previous lines, use assert to help your ide figure out the type of data
+    assert data_a is not None
+    assert data_b is not None
+
+    current_function_name = inspect.getframeinfo(inspect.currentframe()).function
+    if not equal_sets(set(data_a.keys()), set(data_b.keys()), current_function_name):
+        return False
+    for keypoints_type in data_a.keys():
+        if not equal_matches(data_a[keypoints_type], data_b[keypoints_type]):
+            return False
+    return True
 
 
 def equal_observations(
@@ -502,12 +653,15 @@ def equal_kapture(
             return False
 
     # compare image features (keypoints, descriptors, global_features)
-    for feature_type in ['keypoints', 'descriptors', 'global_features']:
-        if not equal_image_features(getattr(data_a, feature_type), getattr(data_b, feature_type)):
-            return False
+    if not equal_keypoints_collections(data_a.keypoints, data_b.keypoints):
+        return False
+    if not equal_descriptors_collections(data_a.descriptors, data_b.descriptors):
+        return False
+    if not equal_global_features_collections(data_a.global_features, data_b.global_features):
+        return False
 
     # compare matches
-    if not equal_matches(data_a.matches, data_b.matches):
+    if not equal_matches_collections(data_a.matches, data_b.matches):
         return False
 
     # compare observations

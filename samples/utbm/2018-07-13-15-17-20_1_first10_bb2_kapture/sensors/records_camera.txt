@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, image_path
 1531487840875078949, bb2_left, bb2_left/frame_000000001.jpg
 1531487840875078949, bb2_right, bb2_right/frame_000000001.jpg

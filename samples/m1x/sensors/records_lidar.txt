@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, pcd_path
 1555399760777612, lidar0, lidar0/1555399760777612.pcd
 1555399760777612, lidar1, lidar1/1555399760777612.pcd

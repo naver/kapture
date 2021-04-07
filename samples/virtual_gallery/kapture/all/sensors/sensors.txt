@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_id, name, sensor_type, [sensor_params]+
 training_camera_0, , camera, PINHOLE, 1920, 1080, 1371.022, 1371.022, 959.5, 539.5
 training_camera_1, , camera, PINHOLE, 1920, 1080, 1371.022, 1371.022, 959.5, 539.5

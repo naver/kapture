@@ -59,7 +59,7 @@ class TestMatches(unittest.TestCase):
         image_pairs_expected = {('00.jpg', '01.jpg'), ('00.jpg', '02.jpg'),
                                 ('00.jpg', '03.jpg'), ('01.jpg', '02.jpg'),
                                 ('01.jpg', '03.jpg'), ('02.jpg', '03.jpg')}
-        image_pairs_actual = set(kapture.io.features.matching_pairs_from_dirpath(self._kapture_dirpath))
+        image_pairs_actual = set(kapture.io.features.matching_pairs_from_dirpath('SIFT', self._kapture_dirpath))
         self.assertEqual(6, len(image_pairs_actual))
         self.assertEqual(image_pairs_expected, image_pairs_actual)
 
@@ -70,7 +70,7 @@ class TestMatches(unittest.TestCase):
 
     def test_matches_from_file(self):
         # check a single sample file
-        matching_sample_filepath = path.join(self._kapture_dirpath, 'reconstruction', 'matches',
+        matching_sample_filepath = path.join(self._kapture_dirpath, 'reconstruction', 'matches', 'SIFT',
                                              '00.jpg.overlapping', '01.jpg.matches')
         matchings = kapture.io.features.image_matches_from_file(matching_sample_filepath)
         self.assertIsInstance(matchings, np.ndarray)

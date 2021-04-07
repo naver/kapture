@@ -31,6 +31,8 @@ logger = logging.getLogger('colmap')
 def export_colmap(kapture_dir_path: str,
                   colmap_database_filepath: str,
                   colmap_reconstruction_dir_path: Optional[str],
+                  keypoints_type: str = None,
+                  descriptors_type: str = None,
                   colmap_rig_filepath: str = None,
                   force_overwrite_existing: bool = False,
                   pairsfile_path: Optional[str] = None) -> None:
@@ -68,7 +70,7 @@ def export_colmap(kapture_dir_path: str,
         rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
 
     # write colmap database
-    kapture_to_colmap(kapture_data, kapture_dir_path, db)
+    kapture_to_colmap(kapture_data, kapture_dir_path, db, keypoints_type, descriptors_type)
 
     if colmap_reconstruction_dir_path:
         # create text files
@@ -78,7 +80,8 @@ def export_colmap(kapture_dir_path: str,
                              kapture_data,
                              kapture_dir_path,
                              colmap_camera_ids,
-                             colmap_image_ids)
+                             colmap_image_ids,
+                             keypoints_type)
         if colmap_rig_filepath:
             try:
                 if kapture_data.rigs is None:

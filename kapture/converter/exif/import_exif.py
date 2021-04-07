@@ -181,10 +181,10 @@ def import_gps_from_exif(
     :return:
     """
     logger.info('loading kapture partial ...')
-    skip_heavy_useless = {kapture.Trajectories,
+    skip_heavy_useless = [kapture.Trajectories,
                           kapture.RecordsLidar, kapture.RecordsWifi,
                           kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,
-                          kapture.Matches, kapture.Points3d, kapture.Observations}
+                          kapture.Matches, kapture.Points3d, kapture.Observations]
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_dirpath, skip_list=skip_heavy_useless)
 
     # load exifs

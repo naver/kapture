@@ -16,7 +16,7 @@ from typing import List
 
 from kapture.algo.merge_keep_ids import merge_keep_ids
 from kapture.algo.merge_remap import merge_remap
-from kapture.io.csv import kapture_from_dir, kapture_to_dir
+from kapture.io.csv import get_all_tar_handlers, kapture_from_dir, kapture_to_dir
 from kapture.io.records import get_image_fullpath
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.records import TransferAction
@@ -77,17 +77,25 @@ def merge_kaptures(kapture_path_list: List[str],  # noqa: C901: function really 
         skip_list.append(kapture.Observations)
 
     kapture_data_list = []
+    kapture_tarcollection_list = []
     for kapture_path in kapture_path_list:
         logger.info(f'Loading {kapture_path}')
-        kapture_data = kapture_from_dir(kapture_path)
+        tar_handlers = get_all_tar_handlers(kapture_path)
+        kapture_data = kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
         kapture_data_list.append(kapture_data)
+        kapture_tarcollection_list.append(tar_handlers)
 
     if keep_sensor_ids:
-        merged_kapture = merge_keep_ids(kapture_data_list, skip_list, kapture_path_list,
+        merged_kapture = merge_keep_ids(kapture_data_list, skip_list,
+                                        kapture_path_list, kapture_tarcollection_list,
                                         merged_path, images_import_strategy)
     else:
-        merged_kapture = merge_remap(kapture_data_list, skip_list, kapture_path_list,
+        merged_kapture = merge_remap(kapture_data_list, skip_list,
+                                     kapture_path_list, kapture_tarcollection_list,
                                      merged_path, images_import_strategy)
+
+    for tar_handlers in kapture_tarcollection_list:
+        tar_handlers.close()
 
     logger.info('Writing merged kapture data...')
     kapture_to_dir(merged_path, merged_kapture)

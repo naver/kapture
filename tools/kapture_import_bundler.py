@@ -55,6 +55,7 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 
 logger = logging.getLogger('bundler')
 MODEL = kapture.CameraType.RADIAL
+LOCAL_FEATURE_TYPE = 'sift'
 
 
 def import_bundler(bundler_path: str,
@@ -103,7 +104,7 @@ def import_bundler(bundler_path: str,
     images = kapture.RecordsCamera()
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
     points3d = [] if add_reconstruction else None
-    keypoints = kapture.Keypoints('sift', np.float32, 2) if add_reconstruction else None
+    keypoints = None
     observations = kapture.Observations() if add_reconstruction else None
     image_mapping = []  # bundler camera_id -> (name, width, height)
     for i in range(0, number_of_cameras):
@@ -148,7 +149,6 @@ def import_bundler(bundler_path: str,
             trajectories[(i, camera_id)] = kapture.PoseTransform.compose([transformation, pose, transformation])
 
     if points3d is not None and number_of_points > 0:
-        assert keypoints is not None
         assert observations is not None
         offset += number_of_cameras * number_of_lines_per_camera
         number_of_lines_per_point = 3  # position color viewlist
@@ -189,18 +189,20 @@ def import_bundler(bundler_path: str,
                     known_keypoints[(file_name, keypoint_id)] = len(local_keypoints[file_name])
                     local_keypoints[file_name].append([x, y])
                 keypoint_idx = known_keypoints[(file_name, keypoint_id)]
-                observations.add(i, file_name, keypoint_idx)
+                observations.add(i, LOCAL_FEATURE_TYPE, file_name, keypoint_idx)
             points3d.append(position + color)
         points3d = np.array(points3d)
 
         # finally, convert local_keypoints to np.ndarray and add them to the global keypoints variable
-        keypoints = kapture.Keypoints('sift', np.float32, 2)
+        sift_keypoints = kapture.Keypoints(LOCAL_FEATURE_TYPE, np.float32, 2)
         for image_filename, keypoints_array in local_keypoints.items():
-            keypoints_np_array = np.array(keypoints_array).astype(np.float32)
-            keypoints_out_path = kapture.io.features.get_keypoints_fullpath(kapture_dir_path, image_filename)
+            keypoints_np_array = np.array(keypoints_array, dtype=np.float32)
+            keypoints_out_path = kapture.io.features.get_keypoints_fullpath(LOCAL_FEATURE_TYPE,
+                                                                            kapture_dir_path,
+                                                                            image_filename)
             kapture.io.features.image_keypoints_to_file(keypoints_out_path, keypoints_np_array)
-            keypoints.add(image_filename)
-
+            sift_keypoints.add(image_filename)
+        keypoints = {LOCAL_FEATURE_TYPE: sift_keypoints}
     if points3d is not None:
         points3d = kapture.Points3d(points3d)
 
