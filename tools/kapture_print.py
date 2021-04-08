@@ -330,11 +330,10 @@ def print_command_line() -> None:
 
     args.input = path.abspath(args.input)
     # load
-    tar_handlers = kapture.io.csv.get_all_tar_handlers(args.input)
-    kapture_data = kapture.io.csv.kapture_from_dir(args.input, tar_handlers=tar_handlers)
-    do_print(kapture_data, args.input, args.output, args.detail, args.all,
-             args.timestamp_unit, args.timestamp_formatting)
-    tar_handlers.close()
+    with kapture.io.csv.get_all_tar_handlers(args.input) as tar_handlers:
+        kapture_data = kapture.io.csv.kapture_from_dir(args.input, tar_handlers=tar_handlers)
+        do_print(kapture_data, args.input, args.output, args.detail, args.all,
+                 args.timestamp_unit, args.timestamp_formatting)
 
 
 def do_print(

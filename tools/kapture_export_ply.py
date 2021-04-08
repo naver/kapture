@@ -45,80 +45,78 @@ def plot_ply(kapture_path: str,  # noqa: C901
         os.makedirs(ply_path, exist_ok=True)
 
         logger.info('loading data ...')
-        tar_handlers = csv.get_all_tar_handlers(kapture_path)
-        kapture_data = csv.kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
+        with csv.get_all_tar_handlers(kapture_path) as tar_handlers:
+            kapture_data = csv.kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
 
-        def _should_do(choice: str) -> bool:
-            ok_only = only is None or choice in only
-            ok_skip = skip is None or choice not in skip
-            return ok_only or ok_skip
+            def _should_do(choice: str) -> bool:
+                ok_only = only is None or choice in only
+                ok_skip = skip is None or choice not in skip
+                return ok_only or ok_skip
 
-        logger.info('plotting  ...')
-        if _should_do('rigs') and kapture_data.rigs:
-            logger.info(f'creating {len(kapture_data.rigs)} rigs.')
-            for rig_id, rig in kapture_data.rigs.items():
-                rig_ply_filepath = path.join(ply_path, f'rig_{rig_id}.ply')
-                logger.info(f'creating rig file : {rig_ply_filepath}.')
-                logger.debug(rig_ply_filepath)
-                ply.rig_to_ply(rig_ply_filepath, rig, axis_length)
+            logger.info('plotting  ...')
+            if _should_do('rigs') and kapture_data.rigs:
+                logger.info(f'creating {len(kapture_data.rigs)} rigs.')
+                for rig_id, rig in kapture_data.rigs.items():
+                    rig_ply_filepath = path.join(ply_path, f'rig_{rig_id}.ply')
+                    logger.info(f'creating rig file : {rig_ply_filepath}.')
+                    logger.debug(rig_ply_filepath)
+                    ply.rig_to_ply(rig_ply_filepath, rig, axis_length)
 
-        if _should_do('trajectories') and kapture_data.trajectories:
-            trajectories_ply_filepath = path.join(ply_path, 'trajectories.ply')
-            logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
-            ply.trajectories_to_ply(trajectories_ply_filepath, kapture_data.trajectories, axis_length)
+            if _should_do('trajectories') and kapture_data.trajectories:
+                trajectories_ply_filepath = path.join(ply_path, 'trajectories.ply')
+                logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
+                ply.trajectories_to_ply(trajectories_ply_filepath, kapture_data.trajectories, axis_length)
 
-        if _should_do('points3d') and kapture_data.points3d:
-            points3d_ply_filepath = path.join(ply_path, 'points3d.ply')
-            logger.info(f'creating 3D points file : {points3d_ply_filepath}')
-            ply.points3d_to_ply(points3d_ply_filepath, kapture_data.points3d)
+            if _should_do('points3d') and kapture_data.points3d:
+                points3d_ply_filepath = path.join(ply_path, 'points3d.ply')
+                logger.info(f'creating 3D points file : {points3d_ply_filepath}')
+                ply.points3d_to_ply(points3d_ply_filepath, kapture_data.points3d)
 
-        if _should_do('keypoints') and kapture_data.keypoints:
-            if keypoints_type is None:
-                if len(kapture_data.keypoints) == 1:
-                    keypoints_type = next(iter(kapture_data.keypoints.keys()))
-                else:
-                    raise ValueError('should_do(keypoints) is true but keypoints_type '
-                                     'is None and could be multiple values, please specify')
+            if _should_do('keypoints') and kapture_data.keypoints:
+                if keypoints_type is None:
+                    if len(kapture_data.keypoints) == 1:
+                        keypoints_type = next(iter(kapture_data.keypoints.keys()))
+                    else:
+                        raise ValueError('should_do(keypoints) is true but keypoints_type '
+                                         'is None and could be multiple values, please specify')
 
-            logger.info('creating keypoints in 3D : '
-                        f'{kapture.io.features.get_keypoints_fullpath(keypoints_type, ply_path)}')
-            keypoints_dsize = kapture_data.keypoints[keypoints_type].dsize
-            keypoints_dtype = kapture_data.keypoints[keypoints_type].dtype
-            keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints[keypoints_type],
-                                                                             keypoints_type,
-                                                                             kapture_path,
-                                                                             tar_handlers)
-            for image_filename, keypoints_filepath in tqdm(keypoints_filepaths.items(),
-                                                           disable=logger.level >= logging.CRITICAL):
-                image_filepath = kapture.io.records.get_image_fullpath(kapture_path, image_filename)
-                image_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
-                                                                                      ply_path,
-                                                                                      image_filename) + '.jpg'
-                image.image_keypoints_to_image_file(
-                    image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
+                logger.info('creating keypoints in 3D : '
+                            f'{kapture.io.features.get_keypoints_fullpath(keypoints_type, ply_path)}')
+                keypoints_dsize = kapture_data.keypoints[keypoints_type].dsize
+                keypoints_dtype = kapture_data.keypoints[keypoints_type].dtype
+                keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints[keypoints_type],
+                                                                                 keypoints_type,
+                                                                                 kapture_path,
+                                                                                 tar_handlers)
+                for image_filename, keypoints_filepath in tqdm(keypoints_filepaths.items(),
+                                                               disable=logger.level >= logging.CRITICAL):
+                    image_filepath = kapture.io.records.get_image_fullpath(kapture_path, image_filename)
+                    image_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
+                                                                                          ply_path,
+                                                                                          image_filename) + '.jpg'
+                    image.image_keypoints_to_image_file(
+                        image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
 
-        if _should_do('depth') and kapture_data.records_depth:
-            logger.info('creating depth maps in 3D.')
-            depth_records_filepaths = kapture.io.records.depth_maps_to_filepaths(kapture_data.records_depth,
-                                                                                 kapture_path)
-            map_depth_to_sensor = {depth_map_name: sensor_id
-                                   for _, sensor_id, depth_map_name in kapture.flatten(kapture_data.records_depth)}
-            for depth_map_name, depth_map_filepath in tqdm(depth_records_filepaths.items(),
-                                                           disable=logger.level >= logging.CRITICAL):
-                depth_png_filepath = path.join(ply_path, f'depth_images/{depth_map_name}.png')
-                logger.debug(f'creating depth map file {depth_png_filepath}')
-                os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
-                depth_sensor_id = map_depth_to_sensor[depth_map_name]
-                depth_map_sizes = tuple(int(x) for x in kapture_data.sensors[depth_sensor_id].sensor_params[1:3])
-                depth_map = records_depth_from_file(depth_map_filepath, depth_map_sizes)
-                # min max scaling
-                depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
-                depth_map = (depth_map * 255.).astype(np.uint8)
-                depth_image = Image.fromarray(depth_map)
-                depth_image.save(depth_png_filepath)
-        tar_handlers.close()
-        logger.info('done.')
-
+            if _should_do('depth') and kapture_data.records_depth:
+                logger.info('creating depth maps in 3D.')
+                depth_records_filepaths = kapture.io.records.depth_maps_to_filepaths(kapture_data.records_depth,
+                                                                                     kapture_path)
+                map_depth_to_sensor = {depth_map_name: sensor_id
+                                       for _, sensor_id, depth_map_name in kapture.flatten(kapture_data.records_depth)}
+                for depth_map_name, depth_map_filepath in tqdm(depth_records_filepaths.items(),
+                                                               disable=logger.level >= logging.CRITICAL):
+                    depth_png_filepath = path.join(ply_path, f'depth_images/{depth_map_name}.png')
+                    logger.debug(f'creating depth map file {depth_png_filepath}')
+                    os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
+                    depth_sensor_id = map_depth_to_sensor[depth_map_name]
+                    depth_map_sizes = tuple(int(x) for x in kapture_data.sensors[depth_sensor_id].sensor_params[1:3])
+                    depth_map = records_depth_from_file(depth_map_filepath, depth_map_sizes)
+                    # min max scaling
+                    depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
+                    depth_map = (depth_map * 255.).astype(np.uint8)
+                    depth_image = Image.fromarray(depth_map)
+                    depth_image.save(depth_png_filepath)
+            logger.info('done.')
     except Exception as e:
         logging.critical(e)
         raise

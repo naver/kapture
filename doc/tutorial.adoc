@@ -75,7 +75,9 @@ import kapture.io.csv as csv
 
 dataset_path = '../samples/virtual_gallery/kapture/training'
 # keypoints, descriptors, matches, global features can be stored in tar files, so open them in advance
-# tar_handlers.close() should be called before exiting the program
+# use with csv.get_all_tar_handlers(dataset_path) as tar_handlers
+# or call
+# tar_handlers.close() before exiting the program
 tar_handlers = csv.get_all_tar_handlers(dataset_path)
 kapture_data = csv.kapture_from_dir(dataset_path, tar_handlers)
 ----

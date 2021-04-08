@@ -78,24 +78,25 @@ def merge_kaptures(kapture_path_list: List[str],  # noqa: C901: function really 
 
     kapture_data_list = []
     kapture_tarcollection_list = []
-    for kapture_path in kapture_path_list:
-        logger.info(f'Loading {kapture_path}')
-        tar_handlers = get_all_tar_handlers(kapture_path)
-        kapture_data = kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
-        kapture_data_list.append(kapture_data)
-        kapture_tarcollection_list.append(tar_handlers)
+    try:
+        for kapture_path in kapture_path_list:
+            logger.info(f'Loading {kapture_path}')
+            tar_handlers = get_all_tar_handlers(kapture_path)
+            kapture_data = kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
+            kapture_data_list.append(kapture_data)
+            kapture_tarcollection_list.append(tar_handlers)
 
-    if keep_sensor_ids:
-        merged_kapture = merge_keep_ids(kapture_data_list, skip_list,
-                                        kapture_path_list, kapture_tarcollection_list,
-                                        merged_path, images_import_strategy)
-    else:
-        merged_kapture = merge_remap(kapture_data_list, skip_list,
-                                     kapture_path_list, kapture_tarcollection_list,
-                                     merged_path, images_import_strategy)
-
-    for tar_handlers in kapture_tarcollection_list:
-        tar_handlers.close()
+        if keep_sensor_ids:
+            merged_kapture = merge_keep_ids(kapture_data_list, skip_list,
+                                            kapture_path_list, kapture_tarcollection_list,
+                                            merged_path, images_import_strategy)
+        else:
+            merged_kapture = merge_remap(kapture_data_list, skip_list,
+                                         kapture_path_list, kapture_tarcollection_list,
+                                         merged_path, images_import_strategy)
+    finally:
+        for tar_handlers in kapture_tarcollection_list:
+            tar_handlers.close()
 
     logger.info('Writing merged kapture data...')
     kapture_to_dir(merged_path, merged_kapture)
