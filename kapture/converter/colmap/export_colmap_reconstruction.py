@@ -4,9 +4,10 @@
 Functions to export the reconstruction part of colmap (only text format is supported).
 """
 
+from kapture.io.tar import TarCollection
 import logging
 import os.path as path
-from typing import Dict, Tuple, List
+from typing import Dict, Optional, Tuple, List
 
 # kapture
 import kapture
@@ -167,6 +168,7 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
 def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
                          kapture_data: kapture.Kapture,
                          kapture_dirpath: str,
+                         tar_handler: Optional[TarCollection],
                          colmap_camera_ids: Dict[str, int],
                          colmap_image_ids: Dict[str, int],
                          keypoints_type: str = None) -> None:
@@ -176,6 +178,7 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
     :param colmap_reconstruction_dirpath: path to directory where colmap reconstruction files will be stored.
     :param kapture_data: input kapture data
     :param kapture_dirpath: path to output directory, where colmap files will be stored
+    :param tar_handler: collection of preloaded tar archives
     :param colmap_camera_ids: gives the correspondences between kapture camera id and colmap camera id
     :param colmap_image_ids: gives the correspondences between kapture image id (image path) and colmap image id
     """
@@ -218,7 +221,8 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
             keypoints = kapture_data.keypoints[keypoints_type]
             keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints,
                                                                              keypoints_type,
-                                                                             kapture_dirpath)
+                                                                             kapture_dirpath,
+                                                                             tar_handler)
             for image_filename, image_keypoints_filepath in keypoints_filepaths.items():
                 image_keypoints = kapture.io.features.image_keypoints_from_file(image_keypoints_filepath,
                                                                                 keypoints.dtype,

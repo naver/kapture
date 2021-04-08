@@ -60,38 +60,40 @@ def export_colmap(kapture_dir_path: str,
         raise ValueError('the existing colmap database is not empty : {}'.format(colmap_database_filepath))
 
     logger.info('loading kapture files...')
-    kapture_data = csv.kapture_from_dir(kapture_dir_path, pairsfile_path)
-    assert isinstance(kapture_data, kapture.Kapture)
+    with csv.get_all_tar_handlers(kapture_dir_path) as tar_handlers:
+        kapture_data = csv.kapture_from_dir(kapture_dir_path, pairsfile_path, tar_handlers=tar_handlers)
+        assert isinstance(kapture_data, kapture.Kapture)
 
-    # COLMAP does not fully support rigs.
-    if kapture_data.rigs is not None:
-        # make sure, rigs are not used in trajectories.
-        logger.info('remove rigs notation.')
-        rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
+        # COLMAP does not fully support rigs.
+        if kapture_data.rigs is not None:
+            # make sure, rigs are not used in trajectories.
+            logger.info('remove rigs notation.')
+            rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
 
-    # write colmap database
-    kapture_to_colmap(kapture_data, kapture_dir_path, db, keypoints_type, descriptors_type)
+        # write colmap database
+        kapture_to_colmap(kapture_data, kapture_dir_path, tar_handlers, db, keypoints_type, descriptors_type)
 
-    if colmap_reconstruction_dir_path:
-        # create text files
-        colmap_camera_ids = get_colmap_camera_ids_from_db(db, kapture_data.records_camera)
-        colmap_image_ids = get_colmap_image_ids_from_db(db)
-        export_to_colmap_txt(colmap_reconstruction_dir_path,
-                             kapture_data,
-                             kapture_dir_path,
-                             colmap_camera_ids,
-                             colmap_image_ids,
-                             keypoints_type)
-        if colmap_rig_filepath:
-            try:
-                if kapture_data.rigs is None:
-                    raise ValueError('No rig to export.')
-                export_colmap_rig(colmap_rig_filepath,
-                                  kapture_data.rigs,
-                                  kapture_data.records_camera,
-                                  colmap_camera_ids)
-            except Exception as e:
-                warnings.warn(e)
-                logger.warning(e)
+        if colmap_reconstruction_dir_path:
+            # create text files
+            colmap_camera_ids = get_colmap_camera_ids_from_db(db, kapture_data.records_camera)
+            colmap_image_ids = get_colmap_image_ids_from_db(db)
+            export_to_colmap_txt(colmap_reconstruction_dir_path,
+                                 kapture_data,
+                                 kapture_dir_path,
+                                 tar_handlers,
+                                 colmap_camera_ids,
+                                 colmap_image_ids,
+                                 keypoints_type)
+            if colmap_rig_filepath:
+                try:
+                    if kapture_data.rigs is None:
+                        raise ValueError('No rig to export.')
+                    export_colmap_rig(colmap_rig_filepath,
+                                      kapture_data.rigs,
+                                      kapture_data.records_camera,
+                                      colmap_camera_ids)
+                except Exception as e:
+                    warnings.warn(e)
+                    logger.warning(e)
 
     db.close()
