@@ -105,12 +105,16 @@ class TestColmapMaupertuis(unittest.TestCase):
         self._database_filepath = path.join(self._colmap_dirpath, 'colmap.db')
         self._reconstruction_path = path.join(self._colmap_dirpath, 'reconstruction')
         self._kapture_dirpath = path.normpath(path.join(self._sample_dirpath, 'kapture'))
+        self.keypoints_type = 'SIFT'
+        self.descriptors_type = 'SIFT'
 
     def tearDown(self) -> None:
         self._tempdir.cleanup()
 
     def test_maupertuis_import_db_only(self):
         kapture_data = import_colmap_database(self._database_filepath, self._temp_dirpath,
+                                              self.keypoints_type,
+                                              self.descriptors_type,
                                               no_geometric_filtering=True)
 
         # check the numbers
@@ -121,9 +125,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertIsNone(kapture_data.records_gnss)
         self.assertEqual(1, len(kapture_data.sensors))
         self.assertEqual(4, len(kapture_data.records_camera))
-        self.assertEqual(4, len(kapture_data.keypoints))
-        self.assertEqual(4, len(kapture_data.descriptors))
-        self.assertEqual(6, len(kapture_data.matches))
+        self.assertEqual(4, len(kapture_data.keypoints[self.keypoints_type]))
+        self.assertEqual(4, len(kapture_data.descriptors[self.descriptors_type]))
+        self.assertEqual(6, len(kapture_data.matches[self.keypoints_type]))
 
         # check camera
         camera = kapture_data.sensors['cam_00001']
@@ -138,18 +142,21 @@ class TestColmapMaupertuis(unittest.TestCase):
                          [filename for _, _, filename in kapture.flatten(snapshots, True)])
 
         # check keypoints
-        keypoints = kapture_data.keypoints
+        keypoints = kapture_data.keypoints[self.keypoints_type]
         self.assertEqual(np.float32, keypoints.dtype)
         self.assertEqual(6, keypoints.dsize)
         self.assertEqual({'00.jpg', '01.jpg', '02.jpg', '03.jpg'}, keypoints)
-        keypoints_filepaths_actual = kapture.io.features.keypoints_to_filepaths(keypoints, self._temp_dirpath)
+        keypoints_filepaths_actual = kapture.io.features.keypoints_to_filepaths(keypoints,
+                                                                                self.keypoints_type,
+                                                                                self._temp_dirpath)
         keypoints_filepaths_expected = {
-            f'{i:02d}.jpg': path_secure(f'{self._temp_dirpath}/reconstruction/keypoints/{i:02d}.jpg.kpt')
+            f'{i:02d}.jpg': path_secure(f'{self._temp_dirpath}/reconstruction/keypoints'
+                                        f'/{self.keypoints_type}/{i:02d}.jpg.kpt')
             for i in [0, 1, 2, 3]}
         self.assertDictEqual(keypoints_filepaths_actual, keypoints_filepaths_expected)
         # check a keypoints file
         image_keypoints_filepaths = sorted(
-            kapture.io.features.keypoints_to_filepaths(keypoints, self._temp_dirpath).values())
+            kapture.io.features.keypoints_to_filepaths(keypoints, self.keypoints_type, self._temp_dirpath).values())
         image_keypoints = image_keypoints_from_file(image_keypoints_filepaths[0], keypoints.dtype, keypoints.dsize)
         self.assertEqual((6424, 6), image_keypoints.shape)
         self.assertAlmostEqual([1290.908447265625, 4.156360626220703, -1.3475048542022705,
@@ -161,24 +168,28 @@ class TestColmapMaupertuis(unittest.TestCase):
                                image_keypoints[-1].tolist())
 
         # check descriptors
-        descriptors = kapture_data.descriptors
+        descriptors = kapture_data.descriptors[self.descriptors_type]
         self.assertEqual(np.uint8, descriptors.dtype)
         self.assertEqual(128, descriptors.dsize)
         self.assertEqual({'00.jpg', '01.jpg', '02.jpg', '03.jpg'}, descriptors)
-        descriptors_filepaths_actual = kapture.io.features.descriptors_to_filepaths(descriptors, self._temp_dirpath)
+        descriptors_filepaths_actual = kapture.io.features.descriptors_to_filepaths(descriptors,
+                                                                                    self.descriptors_type,
+                                                                                    self._temp_dirpath)
         descriptors_filepaths_expected = {
-            f'{i:02d}.jpg': path_secure(f'{self._temp_dirpath}/reconstruction/descriptors/{i:02d}.jpg.desc')
+            f'{i:02d}.jpg': path_secure(f'{self._temp_dirpath}/reconstruction/descriptors/'
+                                        f'{self.descriptors_type}/{i:02d}.jpg.desc')
             for i in [0, 1, 2, 3]}
         self.assertDictEqual(descriptors_filepaths_actual, descriptors_filepaths_expected)
         # check a descriptors file
-        image_descriptors_filepaths = sorted(kapture.io.features.descriptors_to_filepaths(
-            descriptors, self._temp_dirpath).values())
+        image_descriptors_filepaths = sorted(kapture.io.features.descriptors_to_filepaths(descriptors,
+                                                                                          self.descriptors_type,
+                                                                                          self._temp_dirpath).values())
         image_descriptors = image_descriptors_from_file(
             image_descriptors_filepaths[0], descriptors.dtype, descriptors.dsize)
         self.assertEqual(image_keypoints.shape[0], image_descriptors.shape[0])
 
         # check matches
-        matches = kapture_data.matches
+        matches = kapture_data.matches[self.keypoints_type]
         self.assertEqual({('01.jpg', '03.jpg'), ('00.jpg', '02.jpg'),
                           ('00.jpg', '03.jpg'), ('02.jpg', '03.jpg'),
                           ('00.jpg', '01.jpg'), ('01.jpg', '02.jpg')},
@@ -186,7 +197,7 @@ class TestColmapMaupertuis(unittest.TestCase):
 
     def test_maupertuis_import_txt_only(self):
         kapture_data = import_colmap_from_reconstruction_files(
-            self._reconstruction_path, self._temp_dirpath, skip=set())
+            self._reconstruction_path, self._temp_dirpath, self.keypoints_type, skip=set())
 
         # check the numbers
         self.assertEqual(1, len(kapture_data.sensors))
@@ -194,7 +205,7 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertEqual(4, len(kapture_data.records_camera))
         self.assertIs(kapture_data.records_lidar, None)
         self.assertIs(kapture_data.records_wifi, None)
-        self.assertEqual(4, len(kapture_data.keypoints))
+        self.assertEqual(4, len(kapture_data.keypoints[self.keypoints_type]))
         self.assertIs(kapture_data.descriptors, None)
         self.assertIs(kapture_data.matches, None)
         self.assertEqual(1039, len(kapture_data.points3d))
@@ -231,11 +242,12 @@ class TestColmapMaupertuis(unittest.TestCase):
         observations = kapture_data.observations
         # self.assertEqual(4, len(observations[0]))
         self.assertEqual({('01.jpg', 4561), ('02.jpg', 3389), ('00.jpg', 4975), ('03.jpg', 3472)},
-                         set(observations[0]))
+                         set(observations[0]['SIFT']))
 
     def test_maupertuis_import(self):
         kapture_data = import_colmap(self._temp_dirpath, self._database_filepath,
                                      self._reconstruction_path, self._images_filepath,
+                                     None, self.keypoints_type, self.descriptors_type,
                                      force_overwrite_existing=True,
                                      images_import_strategy=TransferAction.copy,
                                      no_geometric_filtering=True)
@@ -247,9 +259,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertIs(kapture_data.records_lidar, None)
         self.assertIs(kapture_data.records_wifi, None)
         self.assertIs(kapture_data.records_gnss, None)
-        self.assertEqual(4, len(kapture_data.keypoints))
-        self.assertEqual(4, len(kapture_data.descriptors))
-        self.assertEqual(6, len(kapture_data.matches))
+        self.assertEqual(4, len(kapture_data.keypoints[self.keypoints_type]))
+        self.assertEqual(4, len(kapture_data.descriptors[self.descriptors_type]))
+        self.assertEqual(6, len(kapture_data.matches[self.keypoints_type]))
         self.assertEqual(1039, len(kapture_data.points3d))
         self.assertEqual(1039, len(kapture_data.observations))
 
@@ -277,9 +289,12 @@ class TestColmapMaupertuis(unittest.TestCase):
     def test_maupertuis_export_db_only(self):
         # export/import and check
         colmap_db_filepath = path.join(self._temp_dirpath, 'colmap.db')
-        export_colmap(self._kapture_dirpath, colmap_db_filepath, None, None, True)
+        export_colmap(self._kapture_dirpath, colmap_db_filepath, None,
+                      self.keypoints_type, self.descriptors_type, None, True)
 
         kapture_data = import_colmap(self._temp_dirpath, colmap_db_filepath,
+                                     keypoints_type=self.keypoints_type,
+                                     descriptors_type=self.descriptors_type,
                                      force_overwrite_existing=True,
                                      no_geometric_filtering=True)
 
@@ -289,9 +304,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertEqual(4, len(kapture_data.records_camera))
         self.assertIs(kapture_data.records_lidar, None)
         self.assertIs(kapture_data.records_wifi, None)
-        self.assertEqual(4, len(kapture_data.keypoints))
-        self.assertEqual(4, len(kapture_data.descriptors))
-        self.assertEqual(6, len(kapture_data.matches))
+        self.assertEqual(4, len(kapture_data.keypoints[self.keypoints_type]))
+        self.assertEqual(4, len(kapture_data.descriptors[self.descriptors_type]))
+        self.assertEqual(6, len(kapture_data.matches[self.keypoints_type]))
         self.assertIs(kapture_data.points3d, None)
         self.assertIs(kapture_data.observations, None)
 
@@ -299,9 +314,14 @@ class TestColmapMaupertuis(unittest.TestCase):
         # export/import and check
         colmap_db_filepath = path.join(self._temp_dirpath, 'colmap.db')
         colmap_txt_filepath = path.join(self._temp_dirpath, 'dense')
-        export_colmap(self._kapture_dirpath, colmap_db_filepath, colmap_txt_filepath, None, True)
+        export_colmap(self._kapture_dirpath, colmap_db_filepath, colmap_txt_filepath,
+                      self.keypoints_type,
+                      self.descriptors_type,
+                      None, True)
 
         kapture_data = import_colmap(self._temp_dirpath, colmap_db_filepath, colmap_txt_filepath,
+                                     keypoints_type=self.keypoints_type,
+                                     descriptors_type=self.descriptors_type,
                                      force_overwrite_existing=True,
                                      no_geometric_filtering=True)
 
@@ -312,9 +332,9 @@ class TestColmapMaupertuis(unittest.TestCase):
         self.assertIs(kapture_data.records_lidar, None)
         self.assertIs(kapture_data.records_wifi, None)
         self.assertIs(kapture_data.records_gnss, None)
-        self.assertEqual(4, len(kapture_data.keypoints))
-        self.assertEqual(4, len(kapture_data.descriptors))
-        self.assertEqual(6, len(kapture_data.matches))
+        self.assertEqual(4, len(kapture_data.keypoints[self.keypoints_type]))
+        self.assertEqual(4, len(kapture_data.descriptors[self.descriptors_type]))
+        self.assertEqual(6, len(kapture_data.matches[self.keypoints_type]))
         self.assertEqual(1039, len(kapture_data.points3d))
         self.assertEqual(1039, len(kapture_data.observations))
 
