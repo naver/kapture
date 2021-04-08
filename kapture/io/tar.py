@@ -57,6 +57,12 @@ class TarCollection:
         self.global_features = global_features
         self.matches = matches
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def close(self):
         """
         closes all handlers

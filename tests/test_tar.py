@@ -44,40 +44,38 @@ class TestTar(unittest.TestCase):
         # check all at once
         self.assertFalse(equal_kapture(kapture_data_expected, kapture_data_no_recon))
 
-        tar_handlers = csv.get_all_tar_handlers(self._kapture_tar_sample_path)
-        kapture_data_actual = csv.kapture_from_dir(self._kapture_tar_sample_path, tar_handlers=tar_handlers)
+        with csv.get_all_tar_handlers(self._kapture_tar_sample_path) as tar_handlers:
+            kapture_data_actual = csv.kapture_from_dir(self._kapture_tar_sample_path, tar_handlers=tar_handlers)
 
-        # check in detail what could be wrong
-        self.assertTrue(equal_sensors(kapture_data_expected.sensors, kapture_data_actual.sensors))
-        self.assertTrue(equal_records_gnss(kapture_data_expected.records_gnss, kapture_data_actual.records_gnss))
-        # check all at once
-        self.assertTrue(equal_kapture(kapture_data_expected, kapture_data_actual))
+            # check in detail what could be wrong
+            self.assertTrue(equal_sensors(kapture_data_expected.sensors, kapture_data_actual.sensors))
+            self.assertTrue(equal_records_gnss(kapture_data_expected.records_gnss, kapture_data_actual.records_gnss))
+            # check all at once
+            self.assertTrue(equal_kapture(kapture_data_expected, kapture_data_actual))
 
-        # check kpt
-        image_name = '01.jpg'
-        keypoints_type = 'HessianAffine'
-        kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
-                                                            kapture_dirpath=self._kapture_sample_path,
-                                                            image_filename=image_name)
-        kpts_expected = image_keypoints_from_file(kapture_keypoints_filepath,
-                                                  kapture_data_expected.keypoints[keypoints_type].dtype,
-                                                  kapture_data_expected.keypoints[keypoints_type].dsize)
-        handler_kpts = tar_handlers.keypoints[keypoints_type]
-        kpts_actual = handler_kpts.get_array_from_tar(image_name + FEATURE_FILE_EXTENSION[kapture.Keypoints],
+            # check kpt
+            image_name = '01.jpg'
+            keypoints_type = 'HessianAffine'
+            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
+                                                                kapture_dirpath=self._kapture_sample_path,
+                                                                image_filename=image_name)
+            kpts_expected = image_keypoints_from_file(kapture_keypoints_filepath,
                                                       kapture_data_expected.keypoints[keypoints_type].dtype,
                                                       kapture_data_expected.keypoints[keypoints_type].dsize)
-        self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
+            handler_kpts = tar_handlers.keypoints[keypoints_type]
+            kpts_actual = handler_kpts.get_array_from_tar(image_name + FEATURE_FILE_EXTENSION[kapture.Keypoints],
+                                                          kapture_data_expected.keypoints[keypoints_type].dtype,
+                                                          kapture_data_expected.keypoints[keypoints_type].dsize)
+            self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
 
-        kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
-                                                            kapture_dirpath=self._kapture_sample_path,
-                                                            image_filename=image_name,
-                                                            tar_handler=tar_handlers)
-        kpts_expected = image_keypoints_from_file(kapture_keypoints_filepath,
-                                                  kapture_data_expected.keypoints[keypoints_type].dtype,
-                                                  kapture_data_expected.keypoints[keypoints_type].dsize)
-        self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
-
-        tar_handlers.close()
+            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
+                                                                kapture_dirpath=self._kapture_sample_path,
+                                                                image_filename=image_name,
+                                                                tar_handler=tar_handlers)
+            kpts_expected = image_keypoints_from_file(kapture_keypoints_filepath,
+                                                      kapture_data_expected.keypoints[keypoints_type].dtype,
+                                                      kapture_data_expected.keypoints[keypoints_type].dsize)
+            self.assertTrue(np.array_equal(kpts_expected, kpts_actual))
 
 
 if __name__ == '__main__':
