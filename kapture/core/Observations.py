@@ -81,6 +81,8 @@ class Observations(Dict[int, Dict[str, List[Tuple[str, int]]]]):
         # [point3d_idx, keypoints_type]:   (image_path, keypoint_idx)   (image_path, keypoint_idx)...
         for point3d_idx, keypoints_type in sorted(self.key_pairs(), key=lambda x: x[0]):
             representation += f'[{point3d_idx:05}, {keypoints_type}]: '
-            for image_path, keypoint_idx in self.get((point3d_idx, keypoints_type)):
+            assert point3d_idx is not None
+            for image_path, keypoint_idx in self.get(point3d_idx)[keypoints_type]:
                 representation += f'\t({image_path}, {keypoint_idx})'
             representation += '\n'
+        return representation
