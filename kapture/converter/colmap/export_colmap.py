@@ -4,6 +4,7 @@
 This script exports data from kapture to COLMAP database and/or reconstruction files.
 """
 
+from kapture.utils.Collections import try_get_only_key_from_collection
 import logging
 import os
 import os.path as path
@@ -31,8 +32,8 @@ logger = logging.getLogger('colmap')
 def export_colmap(kapture_dir_path: str,
                   colmap_database_filepath: str,
                   colmap_reconstruction_dir_path: Optional[str],
-                  keypoints_type: str = None,
-                  descriptors_type: str = None,
+                  keypoints_type: Optional[str] = None,
+                  descriptors_type: Optional[str] = None,
                   colmap_rig_filepath: str = None,
                   force_overwrite_existing: bool = False,
                   pairsfile_path: Optional[str] = None) -> None:
@@ -63,6 +64,14 @@ def export_colmap(kapture_dir_path: str,
     with csv.get_all_tar_handlers(kapture_dir_path) as tar_handlers:
         kapture_data = csv.kapture_from_dir(kapture_dir_path, pairsfile_path, tar_handlers=tar_handlers)
         assert isinstance(kapture_data, kapture.Kapture)
+
+        if keypoints_type is None:
+            keypoints_type = try_get_only_key_from_collection(kapture_data.keypoints)
+        # if it's still None try again from matches
+        if keypoints_type is None:
+            keypoints_type = try_get_only_key_from_collection(kapture_data.matches)
+        if descriptors_type is None:
+            descriptors_type = try_get_only_key_from_collection(kapture_data.descriptors)
 
         # COLMAP does not fully support rigs.
         if kapture_data.rigs is not None:

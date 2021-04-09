@@ -6,7 +6,7 @@ Additional collections and base python objects.
 
 import collections
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class AutoEnum(Enum):
@@ -43,3 +43,17 @@ def get_new_if_not_empty(new_value: Any, old_value: Any) -> Any:
     Return the new value if it is not None
     """
     return new_value if new_value else old_value
+
+
+def try_get_only_key_from_collection(collection: Optional[dict]) -> Optional[str]:
+    """
+    3 scenarios:
+    1 - dict is None or empty -> return None
+    2 - dict has exactly one item, return its key
+    3 - dict has more than one item, raise exception
+    """
+    if collection is None or len(collection) == 0:
+        return None
+    if len(collection) == 1:
+        return next(iter(collection.keys()))
+    raise ValueError(f'{collection} has more than 1 item, cannot decide which to pick')

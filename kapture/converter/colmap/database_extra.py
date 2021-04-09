@@ -597,8 +597,8 @@ def kapture_to_colmap(kapture_data: kapture.Kapture,
                       kapture_dirpath: str,
                       tar_handler: Optional[TarCollection],
                       database: COLMAPDatabase,
-                      keypoints_type: str = None,
-                      descriptors_type: str = None,
+                      keypoints_type: Optional[str] = None,
+                      descriptors_type: Optional[str] = None,
                       export_two_view_geometry: bool = False) -> None:
     """
     Export kapture data to colmap database.
@@ -643,33 +643,28 @@ def kapture_to_colmap(kapture_data: kapture.Kapture,
         kapture_data.trajectories, colmap_camera_ids)
 
     # keypoints
-    if kapture_data.keypoints is not None and len(kapture_data.keypoints) > 0:
-        if len(kapture_data.keypoints) == 1 and keypoints_type is None:
-            keypoints_type = next(iter(kapture_data.keypoints.keys()))
-        if keypoints_type is not None and keypoints_type in kapture_data.keypoints:
-            keypoints = kapture_data.keypoints[keypoints_type]
-            logger.info(f'registering {len(keypoints)} keypoints in database...')
-            add_keypoints_to_database(database, keypoints, keypoints_type,
-                                      kapture_dirpath, tar_handler, colmap_image_ids)
+    if kapture_data.keypoints is not None and keypoints_type is not None and keypoints_type in kapture_data.keypoints:
+        keypoints = kapture_data.keypoints[keypoints_type]
+        logger.info(f'registering {len(keypoints)} keypoints in database...')
+        add_keypoints_to_database(database, keypoints, keypoints_type,
+                                  kapture_dirpath, tar_handler, colmap_image_ids)
 
     # descriptors
-    if kapture_data.descriptors is not None and len(kapture_data.descriptors) > 0:
-        if len(kapture_data.descriptors) == 1 and descriptors_type is None:
-            descriptors_type = next(iter(kapture_data.descriptors.keys()))
-        if descriptors_type is not None and descriptors_type in kapture_data.descriptors:
-            descriptors = kapture_data.descriptors[descriptors_type]
-            logger.info(f'registering {len(descriptors)} descriptors in database...')
-            add_descriptors_to_database(database, descriptors,
-                                        descriptors_type, kapture_dirpath,
-                                        tar_handler, colmap_image_ids)
+    if kapture_data.descriptors is not None \
+            and descriptors_type is not None \
+            and descriptors_type in kapture_data.descriptors:
+        descriptors = kapture_data.descriptors[descriptors_type]
+        logger.info(f'registering {len(descriptors)} descriptors in database...')
+        add_descriptors_to_database(database, descriptors,
+                                    descriptors_type, kapture_dirpath,
+                                    tar_handler, colmap_image_ids)
 
     # matches
-    if kapture_data.matches is not None and len(kapture_data.matches) > 0:
-        if len(kapture_data.matches) == 1 and keypoints_type is None:
-            keypoints_type = next(iter(kapture_data.matches.keys()))
-        if keypoints_type is not None and keypoints_type in kapture_data.matches:
-            matches = kapture_data.matches[keypoints_type]
-            logger.info(f'registering {len(matches)} matches in database...')
-            add_matches_to_database(database, matches, keypoints_type,
-                                    kapture_dirpath, tar_handler,
-                                    colmap_image_ids, export_two_view_geometry)
+    if kapture_data.matches is not None \
+            and keypoints_type is not None \
+            and keypoints_type in kapture_data.matches:
+        matches = kapture_data.matches[keypoints_type]
+        logger.info(f'registering {len(matches)} matches in database...')
+        add_matches_to_database(database, matches, keypoints_type,
+                                kapture_dirpath, tar_handler,
+                                colmap_image_ids, export_two_view_geometry)
