@@ -4,7 +4,6 @@
 This script exports data from kapture to COLMAP database and/or reconstruction files.
 """
 
-from kapture.utils.Collections import try_get_only_key_from_collection
 import logging
 import os
 import os.path as path
@@ -18,6 +17,7 @@ import kapture.algo.merge_keep_ids
 import kapture.io.csv as csv
 import kapture.io.structure
 import kapture.utils.paths
+from kapture.utils.Collections import try_get_only_key_from_collection
 
 # local
 from .database import COLMAPDatabase
@@ -43,6 +43,8 @@ def export_colmap(kapture_dir_path: str,
     :param kapture_dir_path: kapture top directory
     :param colmap_database_filepath: path to colmap database file
     :param colmap_reconstruction_dir_path: path to colmap reconstruction directory
+    :param keypoints_type: reference the the keypoints for which the reconstruction are exported
+    :param descriptors_type: reference the the descriptors for which the reconstruction are exported
     :param colmap_rig_filepath: path to colmap rig file
     :param force_overwrite_existing: Silently overwrite colmap files if already exists.
     :param pairsfile_path: Filter matches to load

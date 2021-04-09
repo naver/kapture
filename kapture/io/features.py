@@ -271,8 +271,8 @@ def get_descriptors_fullpath(descriptors_type: str, kapture_dirpath: str, image_
     """
     Computes the full path of the descriptors file
 
-    :param kapture_dirpath: top kapture directory path
     :param descriptors_type: the name of the descriptors type
+    :param kapture_dirpath: top kapture directory path
     :param image_filename: image file name
     :param tar_handler: collection of preloaded tar archives
     :return: full path of the descriptors file

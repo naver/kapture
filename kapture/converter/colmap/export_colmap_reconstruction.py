@@ -181,6 +181,7 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
     :param tar_handler: collection of preloaded tar archives
     :param colmap_camera_ids: gives the correspondences between kapture camera id and colmap camera id
     :param colmap_image_ids: gives the correspondences between kapture image id (image path) and colmap image id
+    :param keypoints_type: reference the the keypoints for which the reconstruction are exported
     """
     assert isinstance(kapture_data, kapture.Kapture)
     assert isinstance(colmap_camera_ids, dict)
