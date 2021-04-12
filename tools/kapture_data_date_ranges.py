@@ -107,7 +107,7 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
             timestamp_len_str = f'{timestamp_len1}' if timestamp_len1 == timestamp_len2\
                 else f'{timestamp_len1}-{timestamp_len2}'
             print(f'{kapture_filename:42s} timestamp {timestamp_len_str} digits from {timestamp_range_str}'
-                  f' : {(nb_lines-2):12,d} records'.replace(',',' '))
+                  f' : {(nb_lines-2):12,d} records'.replace(',', ' '))
 
 
 def do_print(kapture_path: str) -> None:
