@@ -355,6 +355,7 @@ def trajectories_to_file(filepath: str, trajectories: kapture.Trajectories) -> N
     :param trajectories:
     """
     assert (isinstance(trajectories, kapture.Trajectories))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, qw, qx, qy, qz, tx, ty, tz'
     padding = PADDINGS['timestamp'] + PADDINGS['device_id'] + PADDINGS['pose']
     table = (
@@ -365,7 +366,9 @@ def trajectories_to_file(filepath: str, trajectories: kapture.Trajectories) -> N
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header, padding=padding)
-        logger.debug(f'wrote {nb_records:12,d} {type(trajectories)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(trajectories)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None) -> kapture.Trajectories:
@@ -418,6 +421,7 @@ def records_camera_to_file(filepath: str, records_camera: kapture.RecordsCamera)
     :param records_camera:
     """
     assert (isinstance(records_camera, kapture.RecordsCamera))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, image_path'
     table = (
         [timestamp, sensor_id] + [records_camera[(timestamp, sensor_id)]]
@@ -425,7 +429,9 @@ def records_camera_to_file(filepath: str, records_camera: kapture.RecordsCamera)
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records_camera)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_camera)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def records_camera_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsCamera:
@@ -466,6 +472,7 @@ def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) ->
     :param records_depth:
     """
     assert (isinstance(records_depth, kapture.RecordsDepth))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, depth_map_path'
     table = (
         [timestamp, sensor_id] + [records_depth[(timestamp, sensor_id)]]
@@ -473,7 +480,9 @@ def records_depth_to_file(filepath: str, records_depth: kapture.RecordsDepth) ->
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records_depth)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_depth)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsDepth:
@@ -514,6 +523,7 @@ def records_lidar_to_file(filepath: str, records_lidar: kapture.RecordsLidar) ->
     :param records_lidar:
     """
     assert (isinstance(records_lidar, kapture.RecordsLidar))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, point_cloud_path'
     table = (
         [timestamp, sensor_id] + [records_lidar[(timestamp, sensor_id)]]
@@ -521,7 +531,9 @@ def records_lidar_to_file(filepath: str, records_lidar: kapture.RecordsLidar) ->
     )
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records_lidar)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_lidar)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def records_lidar_from_file(filepath: str, lidar_ids: Optional[Set[str]] = None
@@ -561,13 +573,16 @@ def records_generic_to_file(filepath: str, records: kapture.RecordsBase) -> None
         :param records:
         """
     assert (isinstance(records, kapture.RecordsBase))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, ' + ', '.join(f.name for f in records.record_type.fields())
     table = []
     for timestamp, sensor_id, record in kapture.flatten(records, is_sorted=True):
         table.append([timestamp, sensor_id] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def records_generic_from_file(records_type: Type, filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -615,6 +630,7 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
     :param records_wifi:
     """
     assert (isinstance(records_wifi, kapture.RecordsWifi))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end'
     table = []
     for timestamp, sensor_id in sorted(records_wifi.key_pairs()):
@@ -622,7 +638,9 @@ def records_wifi_to_file(filepath: str, records_wifi: kapture.RecordsWifi) -> No
             table.append([timestamp, sensor_id, bssid] + [str(v) for v in record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records_wifi)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_wifi)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def records_wifi_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -667,6 +685,7 @@ def records_bluetooth_to_file(filepath: str, records_bluetooth: kapture.RecordsB
     :param records_bluetooth: records to save
     """
     assert (isinstance(records_bluetooth, kapture.RecordsBluetooth))
+    saving_start = datetime.datetime.now()
     header = '# timestamp, device_id, address, RSSI, name'
     table = []
     for timestamp, sensor_id in sorted(records_bluetooth.key_pairs()):
@@ -674,7 +693,9 @@ def records_bluetooth_to_file(filepath: str, records_bluetooth: kapture.RecordsB
             table.append([timestamp, sensor_id, address] + [str(v) for v in bt_record.astuple()])
     with open(filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(records_bluetooth)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_bluetooth)}'
+                     f' in {saving_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
 
 
 def records_bluetooth_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None
@@ -1054,6 +1075,7 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     """
     assert path.basename(observations_filepath) == 'observations.txt'
     assert isinstance(observations, kapture.Observations)
+    saving_start = datetime.datetime.now()
     header = '# point3d_id, [image_path, feature_id]*'
     table = (
         [str(point3d_idx)] + [str(k) for pair in observations[point3d_idx] for k in pair]
@@ -1062,7 +1084,9 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
         nb_records = table_to_file(file, table, header=header)
-        logger.debug(f'wrote {nb_records:12,d} {type(observations)}'.replace(',', ' '))
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(observations)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
 
 
 def observations_from_file(observations_filepath: str, images_paths_with_keypoints: Optional[Set[str]] = None
