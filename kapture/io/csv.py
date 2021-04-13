@@ -1695,7 +1695,7 @@ def get_all_tar_handlers(kapture_dir_path: str,
         assert mode in {'r', 'a'}
     else:
         assert isinstance(mode, dict)
-        for _, mode_t in mode.values():
+        for mode_t in mode.values():
             assert mode_t in {'r', 'a'}
 
     data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
