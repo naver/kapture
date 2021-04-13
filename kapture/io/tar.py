@@ -47,15 +47,30 @@ class TarHandler:
 class TarCollection:
 
     def __init__(self,
-                 keypoints: Dict[str, TarHandler] = {},
-                 descriptors: Dict[str, TarHandler] = {},
-                 global_features: Dict[str, TarHandler] = {},
-                 matches: Dict[str, TarHandler] = {}):
+                 keypoints: Optional[Dict[str, TarHandler]] = None,
+                 descriptors: Optional[Dict[str, TarHandler]] = None,
+                 global_features: Optional[Dict[str, TarHandler]] = None,
+                 matches: Optional[Dict[str, TarHandler]] = None):
         super().__init__()
-        self.keypoints = keypoints
-        self.descriptors = descriptors
-        self.global_features = global_features
-        self.matches = matches
+        if keypoints is None:
+            self.keypoints = {}
+        else:
+            self.keypoints = keypoints
+
+        if descriptors is None:
+            self.descriptors = {}
+        else:
+            self.descriptors = descriptors
+
+        if global_features is None:
+            self.global_features = {}
+        else:
+            self.global_features = global_features
+
+        if matches is None:
+            self.matches = {}
+        else:
+            self.matches = matches
 
     def __enter__(self):
         return self
