@@ -175,7 +175,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
             shutil.copy(path.join(global_features_dir_path, global_features_filename), global_features_output_file)
 
     # observations
-    observations_csv_filename = path.join('sensors', 'observations.txt')
+    observations_csv_filename = path.join('reconstruction', 'observations.txt')
     observations_csv_path = path.join(kapture_dirpath, observations_csv_filename)
     if path.isfile(observations_csv_path):
         logger.debug(f'converting {observations_csv_path}...')
