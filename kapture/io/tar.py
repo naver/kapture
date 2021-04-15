@@ -20,6 +20,12 @@ class TarHandler:
         # if c.name is found multiple time, the value will correspond to its last occurence, so the most up to data one
         self.content = {c.name: c for c in tarcontent}
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def flush(self):
         self.fid.fileobj.flush()
 
