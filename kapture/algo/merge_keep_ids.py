@@ -384,9 +384,10 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function 
             merged_kapture.global_features = get_new_if_not_empty(new_global_features, merged_kapture.global_features)
     if kapture.Matches not in skip_list:
         matches = [every_kapture.matches for every_kapture in kapture_list]
-        new_matches = merge_matches_collections(matches, data_paths, kapture_path, tarcollection_list)
-        merged_kapture.matches = get_new_if_not_empty(new_matches, merged_kapture.matches)
-
+        matches_not_none = [k for k in matches if k is not None]
+        if len(matches_not_none) > 0:
+            new_matches = merge_matches_collections(matches, data_paths, kapture_path, tarcollection_list)
+            merged_kapture.matches = get_new_if_not_empty(new_matches, merged_kapture.matches)
     if kapture.Points3d not in skip_list and kapture.Observations not in skip_list:
         points_and_obs = [(every_kapture.points3d, every_kapture.observations) for every_kapture in kapture_list]
         new_points, new_observations = merge_points3d_and_observations(points_and_obs)
