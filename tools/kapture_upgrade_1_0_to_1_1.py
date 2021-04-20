@@ -77,11 +77,15 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
         if path.isfile(csv_fullpath):
             logger.debug(f'converting {csv_fullpath}...')
             old_version = kapture.io.csv.get_version_from_csv_file(csv_fullpath)
-            assert old_version == '1.0'
+            if 'points3d' not in csv_filename:
+                assert old_version == '1.0'
+            else:
+                assert (old_version is None or old_version == '1.0')
             csv_output_path = path.join(output_path, csv_filename)
             with open(csv_fullpath, 'r') as source_file:
                 with open(csv_output_path, 'w') as output_file:
-                    source_file.readline()  # read and ignore header
+                    if old_version is not None:
+                        source_file.readline()  # read and ignore header
                     # write replacement header
                     output_file.write(kapture.io.csv.KAPTURE_FORMAT_1 + kapture.io.csv.kapture_linesep)
                     shutil.copyfileobj(source_file, output_file)

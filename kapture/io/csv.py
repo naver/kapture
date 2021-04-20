@@ -1199,7 +1199,7 @@ def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
     """
     assert isinstance(points3d, kapture.Points3d)
     os.makedirs(path.dirname(filepath), exist_ok=True)
-    header = 'X, Y, Z, R, G, B'
+    header = KAPTURE_FORMAT_1[2:] + kapture_linesep + 'X, Y, Z, R, G, B'
     np.savetxt(filepath, points3d.as_array(), delimiter=',', header=header)
 
 

@@ -431,15 +431,17 @@ class TestCsvPoints3d(unittest.TestCase):
         with open(filepath, 'rt') as file:
             lines = file.readlines()
 
-        self.assertEqual(4, len(lines))
+        self.assertEqual(5, len(lines))
         self.assertTrue(lines[0].startswith('#'))
-        first_line = [float(f) for f in lines[1].split(',')]
+        self.assertTrue(lines[1].startswith('#'))
+        first_line = [float(f) for f in lines[2].split(',')]
         self.assertEqual(6, len(first_line))
         self.assertAlmostEqual([0.0, 1.0, 0.0, 0.0, 0.0, 0.0], first_line)
 
     def test_points_from_empty_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
+            file.write(csv.KAPTURE_FORMAT_1 + kapture_linesep)
             file.write('# X, Y, Z, R, G, B' + kapture_linesep)
         # prevent numpy showing warning
         with warnings.catch_warnings():
@@ -450,6 +452,7 @@ class TestCsvPoints3d(unittest.TestCase):
     def test_points_from_single_line_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
+            file.write(csv.KAPTURE_FORMAT_1 + kapture_linesep)
             file.write('# X, Y, Z, R, G, B' + kapture_linesep)
             file.write('0, 1.0, 0.0, 255, .0, 150' + kapture_linesep)
         points3d = csv.points3d_from_file(filepath)
@@ -459,6 +462,7 @@ class TestCsvPoints3d(unittest.TestCase):
     def test_points_from_file(self):
         filepath = path.join(self._tempdir.name, 'points3d.txt')
         with open(filepath, 'wt') as file:
+            file.write(csv.KAPTURE_FORMAT_1 + kapture_linesep)
             file.write('# X, Y, Z, R, G, B' + kapture_linesep)
             file.write('0, 1.0, 0.0, 255, .0, 150' + kapture_linesep)
             file.write('-10, 0, 0.0, 25, .0, 150' + kapture_linesep)
