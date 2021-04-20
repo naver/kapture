@@ -13,9 +13,11 @@ import gzip
 import pickle
 import json
 from tqdm import tqdm
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 # kapture
 import kapture
+from kapture.io.csv import get_all_tar_handlers, kapture_from_dir
+from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.io.binary import TransferAction, transfer_files_from_dir
 from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
 from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
@@ -187,7 +189,13 @@ def export_opensfm_camera(
     return opensfm_camera
 
 
-def _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_root_dir, opensfm_root_dir,
+def _export_opensfm_features_and_matches(image_filenames,
+                                         keypoints_type,
+                                         descriptors_type,
+                                         kapture_data,
+                                         kapture_root_dir,
+                                         tar_handlers,
+                                         opensfm_root_dir,
                                          disable_tqdm):
     """
     export features files (keypoints + descriptors) and matches
@@ -196,26 +204,45 @@ def _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_
     opensfm_features_dir_path = path.join(opensfm_root_dir, 'features')
     logger.info(f'exporting keypoint and descriptors to {opensfm_features_dir_path}')
     os.makedirs(opensfm_features_dir_path, exist_ok=True)
+
+    if keypoints_type is None:
+        keypoints_type = try_get_only_key_from_collection(kapture_data.keypoints)
+    # if it's still None try again from matches
+    if keypoints_type is None:
+        keypoints_type = try_get_only_key_from_collection(kapture_data.matches)
+    if descriptors_type is None:
+        descriptors_type = try_get_only_key_from_collection(kapture_data.descriptors)
+
     for image_filename in tqdm(image_filenames, disable=disable_tqdm):
         opensfm_features = {}
         # look and load for keypoints in kapture
-        if kapture_data.keypoints is not None and image_filename in kapture_data.keypoints:
-            kapture_keypoints_filepath = get_keypoints_fullpath(kapture_dirpath=kapture_root_dir,
-                                                                image_filename=image_filename)
+        if kapture_data.keypoints is not None and \
+                keypoints_type is not None and \
+                keypoints_type in kapture_data.keypoints and \
+                image_filename in kapture_data.keypoints[keypoints_type]:
+            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type=keypoints_type,
+                                                                kapture_dirpath=kapture_root_dir,
+                                                                image_filename=image_filename,
+                                                                tar_handler=tar_handlers)
             logger.debug(f'loading {kapture_keypoints_filepath}')
             kapture_keypoint = image_keypoints_from_file(kapture_keypoints_filepath,
-                                                         dtype=kapture_data.keypoints.dtype,
-                                                         dsize=kapture_data.keypoints.dsize)
+                                                         dtype=kapture_data.keypoints[keypoints_type].dtype,
+                                                         dsize=kapture_data.keypoints[keypoints_type].dsize)
             opensfm_features['points'] = kapture_keypoint
 
         # look and load for descriptors in kapture
-        if kapture_data.descriptors is not None and image_filename in kapture_data.descriptors:
-            kapture_descriptor_filepath = get_descriptors_fullpath(kapture_dirpath=kapture_root_dir,
-                                                                   image_filename=image_filename)
+        if kapture_data.descriptors is not None and \
+                descriptors_type is not None and \
+                descriptors_type in kapture_data.descriptors and \
+                image_filename in kapture_data.descriptors[descriptors_type]:
+            kapture_descriptor_filepath = get_descriptors_fullpath(descriptors_type=descriptors_type,
+                                                                   kapture_dirpath=kapture_root_dir,
+                                                                   image_filename=image_filename,
+                                                                   tar_handler=tar_handlers)
             logger.debug(f'loading {kapture_descriptor_filepath}')
             kapture_descriptor = image_descriptors_from_file(kapture_descriptor_filepath,
-                                                             dtype=kapture_data.descriptors.dtype,
-                                                             dsize=kapture_data.descriptors.dsize)
+                                                             dtype=kapture_data.descriptors[descriptors_type].dtype,
+                                                             dsize=kapture_data.descriptors[descriptors_type].dsize)
             opensfm_features['descriptors'] = kapture_descriptor
 
         # writing opensfm feature file
@@ -226,13 +253,15 @@ def _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_
             np.save(opensfm_features_filepath, opensfm_features)
 
     # export matches files
-    if kapture_data.matches is not None:
+    if kapture_data.matches is not None and \
+            keypoints_type is not None and \
+            keypoints_type in kapture_data.matches:
         opensfm_matches_suffix = '_matches.pkl.gz'
         opensfm_matches_dir_path = path.join(opensfm_root_dir, 'matches')
         os.makedirs(opensfm_matches_dir_path, exist_ok=True)
         logger.info(f'exporting matches to {opensfm_matches_dir_path}')
         opensfm_pairs = {}
-        for image_filename1, image_filename2 in kapture_data.matches:
+        for image_filename1, image_filename2 in kapture_data.matches[keypoints_type]:
             opensfm_pairs.setdefault(image_filename1, []).append(image_filename2)
 
         for image_filename1 in tqdm(image_filenames, disable=disable_tqdm):
@@ -242,7 +271,10 @@ def _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_
             for image_filename2 in opensfm_pairs.get(image_filename1, []):
                 # print(image_filename1, image_filename2)
                 kapture_matches_filepath = get_matches_fullpath(
-                    (image_filename1, image_filename2), kapture_dirpath=kapture_root_dir)
+                    (image_filename1, image_filename2),
+                    keypoints_type=keypoints_type,
+                    kapture_dirpath=kapture_root_dir,
+                    tar_handler=tar_handlers)
                 kapture_matches = image_matches_from_file(kapture_matches_filepath)
                 opensfm_matches[image_filename2] = kapture_matches[:, 0:2].astype(np.int)
 
@@ -255,7 +287,9 @@ def export_opensfm(
         kapture_root_dir: str,
         opensfm_root_dir: str,
         force_overwrite_existing: bool = False,
-        images_export_method: TransferAction = TransferAction.copy
+        images_export_method: TransferAction = TransferAction.copy,
+        keypoints_type: Optional[str] = None,
+        descriptors_type: Optional[str] = None,
 ) -> None:
     """
     Export the kapture data to an openSfM format
@@ -268,69 +302,68 @@ def export_opensfm(
 
     disable_tqdm = logger.getEffectiveLevel() > logging.INFO  # don't display tqdm for non-verbose levels
     # load reconstruction
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_root_dir)
+    with get_all_tar_handlers(kapture_root_dir) as tar_handlers:
+        kapture_data = kapture_from_dir(kapture_root_dir, tar_handlers=tar_handlers)
 
-    # export cameras
-    opensfm_cameras = {}
-    kapture_cameras = {cam_id: cam
-                       for cam_id, cam in kapture_data.sensors.items()
-                       if cam.sensor_type == 'camera'}
-    for cam_id, kapture_camera in kapture_cameras.items():
-        opensfm_cameras[cam_id] = export_opensfm_camera(kapture_camera)
+        # export cameras
+        opensfm_cameras = {}
+        for cam_id, kapture_camera in kapture_data.cameras.items():
+            opensfm_cameras[cam_id] = export_opensfm_camera(kapture_camera)
 
-    # export shots
-    opensfm_shots = {}
-    for timestamp, camera_id, image_filename in tqdm(kapture.flatten(kapture_data.records_camera),
-                                                     disable=disable_tqdm):
-        # retrieve pose (if there is one).
-        # opensfm_shots = {image_filename: shot}
-        # shot = {camera , rotation, translation, capture_time, gps_position, ...}
-        opensfm_shot = {
-            'capture_time': 0,  # in ms != timestamp
-            'camera': camera_id,
-        }
-        if (timestamp, camera_id) in kapture_data.trajectories:
-            pose = kapture_data.trajectories[timestamp, camera_id]
-            rotation_vector = quaternion.as_rotation_vector(pose.r)
-            translation_vector = pose.t.flatten()
-            opensfm_shot.update({
-                'rotation': rotation_vector.tolist(),
-                'translation': translation_vector.tolist()
-            })
-        opensfm_shots[image_filename] = opensfm_shot
-
-    # pack it
-    opensfm_reconstruction = {
-        'cameras': opensfm_cameras,
-        'shots': opensfm_shots,
-    }
-
-    # images
-    logger.info(f'writing image files "{path.join(opensfm_root_dir, "images")}".')
-    image_filenames = [f for _, _, f in kapture.flatten(kapture_data.records_camera)]
-    kapture_image_file_paths = [get_record_fullpath(kapture_root_dir, image_filename)
-                                for image_filename in image_filenames]
-    opensfm_image_file_paths = [path.join(opensfm_root_dir, 'images', image_filename)
-                                for image_filename in image_filenames]
-    transfer_files_from_dir(
-        source_filepath_list=kapture_image_file_paths,
-        destination_filepath_list=opensfm_image_file_paths,
-        force_overwrite=force_overwrite_existing,
-        copy_strategy=images_export_method,
-    )
-
-    _export_opensfm_features_and_matches(image_filenames, kapture_data, kapture_root_dir, opensfm_root_dir,
-                                         disable_tqdm)
-
-    # export 3D-points files
-    if kapture_data.points3d is not None:
-        logger.info('exporting points 3-D')
-        opensfm_reconstruction['points'] = {}
-        for i, (x, y, z, r, g, b) in tqdm(enumerate(kapture_data.points3d), disable=disable_tqdm):
-            opensfm_reconstruction['points'][i] = {
-                'coordinates': [x, y, z],
-                'color': [r, g, b]
+        # export shots
+        opensfm_shots = {}
+        for timestamp, camera_id, image_filename in tqdm(kapture.flatten(kapture_data.records_camera),
+                                                         disable=disable_tqdm):
+            # retrieve pose (if there is one).
+            # opensfm_shots = {image_filename: shot}
+            # shot = {camera , rotation, translation, capture_time, gps_position, ...}
+            opensfm_shot = {
+                'capture_time': 0,  # in ms != timestamp
+                'camera': camera_id,
             }
+            if (timestamp, camera_id) in kapture_data.trajectories.key_pairs():
+                pose = kapture_data.trajectories[timestamp, camera_id]
+                rotation_vector = quaternion.as_rotation_vector(pose.r)
+                translation_vector = pose.t.flatten()
+                opensfm_shot.update({
+                    'rotation': rotation_vector.tolist(),
+                    'translation': translation_vector.tolist()
+                })
+            opensfm_shots[image_filename] = opensfm_shot
+
+        # pack it
+        opensfm_reconstruction = {
+            'cameras': opensfm_cameras,
+            'shots': opensfm_shots,
+        }
+
+        # images
+        logger.info(f'writing image files "{path.join(opensfm_root_dir, "images")}".')
+        image_filenames = [f for _, _, f in kapture.flatten(kapture_data.records_camera)]
+        kapture_image_file_paths = [get_record_fullpath(kapture_root_dir, image_filename)
+                                    for image_filename in image_filenames]
+        opensfm_image_file_paths = [path.join(opensfm_root_dir, 'images', image_filename)
+                                    for image_filename in image_filenames]
+        transfer_files_from_dir(
+            source_filepath_list=kapture_image_file_paths,
+            destination_filepath_list=opensfm_image_file_paths,
+            force_overwrite=force_overwrite_existing,
+            copy_strategy=images_export_method,
+        )
+
+        _export_opensfm_features_and_matches(image_filenames, keypoints_type, descriptors_type,
+                                             kapture_data, kapture_root_dir, tar_handlers,
+                                             opensfm_root_dir, disable_tqdm)
+
+        # export 3D-points files
+        if kapture_data.points3d is not None:
+            logger.info('exporting points 3-D')
+            opensfm_reconstruction['points'] = {}
+            for i, (x, y, z, r, g, b) in tqdm(enumerate(kapture_data.points3d), disable=disable_tqdm):
+                opensfm_reconstruction['points'][i] = {
+                    'coordinates': [x, y, z],
+                    'color': [r, g, b]
+                }
 
     # write json files #################################################################################################
     os.makedirs(opensfm_root_dir, exist_ok=True)
