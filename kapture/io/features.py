@@ -438,8 +438,8 @@ def get_matches_fullpath(
     :return: full path of the matches file
     """
     if image_filename_pair is not None:
-        filename = path.join(image_filename_pair[0] + FEATURE_PAIR_PATH_SEPARATOR[kapture.Matches],
-                             image_filename_pair[1])
+        filename = path_secure(path.join(image_filename_pair[0] + FEATURE_PAIR_PATH_SEPARATOR[kapture.Matches],
+                                         image_filename_pair[1]))
     else:
         filename = None
     return get_features_fullpath(kapture.Matches, keypoints_type, kapture_dirpath, filename, tar_handler)

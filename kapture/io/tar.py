@@ -18,7 +18,7 @@ class TarHandler:
         # list all files
         tarcontent = self.fid.getmembers()
         # if c.name is found multiple time, the value will correspond to its last occurence, so the most up to data one
-        self.content = {c.name: c for c in tarcontent}
+        self.content = {path_secure(c.name): c for c in tarcontent}
 
     def __enter__(self):
         return self
@@ -34,6 +34,7 @@ class TarHandler:
 
     def add_array_to_tar(self, filepath: str, data_array: np.ndarray) -> None:
         assert self.mode == 'a'
+        filepath = path_secure(filepath)
         info = tarfile.TarInfo(filepath)
         data = data_array.tobytes()
         info.size = len(data)
@@ -44,6 +45,9 @@ class TarHandler:
 
     def get_array_from_tar(self, filepath: str, dtype: Type, dsize: int) -> np.ndarray:
         assert self.mode == 'r'
+        filepath = path_secure(filepath)
+        if filepath not in self.content:
+            print(self.content)
         info = self.content[filepath]
         data_array = np.frombuffer(self.fid.extractfile(info).read(), dtype=dtype)
         data_array = data_array.reshape((-1, dsize))
