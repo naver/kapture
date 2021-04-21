@@ -234,7 +234,7 @@ class TestSensor(unittest.TestCase):
 
         # test typical camera
         sensor_name = 'GOPRO_FUSION'
-        sensor_type = 'camera'
+        sensor_type = kapture.SENSOR_TYPE_CAMERA
         #                 SIMPLE_PINHOLE,   w,   h,   f,  cx,  cy
         sensor_params = ['SIMPLE_PINHOLE', 640, 480, 100, 320, 240]
         sensor = kapture.Sensor(sensor_type, sensor_params, name=sensor_name)
@@ -288,7 +288,7 @@ class TestSensors(unittest.TestCase):
         invalid_sensor_id = tuple('a', )
         valid_sensor_id = 'cam0'
         invalid_sensor = int(0)
-        valid_sensor = kapture.Sensor('camera')
+        valid_sensor = kapture.Sensor(kapture.SENSOR_TYPE_CAMERA)
         self.assertRaises(TypeError, sensors.__setitem__, valid_sensor_id, invalid_sensor)
         self.assertRaises(TypeError, sensors.__setitem__, invalid_sensor_id, valid_sensor)
         self.assertRaises(TypeError, sensors.__setitem__, invalid_sensor_id, invalid_sensor)
@@ -847,7 +847,7 @@ class TestMatches(unittest.TestCase):
 class TestKapture(unittest.TestCase):
     def test_init(self):
         lidar0 = kapture.Sensor('lidar', [])
-        cam0 = kapture.Sensor('camera', [])
+        cam0 = kapture.Sensor(kapture.SENSOR_TYPE_CAMERA, [])
         sensors = kapture.Sensors()
         sensors['cam0'] = cam0
         kapture_data = kapture.Kapture(sensors=sensors)
@@ -869,7 +869,7 @@ class TestKapture(unittest.TestCase):
         self.assertTrue(all(member is None for member in members.values()))
 
         # test sensors only
-        kapture_data.sensors = kapture.Sensors({'cam0': kapture.Sensor('camera', [])})
+        kapture_data.sensors = kapture.Sensors({'cam0': kapture.Sensor(kapture.SENSOR_TYPE_CAMERA, [])})
         members = kapture_data.as_dict()
         self.assertEqual(len(members), 1)
         self.assertEqual(members, {'sensors': kapture_data.sensors})
