@@ -20,7 +20,9 @@ from kapture.io.records import get_image_fullpath
 from kapture.io.features import keypoints_to_filepaths, image_keypoints_from_file, get_keypoints_fullpath
 from kapture.io.features import descriptors_to_filepaths, image_descriptors_from_file
 from kapture.io.features import matches_to_filepaths, image_matches_from_file
+from kapture.utils.Collections import try_get_only_key_from_collection
 import kapture.io.structure
+from kapture.io.tar import TarCollection
 from kapture.core.Trajectories import rigs_remove_inplace
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
@@ -342,11 +344,13 @@ def export_openmvg_poses(
 
 
 def export_openmvg_structure(
-        kapture_points_3d: kapture.Points3d,
+        kapture_points_3d: Optional[kapture.Points3d],
         kapture_to_openmvg_view_ids: Dict[str, int],
         kapture_observations: Optional[kapture.Observations] = None,
         kapture_keypoints: Optional[kapture.Keypoints] = None,
+        keypoints_type: Optional[str] = None,
         kapture_path: Optional[str] = None,
+        tar_handlers: Optional[TarCollection] = None,
 ):
     # early check
     if kapture_points_3d is None:
@@ -367,15 +371,22 @@ def export_openmvg_structure(
                 'observations': []
             }
         }
-        if include_2d_observations and point_idx in kapture_observations:
-            for kapture_image_name, feature_point_id in kapture_observations[point_idx]:
+        if include_2d_observations and \
+                kapture_observations is not None and \
+                point_idx in kapture_observations and \
+                keypoints_type is not None and \
+                keypoints_type in kapture_observations[point_idx]:
+            for kapture_image_name, feature_point_id in kapture_observations[point_idx, keypoints_type]:
                 openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
                 point_2d_observation = {'key': openmvg_view_id,
                                         'value': {'id_feat': feature_point_id, }}
 
                 if kapture_path and kapture_keypoints is not None:
                     # if given, load keypoints to populate 2D coordinates of the feature.
-                    keypoints_file_path = get_keypoints_fullpath(kapture_path, kapture_image_name)
+                    keypoints_file_path = get_keypoints_fullpath(keypoints_type,
+                                                                 kapture_path,
+                                                                 kapture_image_name,
+                                                                 tar_handlers)
                     try:
                         keypoints_data = image_keypoints_from_file(keypoints_file_path,
                                                                    dtype=kapture_keypoints.dtype,
@@ -392,15 +403,17 @@ def export_openmvg_structure(
 
 
 def export_openmvg_sfm_data(
-        kapture_path: str,
-        kapture_data: kapture.Kapture,
-        openmvg_sfm_data_file_path: str,
-        openmvg_image_root_path: str,
-        image_action: TransferAction,
-        image_path_flatten: bool,
-        force: bool,
-        kapture_to_openmvg_view_ids: dict = {}
-) -> Dict:
+    keypoints_type: Optional[str],
+    kapture_path: str,
+    tar_handlers: TarCollection,
+    kapture_data: kapture.Kapture,
+    openmvg_sfm_data_file_path: str,
+    openmvg_image_root_path: str,
+    image_action: TransferAction,
+    image_path_flatten: bool,
+    force: bool,
+    kapture_to_openmvg_view_ids: dict = {}
+) -> None:
     """
     Convert the kapture data into an openMVG dataset stored as a dictionary.
     The format is defined here:
@@ -486,8 +499,13 @@ def export_openmvg_sfm_data(
         kapture_points_3d=kapture_data.points3d,
         kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
         kapture_observations=kapture_data.observations,
-        kapture_keypoints=kapture_data.keypoints,
-        kapture_path=kapture_path
+        kapture_keypoints=kapture_data.keypoints[keypoints_type] if (
+            kapture_data.keypoints is not None and
+            keypoints_type is not None and
+            keypoints_type in kapture_data.keypoints) else None,
+        kapture_path=kapture_path,
+        tar_handlers=tar_handlers,
+        keypoints_type=keypoints_type
     )
 
     openmvg_sfm_data = {
@@ -524,8 +542,11 @@ def export_openmvg_sfm_data(
 
 def export_openmvg_regions(
         kapture_path: str,
+        tar_handlers: TarCollection,
+        keypoints_type: Optional[str],
+        descriptors_type: Optional[str],
         kapture_keypoints: Optional[kapture.Keypoints],
-        kapture_descriptors: kapture.Descriptors,
+        kapture_descriptors: Optional[kapture.Descriptors],
         openmvg_regions_dir_path: str,
         image_path_flatten: bool
 ):
@@ -540,7 +561,7 @@ def export_openmvg_regions(
     :return:
     """
     # early check we should do
-    if kapture_keypoints is None or kapture_descriptors is None:
+    if kapture_keypoints is None or kapture_descriptors is None or keypoints_type is None or descriptors_type is None:
         logger.warning('no keypoints or descriptors to export.')
         return
 
@@ -568,7 +589,7 @@ def export_openmvg_regions(
     hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
 
     # copy keypoints files
-    keypoints = keypoints_to_filepaths(kapture_keypoints, kapture_path)
+    keypoints = keypoints_to_filepaths(kapture_keypoints, keypoints_type, kapture_path, tar_handlers)
     for kapture_image_name, kapture_keypoint_file_path in tqdm(keypoints.items(), disable=hide_progress_bars):
         openmvg_keypoint_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_keypoint_file_name = path.splitext(path.basename(openmvg_keypoint_file_name))[0] + '.feat'
@@ -587,7 +608,7 @@ def export_openmvg_regions(
     using AKAZE_Liop_Regions = Scalar_Regions<SIOPointFeature, unsigned char, 144>;
     using AKAZE_Binary_Regions = Binary_Regions<SIOPointFeature, 64>;
     """
-    descriptors = descriptors_to_filepaths(kapture_descriptors, kapture_path)
+    descriptors = descriptors_to_filepaths(kapture_descriptors, descriptors_type, kapture_path, tar_handlers)
     for kapture_image_name, kapture_descriptors_file_path in tqdm(descriptors.items(), disable=hide_progress_bars):
         openmvg_descriptors_file_name = get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_descriptors_file_name = path.splitext(path.basename(openmvg_descriptors_file_name))[0] + '.desc'
@@ -605,11 +626,13 @@ def export_openmvg_regions(
 
 def export_openmvg_matches(
         kapture_path: str,
+        tar_handlers: TarCollection,
+        keypoints_type: Optional[str],
         kapture_data: kapture.Kapture,
         openmvg_matches_file_path: str,
         kapture_to_openmvg_view_ids: Dict[str, int]
 ):
-    if kapture_data.matches is None:
+    if kapture_data.matches is None or keypoints_type is None or keypoints_type not in kapture_data.matches:
         logger.warning('No matches to be exported.')
         return
 
@@ -620,7 +643,7 @@ def export_openmvg_matches(
     os.makedirs(path.dirname(openmvg_matches_file_path), exist_ok=True)
 
     hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
-    matches = matches_to_filepaths(kapture_data.matches, kapture_path)
+    matches = matches_to_filepaths(kapture_data.matches[keypoints_type], keypoints_type, kapture_path, tar_handlers)
     with open(openmvg_matches_file_path, 'w') as fid:
         for image_pair, kapture_matches_filepath in tqdm(matches.items(), disable=hide_progress_bars):
             # idx image1 idx image 2
@@ -635,14 +658,16 @@ def export_openmvg_matches(
 
 
 def export_openmvg(
-        kapture_path: str,
-        openmvg_sfm_data_file_path: str,
-        openmvg_image_root_path: str = None,
-        openmvg_regions_dir_path: str = None,
-        openmvg_matches_file_path: str = None,
-        image_action: TransferAction = TransferAction.skip,
-        image_path_flatten: bool = False,
-        force: bool = False
+    kapture_path: str,
+    openmvg_sfm_data_file_path: str,
+    openmvg_image_root_path: str = None,
+    openmvg_regions_dir_path: str = None,
+    openmvg_matches_file_path: str = None,
+    image_action: TransferAction = TransferAction.skip,
+    image_path_flatten: bool = False,
+    keypoints_type: Optional[str] = None,
+    descriptors_type: Optional[str] = None,
+    force: bool = False
 ) -> None:
     """
     Export the kapture data to an openMVG files.
@@ -672,43 +697,62 @@ def export_openmvg(
 
     # load kapture
     logger.info(f'loading kapture {kapture_path}...')
-    kapture_data = kapture.io.csv.kapture_from_dir(kapture_path)
-    if kapture_data is None or not isinstance(kapture_data, kapture.Kapture):
-        raise ValueError(f'unable to load kapture from {kapture_path}')
-    kapture_to_openmvg_view_ids = {}
+    with kapture.io.csv.get_all_tar_handlers(kapture_path) as tar_handlers:
+        kapture_data = kapture.io.csv.kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
+        if kapture_data is None or not isinstance(kapture_data, kapture.Kapture):
+            raise ValueError(f'unable to load kapture from {kapture_path}')
+        kapture_to_openmvg_view_ids = {}
 
-    logger.info(f'exporting sfm data to {openmvg_sfm_data_file_path} ...')
-    export_openmvg_sfm_data(
-        kapture_data=kapture_data,
-        kapture_path=kapture_path,
-        openmvg_sfm_data_file_path=openmvg_sfm_data_file_path,
-        openmvg_image_root_path=openmvg_image_root_path,
-        image_action=image_action,
-        image_path_flatten=image_path_flatten,
-        force=force,
-        kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
+        if keypoints_type is None:
+            keypoints_type = try_get_only_key_from_collection(kapture_data.keypoints)
+        if descriptors_type is None:
+            descriptors_type = try_get_only_key_from_collection(kapture_data.descriptors)
 
-    if openmvg_regions_dir_path is not None:
-        try:
-            logger.info(f'exporting regions to {openmvg_regions_dir_path} ...')
-            export_openmvg_regions(
-                kapture_path=kapture_path,
-                kapture_keypoints=kapture_data.keypoints,
-                kapture_descriptors=kapture_data.descriptors,
-                openmvg_regions_dir_path=openmvg_regions_dir_path,
-                image_path_flatten=image_path_flatten
-            )
-        except ValueError as e:
-            logger.error(e)
+        logger.info(f'exporting sfm data to {openmvg_sfm_data_file_path} ...')
+        export_openmvg_sfm_data(
+            keypoints_type=keypoints_type,
+            kapture_data=kapture_data,
+            kapture_path=kapture_path,
+            tar_handlers=tar_handlers,
+            openmvg_sfm_data_file_path=openmvg_sfm_data_file_path,
+            openmvg_image_root_path=openmvg_image_root_path,
+            image_action=image_action,
+            image_path_flatten=image_path_flatten,
+            force=force,
+            kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids)
 
-    if openmvg_matches_file_path is not None:
-        try:
-            logger.info(f'exporting matches to {openmvg_matches_file_path} ...')
-            export_openmvg_matches(
-                kapture_path=kapture_path,
-                kapture_data=kapture_data,
-                openmvg_matches_file_path=openmvg_matches_file_path,
-                kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids
-            )
-        except ValueError as e:
-            logger.error(e)
+        if openmvg_regions_dir_path is not None:
+            try:
+                logger.info(f'exporting regions to {openmvg_regions_dir_path} ...')
+                export_openmvg_regions(
+                    kapture_path=kapture_path,
+                    kapture_keypoints=kapture_data.keypoints[keypoints_type] if (
+                        kapture_data.keypoints is not None and
+                        keypoints_type is not None and
+                        keypoints_type in kapture_data.keypoints) else None,
+                    kapture_descriptors=kapture_data.descriptors[descriptors_type] if (
+                        kapture_data.descriptors is not None and
+                        descriptors_type is not None and
+                        descriptors_type in kapture_data.descriptors) else None,
+                    openmvg_regions_dir_path=openmvg_regions_dir_path,
+                    image_path_flatten=image_path_flatten,
+                    tar_handlers=tar_handlers,
+                    keypoints_type=keypoints_type,
+                    descriptors_type=descriptors_type
+                )
+            except ValueError as e:
+                logger.error(e)
+
+        if openmvg_matches_file_path is not None:
+            try:
+                logger.info(f'exporting matches to {openmvg_matches_file_path} ...')
+                export_openmvg_matches(
+                    kapture_path=kapture_path,
+                    kapture_data=kapture_data,
+                    openmvg_matches_file_path=openmvg_matches_file_path,
+                    kapture_to_openmvg_view_ids=kapture_to_openmvg_view_ids,
+                    tar_handlers=tar_handlers,
+                    keypoints_type=keypoints_type
+                )
+            except ValueError as e:
+                logger.error(e)
