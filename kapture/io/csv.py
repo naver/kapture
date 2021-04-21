@@ -1327,7 +1327,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_camera_file_path = csv_file_paths[kapture.RecordsCamera]
         logger.debug(f'loading images {records_camera_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('camera', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SENSOR_TYPE_CAMERA, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_camera = records_camera_from_file(csv_file_paths[kapture.RecordsCamera], sensor_ids)
     # records depth
@@ -1335,7 +1335,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_depth_file_path = csv_file_paths[kapture.RecordsDepth]
         logger.debug(f'loading depth {records_depth_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('depth', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SENSOR_TYPE_DEPTH_CAM, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth], sensor_ids)
     # records lidar
