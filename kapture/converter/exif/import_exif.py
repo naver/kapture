@@ -147,7 +147,7 @@ def extract_gps_from_exif(
     cam_to_gps_id = {  # cam_id -> gps_id
         cam_id: 'GPS_' + cam_id
         for cam_id, sensor in kapture_data.sensors.items()
-        if sensor.sensor_type == 'camera'
+        if sensor.sensor_type == kapture.SENSOR_TYPE_CAMERA
     }  # cam_id -> gps_id
 
     # set all gps to EPSG:4326
@@ -181,10 +181,10 @@ def import_gps_from_exif(
     :return:
     """
     logger.info('loading kapture partial ...')
-    skip_heavy_useless = {kapture.Trajectories,
+    skip_heavy_useless = [kapture.Trajectories,
                           kapture.RecordsLidar, kapture.RecordsWifi,
                           kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,
-                          kapture.Matches, kapture.Points3d, kapture.Observations}
+                          kapture.Matches, kapture.Points3d, kapture.Observations]
     kapture_data = kapture.io.csv.kapture_from_dir(kapture_dirpath, skip_list=skip_heavy_useless)
 
     # load exifs

@@ -126,7 +126,7 @@ def update_DB_cameras_and_poses(database: COLMAPDatabase,
     logger.debug('Add cameras in database...')
     colmap_camera_ids = {}  # to keep ID of camera in case it is different from the one we use
     for cam_id, cam in kapture_data.sensors.items():
-        if cam.sensor_type != 'camera':
+        if cam.sensor_type not in kapture.ALL_CAMERA_SENSOR_TYPES:
             continue
         col_cam_id, width, height, params, prior_focal_length = get_colmap_camera(cam)
 

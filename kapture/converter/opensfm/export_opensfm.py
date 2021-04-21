@@ -274,7 +274,7 @@ def export_opensfm(
     opensfm_cameras = {}
     kapture_cameras = {cam_id: cam
                        for cam_id, cam in kapture_data.sensors.items()
-                       if cam.sensor_type == 'camera'}
+                       if cam.sensor_type == kapture.SENSOR_TYPE_CAMERA}
     for cam_id, kapture_camera in kapture_cameras.items():
         opensfm_cameras[cam_id] = export_opensfm_camera(kapture_camera)
 
