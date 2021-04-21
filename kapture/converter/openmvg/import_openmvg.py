@@ -345,8 +345,12 @@ def _import_openmvg_regions(
     # retrieve what type of descriptors it is.
     descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
     descriptors_props = {
-        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128),
-        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128),
+        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128,
+                                     keypoints_type=keypoints_type,
+                                     metric_type='L2'),
+        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128,
+                                           keypoints_type=keypoints_type,
+                                           metric_type='L2'),
     }.get(descriptors_type)
     if not descriptors_props:
         raise ValueError(f'conversion of {descriptors_type} descriptors not implemented.')
@@ -364,7 +368,9 @@ def _import_openmvg_regions(
             assert keypoints_data.shape[1] == 4
             kapture_keypoints.add(image_name)
             # and convert file
-            kapture_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_name)
+            kapture_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
+                                                                                    kapture_path,
+                                                                                    image_name)
             array_to_file(kapture_keypoints_filepath, keypoints_data)
 
         # descriptors
@@ -381,11 +387,13 @@ def _import_openmvg_regions(
             # descriptors_data.reshape((keypoints_data.shape[0], -1))
             kapture_descriptors.add(image_name)
             # and convert file
-            kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_path, image_name)
+            kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(descriptors_type,
+                                                                                        kapture_path,
+                                                                                        image_name)
             array_to_file(kapture_descriptors_filepath, descriptors_data)
 
-    kapture_data.keypoints = kapture_keypoints
-    kapture_data.descriptors = kapture_descriptors
+    kapture_data.keypoints = {keypoints_type: kapture_keypoints}
+    kapture_data.descriptors = {descriptors_type: kapture_descriptors}
 
 
 def _import_openmvg_matches(
