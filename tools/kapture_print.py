@@ -67,7 +67,8 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value('nb sensors', len(kapture_data.sensors), file=output_stream, show_none=show_all)
     else:
         print_title('sensors', file=output_stream)
-        cam_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'camera']
+        cam_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                   if sensor.sensor_type in kapture.ALL_CAMERA_SENSOR_TYPES]
         print_key_value(' ├─ nb cameras', len(cam_ids), file=output_stream, show_none=show_all)
         lidar_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'lidar']
         print_key_value(' ├─ nb lidar', len(lidar_ids), file=output_stream, show_none=show_all)
