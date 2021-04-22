@@ -1092,7 +1092,7 @@ def global_features_from_dir(global_features_type: str,
     """
     Reads and builds Global features from images_filenames if given, or directly from actual files in kapture_dirpath.
 
-    :param global_features_type: type of global_features to export, name of the global_features subfolder
+    :param global_features_type: type of global_features, name of the global_features subfolder
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :param tar_handler: collection of preloaded tar archives
