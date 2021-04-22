@@ -931,7 +931,7 @@ def keypoints_from_dir(keypoints_type: str,
     """
     Reads and builds keypoints from images_filenames if given, or directly from actual files in kapture_dirpath.
 
-    :param keypoints_type: name of the keypoints
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :param tar_handler: collection of preloaded tar archives
@@ -1006,7 +1006,7 @@ def descriptors_from_dir(descriptors_type: str, kapture_dirpath: str, images_pat
     """
     Reads and builds descriptors from images_filenames if given, or directly from actual files in kapture_dirpath.
 
-    :param descriptors_type: the name of the descriptors type
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :param tar_handler: collection of preloaded tar archives
@@ -1092,7 +1092,7 @@ def global_features_from_dir(global_features_type: str,
     """
     Reads and builds Global features from images_filenames if given, or directly from actual files in kapture_dirpath.
 
-    :param global_features_type: the name of the global_features type
+    :param global_features_type: type of global_features to export, name of the global_features subfolder
     :param kapture_dirpath: root path of kapture
     :param images_paths: optional list of image file names
     :param tar_handler: collection of preloaded tar archives
@@ -1134,7 +1134,7 @@ def matches_from_dir(
     """
     Reads and builds Matches from images_filenames if given, or directly from actual files in kapture_dirpath.
 
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: root path of kapture
     :param image_filenames: optional list of image file names
     :param matches_pairsfile_path: text file in the csv format; where each line is image_name1, image_name2, score

@@ -45,8 +45,8 @@ def import_colmap_database(colmap_database_filepath: str,
     :param colmap_database_filepath: path to colmap database file.
     :param kapture_dir_path: path to kapture directory. Is used to store keypoints, descriptors and matches files.
                             If not given (None), is equivalent to skip_reconstruction == True.
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
-    :param descriptors_type: type of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering:
     :param skip_reconstruction: skip the import of the kapture/reconstruction part,
                             ie. Keypoints, Descriptors, Matches.
@@ -106,7 +106,7 @@ def import_colmap_from_reconstruction_files(reconstruction_dir_path: str,
     :param reconstruction_dir_path:
     :param kapture_dir_path: path to kapture directory. Is used to store keypoints files.
                             If not given (None), keypoints are automatically skipped.
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
     :param skip: can skip independently : Keypoints, Points3d or Observations.
                 Note that Points3d and Observations are in the same file, so you should skip both to gain its reading.
     :return: kapture object
@@ -177,8 +177,8 @@ def import_colmap(kapture_dir_path: Optional[str],  # noqa: C901: the import alg
     :param colmap_reconstruction_dir_path: optional path to colmap reconstruction directory.
     :param colmap_images_dir_path: directory path to colmap images. If given, a link to it will be created.
     :param colmap_rig_filepath: optional path to colmap rig file.
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
-    :param descriptors_type: type of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering:
     :param skip_reconstruction: skip the import of the kapture/reconstruction part,
                                 ie. Keypoints, Descriptors, Matches, Points3d, Observations.

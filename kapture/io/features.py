@@ -198,7 +198,7 @@ def get_keypoints_fullpath(keypoints_type: str, kapture_dirpath: str, image_file
     """
     Computes the full path of the keypoints file
 
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param image_filename: image file name
     :param tar_handler: collection of preloaded tar archives
@@ -214,7 +214,7 @@ def keypoints_to_filepaths(keypoints: kapture.Keypoints, keypoints_type: str, ka
     Computes keypoints files paths
 
     :param keypoints: keypoints
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: keypoint to keypoint file dictionary
@@ -228,7 +228,7 @@ def keypoints_check_dir(keypoints: kapture.Keypoints, keypoints_type: str, kaptu
     Checks that all keypoints file exist.
 
     :param keypoints: keypoints
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: True if they all exist, false otherwise.
@@ -271,7 +271,7 @@ def get_descriptors_fullpath(descriptors_type: str, kapture_dirpath: str, image_
     """
     Computes the full path of the descriptors file
 
-    :param descriptors_type: the name of the descriptors type
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param kapture_dirpath: top kapture directory path
     :param image_filename: image file name
     :param tar_handler: collection of preloaded tar archives
@@ -289,7 +289,7 @@ def descriptors_to_filepaths(descriptors: kapture.Descriptors,
     Computes descriptors files paths
 
     :param descriptors: descriptors
-    :param descriptors_type: the name of the descriptors type
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: descriptors to descriptors file dictionary
@@ -303,7 +303,7 @@ def descriptors_check_dir(descriptors: kapture.Descriptors, descriptors_type: st
     Checks that all descriptors file exist.
 
     :param descriptors: descriptors
-    :param descriptors_type: the name of the descriptors type
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: True if they all exist, false otherwise.
@@ -350,7 +350,7 @@ def get_global_features_fullpath(global_features_type: str,
     Computes the full path of the global features file
 
     :param kapture_dirpath: top kapture directory path
-    :param global_features_type: the name of the global_features type
+    :param global_features_type: type of global_features, name of the global_features subfolder
     :param image_filename: image file name
     :param tar_handler: collection of preloaded tar archives
     :return: full path of the global features file
@@ -368,7 +368,7 @@ def global_features_to_filepaths(global_features: kapture.GlobalFeatures,
     Computes global features files paths
 
     :param global_features: global features
-    :param global_features_type: the name of the global_features type
+    :param global_features_type: type of global_features, name of the global_features subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: global features to global features file dictionary
@@ -384,7 +384,7 @@ def global_features_check_dir(global_features: kapture.GlobalFeatures,
     Checks that all keypoints file exist.
 
     :param global_features: global features
-    :param global_features_type: the name of the global_features type
+    :param global_features_type: type of global_features, name of the global_features subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: True if they all exist, false otherwise.
@@ -432,7 +432,7 @@ def get_matches_fullpath(
     Computes the full path of the matches file between two images
 
     :param image_filename_pair: image file names
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: full path of the matches file
@@ -454,7 +454,7 @@ def matches_to_filepaths(matches: kapture.Matches,
     Computes matches files paths
 
     :param matches: matches
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: file to file matches to matches file dictionary
@@ -501,7 +501,7 @@ def matches_check_dir(matches: kapture.Matches, keypoints_type: str, kapture_dir
     Checks that all matches file exist.
 
     :param matches: matches
-    :param keypoints_type: the name of the keypoints type
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dirpath: top kapture directory path
     :param tar_handler: collection of preloaded tar archives
     :return: True if they all exist, false otherwise.

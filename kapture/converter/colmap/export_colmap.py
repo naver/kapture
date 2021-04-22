@@ -43,8 +43,8 @@ def export_colmap(kapture_dir_path: str,
     :param kapture_dir_path: kapture top directory
     :param colmap_database_filepath: path to colmap database file
     :param colmap_reconstruction_dir_path: path to colmap reconstruction directory
-    :param keypoints_type: reference the the keypoints for which the reconstruction are exported
-    :param descriptors_type: reference the the descriptors for which the reconstruction are exported
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param colmap_rig_filepath: path to colmap rig file
     :param force_overwrite_existing: Silently overwrite colmap files if already exists.
     :param pairsfile_path: Filter matches to load

@@ -105,7 +105,7 @@ def get_keypoints_from_database(database: COLMAPDatabase,
     :param records_camera: input images.
     :param kapture_dirpath: input root path to kapture.
     :param tar_handler: collection of preloaded tar archives
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
     :return: kapture keypoints
     """
     image_filenames = set()
@@ -179,8 +179,8 @@ def get_descriptors_from_database(database: COLMAPDatabase,
     :param images: list of images (as RecordsCamera).
     :param kapture_dirpath: input root path to kapture.
     :param tar_handler: collection of preloaded tar archives
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
-    :param descriptors_type: type of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder (by default, in colmap, its SIFT, but can be imported)
     :return: kapture descriptors
     """
     image_filenames = set()
@@ -249,7 +249,7 @@ def get_matches_from_database(database: COLMAPDatabase,
     :param images: input list of images (as RecordsCamera).
     :param kapture_dirpath: input root path to kapture.
     :param tar_handler: collection of preloaded tar archives
-    :param keypoints_type: type of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering: only retrieve matches with geometric consistency.
     :return: kapture matches
     """

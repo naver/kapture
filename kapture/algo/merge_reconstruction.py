@@ -235,6 +235,7 @@ def merge_matches(keypoints_type: str,
     """
     Merge several matches lists in one.
 
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param matches_list: list of matches to merge
     :param matches_paths: matches files paths
     :param output_path: root path of the merged matches files

@@ -133,7 +133,7 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
     :param colmap_image_ids: correspondences between kapture image id (image path) and colmap image id
     :param points3d: kapture points3d to export
     :param observations: kapture observations to export
-    :param keypoints_type: reference the the keypoints for which the observations are exported
+    :param keypoints_type: type of keypoints for which the observations are exported, name of the keypoints subfolder
     """
     assert isinstance(points3d, kapture.Points3d) or points3d is None
     assert isinstance(observations, kapture.Observations) or observations is None

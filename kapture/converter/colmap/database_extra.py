@@ -505,7 +505,7 @@ def add_keypoints_to_database(database: COLMAPDatabase,
 
     :param database: colmap database.
     :param keypoints: kapture keypoints to add
-    :param keypoints_type: type of keypoints
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dir_path: kapture data top directory
     :param tar_handler: collection of preloaded tar archives
     :param colmap_image_ids: kapture camera identifier -> colmap camera identifier dictionary
@@ -607,8 +607,8 @@ def kapture_to_colmap(kapture_data: kapture.Kapture,
     :param kapture_dirpath: path to kapture directory, to retrieve binary files (keypoints, descriptors, ...)
     :param tar_handler: collection of preloaded tar archives
     :param database: colmap database.
-    :param keypoints_type: types of keypoints to export
-    :param descriptors_type: types of descriptors to export
+    :param keypoints_type: type of keypoints to export, name of the keypoints subfolder
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param export_two_view_geometry: if True, also export two geometry.
     """
     assert isinstance(kapture_data, kapture.Kapture)

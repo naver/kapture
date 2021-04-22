@@ -102,7 +102,7 @@ class Descriptors(ImageFeaturesBase):
         :param type_name: input name of feature type (eg. SIFT). Used for information only.
         :param dtype: input type of the feature (eg. numpy.float32).
         :param dsize: input length of the feature (eg. 64 for sift descriptor).
-        :param keypoints_type: name of the directory which contains the keypoints that are being described.
+        :param keypoints_type: type of keypoints, name of the keypoints subfolder
         :param metric_type: name of the metric used to compare the descriptors, for information only.
         :param args: anything that can be passed to the set() constructor.
         :param kwargs: anything that can be passed to the set() constructor.
