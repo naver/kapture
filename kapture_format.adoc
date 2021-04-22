@@ -163,6 +163,9 @@ The advantage of tarfile compared to normal folders is that it's faster to copy/
 
 Note that overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be careful.
 
+The scripts in kapture such as import_colmap_py will never create a tar, they will export features to regular files.
+It is up to the user to tar the features if they so desire.
+
 In order to use the tar files, you will have to open them before loading the kapture data:
 ```
 # in read mode:
