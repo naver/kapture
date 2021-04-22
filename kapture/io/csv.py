@@ -1712,7 +1712,12 @@ def get_all_tar_handlers(kapture_dir_path: str,
         logger.debug(f'opening keypoints tars {data_dir_paths[kapture.Keypoints]} ...')
         keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Keypoints]
+            if isinstance(mode, str):
+                mode_t = mode
+            elif kapture.Keypoints in mode:
+                mode_t = mode[kapture.Keypoints]
+            else:
+                mode_t = 'r'
             for keypoints_type in keypoints_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Keypoints, keypoints_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
@@ -1722,7 +1727,12 @@ def get_all_tar_handlers(kapture_dir_path: str,
         logger.debug(f'opening descriptors tars {data_dir_paths[kapture.Descriptors]} ...')
         descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Descriptors]
+            if isinstance(mode, str):
+                mode_t = mode
+            elif kapture.Descriptors in mode:
+                mode_t = mode[kapture.Descriptors]
+            else:
+                mode_t = 'r'
             for descriptors_type in descriptors_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Descriptors, descriptors_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
@@ -1732,7 +1742,12 @@ def get_all_tar_handlers(kapture_dir_path: str,
         logger.debug(f'opening global_features tars {data_dir_paths[kapture.GlobalFeatures]} ...')
         global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.GlobalFeatures]
+            if isinstance(mode, str):
+                mode_t = mode
+            elif kapture.GlobalFeatures in mode:
+                mode_t = mode[kapture.GlobalFeatures]
+            else:
+                mode_t = 'r'
             for global_features_type in global_features_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.GlobalFeatures, global_features_type, kapture_dir_path)
                 if path.isfile(tarfile_path):
@@ -1744,7 +1759,12 @@ def get_all_tar_handlers(kapture_dir_path: str,
                           for name in os.listdir(data_dir_paths[kapture.Matches])
                           if os.path.isdir(os.path.join(data_dir_paths[kapture.Matches], name))]
         if len(keypoints_list) > 0:
-            mode_t = mode if isinstance(mode, str) else mode[kapture.Matches]
+            if isinstance(mode, str):
+                mode_t = mode
+            elif kapture.Matches in mode:
+                mode_t = mode[kapture.Matches]
+            else:
+                mode_t = 'r'
             for keypoints_type in keypoints_list:
                 tarfile_path = get_feature_tar_fullpath(kapture.Matches, keypoints_type, kapture_dir_path)
                 if path.isfile(tarfile_path):

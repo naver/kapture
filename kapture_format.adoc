@@ -133,12 +133,60 @@ Text files must comply the following:
 
 === Support for tar files
 
-It is possible to replace some of the recontruction folders with a tar.
-To be precise, all subfolders of `keypoints`, `descriptors`, `global_features` and `matches` can be replaced by an archive of the same name + `.tar`. For example `reconstruction/keypoints/r2d2_WASF-N8_20k/` become `reconstruction/keypoints/r2d2_WASF-N8_20k.tar`.
-The content of the tar file should be identical to the folder it replaces. Read or Append operations are supported.
-Overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be careful.
+It is possible to put some of the features inside with a tar.
+To be precise, for every subfolders of `keypoints`, `descriptors`, `global_features` and `matches`, the features/matches files can be stored inside a tar named `keypoints.tar`, `descriptors.tar`, `global_features.tar` or `matches.tar`.
+For example :
+```
+reconstruction/
+├─ keypoints/
+│  ├─ r2d2_WASF-N8_20k              # identify the type of keypoints
+│  │  ├─ keypoints.txt              # type of keypoint (shape and dtype)
+│  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+│  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+│  │  ├─ ...
+
+become
+
+reconstruction/
+├─ keypoints/ 
+│  ├─ r2d2_WASF-N8_20k                 # identify the type of keypoints
+│  │  ├─ keypoints.txt                 # type of keypoint (shape and dtype)
+│  │  ├─ keypoints.tar                 # instead of regular files, you can use an archive
+│  │  │  ├─ map/cam_01/00001.jpg.kpt   # inside the tar, filename is the same as above
+│  │  │  ├─ query/query001.jpg.kpt     # inside the tar, filename is the same as above
+│  │  │  ├─ ...
+```
+
+The content of the tar file should be identical to the folder it replaces. 
+Read OR Append operations are supported, you have to chose which. It is recommended to start using tar when all features are already computed.
+The advantage of tarfile compared to normal folders is that it's faster to copy/move and estimate size.
+
+Note that overwriting a file within the tar with result in wasted space (the updated file will be appended to the tar file) so be careful.
+
 In order to use the tar files, you will have to open them before loading the kapture data:
-TO COMPLETE API IMPLICATIONS OF THAT CHANGE
+```
+# in read mode:
+keypoints_type = 'r2d2_WASF_N8_20k'
+with get_all_tar_handlers(kapture_root_dir) as tar_handlers:
+   kapture_data = kapture_from_dir(kapture_root_dir, tar_handlers=tar_handlers)
+   images = [image_name for _, _, image_name in kapture.flatten(kapture_data.records_camera)]
+   for image_name in images:
+      # if keypoints are not in a tar, keypoints_path will be a string with full path to the file
+      # if keypoints are in a tar, keypoints_path will be a pair (filename, tar_handler)
+      keypoints_path = get_keypoints_fullpath(keypoints_type, kapture_root_dir, image_name, tar_handlers)
+      keypoints = image_keypoints_from_file(keypoints_path, kapture_data.keypoints[keypoints_type].dtype, kapture_data.keypoints[keypoints_type].dsize)
+
+# keypoints and descriptors in append mode
+with get_all_tar_handlers(kapture_root_dir, mode={kapture.Keypoints: 'a', kapture.Descriptors: 'a'}) as tar_handlers:
+   kapture_data = kapture_from_dir(kapture_root_dir, tar_handlers=tar_handlers)
+   images = [image_name for _, _, image_name in kapture.flatten(kapture_data.records_camera)]
+   for image_name in images:
+      # if keypoints are not in a tar, keypoints_path will be a string with full path to the file
+      # if keypoints are in a tar, keypoints_path will be a pair (filename, tar_handler)
+      keypoints_path = get_keypoints_fullpath(keypoints_type, kapture_root_dir, image_name, tar_handlers)
+      keypoints = np.zeros((0, 128), dtype=np.float64)
+      keypoints = image_keypoints_to_file(keypoints_path, keypoints)
+```
 
 == `├─ sensors/`
 
