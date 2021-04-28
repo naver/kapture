@@ -13,6 +13,9 @@ import argparse
 from typing import Optional
 from tqdm import tqdm
 import shutil
+# import numpy as np like in kapture.io.csv
+# so that types written as "np.float32" are understood by read_old_image_features_csv
+import numpy as np  # noqa: F401
 
 import path_to_kapture  # noqa: F401
 import kapture
