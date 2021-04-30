@@ -431,6 +431,7 @@ def _import_openmvg_matches(
                 assert len(kapture_data.records_camera[idx_image1]) == 1
                 sensor_id = next(iter(kapture_data.records_camera[idx_image1].keys()))
                 image_1 = kapture_data.records_camera.get(idx_image1)[sensor_id]
+                openmvg_image_idx_to_kapture_image_name[idx_image1] = image_1
 
             idx_image2 = int(splits_idx[1])
             if idx_image2 in openmvg_image_idx_to_kapture_image_name:
@@ -441,6 +442,7 @@ def _import_openmvg_matches(
                 assert len(kapture_data.records_camera[idx_image2]) == 1
                 sensor_id = next(iter(kapture_data.records_camera[idx_image2].keys()))
                 image_2 = kapture_data.records_camera.get(idx_image2)[sensor_id]
+                openmvg_image_idx_to_kapture_image_name[idx_image2] = image_2
 
             swap_order = image_2 < image_1
             line = fid.readline()
