@@ -420,7 +420,7 @@ def _import_openmvg_matches(
             line = fid.readline()
             if not line:
                 break
-            splits_idx = line.rstrip('\r\n').split(' ')
+            splits_idx = line.rstrip('\r\n').split()
             assert len(splits_idx) == 2
             idx_image1 = int(splits_idx[0])
             if idx_image1 in openmvg_image_idx_to_kapture_image_name:
@@ -450,7 +450,7 @@ def _import_openmvg_matches(
             matches_array = np.empty((num_matches, 3), dtype=np.float)
             for i in range(num_matches):
                 line = fid.readline()
-                splits_kpts_idx = line.rstrip('\r\n').split(' ')
+                splits_kpts_idx = line.rstrip('\r\n').split()
                 assert len(splits_kpts_idx) == 2
                 if swap_order:
                     matches_array[i, 1] = int(splits_kpts_idx[0])
