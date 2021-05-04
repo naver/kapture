@@ -11,7 +11,7 @@ from .features import image_keypoints_from_file
 
 def image_keypoints_to_image(
         image: Image,
-        keypoints: np.array,
+        keypoints: np.ndarray,
         radius: int = 2,
         filled: bool = True) -> Image:
     """

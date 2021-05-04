@@ -71,9 +71,16 @@ First, load a dataset:
 
 [source,python]
 ----
+import kapture
 import kapture.io.csv as csv
 
-kapture_data = csv.kapture_from_dir('../samples/virtual_gallery/kapture/training')
+dataset_path = '../samples/virtual_gallery/kapture/training'
+# keypoints, descriptors, matches, global features can be stored in tar files, so open them in advance
+# use with csv.get_all_tar_handlers(dataset_path) as tar_handlers
+# or call
+# tar_handlers.close() before exiting the program
+tar_handlers = csv.get_all_tar_handlers(dataset_path)
+kapture_data = csv.kapture_from_dir(dataset_path, tar_handlers=tar_handlers)
 ----
 
 === Get poses
@@ -132,6 +139,13 @@ outputs:
 ...
 ----
 
+=== Close handlers before quitting
+[source,python]
+----
+tar_handlers.close()
+----
+
+
 === Reconstruction
 
 Let's have a look at the reconstruction. First, import more tools from kapture and load another sample dataset:
@@ -145,7 +159,9 @@ from kapture.io.image import image_keypoints_to_image_file
 from PIL import Image
 from tqdm import tqdm
 # load another dataset with reconstruction
-kapture_data = csv.kapture_from_dir('../samples/maupertuis/kapture/')
+dataset_path='../samples/maupertuis/kapture/'
+tar_handlers = csv.get_all_tar_handlers(dataset_path)
+kapture_data = csv.kapture_from_dir(dataset_path, tar_handlers=tar_handlers)
 ----
 
 Let's see what is stored in __keypoints__, __descriptors__ and __matches__:
@@ -163,35 +179,35 @@ output:
 
 [source,bash]
 ----
-keypoints       :  SIFT (float32 x 6) = [
-	00.jpg,
-	02.jpg,
-	01.jpg,
-	03.jpg
-]
-descriptors     :  SIFT (uint8 x 128) = [
-	00.jpg,
-	02.jpg,
-	01.jpg,
-	03.jpg
-]
+keypoints       :  {'SIFT': SIFT (float32 x 6) = [
+        02.jpg,
+        00.jpg,
+        01.jpg,
+        03.jpg
+]}
+descriptors     :  {'SIFT': SIFT SIFT L2 (uint8 x 128) = [
+        02.jpg,
+        00.jpg,
+        01.jpg,
+        03.jpg
+]}
 global_features :  None
-matches         :  [
-	(01.jpg , 02.jpg),
-	(01.jpg , 03.jpg),
-	(00.jpg , 03.jpg),
-	(00.jpg , 02.jpg),
-	(02.jpg , 03.jpg),
-	(00.jpg , 01.jpg)
-]
+matches         :  {'SIFT': [
+        (01.jpg , 02.jpg),
+        (00.jpg , 01.jpg),
+        (00.jpg , 03.jpg),
+        (01.jpg , 03.jpg),
+        (00.jpg , 02.jpg),
+        (02.jpg , 03.jpg)
+]}
 observations    :
-[00000]: 	(01.jpg, 4561)	(02.jpg, 3389)	(00.jpg, 4975)	(03.jpg, 3472)
-[00001]: 	(01.jpg, 4557)	(02.jpg, 4128)	(00.jpg, 4970)
-[00002]: 	(01.jpg, 4554)	(02.jpg, 3466)	(00.jpg, 4958)	(03.jpg, 3556)
+[00000, SIFT]:  (01.jpg, 4561)  (02.jpg, 3389)  (00.jpg, 4975)  (03.jpg, 3472)
+[00001, SIFT]:  (01.jpg, 4557)  (02.jpg, 4128)  (00.jpg, 4970)
+[00002, SIFT]:  (01.jpg, 4554)  (02.jpg, 3466)  (00.jpg, 4958)  (03.jpg, 3556)
 ....
-[01036]: 	(01.jpg, 2484)	(02.jpg, 3702)	(00.jpg, 2527)	(03.jpg, 3944)
-[01037]: 	(01.jpg, 2498)	(02.jpg, 2191)	(00.jpg, 2621)
-[01038]: 	(01.jpg, 2507)	(02.jpg, 1941)	(00.jpg, 2696)
+[01036, SIFT]: 	(01.jpg, 2484)	(02.jpg, 3702)	(00.jpg, 2527)	(03.jpg, 3944)
+[01037, SIFT]: 	(01.jpg, 2498)	(02.jpg, 2191)	(00.jpg, 2621)
+[01038, SIFT]: 	(01.jpg, 2507)	(02.jpg, 1941)	(00.jpg, 2696)
 
 points3d        :
 [[ -2.39675   4.62278  13.2759   57.       57.       49.     ]
@@ -210,13 +226,14 @@ Then, we load the keypoints of the first image (`00.jpg`) as a numpy array using
 [source,python]
 ----
 image_name = '00.jpg'
+keypoints_type = 'SIFT'
 # keypoints_filepaths[image_name] -> keypoints file full path
-keypoints_filepaths = keypoints_to_filepaths(kapture_data.keypoints, kapture_dirpath)
+keypoints_filepaths = keypoints_to_filepaths(kapture_data.keypoints[keypoints_type], keypoints_type, dataset_path, tar_handlers)
 # for image_name in kapture_data.keypoints:
 keypoints_filepath = keypoints_filepaths[image_name]
 keypoints_data = image_keypoints_from_file(filepath=keypoints_filepath,
-                                           dsize=kapture_data.keypoints.dsize,
-                                           dtype=kapture_data.keypoints.dtype)
+                                           dsize=kapture_data.keypoints[keypoints_type].dsize,
+                                           dtype=kapture_data.keypoints[keypoints_type].dtype)
 print(f'keypoints of "{image_name}" as numpy array of {keypoints_data.dtype} and shape {keypoints_data.shape}:')
 print(keypoints_data)
 ----
@@ -249,7 +266,7 @@ to directly draw keypoints on top of an image:
 ----
 # images_filepaths[image_name] -> image file full path
 images_filepaths = images_to_filepaths(kapture_data.records_camera, kapture_dirpath)
-for image_name in tqdm(kapture_data.keypoints):
+for image_name in tqdm(kapture_data.keypoints[keypoints_type]):
     image_filepath = images_filepaths[image_name]
     keypoints_filepath = keypoints_filepaths[image_name]
     image_with_kp_filepath = keypoints_filepath + '_preview.jpg'
@@ -258,11 +275,11 @@ for image_name in tqdm(kapture_data.keypoints):
             output_filepath=image_with_kp_filepath,
             image_filepath=image_filepath,
             keypoints_filepath=keypoints_filepath,
-            keypoint_dtype=kapture_data.keypoints.dtype,
-            keypoint_dsize=kapture_data.keypoints.dsize,
+            keypoint_dtype=kapture_data.keypoints[keypoints_type].dtype,
+            keypoint_dsize=kapture_data.keypoints[keypoints_type].dsize,
             radius=6
         )
-
+tar_handlers.close()
 ----
 
 Saved in `../samples/maupertuis/kapture/reconstruction/keypoints/00.jpg.kpt_preview.png`, you will find:

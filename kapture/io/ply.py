@@ -51,7 +51,7 @@ def get_axis_in_world(
         [length, 0, 0],  # X
         [0, length, 0],  # Y
         [0, 0, length],  # Z
-    ])
+    ], dtype=np.float)
     return pose_device_from_world.inverse().transform_points(sensor_axis)
 
 

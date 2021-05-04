@@ -4,9 +4,10 @@
 Functions to export the reconstruction part of colmap (only text format is supported).
 """
 
+from kapture.io.tar import TarCollection
 import logging
 import os.path as path
-from typing import Dict, Tuple, List
+from typing import Dict, Optional, Tuple, List
 
 # kapture
 import kapture
@@ -123,7 +124,8 @@ def export_to_colmap_matches_txt(colmap_matches_filepath: str, matches: kapture.
 def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
                                   colmap_image_ids: Dict[str, int],
                                   points3d: kapture.Points3d = None,
-                                  observations: kapture.Observations = None) -> None:
+                                  observations: kapture.Observations = None,
+                                  keypoints_type: str = None) -> None:
     """
     Exports to colmap points3d text file.
 
@@ -131,9 +133,11 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
     :param colmap_image_ids: correspondences between kapture image id (image path) and colmap image id
     :param points3d: kapture points3d to export
     :param observations: kapture observations to export
+    :param keypoints_type: type of keypoints for which the observations are exported, name of the keypoints subfolder
     """
     assert isinstance(points3d, kapture.Points3d) or points3d is None
     assert isinstance(observations, kapture.Observations) or observations is None
+
     assert isinstance(colmap_image_ids, dict)
     points3d_colmap_header = '# 3D point list with one line of data per point:\n' \
                              '#   POINT3D_ID, X, Y, Z, R, G, B, ERROR, TRACK[] as (IMAGE_ID, POINT2D_IDX)\n'
@@ -145,10 +149,18 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
                 line = '{} {} {} {} {} {} {} 0'.format(i,
                                                        point3d[0], point3d[1], point3d[2],
                                                        int(point3d[3]), int(point3d[4]), int(point3d[5]))
-                if observations is not None and i in observations and len(observations[i]) > 0:
-                    line += ' '
-                    pairs = [(str(colmap_image_ids[name]), str(keypoint_id)) for name, keypoint_id in observations[i]]
-                    line += ' '.join([str(s) for s in list(sum(pairs, ()))])
+                if observations is not None and i in observations:
+                    if len(observations[i]) == 0:
+                        continue
+                    elif len(observations[i]) == 1 and keypoints_type is None:
+                        keypoints_type = next(iter(observations[i].keys()))
+                    if keypoints_type is None or keypoints_type not in observations[i]:
+                        continue
+                    if len(observations[i, keypoints_type]) > 0:
+                        line += ' '
+                        pairs = [(str(colmap_image_ids[name]), str(keypoint_id))
+                                 for name, keypoint_id in observations[i, keypoints_type]]
+                        line += ' '.join([str(s) for s in list(sum(pairs, ()))])
                 line += '\n'
                 fid.write(line)
 
@@ -156,16 +168,20 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
 def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
                          kapture_data: kapture.Kapture,
                          kapture_dirpath: str,
+                         tar_handler: Optional[TarCollection],
                          colmap_camera_ids: Dict[str, int],
-                         colmap_image_ids: Dict[str, int]) -> None:
+                         colmap_image_ids: Dict[str, int],
+                         keypoints_type: str = None) -> None:
     """
     Exports to colmap reconstruction text files.
 
     :param colmap_reconstruction_dirpath: path to directory where colmap reconstruction files will be stored.
     :param kapture_data: input kapture data
     :param kapture_dirpath: path to output directory, where colmap files will be stored
+    :param tar_handler: collection of preloaded tar archives
     :param colmap_camera_ids: gives the correspondences between kapture camera id and colmap camera id
     :param colmap_image_ids: gives the correspondences between kapture image id (image path) and colmap image id
+    :param keypoints_type: reference the the keypoints for which the reconstruction are exported
     """
     assert isinstance(kapture_data, kapture.Kapture)
     assert isinstance(colmap_camera_ids, dict)
@@ -192,22 +208,33 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
     # images.txt
     image_to_keypoints = {}
     if kapture_data.keypoints and kapture_data.points3d and kapture_data.observations:
-        observations_reversed = {(image_filename, keypoint_idx): point3d_idx
-                                 for point3d_idx, (image_filename, keypoint_idx) in
-                                 kapture.flatten(kapture_data.observations)}
-
-        # prepare images.txt even lines
-        # POINTS2D[] as (X, Y, POINT3D_ID)
-        keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints, kapture_dirpath)
-        for image_filename, image_keypoints_filepath in keypoints_filepaths.items():
-            image_keypoints = kapture.io.features.image_keypoints_from_file(image_keypoints_filepath,
-                                                                            kapture_data.keypoints.dtype,
-                                                                            kapture_data.keypoints.dsize)
-            image_to_keypoints[image_filename] = []
-            for i in range(image_keypoints.shape[0]):
-                point3d_idx = observations_reversed[(image_filename, i)] if (image_filename,
-                                                                             i) in observations_reversed else -1
-                image_to_keypoints[image_filename].append((image_keypoints[i, 0], image_keypoints[i, 1], point3d_idx))
+        if len(kapture_data.keypoints) == 1 and keypoints_type is None:
+            keypoints_type = next(iter(kapture_data.keypoints.keys()))
+        if keypoints_type is not None and keypoints_type in kapture_data.keypoints:
+            obs_for_keypoints_type = {point_id: per_keypoints_type_subdict[keypoints_type]
+                                      for point_id, per_keypoints_type_subdict in kapture_data.observations.items()
+                                      if keypoints_type in per_keypoints_type_subdict}
+            observations_reversed = {(image_filename, keypoint_idx): point3d_idx
+                                     for point3d_idx in obs_for_keypoints_type.keys()
+                                     for image_filename, keypoint_idx in obs_for_keypoints_type[point3d_idx]}
+            # prepare images.txt even lines
+            # POINTS2D[] as (X, Y, POINT3D_ID)
+            keypoints = kapture_data.keypoints[keypoints_type]
+            keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints,
+                                                                             keypoints_type,
+                                                                             kapture_dirpath,
+                                                                             tar_handler)
+            for image_filename, image_keypoints_filepath in keypoints_filepaths.items():
+                image_keypoints = kapture.io.features.image_keypoints_from_file(image_keypoints_filepath,
+                                                                                keypoints.dtype,
+                                                                                keypoints.dsize)
+                image_to_keypoints[image_filename] = []
+                for i in range(image_keypoints.shape[0]):
+                    point3d_idx = observations_reversed[(image_filename, i)] if (image_filename,
+                                                                                 i) in observations_reversed else -1
+                    image_to_keypoints[image_filename].append((image_keypoints[i, 0],
+                                                               image_keypoints[i, 1],
+                                                               point3d_idx))
 
     if kapture_data.records_camera is None or kapture_data.trajectories is None:
         logger.info('skipping colmap images.txt (missing images or trajectories).')
@@ -221,11 +248,14 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
 
     # image_matches.txt: to be imported as custom match (allow geometric verification)
     if kapture_data.matches:
-        logger.info('creating image_matches.txt')
-        export_to_colmap_matches_txt(path.join(colmap_reconstruction_dirpath, 'image_matches.txt'),
-                                     kapture_data.matches)
+        if len(kapture_data.matches) == 1 and keypoints_type is None:
+            keypoints_type = next(iter(kapture_data.matches.keys()))
+        if keypoints_type is not None and keypoints_type in kapture_data.matches:
+            logger.info('creating image_matches.txt')
+            export_to_colmap_matches_txt(path.join(colmap_reconstruction_dirpath, 'image_matches.txt'),
+                                         kapture_data.matches[keypoints_type])
 
     # points3D.txt
     logging.info('creating colmap points3D.txt')
     export_to_colmap_points3d_txt(path.join(colmap_reconstruction_dirpath, 'points3D.txt'), colmap_image_ids,
-                                  kapture_data.points3d, kapture_data.observations)
+                                  kapture_data.points3d, kapture_data.observations, keypoints_type)

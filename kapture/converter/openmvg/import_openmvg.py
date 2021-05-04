@@ -17,8 +17,9 @@ from typing import Dict, Optional, Union
 import kapture
 import kapture.io.csv as kcsv
 import kapture.io.structure
-from kapture.io.records import TransferAction, get_image_fullpath, transfer_files_from_dir
+from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
+from kapture.io.features import get_matches_fullpath
 from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
@@ -345,8 +346,12 @@ def _import_openmvg_regions(
     # retrieve what type of descriptors it is.
     descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
     descriptors_props = {
-        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128),
-        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128),
+        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128,
+                                     keypoints_type=keypoints_type,
+                                     metric_type='L2'),
+        'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128,
+                                           keypoints_type=keypoints_type,
+                                           metric_type='L2'),
     }.get(descriptors_type)
     if not descriptors_props:
         raise ValueError(f'conversion of {descriptors_type} descriptors not implemented.')
@@ -364,7 +369,9 @@ def _import_openmvg_regions(
             assert keypoints_data.shape[1] == 4
             kapture_keypoints.add(image_name)
             # and convert file
-            kapture_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_path, image_name)
+            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
+                                                                kapture_path,
+                                                                image_name)
             array_to_file(kapture_keypoints_filepath, keypoints_data)
 
         # descriptors
@@ -381,19 +388,83 @@ def _import_openmvg_regions(
             # descriptors_data.reshape((keypoints_data.shape[0], -1))
             kapture_descriptors.add(image_name)
             # and convert file
-            kapture_descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_path, image_name)
+            kapture_descriptors_filepath = get_descriptors_fullpath(descriptors_type,
+                                                                    kapture_path,
+                                                                    image_name)
             array_to_file(kapture_descriptors_filepath, descriptors_data)
 
-    kapture_data.keypoints = kapture_keypoints
-    kapture_data.descriptors = kapture_descriptors
+    kapture_data.keypoints = {keypoints_type: kapture_keypoints}
+    kapture_data.descriptors = {descriptors_type: kapture_descriptors}
 
 
 def _import_openmvg_matches(
-        matches_file_path,
-        kapture_data,
-        kapture_path):
-    # look for the "image_describer.json"
-    # matches.*.bin files use cereal over a
-    # map < pair <uint32_t, uint32_t>, std::vector<uint64_t> >
-    # matches = np.fromfile(matches_file_path, dtype=np.uint8)
-    pass  # Ongoing work ...
+        matches_file_path: str,
+        kapture_data: kapture.Kapture,
+        kapture_path: str):
+    if kapture_data.records_camera is None:
+        logger.warning('no images in records_camera, cannot import matches')
+        return
+    if kapture_data.keypoints is None:
+        logger.warning('no keypoints, cannot import matches')
+        return
+    assert len(kapture_data.keypoints) == 1
+    keypoints_type = next(iter(kapture_data.keypoints.keys()))
+
+    # idx image1 idx image 2
+    # nb pairs
+    # pl1 pr1 pl2 pr2 ...
+    openmvg_image_idx_to_kapture_image_name = {}
+    matches = kapture.Matches()
+    with open(matches_file_path, 'r') as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            splits_idx = line.rstrip('\r\n').split()
+            assert len(splits_idx) == 2
+            idx_image1 = int(splits_idx[0])
+            if idx_image1 in openmvg_image_idx_to_kapture_image_name:
+                image_1 = openmvg_image_idx_to_kapture_image_name[idx_image1]
+            else:
+                if idx_image1 not in kapture_data.records_camera:
+                    raise ValueError(f'{idx_image1} not in kapture_data.records_camera')
+                assert len(kapture_data.records_camera[idx_image1]) == 1
+                sensor_id = next(iter(kapture_data.records_camera[idx_image1].keys()))
+                image_1 = kapture_data.records_camera.get(idx_image1)[sensor_id]
+                openmvg_image_idx_to_kapture_image_name[idx_image1] = image_1
+
+            idx_image2 = int(splits_idx[1])
+            if idx_image2 in openmvg_image_idx_to_kapture_image_name:
+                image_2 = openmvg_image_idx_to_kapture_image_name[idx_image2]
+            else:
+                if idx_image2 not in kapture_data.records_camera:
+                    raise ValueError(f'{idx_image2} not in kapture_data.records_camera')
+                assert len(kapture_data.records_camera[idx_image2]) == 1
+                sensor_id = next(iter(kapture_data.records_camera[idx_image2].keys()))
+                image_2 = kapture_data.records_camera.get(idx_image2)[sensor_id]
+                openmvg_image_idx_to_kapture_image_name[idx_image2] = image_2
+
+            swap_order = image_2 < image_1
+            line = fid.readline()
+            num_matches = int(line.rstrip('\r\n'))
+            matches_array = np.empty((num_matches, 3), dtype=np.float)
+            for i in range(num_matches):
+                line = fid.readline()
+                splits_kpts_idx = line.rstrip('\r\n').split()
+                assert len(splits_kpts_idx) == 2
+                if swap_order:
+                    matches_array[i, 1] = int(splits_kpts_idx[0])
+                    matches_array[i, 0] = int(splits_kpts_idx[1])
+                else:
+                    matches_array[i, 0] = int(splits_kpts_idx[0])
+                    matches_array[i, 1] = int(splits_kpts_idx[1])
+                matches_array[i, 2] = 1.0
+            if swap_order:
+                image_filename_pair = (image_2, image_1)
+                matches.add(image_2, image_1)
+            else:
+                image_filename_pair = (image_1, image_2)
+                matches.add(image_1, image_2)
+            matches_filepath = get_matches_fullpath(image_filename_pair, keypoints_type, kapture_path)
+            array_to_file(matches_filepath, matches_array)
+    kapture_data.matches = {keypoints_type: matches}

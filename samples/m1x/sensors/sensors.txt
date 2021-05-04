@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_id, name, sensor_type, [sensor_params]+
 lidar0, vertical, lidar
 lidar1, horizontal, lidar

@@ -35,6 +35,8 @@ def import_opensfm_command_line():
                              f'{", ".join(a.name for a in TransferAction)}')
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete kapture if already exists.')
+    parser.add_argument('--keypoints-type', default='HessianAffine', help='kapture keypoints type.')
+    parser.add_argument('--descriptors-type', default='HOG', help='kapture descriptors type.')
     args = parser.parse_args()
     ####################################################################################################################
     logger.setLevel(args.verbose)
@@ -50,7 +52,7 @@ def import_opensfm_command_line():
     args.input = path.normpath(path.abspath(args.input))
     args.output = path.normpath(path.abspath(args.output))
 
-    import_opensfm(args.input, args.output, args.force, args.transfer)
+    import_opensfm(args.input, args.output, args.force, args.transfer, args.keypoints_type, args.descriptors_type)
 
 
 if __name__ == '__main__':

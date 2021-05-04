@@ -1,0 +1,3 @@
+# kapture format: 1.1
+# name, dtype, dsize, keypoints_type, metric_type
+HOG, uint8, 128, HessianAffine, L2

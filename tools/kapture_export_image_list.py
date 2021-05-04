@@ -5,6 +5,7 @@
 Export the list of images of a kapture into a file listing the image files, and optionally their camera parameters.
 """
 
+from kapture.core.Records import RecordBluetooth, RecordGnss, RecordGyroscope, RecordsAccelerometer, RecordsDepth, RecordsMagnetic
 import logging
 import os
 import argparse
@@ -30,8 +31,14 @@ def export_image_list(kapture_path: str, output_path: str, export_camera_params:
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     safe_remove_file(output_path, force)
-
-    kapture_to_export = kapture_from_dir(kapture_path)
+    skip_heavy_useless = [kapture.Trajectories,
+                          kapture.RecordsLidar, kapture.RecordsWifi,
+                          kapture.RecordsAccelerometer, kapture.RecordBluetooth,
+                          kapture.RecordGnss, kapture.RecordGyroscope,
+                          kapture.RecordsDepth, kapture.RecordsMagnetic,
+                          kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,
+                          kapture.Matches, kapture.Points3d, kapture.Observations]
+    kapture_to_export = kapture_from_dir(kapture_path, skip_list=skip_heavy_useless)
     output_content = []
     logger.info('starting conversion...')
     for _, sensor_id, filename in kapture.flatten(kapture_to_export.records_camera, is_sorted=True):

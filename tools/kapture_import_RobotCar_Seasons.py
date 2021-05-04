@@ -56,6 +56,7 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.converter.colmap.import_colmap import import_colmap
 
 logger = logging.getLogger('RobotCar_Seasons')
+LOCAL_FEATURE_TYPE = 'SIFT'
 
 
 def import_robotcar_cameras(intrinsics_dir_path: str) -> kapture.Sensors:
@@ -134,6 +135,8 @@ def import_robotcar_colmap_location(robotcar_path: str,  # noqa: C901: function 
     kapture_data = import_colmap(kapture_dir_path=kapture_path,
                                  colmap_reconstruction_dir_path=colmap_reconstruction_fullpath,
                                  colmap_images_dir_path=path.join(robotcar_path, "images"),
+                                 keypoints_type=LOCAL_FEATURE_TYPE,
+                                 descriptors_type=LOCAL_FEATURE_TYPE,
                                  skip_reconstruction=skip_reconstruction,
                                  images_import_strategy=TransferAction.skip)  # since filenames are incorrect
 
@@ -165,8 +168,9 @@ def import_robotcar_colmap_location(robotcar_path: str,  # noqa: C901: function 
         # observations.txt: png -> jpg
         new_observations = kapture.Observations()
         for point3d_idx in kapture_data.observations:
-            for image_path, keypoint_id in kapture_data.observations[point3d_idx]:
-                new_observations.add(point3d_idx, image_path.replace(".png", ".jpg"), int(keypoint_id))
+            for image_path, keypoint_id in kapture_data.observations[point3d_idx, LOCAL_FEATURE_TYPE]:
+                new_observations.add(point3d_idx, LOCAL_FEATURE_TYPE,
+                                     image_path.replace(".png", ".jpg"), int(keypoint_id))
         kapture_data.observations = new_observations
 
     # records_camera.txt
@@ -378,6 +382,8 @@ def _import_colmap_overcast_reference(robotcar_path, kapture_path, force_overwri
             colmap_database_filepath=colmap_db_path,
             colmap_reconstruction_dir_path='',
             colmap_images_dir_path=path.join(robotcar_path, "images"),
+            keypoints_type=LOCAL_FEATURE_TYPE,
+            descriptors_type=LOCAL_FEATURE_TYPE,
             no_geometric_filtering=True,
             force_overwrite_existing=force_overwrite_existing,
             images_import_strategy=TransferAction.skip

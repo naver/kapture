@@ -1,2 +1,0 @@
-# kapture format: 1.0
-SIFT, float, 4

@@ -36,6 +36,8 @@ def export_opensfm_command_line():
                              f'{", ".join(a.name for a in TransferAction)}')
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete opensfm data if already exists.')
+    parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
+    parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
     args = parser.parse_args()
     ####################################################################################################################
     logger.setLevel(args.verbose)
@@ -50,7 +52,7 @@ def export_opensfm_command_line():
 
     args.kapture = path.normpath(path.abspath(args.kapture))
     args.opensfm = path.normpath(path.abspath(args.opensfm))
-    export_opensfm(args.kapture, args.opensfm, args.force, args.transfer)
+    export_opensfm(args.kapture, args.opensfm, args.force, args.transfer, args.keypoints_type, args.descriptors_type)
 
 
 if __name__ == '__main__':

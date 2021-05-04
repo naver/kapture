@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_id, name, sensor_type, [sensor_params]+
 kinect_rgb, kinect_rgb, camera, SIMPLE_PINHOLE, 640, 480, 525, 320, 240
 kinect_depth, kinect_depth, depth, SIMPLE_PINHOLE, 640, 480, 585, 320, 240
