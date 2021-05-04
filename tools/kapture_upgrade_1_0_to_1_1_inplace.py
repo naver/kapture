@@ -2,7 +2,7 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 """
-Convert kapture data in version 1.0 to version 1.1
+Convert kapture data in version 1.0 to version 1.1 inplace
 """
 
 import logging
@@ -18,14 +18,11 @@ import numpy as np  # noqa: F401
 import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
-from kapture.io.structure import delete_existing_kapture_files
 import kapture.io.features
 import kapture.io.csv
-from kapture.io.records import import_record_data_from_dir_auto
 from kapture.utils.paths import populate_files_in_dirpath
-from kapture.io.binary import TransferAction
 
-logger = logging.getLogger('upgrade_1_0_to_1_1')
+logger = logging.getLogger('upgrade_1_0_to_1_1_inplace')
 
 CSV_FILENAMES_1_0 = [
     path.join('sensors', 'sensors.txt'),
@@ -59,60 +56,62 @@ def read_old_image_features_csv(csv_filepath):
     return name, dtype, dsize
 
 
-def upgrade_1_0_to_1_1(kapture_dirpath: str,
-                       output_path: str,
-                       keypoints_type: Optional[str],
-                       descriptors_type: Optional[str],
-                       global_features_type: Optional[str],
-                       descriptors_metric_type: str,
-                       global_features_metric_type: str,
-                       images_import_strategy: TransferAction,
-                       force_overwrite_existing: bool) -> None:
-    os.makedirs(output_path, exist_ok=True)
-    delete_existing_kapture_files(output_path, force_erase=force_overwrite_existing)
+def upgrade_1_0_to_1_1_inplace(kapture_dirpath: str,
+                               keypoints_type: Optional[str],
+                               descriptors_type: Optional[str],
+                               global_features_type: Optional[str],
+                               descriptors_metric_type: str,
+                               global_features_metric_type: str) -> None:
     # some text files didn't change, just change their header
-    os.makedirs(path.join(output_path, 'sensors'), exist_ok=True)
-    os.makedirs(path.join(output_path, 'reconstruction'), exist_ok=True)
     for csv_filename in CSV_FILENAMES_1_0:
         csv_fullpath = path.join(kapture_dirpath, csv_filename)
         if path.isfile(csv_fullpath):
             logger.debug(f'converting {csv_fullpath}...')
             old_version = kapture.io.csv.get_version_from_csv_file(csv_fullpath)
-            if 'points3d' not in csv_filename:
-                assert old_version == '1.0'
-            else:
-                assert (old_version is None or old_version == '1.0')
-            csv_output_path = path.join(output_path, csv_filename)
+            assert (old_version is None or old_version == '1.0')
             with open(csv_fullpath, 'r') as source_file:
-                with open(csv_output_path, 'w') as output_file:
-                    if old_version is not None:
-                        source_file.readline()  # read and ignore header
-                    # write replacement header
-                    output_file.write(kapture.io.csv.KAPTURE_FORMAT_1 + kapture.io.csv.kapture_linesep)
-                    shutil.copyfileobj(source_file, output_file)
-
+                if old_version is not None:
+                    source_file.readline()  # read and ignore header
+                # write replacement header
+                lines = source_file.read()
+            with open(csv_fullpath, 'w') as source_file:
+                lines_all = kapture.io.csv.KAPTURE_FORMAT_1 + kapture.io.csv.kapture_linesep + lines
+                source_file.write(lines_all)
     # keypoints
     keypoints_dir_path = path.join(kapture_dirpath, 'reconstruction', 'keypoints')
     keypoints_csv_path = path.join(keypoints_dir_path, 'keypoints.txt')
+    local_features_json_filepath = path.join(keypoints_dir_path, 'extract_local_features.json')
     if path.isdir(keypoints_dir_path) and path.isfile(keypoints_csv_path):
         logger.debug(f'converting {keypoints_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(keypoints_csv_path)
-        assert old_version == '1.0'
+        assert old_version is None or old_version == '1.0'
         name, dtype, dsize = read_old_image_features_csv(keypoints_csv_path)
+        os.remove(keypoints_csv_path)
         if keypoints_type is None:
             assert name != ''
             keypoints_type = name
         keypoints = kapture.Keypoints(name, dtype, dsize)
-        keypoints_csv_output_path = path.join(output_path,
+        keypoints_csv_output_path = path.join(kapture_dirpath,
                                               kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Keypoints](keypoints_type))
         keypoints_output_dir = path.dirname(keypoints_csv_output_path)
         kapture.io.csv.keypoints_to_file(keypoints_csv_output_path, keypoints)
+
+        # json file
+        if path.isfile(local_features_json_filepath):
+            local_features_json_output_file = path.join(keypoints_output_dir, 'extract_local_features.json')
+            shutil.move(local_features_json_filepath, local_features_json_output_file)
+
         # now copy all .kpt files
-        keypoints_filenames = populate_files_in_dirpath(keypoints_dir_path, '.kpt')
+        keypoints_filenames = list(populate_files_in_dirpath(keypoints_dir_path, '.kpt'))
+        # cast to list before enumerating (or moved files will be listed multiple times)
         for keypoints_filename in keypoints_filenames:
             keypoints_output_file = path.join(keypoints_output_dir, keypoints_filename)
+            keypoints_inpath = path.join(keypoints_dir_path, keypoints_filename)
             os.makedirs(path.dirname(keypoints_output_file), exist_ok=True)
-            shutil.copy(path.join(keypoints_dir_path, keypoints_filename), keypoints_output_file)
+            shutil.move(keypoints_inpath, keypoints_output_file)
+            old_kp_dir = path.dirname(keypoints_inpath)
+            if len(os.listdir(old_kp_dir)) == 0:
+                os.removedirs(old_kp_dir)
 
     # descriptors
     descriptors_dir_path = path.join(kapture_dirpath, 'reconstruction', 'descriptors')
@@ -120,64 +119,93 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     if path.isdir(descriptors_dir_path) and path.isfile(descriptors_csv_path):
         logger.debug(f'converting {descriptors_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(descriptors_csv_path)
-        assert old_version == '1.0'
+        assert old_version is None or old_version == '1.0'
         assert keypoints_type is not None
         name, dtype, dsize = read_old_image_features_csv(descriptors_csv_path)
+        os.remove(descriptors_csv_path)
         if descriptors_type is None:
             assert name != ''
             descriptors_type = name
         descriptors = kapture.Descriptors(name, dtype, dsize, keypoints_type, descriptors_metric_type)
-        descriptors_csv_output_path = path.join(output_path,
+        descriptors_csv_output_path = path.join(kapture_dirpath,
                                                 kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.Descriptors](
                                                     descriptors_type)
                                                 )
         descriptors_output_dir = path.dirname(descriptors_csv_output_path)
         kapture.io.csv.descriptors_to_file(descriptors_csv_output_path, descriptors)
         # now copy all .desc files
-        descriptors_filenames = populate_files_in_dirpath(descriptors_dir_path, '.desc')
+        descriptors_filenames = list(populate_files_in_dirpath(descriptors_dir_path, '.desc'))
+        # cast to list before enumerating (or moved files will be listed multiple times)
         for descriptors_filename in descriptors_filenames:
             descriptors_output_file = path.join(descriptors_output_dir, descriptors_filename)
             os.makedirs(path.dirname(descriptors_output_file), exist_ok=True)
-            shutil.copy(path.join(descriptors_dir_path, descriptors_filename), descriptors_output_file)
+            shutil.move(path.join(descriptors_dir_path, descriptors_filename), descriptors_output_file)
+            old_desc_dir = path.dirname(path.join(descriptors_dir_path, descriptors_filename))
+            if len(os.listdir(old_desc_dir)) == 0:
+                os.removedirs(old_desc_dir)
 
     # matches
     matches_dir_path = path.join(kapture_dirpath, 'reconstruction', 'matches')
+    matches_json_filepath = path.join(matches_dir_path, 'run_matching.json')
     if path.isdir(matches_dir_path):
         logger.debug(f'converting {matches_dir_path}...')
         assert keypoints_type is not None
-        matches_output_dir = kapture.io.features.get_matches_fullpath(None, keypoints_type, output_path)
+        matches_output_dir = kapture.io.features.get_matches_fullpath(None, keypoints_type, kapture_dirpath)
+        os.makedirs(matches_output_dir, exist_ok=True)
+
+        # json file
+        if path.isfile(matches_json_filepath):
+            matches_json_output_file = path.join(matches_output_dir, 'run_matching.json')
+            shutil.move(matches_json_filepath, matches_json_output_file)
+
         # now copy all .matches files
-        matches_filenames = populate_files_in_dirpath(matches_dir_path, '.matches')
+        matches_filenames = list(populate_files_in_dirpath(matches_dir_path, '.matches'))
+        # cast to list before enumerating (or moved files will be listed multiple times)
         for matches_filename in matches_filenames:
             matches_output_file = path.join(matches_output_dir, matches_filename)
             os.makedirs(path.dirname(matches_output_file), exist_ok=True)
-            shutil.copy(path.join(matches_dir_path, matches_filename), matches_output_file)
+            shutil.move(path.join(matches_dir_path, matches_filename), matches_output_file)
+            old_matches_dir = path.dirname(path.join(matches_dir_path, matches_filename))
+            if len(os.listdir(old_matches_dir)) == 0:
+                os.removedirs(old_matches_dir)
 
     # global features
     global_features_dir_path = path.join(kapture_dirpath, 'reconstruction', 'global_features')
     global_features_csv_path = path.join(global_features_dir_path, 'global_features.txt')
+    global_features_json_filepath = path.join(global_features_dir_path, 'extract_global_features.json')
     if path.isdir(global_features_dir_path) and path.isfile(global_features_csv_path):
         logger.debug(f'converting {global_features_dir_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(global_features_csv_path)
-        assert old_version == '1.0'
+        assert old_version is None or old_version == '1.0'
         assert keypoints_type is not None
         name, dtype, dsize = read_old_image_features_csv(global_features_csv_path)
+        os.remove(global_features_csv_path)
         if global_features_type is None:
             assert name != ''
             global_features_type = name
         global_features = kapture.GlobalFeatures(name, dtype, dsize, global_features_metric_type)
-        global_features_csv_output_path = path.join(output_path,
+        global_features_csv_output_path = path.join(kapture_dirpath,
                                                     kapture.io.csv.FEATURES_CSV_FILENAMES[kapture.GlobalFeatures](
                                                         global_features_type)
                                                     )
         global_features_output_dir = path.dirname(global_features_csv_output_path)
         kapture.io.csv.global_features_to_file(global_features_csv_output_path, global_features)
+
+        # json file
+        if path.isfile(global_features_json_filepath):
+            global_features_json_output_file = path.join(global_features_output_dir, 'extract_global_features.json')
+            shutil.move(global_features_json_filepath, global_features_json_output_file)
+
         # now copy all .gfeat files
-        global_features_filenames = populate_files_in_dirpath(global_features_dir_path, '.gfeat')
+        global_features_filenames = list(populate_files_in_dirpath(global_features_dir_path, '.gfeat'))
+        # cast to list before enumerating (or moved files will be listed multiple times)
         for global_features_filename in global_features_filenames:
             global_features_output_file = path.join(global_features_output_dir, global_features_filename)
             os.makedirs(path.dirname(global_features_output_file), exist_ok=True)
-            shutil.copy(path.join(global_features_dir_path, global_features_filename), global_features_output_file)
+            shutil.move(path.join(global_features_dir_path, global_features_filename), global_features_output_file)
+            old_gfeat_dir = path.dirname(path.join(global_features_dir_path, global_features_filename))
+            if len(os.listdir(old_gfeat_dir)) == 0:
+                os.removedirs(old_gfeat_dir)
 
     # observations
     observations_csv_filename = path.join('reconstruction', 'observations.txt')
@@ -185,7 +213,7 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
     if path.isfile(observations_csv_path):
         logger.debug(f'converting {observations_csv_path}...')
         old_version = kapture.io.csv.get_version_from_csv_file(observations_csv_path)
-        assert old_version == '1.0'
+        assert old_version is None or old_version == '1.0'
         assert keypoints_type is not None
         observations = kapture.Observations()
         with open(observations_csv_path, 'r') as source_file:
@@ -198,20 +226,13 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
                     keypoints_ids = pairs[1::2]
                     for image_path, keypoint_id in zip(image_paths, keypoints_ids):
                         observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
-        observations_output_path = path.join(output_path, observations_csv_filename)
-        kapture.io.csv.observations_to_file(observations_output_path, observations)
-
-    # records_data
-    records_data_path = path.join(kapture_dirpath, 'sensors', 'records_data')
-    logger.debug(f'converting {records_data_path}...')
-    filename_list = list(populate_files_in_dirpath(records_data_path))
-    import_record_data_from_dir_auto(records_data_path, output_path, filename_list, images_import_strategy)
+        kapture.io.csv.observations_to_file(observations_csv_path, observations)
     logger.debug('all done!')
 
 
-def upgrade_1_0_to_1_1_command_line() -> None:
+def upgrade_1_0_to_1_1_inplace_command_line() -> None:
     """
-    Convert kapture data in version 1.0 to version 1.1.
+    Convert kapture data in version 1.0 to version 1.1 inplace.
     """
     parser = argparse.ArgumentParser(
         description='convert kapture data in version 1.0 to version 1.1')
@@ -222,11 +243,8 @@ def upgrade_1_0_to_1_1_command_line() -> None:
         help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
     parser_verbosity.add_argument(
         '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
     # export ###########################################################################################################
     parser.add_argument('-i', '--input', required=True, help='input path to kapture directory')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
     parser.add_argument('--keypoints-type', default=None,
                         help='types of keypoints.')
     parser.add_argument('--descriptors-type', default=None, help='types of descriptors.')
@@ -234,9 +252,6 @@ def upgrade_1_0_to_1_1_command_line() -> None:
     parser.add_argument('--global-features-type', default=None,
                         help='types of global features.')
     parser.add_argument('--global-features-metric-type', default='L2', help='types of descriptors.')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.skip,
-                        help=f'How to import images [skip], '
-                        f'choose among: {", ".join(a.name for a in TransferAction)}')
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -245,12 +260,10 @@ def upgrade_1_0_to_1_1_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    upgrade_1_0_to_1_1(args.input, args.output,
-                       args.keypoints_type, args.descriptors_type, args.global_features_type,
-                       args.descriptors_metric_type, args.global_features_metric_type,
-                       args.image_transfer,
-                       args.force)
+    upgrade_1_0_to_1_1_inplace(args.input,
+                               args.keypoints_type, args.descriptors_type, args.global_features_type,
+                               args.descriptors_metric_type, args.global_features_metric_type)
 
 
 if __name__ == '__main__':
-    upgrade_1_0_to_1_1_command_line()
+    upgrade_1_0_to_1_1_inplace_command_line()

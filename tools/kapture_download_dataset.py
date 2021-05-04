@@ -20,6 +20,8 @@ import path_to_kapture  # noqa: F401
 import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size
 from kapture.converter.downloader.archives import untar_file, compute_sha256sum
+from kapture.io.csv import get_version_from_csv_file
+from kapture_upgrade_1_0_to_1_1_inplace import upgrade_1_0_to_1_1_inplace
 
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
@@ -262,9 +264,32 @@ class Dataset:
 
         # done
         self.mark_as_installed()
+        self.upgrade()
         logger.debug(f'done installing {self._name}')
         status = self.prob_status()
         return status
+
+    def upgrade(self):
+        # upgrade ?
+        status = self.prob_status()
+        if status == 'installed':
+            # list all sensors.txt files
+            filelist = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
+                        for f in filenames if f == 'sensors.txt']
+            # check version
+            for filename in filelist:
+                version = get_version_from_csv_file(filename)
+                if version is None or version == '1.0':
+                    logger.debug(f'upgrading {filename} - version {version} to 1.1')
+                    kapture_path = path.dirname(path.dirname(filename))
+                    upgrade_1_0_to_1_1_inplace(kapture_path, None, None, None, 'L2', 'L2')
+                elif version == '1.1':
+                    logger.debug(f'{filename} already in 1.1, no need to upgrade')
+                else:
+                    logger.warning(f'{filename} - version {version} is unknown')
+            # run inplace upgrade script
+        else:
+            logger.warning('dataset not yet installed, cannot attempt upgrade')
 
 
 def load_datasets_from_index(
@@ -360,6 +385,11 @@ def kapture_download_dataset_cli():
     parser_download.add_argument('dataset', nargs='*', default=[],
                                  help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
+    parser_install = subparsers.add_parser('upgrade', help='upgrade dataset to 1.1')
+    parser_install.set_defaults(cmd='upgrade')
+    parser_install.add_argument('dataset', nargs='*', default=[],
+                                help='name of the dataset to download. Can use unix-like wildcard.')
+    ####################################################################################################################
 
     args = parser.parse_args()
 
@@ -419,6 +449,21 @@ def kapture_download_dataset_cli():
                 logger.info(f'{name}: starting installation  ...')
                 status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
                 logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
+
+        elif args.cmd == 'upgrade':
+            logger.debug(f'will install dataset: {args.dataset} ...')
+            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                     install_path=args.install_path,
+                                                     filter_patterns=args.dataset)
+            if len(dataset_index) == 0:
+                raise ValueError('There is no matching dataset.'
+                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+
+            logger.info(f'{len(dataset_index)} dataset will be installed.')
+            for name, dataset in dataset_index.items():
+                logger.info(f'{name}: starting installation  ...')
+                dataset.upgrade()
+                logger.info(f'{name} upgrade: successful')
 
         elif args.cmd == 'download':
             logger.debug(f'will download dataset: {args.dataset} ...')
