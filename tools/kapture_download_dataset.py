@@ -276,20 +276,24 @@ class Dataset:
             # list all sensors.txt files
             filelist = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
                         for f in filenames if f == 'sensors.txt']
+            upgrade_sucessful = False
             # check version
             for filename in filelist:
                 version = get_version_from_csv_file(filename)
                 if version is None or version == '1.0':
-                    logger.debug(f'upgrading {filename} - version {version} to 1.1')
+                    logger.debug(f'upgrading {filename} from version {version} to 1.1')
                     kapture_path = path.dirname(path.dirname(filename))
+                    # run inplace upgrade script
                     upgrade_1_0_to_1_1_inplace(kapture_path, None, None, None, 'L2', 'L2')
+                    logger.info(f'{kapture_path} - successfully upgraded to 1.1')
                 elif version == '1.1':
-                    logger.debug(f'{filename} already in 1.1, no need to upgrade')
+                    logger.info(f'{filename} already in 1.1, no need to upgrade')
                 else:
                     logger.warning(f'{filename} - version {version} is unknown')
-            # run inplace upgrade script
+            return upgrade_sucessful
         else:
             logger.warning('dataset not yet installed, cannot attempt upgrade')
+            return False
 
 
 def load_datasets_from_index(
@@ -463,7 +467,6 @@ def kapture_download_dataset_cli():
             for name, dataset in dataset_index.items():
                 logger.info(f'{name}: starting installation  ...')
                 dataset.upgrade()
-                logger.info(f'{name} upgrade: successful')
 
         elif args.cmd == 'download':
             logger.debug(f'will download dataset: {args.dataset} ...')
