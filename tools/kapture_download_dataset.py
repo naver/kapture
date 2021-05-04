@@ -21,7 +21,7 @@ import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size
 from kapture.converter.downloader.archives import untar_file, compute_sha256sum
 from kapture.io.csv import get_version_from_csv_file
-from kapture_upgrade_1_0_to_1_1_inplace import upgrade_1_0_to_1_1_inplace
+from kapture.utils.upgrade import upgrade_1_0_to_1_1_inplace
 
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')

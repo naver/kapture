@@ -24,39 +24,9 @@ import kapture.io.csv
 from kapture.io.records import import_record_data_from_dir_auto
 from kapture.utils.paths import populate_files_in_dirpath
 from kapture.io.binary import TransferAction
+from kapture.utils.upgrade import CSV_FILENAMES_1_0, read_old_image_features_csv
 
 logger = logging.getLogger('upgrade_1_0_to_1_1')
-
-CSV_FILENAMES_1_0 = [
-    path.join('sensors', 'sensors.txt'),
-    path.join('sensors', 'trajectories.txt'),
-    path.join('sensors', 'rigs.txt'),
-    path.join('sensors', 'records_camera.txt'),
-    path.join('sensors', 'records_depth.txt'),
-    path.join('sensors', 'records_lidar.txt'),
-    path.join('sensors', 'records_wifi.txt'),
-    path.join('sensors', 'records_bluetooth.txt'),
-    path.join('sensors', 'records_gnss.txt'),
-    path.join('sensors', 'records_accelerometer.txt'),
-    path.join('sensors', 'records_gyroscope.txt'),
-    path.join('sensors', 'records_magnetic.txt'),
-    path.join('reconstruction', 'points3d.txt')]
-
-
-def read_old_image_features_csv(csv_filepath):
-    with open(csv_filepath, 'r') as source_file:
-        table = kapture.io.csv.table_from_file(source_file)
-        line = list(table)[0]
-        assert len(line) == 3
-        name, dtype, dsize = line[0], line[1], int(line[2])
-
-    # try to list all possible type from numpy that can be used in eval(dtype)
-    from numpy import float, float32, float64, int32, uint8  # noqa: F401
-    if isinstance(type(eval(dtype)), type):
-        dtype = eval(dtype)
-    else:
-        raise ValueError('Expect data type ')
-    return name, dtype, dsize
 
 
 def upgrade_1_0_to_1_1(kapture_dirpath: str,
