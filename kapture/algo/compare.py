@@ -116,9 +116,11 @@ def equal_sensors(sensors_a: Optional[kapture.Sensors], sensors_b: Optional[kapt
             return False
 
         equal_params = False
-        if sensor_a.sensor_type == 'camera':
+        if sensor_a.sensor_type in kapture.ALL_CAMERA_SENSOR_TYPES:
             assert isinstance(sensor_a, Camera)
             assert isinstance(sensor_b, Camera)
+            if sensor_a.sensor_type != sensor_b.sensor_type:
+                return False
             if sensor_a.camera_type == sensor_b.camera_type:
                 equal_params = equal_camera_params(sensor_a.camera_params, sensor_b.camera_params)
         else:

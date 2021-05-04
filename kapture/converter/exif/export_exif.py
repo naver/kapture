@@ -112,7 +112,7 @@ def export_gps_to_exif(
     if gps_id_to_cam_id is None:
         camera_ids = {cam_id
                       for cam_id, sensor in kapture_data.sensors.items()
-                      if sensor.sensor_type == 'camera'}
+                      if sensor.sensor_type == kapture.SENSOR_TYPE_CAMERA}
 
         gps_ids = {gps_id
                    for gps_id, sensor in kapture_data.sensors.items()

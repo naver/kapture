@@ -181,28 +181,43 @@ def import_7scenes(d7scenes_path: str,
     """
     From authors: The RGB and depth camera have not been calibrated and we can’t provide calibration parameters at the
     moment. The recorded frames correspond to the raw, uncalibrated camera images. In the KinectFusion pipeline we used
-    the following default intrinsics for the depth camera: Principle point (320,240), Focal length (585,585).    
+    the following default intrinsics for the depth camera: Principle point (320,240), Focal length (585,585).
     ----
-    We use the extr. kinect camera parameters from https://projet.liris.cnrs.fr/voir/activities-dataset/kinect-calibration.html. 
+    We use the extr. kinect camera parameters from
+    https://projet.liris.cnrs.fr/voir/activities-dataset/kinect-calibration.html.
     """
     sensors = kapture.Sensors()
     # camera_type = kapture.CameraType.OPENCV
-    # camera_params = [640, 480, 5.2161910696979987e+02, 5.2132946256749767e+02, 3.1755491910920682e+02, 2.5921654718027673e+02,
-    #                  2.5673002693536984e-01, -9.3976085633794137e-01, -1.8605549188751580e-03, -2.2232238578189420e-03]  # w, h, f, cx, cy, k1, k2, p1, p2, k3
+    # # w, h, f, cx, cy, k1, k2, p1, p2, k3
+    # camera_params = [640, 480, 5.2161910696979987e+02,
+    #                  5.2132946256749767e+02, 3.1755491910920682e+02,
+    #                  2.5921654718027673e+02, 2.5673002693536984e-01,
+    #                  -9.3976085633794137e-01, -1.8605549188751580e-03, -2.2232238578189420e-03]
     camera_type = kapture.CameraType.SIMPLE_PINHOLE
-    # camera_params = [640, 480, 5.2161910696979987e+02, 5.2132946256749767e+02, 3.1755491910920682e+02, 2.5921654718027673e+02]  # w, h, fx, fy, cx, cy
-    camera_params = [640, 480, 525, 320, 240]  # w, h, f, cx, cy
+    # w, h, fx, fy, cx, cy
+    # camera_params = [640, 480,
+    #                  5.2161910696979987e+02, 5.2132946256749767e+02,
+    #                  3.1755491910920682e+02, 2.5921654718027673e+02]
+    camera_params = [640, 480, 525, 320, 240]
     sensors[RGB_SENSOR_ID] = kapture.Camera(
         name=RGB_SENSOR_ID,
         camera_type=camera_type,
         camera_params=camera_params
     )
     # depth_camera_type = kapture.CameraType.OPENCV
-    # depth_camera_params = [640, 480, 5.8818670481438744e+02, 5.8724220649505514e+02, 3.1076280589210484e+02, 2.2887144980135292e+02,
-    #                        -1.8932947734719333e-01, 1.1358015104098631e+00, -4.4260345347128536e-03, -5.4869578635708153e-03, -2.2460143607712921e+00] # w, h, f, cx, cy, k1, k2, p1, p2, k3
+    # w, h, f, cx, cy, k1, k2, p1, p2, k3
+    # depth_camera_params = [640, 480, 5.8818670481438744e+02,
+    #                        5.8724220649505514e+02, 3.1076280589210484e+02,
+    #                        2.2887144980135292e+02, -1.8932947734719333e-01,
+    #                        1.1358015104098631e+00, -4.4260345347128536e-03,
+    #                        -5.4869578635708153e-03, -2.2460143607712921e+00]
     depth_camera_type = kapture.CameraType.SIMPLE_PINHOLE
-    # depth_camera_params = [640, 480, 5.8818670481438744e+02, 5.8724220649505514e+02, 3.1076280589210484e+02, 2.2887144980135292e+02] # w, h, fx, fy, cx, cy
-    depth_camera_params = [640, 480, 585, 320, 240]  # w, h, f, cx, cy
+    # w, h, fx, fy, cx, cy
+    # depth_camera_params = [640, 480,
+    #                        5.8818670481438744e+02, 5.8724220649505514e+02,
+    #                        3.1076280589210484e+02, 2.2887144980135292e+02]
+    # w, h, f, cx, cy
+    depth_camera_params = [640, 480, 585, 320, 240]
     sensors[DEPTH_SENSOR_ID] = kapture.Camera(
         name=DEPTH_SENSOR_ID,
         camera_type=depth_camera_type,

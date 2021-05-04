@@ -144,8 +144,8 @@ class TestCsvSensors(unittest.TestCase):
         self.assertIn('cam1', sensors)
         self.assertEqual('cam0', sensors['cam0'].name)
         self.assertEqual('cam1', sensors['cam1'].name)
-        self.assertEqual('camera', sensors['cam0'].sensor_type)
-        self.assertEqual('camera', sensors['cam1'].sensor_type)
+        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, sensors['cam0'].sensor_type)
+        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, sensors['cam1'].sensor_type)
         self.assertEqual(6, len(sensors['cam1'].sensor_params))
         self.assertListEqual(sensors['cam0'].sensor_params, ['SIMPLE_PINHOLE', '640', '480', '100', '320', '240'])
 
@@ -584,7 +584,7 @@ class TestCsvM1x(unittest.TestCase):
         self.assertIn('AC01324954_wifi', self._kapture_data.sensors)
         self.assertIn('AC01324954_bluetooth', self._kapture_data.sensors)
         self.assertEqual('horizontal', self._kapture_data.sensors['lidar1'].name)
-        self.assertEqual('camera', self._kapture_data.sensors['22970291'].sensor_type)
+        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, self._kapture_data.sensors['22970291'].sensor_type)
         self.assertEqual('lidar', self._kapture_data.sensors['lidar0'].sensor_type)
         self.assertEqual(15, len(self._kapture_data.sensors['22970291'].sensor_params))
 

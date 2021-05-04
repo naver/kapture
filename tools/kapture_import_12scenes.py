@@ -10,7 +10,8 @@ Each sequence contains:
     Color frames (frame-XXXXXX.color.jpg): RGB, 24-bit, JPG
     Depth frames (frame-XXXXXX.depth.png): depth (mm), 16-bit, PNG (invalid depth is set to 0)
     Camera poses (frame-XXXXXX.pose.txt): camera-to-world
-    Camera calibration (info.txt): color and depth camera intrinsics and extrinsics. Note that these are the default intrinsics and we did not perform any calibration.
+    Camera calibration (info.txt): color and depth camera intrinsics and extrinsics.
+    Note that these are the default intrinsics and we did not perform any calibration.
 """
 
 import argparse
@@ -67,18 +68,18 @@ def get_K(camera_type: kapture.CameraType, camera_params):
 
 
 def dilate(x, k):
-  m,n = x.shape
-  y = np.empty_like(x)
-  for i in range(0, m):
-    for j in range(0, n):
-      currmax = x[i,j]
-      for ii in range(int(max(0, i-k/2)), int(min(m, i+k/2+1))):
-        for jj in range(int(max(0, j-k/2)), int(min(n, j+k/2+1))):
-          elt = x[ii,jj]
-          if elt > currmax:
-            currmax = elt
-      y[i,j] = currmax
-  return y
+    m, n = x.shape
+    y = np.empty_like(x)
+    for i in range(0, m):
+        for j in range(0, n):
+            currmax = x[i, j]
+            for ii in range(int(max(0, i-k/2)), int(min(m, i+k/2+1))):
+                for jj in range(int(max(0, j-k/2)), int(min(n, j+k/2+1))):
+                    elt = x[ii, jj]
+                    if elt > currmax:
+                        currmax = elt
+            y[i, j] = currmax
+    return y
 
 
 def register_depth(Kdepth, Kcolor, Rt, depth, width_color, height_color):
@@ -97,7 +98,7 @@ def register_depth(Kdepth, Kcolor, Rt, depth, width_color, height_color):
     mask = (px >= 0) * (py >= 0) * (px < width_color) * (py < height_color)
     reg_depth[py[mask].astype(int), px[mask].astype(int)] = pts[2, mask]
 
-    reg_depth = ndimage.grey_dilation(reg_depth, size=(3,3))
+    reg_depth = ndimage.grey_dilation(reg_depth, size=(3, 3))
 
     return reg_depth
 
@@ -153,8 +154,9 @@ def import_12scenes(d12scenes_path: str,
 
         with open(partition_filepath, 'rt') as file:
             # note from dsac++; the first sequence is used for testing, everything else for training
-            d7s_split_re = re.compile(
-                r'^sequence(?P<sequence>\d+) \[frames=(?P<count>\d+)\]  \[start=(?P<start_frame>\d+) ; end=(?P<end_frame>\d+)\]$')
+            d7s_split_exp = r'^sequence(?P<sequence>\d+) \[frames=(?P<count>\d+)\]  \[start=(?P<start_frame>\d+) ;' \
+                            r' end=(?P<end_frame>\d+)\]$'
+            d7s_split_re = re.compile(d7s_split_exp)
             split_sequences = [re.match(d7s_split_re, line) for line in file.readlines()]
             if len(split_sequences) < 1 or not split_sequences[0]:
                 raise ValueError('failed to parse split.txt file')
@@ -164,7 +166,7 @@ def import_12scenes(d12scenes_path: str,
             if partition == "query":
                 shots = {frame: shot
                          for frame, shot in shots.items()
-                         if frame >= test_split[0] and frame <= test_split[1]
+                         if test_split[0] <= frame <= test_split[1]
                          }
             elif partition == "mapping":
                 shots = {frame: shot

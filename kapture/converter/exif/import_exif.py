@@ -147,7 +147,7 @@ def extract_gps_from_exif(
     cam_to_gps_id = {  # cam_id -> gps_id
         cam_id: 'GPS_' + cam_id
         for cam_id, sensor in kapture_data.sensors.items()
-        if sensor.sensor_type == 'camera'
+        if sensor.sensor_type == kapture.SENSOR_TYPE_CAMERA
     }  # cam_id -> gps_id
 
     # set all gps to EPSG:4326
