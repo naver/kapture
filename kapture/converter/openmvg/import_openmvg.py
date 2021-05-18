@@ -362,6 +362,7 @@ def _import_openmvg_regions(
     for _, _, image_name in kapture.flatten(kapture_data.records_camera):
         openmvg_image_name = path.splitext(path.basename(image_name))[0]
         # keypoints
+        keypoints_data = None
         openmvg_keypoints_filepath = path.join(openmvg_regions_directory_path, openmvg_image_name + '.feat')
         if path.isfile(openmvg_keypoints_filepath):
             # there is a keypoints file in openMVG, lets add it to kapture
@@ -381,7 +382,7 @@ def _import_openmvg_regions(
             # there is a keypoints file in openMVG, lets add it to kapture
             # assumes descriptors shape from keypoints_data shape
             descriptors_data_bytes = np.fromfile(openmvg_descriptors_filepath, dtype=np.uint8)
-            nb_features = keypoints_data.shape[0]
+            nb_features = keypoints_data.shape[0] if keypoints_data is not None else 0
             descriptors_shape = descriptors_data_bytes[0:8].view(descriptors_props['dtype'])
             assert descriptors_shape[0] == nb_features
             descriptors_data = descriptors_data_bytes[8:].view(np.uint8).reshape((nb_features, 128))
