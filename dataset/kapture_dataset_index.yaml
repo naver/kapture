@@ -439,4 +439,48 @@ SILDa_mapping:
 SILDa_query:
   sha256sum: 65a41a8ca26c016d7f71418ac085c54043767a34996e9285a13ad7a81913e3b2
   url: https://imperialcollegelondon.box.com/shared/static/yvjyoj1bmp5h978qy7thuuv8uymbjps1.gz
-
+GangnamStation_B1_release_mapping:
+  sha256sum: 284f98b48e5d71d4f73073045b9d0dc61e0c98836e0b4e4c17eb4343a606886d
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_mapping.tar.gz
+GangnamStation_B1_release_test:
+  sha256sum: 3adf62404ced66401bbc5872cddf6e82d15e65e91a0dd6d274d652cd44f27939
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_test.tar.gz
+GangnamStation_B1_release_validation:
+  sha256sum: 51c6468ac9b21972a4e4125f58578e6816bc230424a98264c0f42a9f5cec8f73
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_validation.tar.gz
+GangnamStation_B2_release_mapping:
+  sha256sum: 0cf73e739c35cbdfa1a1327acadc76bde04bc179ca11919a2d0834c9cd31aaf9
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_mapping.tar.gz
+GangnamStation_B2_release_test:
+  sha256sum: d773e2b9be6b2dbabd60f4935552440ae74b43b9dbdd9bbfe1c39fd2b0533cd1
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_test.tar.gz
+GangnamStation_B2_release_validation:
+  sha256sum: c425e862cadc79298738e3e5d6afa45ffcd72629f5c04f23a6354d59bdf4a6c7
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_validation.tar.gz
+HyundaiDepartmentStore_1F_release_mapping:
+  sha256sum: b5890ff1fd49847e7b1cbb71ab7bcccbc21b209d2fbf0ca54b3216bf85c71b4a
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_1F_release_mapping.tar.gz
+HyundaiDepartmentStore_1F_release_test:
+  sha256sum: d8815848e43f5913c261e119db80cfb1ac28776c4292544cc89db99b83587ac9
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_1F_release_test.tar.gz
+HyundaiDepartmentStore_1F_release_validation:
+  sha256sum: bbf19825659c15bdb7a00e893a2dc2478503231929a4f811f08056f2c572703d
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_1F_release_validation.tar.gz
+HyundaiDepartmentStore_4F_release_mapping:
+  sha256sum: c889399115c5e0e86f7f5160e76e57311d3037812e5cfa5c06df6a3435f88cff
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_4F_release_mapping.tar.gz
+HyundaiDepartmentStore_4F_release_test:
+  sha256sum: de987207bd752c99ee3ab225e3759fe1011d6c1b08c0dadaf358cd37db71b321
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_4F_release_test.tar.gz
+HyundaiDepartmentStore_4F_release_validation:
+  sha256sum: 3761c19d7f02c40de76ba711ab3c09e571bfcdd74917576fef1aa13b7b0f4e22
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_4F_release_validation.tar.gz
+HyundaiDepartmentStore_B1_release_mapping:
+  sha256sum: d585ae1c4e01e48456442fabede1500f5a4508e45e7e255aea674ba6600464aa
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_mapping.tar.gz
+HyundaiDepartmentStore_B1_release_test:
+  sha256sum: 8f6ff8e9fa8db7b6b3958420aa001053a9f31be7918f5941bbada37cdc8a7f1f
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_test.tar.gz
+HyundaiDepartmentStore_B1_release_validation:
+  sha256sum: 43351bccc0a949ba0b63e22df65ec8231813a9317999d49eed0b889050f6060a
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_validation.tar.gz
