@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # sensor_id, name, sensor_type, [sensor_params]+
 bb2_left, bb2_left, camera, OPENCV, 1024, 768, 831.560994, 833.679423, 510.610429, 391.521463, -0.357402, 0.143604, 0.000354, 0.00073
 bb2_right, bb2_right, camera, OPENCV, 1024, 768, 827.54768, 829.216633, 493.502053, 401.443004, -0.356822, 0.143812, 0.000179, 0.000154

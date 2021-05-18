@@ -4,6 +4,7 @@
 Colmap database import as basic kapture objects functions
 """
 
+from kapture.io.tar import TarCollection
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -93,7 +94,8 @@ def get_images_and_trajectories_from_database(database: COLMAPDatabase
 def get_keypoints_from_database(database: COLMAPDatabase,
                                 records_camera: kapture.RecordsCamera,
                                 kapture_dirpath: str,
-                                keypoint_name: str = 'SIFT'
+                                tar_handlers: Optional[TarCollection] = None,
+                                keypoints_type: str = 'SIFT'
                                 ) -> Optional[kapture.Keypoints]:
     """
     Writes keypoints files and return the kapture keypoints from the colmap database.
@@ -102,7 +104,8 @@ def get_keypoints_from_database(database: COLMAPDatabase,
     :param database: colmap database.
     :param records_camera: input images.
     :param kapture_dirpath: input root path to kapture.
-    :param keypoint_name: name of the keypoints detector (by default, in colmap, its SIFT, but can be imported)
+    :param tar_handler: collection of preloaded tar archives
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
     :return: kapture keypoints
     """
     image_filenames = set()
@@ -123,7 +126,10 @@ def get_keypoints_from_database(database: COLMAPDatabase,
         timestamp = colmap_image_id
         image_filename = next((v for v in records_camera[timestamp].values()), None)
         assert image_filename
-        keypoints_filepath = kapture.io.features.get_keypoints_fullpath(kapture_dirpath, image_filename)
+        keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
+                                                                        kapture_dirpath,
+                                                                        image_filename,
+                                                                        tar_handlers)
 
         # handle no keypoints (delay)
         if image_keypoints is None or image_keypoints.shape[0] == 0:
@@ -154,7 +160,7 @@ def get_keypoints_from_database(database: COLMAPDatabase,
         image_filenames.add(image_filename)
 
     if image_filenames:
-        return kapture.Keypoints(keypoint_name, dtype, dsize, image_filenames)
+        return kapture.Keypoints(keypoints_type, dtype, dsize, image_filenames)
     else:
         return None
 
@@ -162,7 +168,9 @@ def get_keypoints_from_database(database: COLMAPDatabase,
 def get_descriptors_from_database(database: COLMAPDatabase,
                                   images: kapture.RecordsCamera,
                                   kapture_dirpath: str,
-                                  descriptor_name: str = 'SIFT'
+                                  tar_handlers: Optional[TarCollection] = None,
+                                  keypoints_type: str = 'SIFT',
+                                  descriptors_type: str = 'SIFT'
                                   ) -> Optional[kapture.Descriptors]:
     """
     Writes descriptors files and return the list in kapture format from the colmap database.
@@ -170,7 +178,9 @@ def get_descriptors_from_database(database: COLMAPDatabase,
     :param database: colmap database.
     :param images: list of images (as RecordsCamera).
     :param kapture_dirpath: input root path to kapture.
-    :param descriptor_name: name of the keypoints descriptor (by default, in colmap, its SIFT, but can be imported)
+    :param tar_handler: collection of preloaded tar archives
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder (by default, in colmap, its SIFT, but can be imported)
     :return: kapture descriptors
     """
     image_filenames = set()
@@ -188,7 +198,10 @@ def get_descriptors_from_database(database: COLMAPDatabase,
         # retrieve image path from image_id (actually the timestamp)
         image_filename = next((v for v in images[image_id].values()), None)
         assert image_filename
-        descriptors_filepath = kapture.io.features.get_descriptors_fullpath(kapture_dirpath, image_filename)
+        descriptors_filepath = kapture.io.features.get_descriptors_fullpath(descriptors_type,
+                                                                            kapture_dirpath,
+                                                                            image_filename,
+                                                                            tar_handlers)
 
         if image_descriptors is None or image_descriptors.shape[0] == 0:
             logger.warning(f'image={image_id}:{image_filename} has 0 descriptors.')
@@ -218,7 +231,7 @@ def get_descriptors_from_database(database: COLMAPDatabase,
         image_filenames.add(image_filename)
 
     if image_filenames:
-        return kapture.Descriptors(descriptor_name, dtype, dsize, image_filenames)
+        return kapture.Descriptors(descriptors_type, dtype, dsize, keypoints_type, "L2", image_filenames)
     else:
         return None
 
@@ -226,13 +239,17 @@ def get_descriptors_from_database(database: COLMAPDatabase,
 def get_matches_from_database(database: COLMAPDatabase,
                               images: kapture.RecordsCamera,
                               kapture_dirpath: str,
-                              no_geometric_filtering: bool) -> kapture.Matches:
+                              tar_handlers: Optional[TarCollection] = None,
+                              keypoints_type: str = 'SIFT',
+                              no_geometric_filtering: bool = False) -> kapture.Matches:
     """
     Writes Matches files and return the list in kapture format from the colmap database.
 
     :param database: input colmap database.
     :param images: input list of images (as RecordsCamera).
     :param kapture_dirpath: input root path to kapture.
+    :param tar_handler: collection of preloaded tar archives
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
     :param no_geometric_filtering: only retrieve matches with geometric consistency.
     :return: kapture matches
     """
@@ -276,7 +293,10 @@ def get_matches_from_database(database: COLMAPDatabase,
         # convert colmap image matches into kapture (cast to float and add a score column)
         image_matches = image_matches.astype(np.float)
         image_matches = np.hstack([image_matches, np.zeros((image_matches.shape[0], 1))])
-        image_matches_filepath = kapture.io.features.get_matches_fullpath((filename1, filename2), kapture_dirpath)
+        image_matches_filepath = kapture.io.features.get_matches_fullpath((filename1, filename2),
+                                                                          keypoints_type,
+                                                                          kapture_dirpath,
+                                                                          tar_handlers)
         kapture.io.features.image_matches_to_file(image_matches_filepath, image_matches)
         # register the matching in kapture
         kapture_matches.add(filename1, filename2)

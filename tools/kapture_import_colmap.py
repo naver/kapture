@@ -52,6 +52,8 @@ def colmap_command_line() -> None:
                         help='path to COLMAP rig json file.')
     parser.add_argument('-o', '-k', '--kapture', required=True,
                         help='output directory where to save kapture files.')
+    parser.add_argument('-kpt', '--keypoints-type', default='SIFT', help='kapture keypoints type.')
+    parser.add_argument('-desc', '--descriptors-type', default='SIFT', help='kapture descriptors type.')
     parser.add_argument('--skip_reconstruction', action='store_true', default=False,
                         help='skip the import of the kapture/reconstruction,'
                              'ie. Keypoints, Descriptors, Matches, Points3d, Observations.')
@@ -82,6 +84,8 @@ def colmap_command_line() -> None:
                                  args.reconstruction,
                                  args.images,
                                  args.rig,
+                                 args.keypoints_type,
+                                 args.descriptors_type,
                                  args.no_geometric_filtering,
                                  args.skip_reconstruction,
                                  args.force,

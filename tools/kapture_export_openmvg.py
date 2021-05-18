@@ -56,7 +56,8 @@ def export_openmvg_command_line():
                                       ''')
     parser.add_argument('--image_path_flatten', action='store_true',
                         help='flatten image subpath, to make sure there is no collision in image names.')
-
+    parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
+    parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
     args = parser.parse_args()
     logger.setLevel(args.verbose)
 
@@ -102,7 +103,9 @@ def export_openmvg_command_line():
         openmvg_matches_file_path=args.matches,
         image_action=args.image_action,
         image_path_flatten=args.image_path_flatten,
-        force=args.force
+        force=args.force,
+        keypoints_type=args.keypoints_type,
+        descriptors_type=args.descriptors_type
     )
 
 

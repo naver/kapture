@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, image_path
 1, cam_00001, 00.jpg
 2, cam_00001, 01.jpg

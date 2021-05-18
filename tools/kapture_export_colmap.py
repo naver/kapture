@@ -37,6 +37,8 @@ def colmap_command_line():
     parser.add_argument('--pairsfile-path', default=None, type=str,
                         help=('text file in the csv format; where each line is image_name1, image_name2, score '
                               'which contains the matches to export'))
+    parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
+    parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
     parser.add_argument('-db', '--database', required=True,
                         help='database output path.')
     parser.add_argument('-txt', '--reconstruction',
@@ -56,7 +58,9 @@ def colmap_command_line():
         for k, v in vars(args).items()))
 
     logger.info('exporting colmap ...')
-    export_colmap(args.kapture, args.database, args.reconstruction, args.rig, args.force, args.pairsfile_path)
+    export_colmap(args.kapture, args.database, args.reconstruction,
+                  args.keypoints_type, args.descriptors_type,
+                  args.rig, args.force, args.pairsfile_path)
     logger.info('done.')
 
 

@@ -1,0 +1,3 @@
+# kapture format: 1.1
+# name, dtype, dsize
+HessianAffine, float32, 4

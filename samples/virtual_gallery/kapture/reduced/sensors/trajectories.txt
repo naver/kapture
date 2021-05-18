@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
        0, training_camera_2, 0.6538603483885627, -0.0, -0.7566152554668637, -0.0, -2.88717, 1.65, 1.464067
        1, training_camera_2, 0.6356313421492913, -0.0, -0.77199274405754, -0.0, -2.797724, 1.65, 1.427949

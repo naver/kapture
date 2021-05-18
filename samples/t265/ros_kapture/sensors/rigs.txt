@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz
 t265, cam001,  1.0, -0.0, -0.0, -0.0, 0.032,  0.0,  0.0
 t265, cam002,  1.0, -0.0, -0.0, -0.0, -0.032,  0.0,  0.0

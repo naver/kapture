@@ -4,6 +4,7 @@
 Colmap specific database functions
 """
 
+from kapture.io.tar import TarCollection
 import logging
 import numpy as np
 import os
@@ -279,20 +280,20 @@ def exists_table(table: str, database: COLMAPDatabase) -> bool:
     return True
 
 
-def save_match_list(kapture_data: kapture.Kapture, path_file: str) -> None:
+def save_match_list(kapture_matches: kapture.Matches, path_file: str) -> None:
     """
-    Saves matching files from db in a file at path_file
+    Saves list of matching files from kapture data to simple text file
     format :
     image_match_1 image_match_2
 
-    :param kapture_data: kapture data
-    :param path_file: path to the matches file
+    :param kapture_matches: kapture_matches data
+    :param kapture_matches: path to the matches file
 
     """
     if path.exists(path_file):
         os.remove(path_file)
     f = open(path_file, "w")
-    for image_path1, image_path2 in kapture_data.matches:
+    for image_path1, image_path2 in kapture_matches:
         f.write("{} {}\n".format(image_path1, image_path2))
     f.close()
 
@@ -318,6 +319,7 @@ def generate_priors_for_reconstruction(kapture_data: kapture.Kapture,
         path_to_priors_for_reconstruction,
         kapture_data_copy,
         "",  # kapture_data_copy do not have binaries so path is irrelevant
+        None,  # same for tar as above
         colmap_camera_ids,
         colmap_image_ids)
 
@@ -494,17 +496,22 @@ def add_images_to_database(database: COLMAPDatabase,
 
 def add_keypoints_to_database(database: COLMAPDatabase,
                               keypoints: kapture.Keypoints,
+                              keypoints_type: str,
                               kapture_dir_path: str,
+                              tar_handler: Optional[TarCollection],
                               colmap_image_ids: dict) -> None:
     """
     Add keypoints to the colmap database.
 
     :param database: colmap database.
     :param keypoints: kapture keypoints to add
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
     :param kapture_dir_path: kapture data top directory
+    :param tar_handler: collection of preloaded tar archives
     :param colmap_image_ids: kapture camera identifier -> colmap camera identifier dictionary
     """
-    keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints, kapture_dir_path)
+    keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(keypoints, keypoints_type,
+                                                                     kapture_dir_path, tar_handler)
     for image_filename, keypoints_filepath in keypoints_filepaths.items():
         image_keypoints = image_keypoints_from_file(keypoints_filepath, keypoints.dtype, keypoints.dsize)
         colmap_image_id = colmap_image_ids[image_filename]
@@ -518,7 +525,9 @@ def add_keypoints_to_database(database: COLMAPDatabase,
 
 def add_descriptors_to_database(database: COLMAPDatabase,
                                 descriptors: kapture.Descriptors,
+                                descriptors_type: str,
                                 kapture_dir_path: str,
+                                tar_handler: Optional[TarCollection],
                                 colmap_image_ids: dict) -> None:
     """
     Add descriptors to the colmap database.
@@ -526,9 +535,13 @@ def add_descriptors_to_database(database: COLMAPDatabase,
     :param database: colmap database.
     :param descriptors: kapture descriptors to add
     :param kapture_dir_path: kapture data top directory
+    :param tar_handler: collection of preloaded tar archives
     :param colmap_image_ids: kapture camera identifier -> colmap camera identifier dictionary
     """
-    descriptors_filepaths = kapture.io.features.descriptors_to_filepaths(descriptors, kapture_dir_path)
+    descriptors_filepaths = kapture.io.features.descriptors_to_filepaths(descriptors,
+                                                                         descriptors_type,
+                                                                         kapture_dir_path,
+                                                                         tar_handler)
     for image_filename, descriptors_filepath in descriptors_filepaths.items():
         image_descriptors = image_keypoints_from_file(descriptors_filepath, descriptors.dtype, descriptors.dsize)
         colmap_image_id = colmap_image_ids[image_filename]
@@ -538,7 +551,9 @@ def add_descriptors_to_database(database: COLMAPDatabase,
 
 def add_matches_to_database(database: COLMAPDatabase,
                             matches: kapture.Matches,
+                            keypoints_type: str,
                             kapture_dir_path: str,
+                            tar_handler: Optional[TarCollection],
                             colmap_image_ids: dict,
                             export_two_view_geometry: bool = False) -> None:
     """
@@ -547,6 +562,7 @@ def add_matches_to_database(database: COLMAPDatabase,
     :param database: colmap database.
     :param matches: kapture matches to add
     :param kapture_dir_path: kapture data top directory
+    :param tar_handler: collection of preloaded tar archives
     :param colmap_image_ids: kapture camera identifier -> colmap camera identifier dictionary
     :param export_two_view_geometry: if True, also export two geometry.
     """
@@ -554,7 +570,7 @@ def add_matches_to_database(database: COLMAPDatabase,
 
     # matches[(image_path1, image_path2)] = image_matches
     matches.normalize()
-    matches_filepaths = kapture.io.features.matches_to_filepaths(matches, kapture_dir_path)
+    matches_filepaths = kapture.io.features.matches_to_filepaths(matches, keypoints_type, kapture_dir_path, tar_handler)
     for (image_path1, image_path2), image_matches_filepath in matches_filepaths.items():
         image_matches = kapture.io.features.image_matches_from_file(image_matches_filepath)
         colmap_image_id1 = colmap_image_ids[image_path1]
@@ -579,14 +595,20 @@ def add_matches_to_database(database: COLMAPDatabase,
 
 def kapture_to_colmap(kapture_data: kapture.Kapture,
                       kapture_dirpath: str,
+                      tar_handler: Optional[TarCollection],
                       database: COLMAPDatabase,
+                      keypoints_type: Optional[str] = None,
+                      descriptors_type: Optional[str] = None,
                       export_two_view_geometry: bool = False) -> None:
     """
     Export kapture data to colmap database.
 
     :param kapture_data: kapture data to export
     :param kapture_dirpath: path to kapture directory, to retrieve binary files (keypoints, descriptors, ...)
+    :param tar_handler: collection of preloaded tar archives
     :param database: colmap database.
+    :param keypoints_type: type of keypoints to export, name of the keypoints subfolder
+    :param descriptors_type: type of descriptors to export, name of the descriptors subfolder
     :param export_two_view_geometry: if True, also export two geometry.
     """
     assert isinstance(kapture_data, kapture.Kapture)
@@ -621,17 +643,28 @@ def kapture_to_colmap(kapture_data: kapture.Kapture,
         kapture_data.trajectories, colmap_camera_ids)
 
     # keypoints
-    if kapture_data.keypoints is not None:
-        logger.info(f'registering {len(kapture_data.keypoints)} keypoints in database...')
-        add_keypoints_to_database(database, kapture_data.keypoints, kapture_dirpath, colmap_image_ids)
+    if kapture_data.keypoints is not None and keypoints_type is not None and keypoints_type in kapture_data.keypoints:
+        keypoints = kapture_data.keypoints[keypoints_type]
+        logger.info(f'registering {len(keypoints)} keypoints in database...')
+        add_keypoints_to_database(database, keypoints, keypoints_type,
+                                  kapture_dirpath, tar_handler, colmap_image_ids)
 
     # descriptors
-    if kapture_data.descriptors is not None:
-        logger.info(f'registering {len(kapture_data.descriptors)} descriptors in database...')
-        add_descriptors_to_database(database, kapture_data.descriptors, kapture_dirpath, colmap_image_ids)
+    if kapture_data.descriptors is not None \
+            and descriptors_type is not None \
+            and descriptors_type in kapture_data.descriptors:
+        descriptors = kapture_data.descriptors[descriptors_type]
+        logger.info(f'registering {len(descriptors)} descriptors in database...')
+        add_descriptors_to_database(database, descriptors,
+                                    descriptors_type, kapture_dirpath,
+                                    tar_handler, colmap_image_ids)
 
     # matches
-    if kapture_data.matches is not None:
-        logger.info(f'registering {len(kapture_data.matches)} matches in database...')
-        add_matches_to_database(database, kapture_data.matches, kapture_dirpath,
+    if kapture_data.matches is not None \
+            and keypoints_type is not None \
+            and keypoints_type in kapture_data.matches:
+        matches = kapture_data.matches[keypoints_type]
+        logger.info(f'registering {len(matches)} matches in database...')
+        add_matches_to_database(database, matches, keypoints_type,
+                                kapture_dirpath, tar_handler,
                                 colmap_image_ids, export_two_view_geometry)

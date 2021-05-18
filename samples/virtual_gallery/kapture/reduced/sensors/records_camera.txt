@@ -1,4 +1,4 @@
-# kapture format: 1.0
+# kapture format: 1.1
 # timestamp, device_id, image_path
 0, training_camera_2, training/gallery_light4_loop1/frames/rgb/camera_2/rgb_00000.jpg
 1, training_camera_2, training/gallery_light4_loop1/frames/rgb/camera_2/rgb_00001.jpg

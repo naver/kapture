@@ -43,7 +43,7 @@ def import_openmvg_command_line() -> None:
     parser.add_argument('-r', '--regions',
                         help='path to openMVG directory containing region files (feat, desc).')
     parser.add_argument('-m', '--matches',
-                        help='path to openMVG matches file (eg. matches.f.bin')
+                        help='path to openMVG matches file (eg. matches.f.txt')
     parser.add_argument('-o', '-k', '--kapture', required=True,
                         help='top directory where to save Kapture files.')
     parser.add_argument('--image_action', default='root_link', type=TransferAction,
@@ -75,7 +75,7 @@ def import_openmvg_command_line() -> None:
         if args.regions is None:
             args.regions = args.openmvg
         if args.matches is None:
-            args.matches = next((path.join(args.openmvg, fn) for fn in ['matches.f.bin', 'matches.putative.bin']))
+            args.matches = next((path.join(args.openmvg, fn) for fn in ['matches.f.txt', 'matches.putative.txt']))
 
     # normalizes paths
     if args.sfm_data is not None:
@@ -84,6 +84,7 @@ def import_openmvg_command_line() -> None:
         args.regions = path.normpath(path.abspath(args.regions))
     if args.matches is not None:
         args.matches = path.normpath(path.abspath(args.matches))
+        assert args.matches.endswith('.txt')
 
     # sanity check
     if all(i is None for i in [args.sfm_data, args.regions, args.matches]):

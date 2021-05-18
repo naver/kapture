@@ -177,8 +177,12 @@ def _import_gnss(opensfm_root_dir, kapture_sensors, image_sensors, image_timesta
     return kapture_gnss
 
 
-def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqdm)\
-        -> Tuple[kapture.Descriptors, kapture.Keypoints, kapture.Matches]:
+def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqdm,
+                                 keypoints_type: str = 'HessianAffine',
+                                 descriptors_type: str = 'HOG')\
+        -> Tuple[Optional[kapture.Descriptors],
+                 Optional[kapture.Keypoints],
+                 Optional[kapture.Matches]]:
     # import features (keypoints + descriptors)
     kapture_keypoints = None  # kapture.Keypoints(type_name='opensfm', dsize=4, dtype=np.float64)
     kapture_descriptors = None  # kapture.Descriptors(type_name='opensfm', dsize=128, dtype=np.uint8)
@@ -193,7 +197,7 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
                                       if filepath.endswith(opensfm_features_suffix))
         for opensfm_feature_filename in tqdm(opensfm_features_file_list, disable=disable_tqdm):
             image_filename = path.relpath(opensfm_feature_filename, opensfm_features_dir_path)[
-                             :-len(opensfm_features_suffix)]
+                :-len(opensfm_features_suffix)]
             opensfm_image_features = np.load(opensfm_feature_filename)
             opensfm_image_keypoints = opensfm_image_features['points']
             opensfm_image_descriptors = opensfm_image_features['descriptors']
@@ -202,18 +206,23 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
                 # print(type(opensfm_image_keypoints.dtype))
                 # HAHOG = Hessian Affine feature point detector + HOG descriptor
                 kapture_keypoints = kapture.Keypoints(
-                    type_name='HessianAffine',
+                    type_name=keypoints_type,
                     dsize=opensfm_image_keypoints.shape[1],
                     dtype=opensfm_image_keypoints.dtype)
             if kapture_descriptors is None:
                 kapture_descriptors = kapture.Descriptors(
-                    type_name='HOG',
+                    type_name=descriptors_type,
                     dsize=opensfm_image_descriptors.shape[1],
-                    dtype=opensfm_image_descriptors.dtype)
+                    dtype=opensfm_image_descriptors.dtype,
+                    keypoints_type=keypoints_type,
+                    metric_type='L2')
 
             # convert keypoints file
             keypoint_file_path = kapture.io.features.get_features_fullpath(
-                data_type=kapture.Keypoints, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
+                data_type=kapture.Keypoints,
+                feature_type=keypoints_type,
+                kapture_dirpath=kapture_root_dir,
+                image_filename=image_filename)
             kapture.io.features.image_keypoints_to_file(
                 filepath=keypoint_file_path, image_keypoints=opensfm_image_keypoints)
             # register the file
@@ -221,7 +230,10 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
 
             # convert descriptors file
             descriptor_file_path = kapture.io.features.get_features_fullpath(
-                data_type=kapture.Descriptors, kapture_dirpath=kapture_root_dir, image_filename=image_filename)
+                data_type=kapture.Descriptors,
+                feature_type=descriptors_type,
+                kapture_dirpath=kapture_root_dir,
+                image_filename=image_filename)
             kapture.io.features.image_descriptors_to_file(
                 filepath=descriptor_file_path, image_descriptors=opensfm_image_descriptors)
             # register the file
@@ -240,7 +252,7 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
 
         for opensfm_matches_filename in tqdm(opensfm_matches_file_list, disable=disable_tqdm):
             image_filename_1 = path.relpath(opensfm_matches_filename, opensfm_matches_dir_path)[
-                               :-len(opensfm_matches_suffix)]
+                :-len(opensfm_matches_suffix)]
             logger.debug(f'parsing matches in {image_filename_1}')
             with gzip.open(opensfm_matches_filename, 'rb') as f:
                 opensfm_matches = pickle.load(f)
@@ -251,6 +263,7 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
                     # convert the bin file to kapture
                     kapture_matches_filepath = kapture.io.features.get_matches_fullpath(
                         image_filename_pair=image_pair,
+                        keypoints_type=keypoints_type,
                         kapture_dirpath=kapture_root_dir)
                     kapture_image_matches = np.hstack([
                         opensfm_image_matches.astype(np.float64),
@@ -264,7 +277,9 @@ def import_opensfm(
         opensfm_root_dir: str,
         kapture_root_dir: str,
         force_overwrite_existing: bool = False,
-        images_import_method: TransferAction = TransferAction.copy
+        images_import_method: TransferAction = TransferAction.copy,
+        keypoints_type: str = 'HessianAffine',
+        descriptors_type: str = 'HOG'
 ) -> None:
     """
     Convert an openSfM structure to a kapture on disk. Also copy, move or link the images files if necessary.
@@ -328,7 +343,9 @@ def import_opensfm(
     # Imports descriptors, keypoints and matches
     kapture_descriptors, kapture_keypoints, kapture_matches = _import_features_and_matches(opensfm_root_dir,
                                                                                            kapture_root_dir,
-                                                                                           disable_tqdm)
+                                                                                           disable_tqdm,
+                                                                                           keypoints_type,
+                                                                                           descriptors_type)
 
     # import 3-D points
     if 'points' in opensfm_reconstruction:
@@ -350,9 +367,9 @@ def import_opensfm(
         records_camera=kapture_images,
         records_gnss=kapture_gnss,
         trajectories=kapture_trajectories,
-        keypoints=kapture_keypoints,
-        descriptors=kapture_descriptors,
-        matches=kapture_matches,
+        keypoints={keypoints_type: kapture_keypoints} if kapture_keypoints is not None else None,
+        descriptors={descriptors_type: kapture_descriptors} if kapture_descriptors is not None else None,
+        matches={keypoints_type: kapture_matches} if kapture_matches is not None else None,
         points3d=kapture_points
     )
     kapture_to_dir(kapture_root_dir, kapture_data)

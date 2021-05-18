@@ -34,10 +34,10 @@ class Kapture:
             records_accelerometer: Optional[RecordsAccelerometer] = None,
             records_gyroscope: Optional[RecordsGyroscope] = None,
             records_magnetic: Optional[RecordsMagnetic] = None,
-            keypoints: Optional[Keypoints] = None,
-            descriptors: Optional[Descriptors] = None,
-            global_features: Optional[GlobalFeatures] = None,
-            matches: Optional[Matches] = None,
+            keypoints: Optional[Dict[str, Keypoints]] = None,
+            descriptors: Optional[Dict[str, Descriptors]] = None,
+            global_features: Optional[Dict[str, GlobalFeatures]] = None,
+            matches: Optional[Dict[str, Matches]] = None,
             observations: Optional[Observations] = None,
             points3d: Optional[Points3d] = None,
     ):
@@ -234,55 +234,55 @@ class Kapture:
         self._records_magnetic = records_magnetic
 
     @property
-    def keypoints(self) -> Optional[Keypoints]:
+    def keypoints(self) -> Optional[Dict[str, Keypoints]]:
         """
-        :return: the keypoints
+        :return: the keypoints collection
         """
         return self._keypoints
 
     @keypoints.setter
-    def keypoints(self, keypoints: Optional[Keypoints]):
-        if keypoints is not None and not isinstance(keypoints, Keypoints):
-            raise TypeError('Keypoints expected')
+    def keypoints(self, keypoints: Optional[Dict[str, Keypoints]]):
+        if keypoints is not None and not isinstance(keypoints, dict):
+            raise TypeError('dict of Keypoints expected')
         self._keypoints = keypoints
 
     @property
-    def descriptors(self) -> Optional[Descriptors]:
+    def descriptors(self) -> Optional[Dict[str, Descriptors]]:
         """
-        :return: the descriptors
+        :return: the descriptors collection
         """
         return self._descriptors
 
     @descriptors.setter
-    def descriptors(self, descriptors: Optional[Descriptors]):
-        if descriptors is not None and not isinstance(descriptors, Descriptors):
-            raise TypeError('Descriptors expected')
+    def descriptors(self, descriptors: Optional[Dict[str, Descriptors]]):
+        if descriptors is not None and not isinstance(descriptors, dict):
+            raise TypeError('dict of Descriptors expected')
         self._descriptors = descriptors
 
     @property
-    def global_features(self) -> Optional[GlobalFeatures]:
+    def global_features(self) -> Optional[Dict[str, GlobalFeatures]]:
         """
-        :return: the global features
+        :return: the global features collection
         """
         return self._global_features
 
     @global_features.setter
-    def global_features(self, global_features: Optional[GlobalFeatures]):
-        if global_features is not None and not isinstance(global_features, GlobalFeatures):
-            raise TypeError('GlobalFeatures expected')
+    def global_features(self, global_features: Optional[Dict[str, GlobalFeatures]]):
+        if global_features is not None and not isinstance(global_features, dict):
+            raise TypeError('dict of GlobalFeatures expected')
         self._global_features = global_features
 
     @property
-    def matches(self) -> Optional[Matches]:
+    def matches(self) -> Optional[Dict[str, Matches]]:
         """
-        :return: the matches
+        :return: the matches collection
         """
         return self._matches
 
     @matches.setter
-    def matches(self, matches: Optional[Matches]):
-        if matches is not None and not isinstance(matches, Matches):
-            raise TypeError('Matches expected')
+    def matches(self, matches: Optional[Dict[str, Matches]]):
+        if matches is not None and not isinstance(matches, dict):
+            raise TypeError('dict of Matches expected')
         self._matches = matches
 
     @property
@@ -324,10 +324,10 @@ class Kapture:
         RecordsAccelerometer,
         RecordsGyroscope,
         RecordsMagnetic,
-        Keypoints,
-        Descriptors,
-        GlobalFeatures,
-        Matches,
+        Optional[Dict[str, Keypoints]],
+        Optional[Dict[str, Descriptors]],
+        Optional[Dict[str, GlobalFeatures]],
+        Optional[Dict[str, Matches]],
         Observations,
         Points3d
     ]]:

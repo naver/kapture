@@ -49,23 +49,57 @@ my_dataset                 # Dataset root path
 │     ├─ map/lidar_01/0001.pcd # lidar data path used in records_lidar.txt
 │     ├─ query/query001.jpg    # image path used in records_camera.txt
 │     ├─ ...
-├─ reconstruction/
-│  ├─ keypoints/                    # 2D keypoints files
-│  │  ├─ keypoints.txt              # type of keypoint
-│  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
-│  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
-│  │  ├─ ...
-│  ├─ descriptors/                  # keypoint descriptors files
-│  │  ├─ descriptors.txt            # type of descriptor
-│  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
-│  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
-│  │  ├─ ...
-│  ├─ ...
-│  ├─ points3d.txt                  # 3D points of the reconstruction
-│  ├─ observations.txt              # 2D/3D points corespondences
-│  ├─ matches/                      # matches files.
-│  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
-│  │  ├─ ...
+└─ reconstruction/
+   ├─ keypoints/                       # 2D keypoints files
+   │  ├─ r2d2_WASF-N8_20k              # identify the type of keypoints
+   │  │  ├─ keypoints.txt              # type of keypoint (shape and dtype)
+   │  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+   │  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ d2_tf                         # identify the type of keypoints
+   │  │  ├─ keypoints.txt              # type of keypoint (shape and dtype)
+   │  │  ├─ keypoints.tar              # instead of regular files, you can use an archive
+   │  │  │  ├─ map/cam_01/00001.jpg.kpt   # keypoints for corresponding image (example)
+   │  │  │  ├─ query/query001.jpg.kpt     # keypoints for corresponding image (example)
+   │  │  │  ├─ ...
+   │  ├─ ...
+   ├─ descriptors/                     # keypoint descriptors files
+   │  ├─ r2d2_WASF-N8_20k              # identify the type of descriptors
+   │  │  ├─ descriptors.txt            # type of descriptor (keypoints type, shape and dtype)
+   │  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
+   │  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
+   │  │  ├─ ...
+   │  ├─ d2_tf                         # identify the type of descriptors
+   │  │  ├─ descriptors.txt            # type of descriptor
+   │  │  ├─ descriptors.tar            # instead of regular files, you can use an archive
+   │  │  │  ├─ map/cam_01/00001.jpg.desc  # descriptors for corresponding image (example)
+   │  │  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
+   │  │  │  ├─ ...
+   │  ├─ ...
+   ├─ points3d.txt                  # 3D points of the reconstruction
+   ├─ observations.txt              # 2D/3D points corespondences
+   ├─ matches/                      # matches files.
+   │  ├─ r2d2_WASF-N8_20k           # identify the type of keypoints that are matched
+   │  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
+   │  │  ├─  ...
+   │  ├─ d2_tf                      # identify the type of keypoints that are matched
+   │  │  ├─ matches.tar             # instead of regular files, you can use an archive
+   │  │  │  ├─ map/cam_01/00001.jpg.overlapping/cam_01/00002.jpg.matches # example
+   │  │  │  ├─  ...
+   │  ├─ ...
+   └─ global_features/                 # global feature files
+      ├─ AP-GeM-LM18                   # identify the type of global_features
+      │  ├─ global_features.txt        # type of global feature
+      │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+      │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+      │  └─ ...
+      ├─ DELG                          # identify the type of global_features
+      │  ├─ global_features.txt        # type of global feature
+      │  ├─ global_features.tar        # instead of regular files, you can use an archive
+      │  │  ├─ map/cam_01/00001.jpg.gfeat # example of global feature for corresponding image
+      │  │  ├─ query/query001.jpg.gfeat   # example of global feature for corresponding image
+      │  │  └─ ...
+      ├─ ...
 ----
 
 == Software
