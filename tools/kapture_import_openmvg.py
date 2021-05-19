@@ -75,7 +75,7 @@ def import_openmvg_command_line() -> None:
         if args.regions is None:
             args.regions = args.openmvg
         if args.matches is None:
-            args.matches = next((path.join(args.openmvg, fn) for fn in ['matches.f.txt', 'matches.putative.txt']))
+            args.matches = path.join(args.openmvg, 'matches.f.txt')
 
     # normalizes paths
     if args.sfm_data is not None:
