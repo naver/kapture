@@ -23,7 +23,7 @@ from kapture.io.features import get_matches_fullpath
 from kapture.io.binary import array_to_file
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import JSON_KEY
+from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME
 from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
@@ -49,6 +49,8 @@ def import_openmvg(
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     """
 
+    if path.isdir(sfm_data_path):
+        sfm_data_path = path.join(sfm_data_path, OPENMVG_DEFAULT_JSON_FILE_NAME)
     # sanity check
     if not path.isfile(sfm_data_path):
         raise ValueError(f'OpenMVG JSON file {sfm_data_path} does not exist.')
