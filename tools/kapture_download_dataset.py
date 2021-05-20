@@ -30,7 +30,6 @@ INDEX_FILENAME = 'kapture_dataset_index.yaml'
 DEFAULT_DATASET_PATH = path.normpath(path.abspath('.'))
 DEFAULT_REPOSITORY_URL = 'https://github.com/naver/kapture/raw/main/dataset'
 # DEFAULT_REPOSITORY_URL = 'https://download.europe.naverlabs.com/kapture/'
-datasets = {}
 
 
 def ask_confirmation(question):
@@ -147,6 +146,7 @@ class Dataset:
         """
 
         probing_status = None
+        size_archive_local = size_archive_online = -1
         if self.is_installed():
             # yaml file says its installed, trust it (no other choices).
             probing_status = 'installed'
@@ -274,11 +274,11 @@ class Dataset:
         status = self.prob_status()
         if status == 'installed':
             # list all sensors.txt files
-            filelist = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
-                        for f in filenames if f == 'sensors.txt']
-            upgrade_sucessful = False
+            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
+                         for f in filenames if f == 'sensors.txt']
+            upgrade_successful = False
             # check version
-            for filename in filelist:
+            for filename in file_list:
                 version = get_version_from_csv_file(filename)
                 if version is None or version == '1.0':
                     logger.debug(f'upgrading {filename} from version {version} to 1.1')
@@ -290,7 +290,7 @@ class Dataset:
                     logger.info(f'{filename} already in 1.1, no need to upgrade')
                 else:
                     logger.warning(f'{filename} - version {version} is unknown')
-            return upgrade_sucessful
+            return upgrade_successful
         else:
             logger.warning('dataset not yet installed, cannot attempt upgrade')
             return False
@@ -344,6 +344,80 @@ def load_datasets_from_index(
     return datasets
 
 
+def kapture_download_dataset(args, index_filepath: str):
+    """
+    Do the dataset download command
+    """
+    global_status = 0
+    if args.cmd == 'update':
+        logger.info(f'updating dataset list from {args.repo} ...')
+        index_remote_url = args.repo + '/' + INDEX_FILENAME
+        logger.debug(f'retrieving index at {index_remote_url}')
+        r = requests.get(index_remote_url, allow_redirects=True)
+        if r.status_code != requests.codes.ok:
+            raise ConnectionError(f'unable to grab {index_remote_url} (code:{r.status_code})')
+        with open(index_filepath, 'wt') as f:
+            f.write(r.text)
+        datasets = load_datasets_from_index(index_filepath=index_filepath,
+                                            install_path=args.install_path)
+        logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
+
+    elif args.cmd == 'list':
+        logger.info(f'listing dataset {index_filepath} ...')
+        datasets = load_datasets_from_index(index_filepath=index_filepath,
+                                            install_path=args.install_path,
+                                            filter_patterns=args.dataset)
+        for name, dataset in datasets.items():
+            status = dataset.prob_status(check_online=args.full)
+            if status == "not reachable" or status == "incomplete" or status == "corrupted":
+                global_status = 1
+            print(f'{status:^16}| {name:40} | {dataset.url}')
+
+    elif args.cmd == 'install':
+        logger.debug(f'will install dataset: {args.dataset} ...')
+        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                 install_path=args.install_path,
+                                                 filter_patterns=args.dataset)
+        if len(dataset_index) == 0:
+            raise ValueError('There is no matching dataset.'
+                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+
+        logger.info(f'{len(dataset_index)} dataset will be installed.')
+        for name, dataset in dataset_index.items():
+            logger.info(f'{name}: starting installation  ...')
+            status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
+            logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
+
+    elif args.cmd == 'upgrade':
+        logger.debug(f'will install dataset: {args.dataset} ...')
+        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                 install_path=args.install_path,
+                                                 filter_patterns=args.dataset)
+        if len(dataset_index) == 0:
+            raise ValueError('There is no matching dataset.'
+                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+
+        logger.info(f'{len(dataset_index)} dataset will be installed.')
+        for name, dataset in dataset_index.items():
+            logger.info(f'{name}: starting installation  ...')
+            dataset.upgrade()
+
+    elif args.cmd == 'download':
+        logger.debug(f'will download dataset: {args.dataset} ...')
+        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
+                                                 install_path=args.install_path,
+                                                 filter_patterns=args.dataset)
+        if len(dataset_index) == 0:
+            raise ValueError('There is no matching dataset.'
+                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+        logger.info(f'{len(dataset_index)} dataset will be downloaded.')
+        for name, dataset in dataset_index.items():
+            logger.info(f'downloading {name} ...')
+            dataset.download(force_overwrite=args.force)
+
+    return global_status
+
+
 def kapture_download_dataset_cli():
     """
     Parse the kapture_download_dataset command line .
@@ -382,7 +456,7 @@ def kapture_download_dataset_cli():
     parser_install.add_argument('dataset', nargs='*', default=[],
                                 help='name of the dataset to download. Can use unix-like wildcard.')
     ####################################################################################################################
-    parser_download = subparsers.add_parser('download', help='dowload dataset, without installing it')
+    parser_download = subparsers.add_parser('download', help='download dataset, without installing it')
     parser_download.set_defaults(cmd='download')
     parser_download.add_argument('-f', '--force', action='store_true', default=False,
                                  help='Force installation even if dataset has already been installed.')
@@ -408,82 +482,12 @@ def kapture_download_dataset_cli():
             parser.print_help()
             logger.critical(f'Choose command among [ {" | ".join(subparsers.choices)} ]')
             exit(-1)
-
-        if args.cmd == 'update':
-            logger.info(f'updating dataset list from {args.repo} ...')
-            index_remote_url = args.repo + '/' + INDEX_FILENAME
-            logger.debug(f'retrieving index at {index_remote_url}')
-            r = requests.get(index_remote_url, allow_redirects=True)
-            if r.status_code != requests.codes.ok:
-                raise ConnectionError(f'unable to grab {index_remote_url} (code:{r.status_code})')
-            with open(index_filepath, 'wt') as f:
-                f.write(r.text)
-            datasets = load_datasets_from_index(index_filepath=index_filepath,
-                                                install_path=args.install_path)
-            logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
-            return 0
-
-        elif args.cmd == 'list':
-            logger.info(f'listing dataset {index_filepath} ...')
-            datasets = load_datasets_from_index(index_filepath=index_filepath,
-                                                install_path=args.install_path,
-                                                filter_patterns=args.dataset)
-            global_status = 0
-            for name, dataset in datasets.items():
-                status = dataset.prob_status(check_online=args.full)
-                if status == "not reachable" or status == "incomplete" or status == "corrupted":
-                    global_status = 1
-                print(f'{status:^16}| {name:40} | {dataset.url}')
-            if global_status != 0:
-                return global_status
-            else:
-                return 0
-
-        elif args.cmd == 'install':
-            logger.debug(f'will install dataset: {args.dataset} ...')
-            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                     install_path=args.install_path,
-                                                     filter_patterns=args.dataset)
-            if len(dataset_index) == 0:
-                raise ValueError('There is no matching dataset.'
-                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
-
-            logger.info(f'{len(dataset_index)} dataset will be installed.')
-            for name, dataset in dataset_index.items():
-                logger.info(f'{name}: starting installation  ...')
-                status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
-                logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
-
-        elif args.cmd == 'upgrade':
-            logger.debug(f'will install dataset: {args.dataset} ...')
-            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                     install_path=args.install_path,
-                                                     filter_patterns=args.dataset)
-            if len(dataset_index) == 0:
-                raise ValueError('There is no matching dataset.'
-                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
-
-            logger.info(f'{len(dataset_index)} dataset will be installed.')
-            for name, dataset in dataset_index.items():
-                logger.info(f'{name}: starting installation  ...')
-                dataset.upgrade()
-
-        elif args.cmd == 'download':
-            logger.debug(f'will download dataset: {args.dataset} ...')
-            dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                     install_path=args.install_path,
-                                                     filter_patterns=args.dataset)
-            if len(dataset_index) == 0:
-                raise ValueError('There is no matching dataset.'
-                                 ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
-            logger.info(f'{len(dataset_index)} dataset will be downloaded.')
-            for name, dataset in dataset_index.items():
-                logger.info(f'downloading {name} ...')
-                dataset.download(force_overwrite=args.force)
+        return kapture_download_dataset(args, index_filepath)
 
     except Exception as e:
         logger.critical(e)
         # raise e
+        return -1
 
 
 if __name__ == '__main__':
