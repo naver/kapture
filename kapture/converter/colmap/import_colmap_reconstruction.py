@@ -56,7 +56,8 @@ def import_from_colmap_images_txt(colmap_images_filepath: str,
     :param colmap_images_filepath: path to colmap images.txt file
     :param kapture_dirpath: path to kapture root path.
                             If not given (None), keypoints are not created.
-    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
+    (by default, in colmap, it is SIFT, but can be imported)
     :return: kapture images, trajectories and keypoints
     """
 
@@ -132,7 +133,8 @@ def import_from_colmap_points3d_txt(colmap_points3d_filepath: str,
     :param colmap_points3d_filepath: path to the colmap file named "points3d.txt"
     :param image_names: dict of image names matching the colmap image id to the kapture image name
                         colmap_image_idx -> kapture_image_filename
-    :param keypoints_type: type of keypoints, name of the keypoints subfolder (by default, in colmap, its SIFT, but can be imported)
+    :param keypoints_type: type of keypoints, name of the keypoints subfolder
+    (by default, in colmap, it is SIFT, but can be imported)
     :param skip_observations: skip import of observations id true.
     :return: kapture 3D points and observations
     """
