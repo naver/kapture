@@ -29,7 +29,7 @@ from kapture.utils.upgrade import CSV_FILENAMES_1_0, read_old_image_features_csv
 logger = logging.getLogger('upgrade_1_0_to_1_1')
 
 
-def upgrade_1_0_to_1_1(kapture_dirpath: str,
+def upgrade_1_0_to_1_1(kapture_dirpath: str,  # noqa: C901: function a bit long but well documented
                        output_path: str,
                        keypoints_type: Optional[str],
                        descriptors_type: Optional[str],
@@ -38,6 +38,9 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,
                        global_features_metric_type: str,
                        images_import_strategy: TransferAction,
                        force_overwrite_existing: bool) -> None:
+    """
+    Convert kapture data in version 1.0 to version 1.1
+    """
     os.makedirs(output_path, exist_ok=True)
     delete_existing_kapture_files(output_path, force_erase=force_overwrite_existing)
     # some text files didn't change, just change their header

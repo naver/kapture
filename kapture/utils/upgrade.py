@@ -1,3 +1,9 @@
+# Copyright 2021-present NAVER Corp. Under BSD 3-clause license
+
+"""
+Upgrade operations.
+"""
+
 import os
 import os.path as path
 from typing import Optional
@@ -29,7 +35,12 @@ CSV_FILENAMES_1_0 = [
     path.join('reconstruction', 'points3d.txt')]
 
 
-def read_old_image_features_csv(csv_filepath):
+def read_old_image_features_csv(csv_filepath: str):
+    """
+    Read the old image feature
+
+    :param csv_filepath: the path to the csv file containing image features
+    """
     with open(csv_filepath, 'r') as source_file:
         table = kapture.io.csv.table_from_file(source_file)
         line = list(table)[0]
@@ -45,12 +56,16 @@ def read_old_image_features_csv(csv_filepath):
     return name, dtype, dsize
 
 
-def upgrade_1_0_to_1_1_inplace(kapture_dirpath: str,
+def upgrade_1_0_to_1_1_inplace(kapture_dirpath: str,  # noqa: C901: function a bit long but well documented
                                keypoints_type: Optional[str],
                                descriptors_type: Optional[str],
                                global_features_type: Optional[str],
                                descriptors_metric_type: str,
                                global_features_metric_type: str) -> None:
+    """
+    Do the upgrade from 1.0 to 1.1 version in place: will replace all the necessary files.
+
+    """
     # some text files didn't change, just change their header
     for csv_filename in CSV_FILENAMES_1_0:
         csv_fullpath = path.join(kapture_dirpath, csv_filename)
