@@ -255,17 +255,17 @@ def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
     # matches
     nb_kpts_types = None if kapture_data.matches is None else len(list(kapture_data.matches.keys()))
     if not show_detail:
-        print_key_value(f'nb types ', nb_kpts_types, file=output_stream, show_none=show_all)
+        print_key_value('nb types ', nb_kpts_types, output_stream, show_all)
         for kpt_type, matches in kapture_data.matches.items():
             print_key_value(f' └─ nb matching pairs {kpt_type} ', len(list(matches)),
-                            file=output_stream, show_none=show_all)
+                            output_stream, show_all)
     elif kapture_data.matches is not None or show_all:
-        print_title('matches', file=output_stream)
+        print_title('matches', output_stream)
         if kapture_data.matches is not None:
             for kpt_type, matches in kapture_data.matches.items():
-                print_key_value(' ├─ keypoints_type ', kpt_type, file=output_stream, show_none=show_all)
-                print_key_value(' | └─ nb pairs ', len(list(matches)), file=output_stream, show_none=show_all)
-            print_key_value(f'nb types ', nb_kpts_types, file=output_stream, show_none=show_all)
+                print_key_value(' ├─ keypoints_type ', kpt_type, output_stream, show_all)
+                print_key_value(' | └─ nb pairs ', len(list(matches)), output_stream, show_all)
+            print_key_value('nb types ', nb_kpts_types, output_stream, show_all)
 
 
 def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
