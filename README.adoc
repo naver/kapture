@@ -206,6 +206,7 @@ See the link:doc/tutorial.adoc[kapture tutorial] for instructions to use the dat
 
 Here is a list of datasets you can directly download in kapture format with the downloader tool:
 
+* https://naverlabs.com/datasets[NAVER LABS localization datasets]
 * Datasets from the https://www.visuallocalization.net/datasets/[Long Term Visual Localization site]:
 ** Aachen Day Night v1.1
 ** Extended CMU-Seasons
