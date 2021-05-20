@@ -1030,7 +1030,7 @@ def descriptors_config_from_file(config_filepath: str) -> DescriptorsConfig:
     return DescriptorsConfig(name, dtype, dsize, keypoints_type, metric_type)
 
 
-def descriptors_from_dir(descriptors_type: str, kapture_dirpath: str, images_paths: Set[str],
+def descriptors_from_dir(descriptors_type: str, kapture_dirpath: str, images_paths: Optional[Set[str]],
                          tar_handler: Optional[Union[TarCollection, TarHandler]] = None) -> kapture.Descriptors:
     """
     Reads and builds descriptors from images_filenames if given, or directly from actual files in kapture_dirpath.
