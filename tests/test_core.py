@@ -34,11 +34,6 @@ class TestFlatten(unittest.TestCase):
         self.assertEqual(actual_list, expected_list)
         self.assertEqual(actual_list_sorted, expected_list_sorted)
 
-        test_values = {5.0, 7.3, 6.02}
-        expected_list_sorted = [(5.0,), (6.02,), (7.3,)]
-        actual_list_sorted = list(kapture.flatten(test_values, is_sorted=True))
-        self.assertEqual(actual_list_sorted, expected_list_sorted)
-
         test_values = kapture.RecordWifiSignal(frequency=2500, rssi=-1.0)
         expected_list = [(test_values,)]
         actual_list = list(kapture.flatten(test_values, is_sorted=False))
