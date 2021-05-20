@@ -4,22 +4,23 @@
 All reading and writing operations of kapture objects in CSV like files
 """
 
+from collections import namedtuple
 import datetime
 import io
-from kapture.utils.logging import getLogger
-from kapture.io.tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler, get_feature_tar_fullpath, retrieve_tar_handler_from_collection
+import numpy as np
+import quaternion
 import os
 import os.path as path
 import re
-from typing import Any, Dict, List, Optional, Set, Type, Union
-from collections import namedtuple
-from typing import Any, List, Optional, Set, Type, Union
-import numpy as np
-import quaternion
 import sys
+from typing import Any, Dict, List, Optional, Set, Type, Union
+
 
 import kapture
 import kapture.io.features
+from kapture.utils.logging import getLogger
+from .tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler
+from .tar import get_feature_tar_fullpath, retrieve_tar_handler_from_collection
 
 logger = kapture.logger
 gettrace = getattr(sys, 'gettrace', None)
@@ -1275,15 +1276,13 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
                      .replace(',', ' '))
 
 
-def observations_from_file(
-        observations_filepath: str,
-        loaded_keypoints: Optional[Dict[str, Set[str]]] = None
-) -> kapture.Observations:
+def observations_from_file(observations_filepath: str, loaded_keypoints: Optional[Dict[str, Set[str]]] = None)\
+        -> kapture.Observations:
     """
     Reads observations from CSV file.
 
     :param observations_filepath: path to CSV file to read.
-    :param images_paths_with_keypoints: input set of image names (ids) that have keypoints.
+    :param loaded_keypoints: input set of image names (ids) that have keypoints.
                                         If given, used to filter out irrelevant observations.
                                         You can get from set(kapture.keypoints)
     :return: observations
@@ -1291,7 +1290,7 @@ def observations_from_file(
     assert path.basename(observations_filepath) == 'observations.txt'
     assert loaded_keypoints is None \
         or (isinstance(loaded_keypoints, dict) and len(loaded_keypoints) > 0)
-    assert loaded_keypoints is None or all([isinstance(kpts, set) for kpts in loaded_keypoints.values()])
+    assert loaded_keypoints is None or all([isinstance(keypoints, set) for keypoints in loaded_keypoints.values()])
 
     observations = kapture.Observations()
     loading_start = datetime.datetime.now()
@@ -1444,7 +1443,7 @@ def kapture_from_dir(
     :param kapture_dir_path: kapture directory root path
     :param matches_pairs_file_path: text file in the csv format; where each line is image_name1, image_name2, score
     :param skip_list: Input option for expert only. Skip the load of specified parts.
-    :param tar_handler: collection of preloaded tar archives
+    :param tar_handlers: collection of preloaded tar archives
     :return: kapture data read
     """
     if not path.isdir(kapture_dir_path):
@@ -1607,10 +1606,10 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path, sensor_ids)
 
 
-def list_features(kapture_type: Type[Union[kapture.Keypoints,
-                                           kapture.Descriptors,
-                                           kapture.GlobalFeatures]],
-                  kapture_dir_path: str) -> List[str]:
+def _list_features(kapture_type: Type[Union[kapture.Keypoints,
+                                            kapture.Descriptors,
+                                            kapture.GlobalFeatures]],
+                   kapture_dir_path: str) -> List[str]:
     subfolders = (
         name
         for name in os.listdir(os.path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
@@ -1643,7 +1642,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
+        keypoints_list = _list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
             kapture_data.keypoints = {}
             for keypoints_type in keypoints_list:
@@ -1655,7 +1654,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'loading descriptors {data_dir_paths[kapture.Descriptors]} ...')
         assert kapture_data.records_camera is not None
-        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
+        descriptors_list = _list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
             kapture_data.descriptors = {}
             for descriptors_type in descriptors_list:
@@ -1667,7 +1666,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'loading global features {data_dir_paths[kapture.GlobalFeatures]} ...')
         assert kapture_data.records_camera is not None
-        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
+        global_features_list = _list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
             kapture_data.global_features = {}
             for global_features_type in global_features_list:
@@ -1742,7 +1741,7 @@ def get_all_tar_handlers(kapture_dir_path: str,
     # keypoints
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'opening keypoints tars {data_dir_paths[kapture.Keypoints]} ...')
-        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
+        keypoints_list = _list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
@@ -1757,7 +1756,7 @@ def get_all_tar_handlers(kapture_dir_path: str,
     # descriptors
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'opening descriptors tars {data_dir_paths[kapture.Descriptors]} ...')
-        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
+        descriptors_list = _list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
@@ -1772,7 +1771,7 @@ def get_all_tar_handlers(kapture_dir_path: str,
     # global_features
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'opening global_features tars {data_dir_paths[kapture.GlobalFeatures]} ...')
-        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
+        global_features_list = _list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
