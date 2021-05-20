@@ -119,6 +119,17 @@ class RecordsBase(Dict[int, Dict[str, T]]):
             for sensor_id in sensors.keys()
         ]
 
+    def data(self) -> List[T]:
+        """
+        Get the list of values stored for each sensor+timestamp.
+
+        :return: list of data
+        """
+        data_values = [data_value
+                       for timestamp, sensors in self.items()
+                       for sensor_id, data_value in sensors.items()]
+        return data_values
+
     @property
     def sensors_ids(self) -> Set[str]:
         """
