@@ -65,7 +65,7 @@ def get_features_fullpath(
         return path_secure(path.join(kapture_dirpath, subdir, feature_type, feature_filename))
     else:
         feature_filename = image_filename + FEATURE_FILE_EXTENSION[data_type] if image_filename else None
-        return (feature_filename, tar_local_handler)
+        return feature_filename, tar_local_handler
 
 
 def features_to_filepaths(
@@ -312,7 +312,8 @@ def descriptors_check_dir(descriptors: kapture.Descriptors, descriptors_type: st
 
 
 # global_features ######################################################################################################
-def image_global_features_from_file(filepath: Union[str, Tuple[str, TarHandler]], dtype: Type, dsize: int) -> np.ndarray:
+def image_global_features_from_file(filepath: Union[str, Tuple[str, TarHandler]], dtype: Type, dsize: int)\
+        -> np.ndarray:
     """
     Read the image global features
 

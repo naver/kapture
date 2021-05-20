@@ -130,7 +130,8 @@ class Descriptors(ImageFeaturesBase):
         return self._metric_type
 
     def __repr__(self):
-        representation = f'{self.type_name} {self.keypoints_type} {self.metric_type} ({self.dtype.__name__} x {self.dsize}) = '
+        representation = f'{self.type_name} {self.keypoints_type} {self.metric_type}' \
+                         f' ({self.dtype.__name__} x {self.dsize}) = '
         if len(self) == 0:
             representation += '[]'
         else:
