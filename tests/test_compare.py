@@ -10,10 +10,9 @@ import os.path as path
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
-from kapture.algo.compare import equal_keypoints_collections, is_distance_within_threshold, pose_transform_distance
+from kapture.algo.compare import is_distance_within_threshold, pose_transform_distance
 from kapture.algo.compare import equal_kapture, equal_sensors, equal_rigs, equal_trajectories, equal_records_camera,\
-    equal_records_lidar, equal_records_wifi, equal_records_gnss, equal_keypoints_collections, \
-    equal_poses
+    equal_records_lidar, equal_records_wifi, equal_records_gnss, equal_poses, equal_keypoints_collections
 
 
 class TestComparePoseTransform(unittest.TestCase):
