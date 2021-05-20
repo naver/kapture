@@ -489,8 +489,8 @@ class TestCsvObservations(unittest.TestCase):
                                                                 "# point3d_id, keypoints_type,"
                                                                 " [image_path, feature_id]*",
                                                                 "0, SIFT, image1.jpg, 0, image2.jpg, 0",
-                                                                "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) \
-                                          + kapture_linesep
+                                                                "2, SIFT, image1.jpg, 2, image2.jpg, 3"])
+        self._observations_csv_expected += kapture_linesep
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
