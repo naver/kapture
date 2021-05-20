@@ -485,10 +485,12 @@ class TestCsvObservations(unittest.TestCase):
             0: {'SIFT': [('image1.jpg', 0), ('image2.jpg', 0)]},
             2: {'SIFT': [('image1.jpg', 2), ('image2.jpg', 3)]}
         })
-        self._observations_csv_expected = csv.KAPTURE_FORMAT_1 + kapture_linesep
-        self._observations_csv_expected += kapture_linesep.join(["# point3d_id, keypoints_type, [image_path, feature_id]*",
-                                                                 "0, SIFT, image1.jpg, 0, image2.jpg, 0",
-                                                                 "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) + kapture_linesep
+        self._observations_csv_expected = kapture_linesep.join([csv.KAPTURE_FORMAT_1,
+                                                                "# point3d_id, keypoints_type,"
+                                                                " [image_path, feature_id]*",
+                                                                "0, SIFT, image1.jpg, 0, image2.jpg, 0",
+                                                                "2, SIFT, image1.jpg, 2, image2.jpg, 3"]) \
+                                          + kapture_linesep
         os.makedirs(path.dirname(self._observations_expected_filepath), exist_ok=True)
         with open(self._observations_expected_filepath, 'wt') as file:
             file.write(self._observations_csv_expected)
@@ -523,30 +525,30 @@ class TestCsvKapture(unittest.TestCase):
         self._tempdir.cleanup()
 
     def test_kapture_write(self):
-        kdata = kapture.Kapture()
+        kapture_data = kapture.Kapture()
 
         # test it is not writing files for undefined parts
-        csv.kapture_to_dir(self._tempdir.name, kdata)
+        csv.kapture_to_dir(self._tempdir.name, kapture_data)
         self.assertFalse(path.exists(path.join(self._tempdir.name, 'sensors', 'sensors.txt')))
         self.assertFalse(path.exists(path.join(self._tempdir.name, 'sensors', 'trajectories.txt')))
         self.assertFalse(path.exists(path.join(self._tempdir.name, 'sensors', 'rigs.txt')))
 
         # test it is actually writing files for parts
-        kdata.sensors = kapture.Sensors()
-        kdata.trajectories = kapture.Trajectories()
-        kdata.rigs = kapture.Rigs()
-        csv.kapture_to_dir(self._tempdir.name, kdata)
+        kapture_data.sensors = kapture.Sensors()
+        kapture_data.trajectories = kapture.Trajectories()
+        kapture_data.rigs = kapture.Rigs()
+        csv.kapture_to_dir(self._tempdir.name, kapture_data)
         self.assertTrue(path.exists(path.join(self._tempdir.name, 'sensors', 'sensors.txt')))
         self.assertTrue(path.exists(path.join(self._tempdir.name, 'sensors', 'trajectories.txt')))
         self.assertTrue(path.exists(path.join(self._tempdir.name, 'sensors', 'rigs.txt')))
         # TODO: using samples
 
     def test_kapture_write_read(self):
-        kdata_expected = kapture.Kapture()
-        kdata_expected.sensors = kapture.Sensors()
-        kdata_expected.trajectories = kapture.Trajectories()
-        kdata_expected.rigs = kapture.Rigs()
-        csv.kapture_to_dir(self._tempdir.name, kdata_expected)
+        kapture_data_expected = kapture.Kapture()
+        kapture_data_expected.sensors = kapture.Sensors()
+        kapture_data_expected.trajectories = kapture.Trajectories()
+        kapture_data_expected.rigs = kapture.Rigs()
+        csv.kapture_to_dir(self._tempdir.name, kapture_data_expected)
         # TODO: using samples
 
     def test_kapture_format_version_from_disk(self):
@@ -687,7 +689,7 @@ class TestCsvMaupertuis(unittest.TestCase):
         self.assertEqual(set(keypoints), {'03.jpg', '01.jpg', '02.jpg', '00.jpg'})
 
     def test_descriptors_from_dir(self):
-        descriptors = kapture.io.csv.descriptors_from_dir(self._features_type, self._kapture_dirpath, None)
+        descriptors = kapture.io.csv.descriptors_from_dir(self._features_type, self._kapture_dirpath, None, None)
         self.assertEqual(descriptors.dtype, np.uint8)
         self.assertEqual(descriptors.dsize, 128)
         self.assertEqual(set(descriptors), {'03.jpg', '01.jpg', '02.jpg', '00.jpg'})
