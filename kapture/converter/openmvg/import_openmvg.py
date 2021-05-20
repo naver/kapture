@@ -361,7 +361,7 @@ def _import_openmvg_regions(
 
     # populate regions files in openMVG directory
     # https://github.com/openMVG/openMVG/blob/master/src/openMVG/features/scalar_regions.hpp#L23
-    image_names = kapture_data.records_camera.data()
+    image_names = kapture_data.records_camera.data_list()
     for image_name in image_names:
         openmvg_image_name = path.splitext(path.basename(image_name))[0]
         # keypoints

@@ -549,7 +549,7 @@ class TestRecords(unittest.TestCase):
         kapture_data = kapture.Kapture(records_camera=records_camera)
         self.assertEqual(1, len(kapture_data.records_camera.keys()))
         self.assertEqual(1, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(record_cam0_image0, kapture_data.records_camera.data()[0])
+        self.assertEqual(record_cam0_image0, kapture_data.records_camera.data_list()[0])
         self.assertIn(timestamp0, kapture_data.records_camera)
         self.assertIn(device_id0, kapture_data.records_camera[timestamp0])
         self.assertIn((timestamp0, device_id0), kapture_data.records_camera)
@@ -557,18 +557,18 @@ class TestRecords(unittest.TestCase):
         records_camera[timestamp1, device_id0] = record_cam0_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(2, len(kapture_data.records_camera.data()))
-        self.assertEqual(record_cam0_image1, kapture_data.records_camera.data()[-1])
+        self.assertEqual(2, len(kapture_data.records_camera.data_list()))
+        self.assertEqual(record_cam0_image1, kapture_data.records_camera.data_list()[-1])
         kapture_data.records_camera[timestamp0][device_id1] = record_cam1_image0
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(3, len(kapture_data.records_camera.data()))
-        self.assertEqual(record_cam0_image1, kapture_data.records_camera.data()[-1])
+        self.assertEqual(3, len(kapture_data.records_camera.data_list()))
+        self.assertEqual(record_cam0_image1, kapture_data.records_camera.data_list()[-1])
         records_camera[timestamp1][device_id1] = record_cam1_image1
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(4, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(4, len(kapture_data.records_camera.data()))
-        self.assertEqual(record_cam1_image1, kapture_data.records_camera.data()[-1])
+        self.assertEqual(4, len(kapture_data.records_camera.data_list()))
+        self.assertEqual(record_cam1_image1, kapture_data.records_camera.data_list()[-1])
         self.assertEqual(record_cam0_image0, kapture_data.records_camera[timestamp0, device_id0])
         self.assertEqual(record_cam1_image0, kapture_data.records_camera[timestamp0, device_id1])
         self.assertEqual(record_cam0_image1, kapture_data.records_camera[timestamp1, device_id0])
@@ -582,11 +582,11 @@ class TestRecords(unittest.TestCase):
         del kapture_data.records_camera[(timestamp0, device_id0)]
         self.assertEqual(2, len(kapture_data.records_camera.keys()))
         self.assertEqual(3, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(3, len(kapture_data.records_camera.data()))
+        self.assertEqual(3, len(kapture_data.records_camera.data_list()))
         del kapture_data.records_camera[(timestamp0, device_id1)]
         self.assertEqual(1, len(kapture_data.records_camera.keys()))
         self.assertEqual(2, len(kapture_data.records_camera.key_pairs()))
-        self.assertEqual(2, len(kapture_data.records_camera.data()))
+        self.assertEqual(2, len(kapture_data.records_camera.data_list()))
 
     def test_init_lidar(self):
         records_lidar = kapture.RecordsLidar()

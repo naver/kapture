@@ -119,9 +119,9 @@ class RecordsBase(Dict[int, Dict[str, T]]):
             for sensor_id in sensors.keys()
         ]
 
-    def data(self) -> List[T]:
+    def data_list(self) -> List[T]:
         """
-        Get the list of values stored for each sensor+timestamp.
+        Get the list of data stored for all sensor+timestamp values.
 
         :return: list of data
         """
