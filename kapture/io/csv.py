@@ -1706,7 +1706,7 @@ def _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kaptu
         kapture_data.observations = observations_from_file(observations_file_path, kapture_data.keypoints)
 
 
-def get_all_tar_handlers(kapture_dir_path: str,
+def get_all_tar_handlers(kapture_dir_path: str,  # noqa: C901: function a bit long but not too complex
                          mode: Union[str, Dict[Type, str]] = 'r',
                          skip_list: List[Type[Union[
                              kapture.Keypoints,
@@ -1722,12 +1722,13 @@ def get_all_tar_handlers(kapture_dir_path: str,
     :param skip_list: Input option for expert only. Skip the load of specified parts, defaults to []
     :return: collection of preloaded tar archives, don't forget to call close() when you're done with it
     """
+    valid_modes = {'r', 'a'}
     if isinstance(mode, str):
-        assert mode in {'r', 'a'}
+        assert mode in valid_modes
     else:
         assert isinstance(mode, dict)
         for mode_t in mode.values():
-            assert mode_t in {'r', 'a'}
+            assert mode_t in valid_modes
 
     data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
                       for dtype, dir_name in kapture.io.features.FEATURES_DATA_DIRNAMES.items()}
