@@ -506,16 +506,6 @@ def _export_openmvg_sfm_data(
 
     # Compute root path and camera used in records
     kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
-    for i, (_, _, kapture_image_name) in enumerate(kapture.flatten(kapture_data.records_camera)):
-        if kapture_image_name not in kapture_to_openmvg_view_ids:
-            kapture_to_openmvg_view_ids[kapture_image_name] = i
-
-    # polymorphic_status = PolymorphicStatus({}, 1, 1)
-    polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
-    ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
-
-    # Compute root path and camera used in records
-    kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
     kapture_to_openmvg_view_ids = {}  # kapture_image_name -> openmvg_view_id
 
     # polymorphic_status = PolymorphicStatus({}, 1, 1)
@@ -536,10 +526,10 @@ def _export_openmvg_sfm_data(
 
     logger.debug('exporting intrinsics ...')
     openmvg_sfm_data_intrinsics = _export_openmvg_intrinsics(
-        kapture_cameras=kapture_data.cameras,
-        kapture_to_openmvg_cam_ids=kapture_to_openmvg_cam_ids,
-        polymorphic_registry=polymorphic_registry,
-        ptr_wrapper_registry=ptr_wrapper_registry,
+        kapture_data.cameras,
+        kapture_to_openmvg_cam_ids,
+        polymorphic_registry,
+        ptr_wrapper_registry,
     )
 
     logger.debug('exporting extrinsics ...')
