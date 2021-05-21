@@ -30,8 +30,8 @@ FIRST_TRAJECTORY_TRANSLATION = [-2.1192500000000005, -0.4327849999999997, -4.073
 FIRST_TRAJECTORY_ROTATION = [0.9926160706165561, -0.08600940611886934, 0.0843934060039041, 0.01390940098954065]
 
 # Constants related to the dataset exported (M1X)
-# FIRST_BASLER_ID = "22970285"
-FIRST_BASLER_ID = 2147483649
+FIRST_BASLER_SENSOR_ID = "22970285"
+FIRST_BASLER_OPENMVG_ID = 2147483649
 LIDAR1 = "lidar1"
 
 
@@ -145,15 +145,14 @@ class TestOpenMvg(unittest.TestCase):
             intrinsics = sfm_data.get(JSON_KEY.INTRINSICS)
             self.assertIsNotNone(intrinsics, "Intrinsics")
             self.assertEqual(10, len(intrinsics), "Cameras")
-            camera_ids = {}
+            camera_ids = set()
             # Search for camera 22970285 and lidar1
             basler = None
             lidar = None
             for intrinsic in intrinsics:
-                # camera_num = intrinsic.get(JSON_KEY.KEY)
                 camera_id = intrinsic.get(JSON_KEY.VALUE, {}).get(JSON_KEY.PTR_WRAPPER, {}).get(JSON_KEY.ID)
-                camera_ids[camera_id] = camera_id
-                if camera_id == FIRST_BASLER_ID:
+                camera_ids.add(camera_id)
+                if camera_id == FIRST_BASLER_OPENMVG_ID:
                     basler = intrinsic.get(JSON_KEY.VALUE)
                 elif camera_id == LIDAR1:
                     lidar = intrinsic.get(JSON_KEY.VALUE)
@@ -182,8 +181,8 @@ class TestOpenMvg(unittest.TestCase):
                     break
             self.assertIsNotNone(image_record, "4th image record")
             local_path = image_record.get(JSON_KEY.LOCAL_PATH)
-            # self.assertEqual(FIRST_BASLER_ID, local_path, "Local path is the camera id")
-            # self.assertEqual(FIRST_BASLER_ID, image_record.get(JSON_KEY.ID_INTRINSIC),
+            self.assertEqual(FIRST_BASLER_SENSOR_ID, local_path, "Local path is the camera id")
+            # self.assertEqual(FIRST_BASLER_SENSOR_ID, image_record.get(JSON_KEY.ID_INTRINSIC),
             #                  "id_intrinsic is the camera id")
             self.assertEqual(camera_params.get(JSON_KEY.WIDTH), image_record.get(JSON_KEY.WIDTH),
                              "Image has camera width")
