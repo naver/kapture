@@ -1606,10 +1606,10 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path, sensor_ids)
 
 
-def _list_features(kapture_type: Type[Union[kapture.Keypoints,
-                                            kapture.Descriptors,
-                                            kapture.GlobalFeatures]],
-                   kapture_dir_path: str) -> List[str]:
+def list_features(kapture_type: Type[Union[kapture.Keypoints,
+                                           kapture.Descriptors,
+                                           kapture.GlobalFeatures]],
+                  kapture_dir_path: str) -> List[str]:
     subfolders = (
         name
         for name in os.listdir(os.path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
@@ -1642,7 +1642,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        keypoints_list = _list_features(kapture.Keypoints, kapture_dir_path)
+        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
             kapture_data.keypoints = {}
             for keypoints_type in keypoints_list:
@@ -1654,7 +1654,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'loading descriptors {data_dir_paths[kapture.Descriptors]} ...')
         assert kapture_data.records_camera is not None
-        descriptors_list = _list_features(kapture.Descriptors, kapture_dir_path)
+        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
             kapture_data.descriptors = {}
             for descriptors_type in descriptors_list:
@@ -1666,7 +1666,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'loading global features {data_dir_paths[kapture.GlobalFeatures]} ...')
         assert kapture_data.records_camera is not None
-        global_features_list = _list_features(kapture.GlobalFeatures, kapture_dir_path)
+        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
             kapture_data.global_features = {}
             for global_features_type in global_features_list:
@@ -1742,7 +1742,7 @@ def get_all_tar_handlers(kapture_dir_path: str,  # noqa: C901: function a bit lo
     # keypoints
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'opening keypoints tars {data_dir_paths[kapture.Keypoints]} ...')
-        keypoints_list = _list_features(kapture.Keypoints, kapture_dir_path)
+        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
         if len(keypoints_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
@@ -1757,7 +1757,7 @@ def get_all_tar_handlers(kapture_dir_path: str,  # noqa: C901: function a bit lo
     # descriptors
     if kapture.Descriptors in kapture_loadable_data:
         logger.debug(f'opening descriptors tars {data_dir_paths[kapture.Descriptors]} ...')
-        descriptors_list = _list_features(kapture.Descriptors, kapture_dir_path)
+        descriptors_list = list_features(kapture.Descriptors, kapture_dir_path)
         if len(descriptors_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
@@ -1772,7 +1772,7 @@ def get_all_tar_handlers(kapture_dir_path: str,  # noqa: C901: function a bit lo
     # global_features
     if kapture.GlobalFeatures in kapture_loadable_data:
         logger.debug(f'opening global_features tars {data_dir_paths[kapture.GlobalFeatures]} ...')
-        global_features_list = _list_features(kapture.GlobalFeatures, kapture_dir_path)
+        global_features_list = list_features(kapture.GlobalFeatures, kapture_dir_path)
         if len(global_features_list) > 0:
             if isinstance(mode, str):
                 mode_t = mode
