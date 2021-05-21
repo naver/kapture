@@ -154,8 +154,7 @@ def _export_openmvg_intrinsics(
         openmvg_camera_id = kapture_to_openmvg_cam_ids.get(kapture_cam_id)
         if openmvg_camera_id is None:
             # this cameras is not used, skip it to make openMVG happy
-            logger.debug(f'skip intrinsic parameters for camera {kapture_cam_id}')
-            continue
+            openmvg_camera_id = _get_openmvg_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
 
         kapture_cam_type = kapture_camera.camera_type
         kapture_camera_params = kapture_camera.camera_params
@@ -246,7 +245,7 @@ def _export_openmvg_intrinsics(
 
 
 def _export_openmvg_views(
-        kapture_cameras: Dict[str,kapture.Camera],
+        kapture_cameras: Dict[str, kapture.Camera],
         kapture_images: kapture.RecordsCamera,
         kapture_trajectories: kapture.Trajectories,
         kapture_to_openmvg_cam_ids: Dict[str, int],
@@ -506,11 +505,18 @@ def _export_openmvg_sfm_data(
 
     # Compute root path and camera used in records
     kapture_to_openmvg_cam_ids = {}  # kapture_cam_id -> openmvg_cam_id
-    kapture_to_openmvg_view_ids = {}  # kapture_image_name -> openmvg_view_id
 
     # polymorphic_status = PolymorphicStatus({}, 1, 1)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
+
+    logger.debug('exporting intrinsics ...')
+    openmvg_sfm_data_intrinsics = _export_openmvg_intrinsics(
+        kapture_data.cameras,
+        kapture_to_openmvg_cam_ids,
+        polymorphic_registry,
+        ptr_wrapper_registry
+    )
 
     logger.debug('exporting views ...')
     openmvg_sfm_data_views = _export_openmvg_views(
@@ -521,15 +527,7 @@ def _export_openmvg_sfm_data(
         kapture_to_openmvg_view_ids,
         polymorphic_registry,
         ptr_wrapper_registry,
-        image_path_flatten,
-    )
-
-    logger.debug('exporting intrinsics ...')
-    openmvg_sfm_data_intrinsics = _export_openmvg_intrinsics(
-        kapture_data.cameras,
-        kapture_to_openmvg_cam_ids,
-        polymorphic_registry,
-        ptr_wrapper_registry,
+        image_path_flatten
     )
 
     logger.debug('exporting extrinsics ...')
