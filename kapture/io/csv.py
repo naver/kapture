@@ -1610,6 +1610,12 @@ def list_features(kapture_type: Type[Union[kapture.Keypoints,
                                            kapture.Descriptors,
                                            kapture.GlobalFeatures]],
                   kapture_dir_path: str) -> List[str]:
+    """
+    list available keypoints or descriptors or global features types for a given kapture
+
+    :param kapture_type: whether to look inside keypoints, descriptors or global features
+    :param kapture_dir_path: kapture top directory path
+    """
     subfolders = (
         name
         for name in os.listdir(os.path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
