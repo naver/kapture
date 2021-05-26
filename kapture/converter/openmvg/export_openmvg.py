@@ -266,7 +266,7 @@ def _export_openmvg_views(
     views = []
 
     """
-    fills an array of views like :  
+    fills an array of views like :
     {
             "key": 0,
             "value": {
@@ -280,7 +280,7 @@ def _export_openmvg_views(
                         "id_view": 0,
                         "id_intrinsic": 3156,
                         "id_pose": 0,
-                and optionally  
+                and optionally
                         "use_pose_center_prior": true, "center_weight": [1.0,1.0,1.0], "center": [...],
                         "use_pose_rotation_prior": true, "rotation_weight": 1.0, "rotation": [[...],[...],[...]]
                     }
