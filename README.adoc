@@ -158,7 +158,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 
 .2+| colmap                 | import |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  ✓   |  ✓   | (✓)
                             | export |  ✓   |  ✓   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  ✓   |  ✓   | (✓)
-.2+| openmvg                | import |  ✓   |  —   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  ✓   |  ✓   |  (✓) 
+.2+| openmvg                | import |  ✓   |  —   |  ✓   |  ✓   |  ⨉   |  ✓   |  ✓   |  —   |  —   |  —   |  (✓) 
                             | export |  ✓   |  —   |  ✓   |  ✓   |  ⨉   |  (✓)   |  (✓)   |  —   |  ✓   |  ✓   |  (✓) 
 .2+| OpenSfM                | import |  ✓   |  ⨉   |  ✓   |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  ⨉   |  ✓
                             | export |  ✓   |  ⨉   |  ✓   |  ✓   |  ⨉   |  ✓   |  —   |  ✓   |  —   |  ⨉   |  ✓
