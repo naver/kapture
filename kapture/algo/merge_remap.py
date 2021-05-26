@@ -452,7 +452,9 @@ def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a b
             merged_kapture.global_features = get_new_if_not_empty(new_global_features, merged_kapture.global_features)
     if kapture.Matches not in skip_list:
         matches = [a_kapture.matches for a_kapture in kapture_list]
-        new_matches = merge_matches_collections(matches, data_paths, kapture_path, tarcollection_list)
+        matches_not_none = [k for k in matches if k is not None]
+        if len(matches_not_none) > 0:
+            new_matches = merge_matches_collections(matches, data_paths, kapture_path, tarcollection_list)
         merged_kapture.matches = get_new_if_not_empty(new_matches, merged_kapture.matches)
 
     if kapture.Points3d not in skip_list and kapture.Observations not in skip_list:

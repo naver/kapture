@@ -104,7 +104,9 @@ def _merge_image_features_collection(feature_class_type: Type[Union[kapture.Keyp
     assert len(features_paths) == len(features_list)
     # get the union
     features_types = set().union(*[features.keys() for features in features_list if features is not None])
-    assert len(features_types) > 0
+    if len(features_types) == 0:
+        return {}
+
     out_collection = {}
     for features_type in features_types:
         image_features_list = [features[features_type] if features is not None and features_type in features else None
@@ -288,7 +290,9 @@ def merge_matches_collections(matches_list: List[Optional[Dict[str,  kapture.Mat
 
     # get the union
     keypoints_types = set().union(*[matches.keys() for matches in matches_list if matches is not None])
-    assert len(keypoints_types) > 0
+    if len(keypoints_types) == 0:
+        return {}
+
     out_collection = {}
     for keypoints_type in keypoints_types:
         kmatches_list = [matches[keypoints_type] if matches is not None and keypoints_type in matches else None
