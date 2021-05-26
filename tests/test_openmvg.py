@@ -144,7 +144,7 @@ class TestOpenMvg(unittest.TestCase):
             self.assertEqual(openmvg_image_root_path, root_path, "Root path correct")
             intrinsics = sfm_data.get(JSON_KEY.INTRINSICS)
             self.assertIsNotNone(intrinsics, "Intrinsics")
-            self.assertEqual(10, len(intrinsics), "Cameras")
+            self.assertEqual(9, len(intrinsics), "Cameras")
             camera_ids = set()
             # Search for camera 22970285 and lidar1
             basler = None
@@ -156,7 +156,7 @@ class TestOpenMvg(unittest.TestCase):
                     basler = intrinsic.get(JSON_KEY.VALUE)
                 elif camera_id == LIDAR1:
                     lidar = intrinsic.get(JSON_KEY.VALUE)
-            self.assertEqual(10, len(camera_ids), "All camera identifiers are different")
+            self.assertEqual(9, len(camera_ids), "All camera identifiers are different")
             self.assertIsNotNone(basler, "First basler camera")
             self.assertEqual(CameraModel.pinhole_brown_t2.name,
                              basler.get(JSON_KEY.POLYMORPHIC_NAME), "Polymorphic name")
@@ -182,8 +182,6 @@ class TestOpenMvg(unittest.TestCase):
             self.assertIsNotNone(image_record, "4th image record")
             local_path = image_record.get(JSON_KEY.LOCAL_PATH)
             self.assertEqual(FIRST_BASLER_SENSOR_ID, local_path, "Local path is the camera id")
-            # self.assertEqual(FIRST_BASLER_SENSOR_ID, image_record.get(JSON_KEY.ID_INTRINSIC),
-            #                  "id_intrinsic is the camera id")
             self.assertEqual(camera_params.get(JSON_KEY.WIDTH), image_record.get(JSON_KEY.WIDTH),
                              "Image has camera width")
             self.assertEqual(camera_params.get(JSON_KEY.HEIGHT), image_record.get(JSON_KEY.HEIGHT),
