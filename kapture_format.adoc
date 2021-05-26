@@ -1,4 +1,4 @@
-= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  data format v1.1
+= image:assets/kapture_newlogo.png["KAPTURE", width=64px] kapture:  data format v1.1
 :sectnums:
 :sectnumlevels: 1
 :toc:

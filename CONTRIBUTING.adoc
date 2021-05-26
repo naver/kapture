@@ -1,4 +1,4 @@
-= image:assets/kapture_logo.svg["KAPTURE", width=64px] kapture:  Contributing
+= image:assets/kapture_newlogo.png["KAPTURE", width=64px] kapture:  Contributing
 :sectnums:
 :sectnumlevels: 1
 :toc:

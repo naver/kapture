@@ -4,7 +4,7 @@
 :toc: macro
 :toclevels: 2
 
-image::assets/kapture_logo.svg["KAPTURE", width=64px]
+image::assets/kapture_newlogo.png["KAPTURE", width=64px]
 
 toc::[]
 
