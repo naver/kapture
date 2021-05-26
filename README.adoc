@@ -167,7 +167,7 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 | image_list                | import |  ✓   |  —   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | nvm                       | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  — 
 | IDL_dataset_cvpr17        | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
-| RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  ?   |  —   |  ✓   |  ✓   |  ?
+| RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  —
 | ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
 | SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
