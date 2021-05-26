@@ -9,7 +9,7 @@ import logging
 import os
 import os.path as path
 from tqdm import tqdm
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import quaternion
@@ -475,9 +475,7 @@ def _export_openmvg_sfm_data(
 
     if kapture_data.cameras is None or kapture_data.records_camera is None:
         raise ValueError('export_openmvg_sfm_data needs kapture camera and records_camera.')
-
-    if image_action == TransferAction.root_link:
-        raise NotImplementedError('root link is not implemented, use skip instead.')
+    cameras = kapture_data.cameras
 
     # refer to the original image dir when skipping image transfer.
     if image_action == TransferAction.skip:
@@ -505,16 +503,41 @@ def _export_openmvg_sfm_data(
     ptr_wrapper_registry = CerealPointerRegistry(id_key=JSON_KEY.ID, value_key=JSON_KEY.DATA)
     # Compute openMVG identifiers
     kapture_images_data: List[Tuple[int, str, str]] = []  # List of (timestamp, kapture_cam_id, image_name)
+    sub_root_path: str = ''
+    image_dirs: Set[str] = set()  # all images directories
     kapture_to_openmvg_cam_ids: Dict[str:int] = {}  # kapture_cam_id -> openmvg_cam_id
     for timestamp, image_data in kapture_data.records_camera.items():
         for kapture_cam_id, kapture_image_name in image_data.items():
             kapture_images_data.append((timestamp, kapture_cam_id, kapture_image_name))
+            image_dirs.add(path.dirname(kapture_image_name))
             _compute_openmvg_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
             _compute_openmvg_id(kapture_image_name, kapture_to_openmvg_view_ids)
+    if len(image_dirs) > 1:
+        # Find if they share a top path
+        sub_root_path = path.commonpath(image_dirs)
+    elif len(image_dirs) == 1:
+        sub_root_path = image_dirs.pop()
+    if sub_root_path:
+        openmvg_image_root_path = os.path.abspath(path.join(openmvg_image_root_path, sub_root_path))
+        # Update image name to be stored
+        shortened_images_data = []
+        for timestamp, kapture_cam_id, kapture_image_name in kapture_images_data:
+            shortened_images_data.append((timestamp, kapture_cam_id, path.relpath(kapture_image_name, sub_root_path)))
+        kapture_images_data = shortened_images_data
+    if image_action == TransferAction.root_link:
+        if not sub_root_path:
+            # We can not link directly to the top destination openmvg directory
+            # We need an additional level
+            openmvg_image_root_path = path.join(openmvg_image_root_path, 'images')
+        kapture_records_path = get_image_fullpath(kapture_path, sub_root_path)
+        # Do a unique images directory link
+        # openmvg_root_path -> kapture/<records_dir>/openmvg_top_images_directory
+        # beware that the paths are reverted in the symlink call
+        os.symlink(kapture_records_path, openmvg_image_root_path)
 
     logger.debug('exporting intrinsics ...')
     openmvg_sfm_data_intrinsics = _export_openmvg_intrinsics(
-        kapture_data.cameras,
+        cameras,
         kapture_to_openmvg_cam_ids,
         polymorphic_registry,
         ptr_wrapper_registry
@@ -522,7 +545,7 @@ def _export_openmvg_sfm_data(
 
     logger.debug('exporting views ...')
     openmvg_sfm_data_views = _export_openmvg_views(
-        kapture_data.cameras,
+        cameras,
         kapture_images_data,
         kapture_data.trajectories,
         kapture_to_openmvg_cam_ids,
