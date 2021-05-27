@@ -108,11 +108,10 @@ def import_openmvg_sfm_data_json(
     device_identifiers = {int: str}  # Pose id -> device id
     timestamp_for_pose = {int: int}  # Pose id -> timestamp
     # Imports the images as records_camera, but also fill in the devices_identifiers and timestamp_for_pose dictionaries
-    records_camera = _import_openmvg_images(
-        sfm_data_json, image_action, kapture_images_path, openmvg_images_dir, data_root_path,
-        device_identifiers, timestamp_for_pose)
-    trajectories = _import_openmvg_trajectories(
-        sfm_data_json, device_identifiers, timestamp_for_pose)
+    records_camera = _import_openmvg_images(sfm_data_json, image_action, kapture_images_path,
+                                            openmvg_images_dir, data_root_path, device_identifiers, timestamp_for_pose)
+    trajectories = _import_openmvg_trajectories(sfm_data_json, device_identifiers, timestamp_for_pose)
+
 
     kapture_data = kapture.Kapture(sensors=kapture_cameras, records_camera=records_camera, trajectories=trajectories)
     return kapture_data
@@ -120,10 +119,11 @@ def import_openmvg_sfm_data_json(
 
 def _import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
-    if input_json.get(JSON_KEY.INTRINSICS):
+    intrinsics = input_json.get(JSON_KEY.INTRINSICS)
+    if intrinsics:
         polymorphic_id_to_value = {}
         logger.info('Importing intrinsics')
-        for sensor in input_json[JSON_KEY.INTRINSICS]:
+        for sensor in intrinsics:
             value = sensor[JSON_KEY.VALUE]
             if JSON_KEY.POLYMORPHIC_NAME in value:
                 # new type name: store it for next instances
@@ -225,8 +225,8 @@ def _import_openmvg_cameras(input_json) -> kapture.Sensors:  # noqa: C901
 def _import_openmvg_images(input_json, image_action, kapture_images_path, openmvg_images_dir, root_path,
                            device_identifiers, timestamp_for_pose):
     records_camera = kapture.RecordsCamera()
-    if input_json.get(JSON_KEY.VIEWS):
-        views = input_json[JSON_KEY.VIEWS]
+    views = input_json.get(JSON_KEY.VIEWS)
+    if views:
         if image_action == TransferAction.root_link:
             # Do a unique images directory link
             # kapture/<records_dir>/openmvg_top_images_directory -> openmvg_root_path
@@ -244,21 +244,20 @@ def _import_openmvg_images(input_json, image_action, kapture_images_path, openmv
             input_data = view[JSON_KEY.VALUE][JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
             pose_id = input_data[JSON_KEY.ID_POSE]
             # All two values should be the same (?)
-            if input_data[JSON_KEY.ID_VIEW]:
+            if JSON_KEY.ID_VIEW in input_data:
                 timestamp = input_data[JSON_KEY.ID_VIEW]
-            else:
+            elif JSON_KEY.KEY in view:
                 timestamp = view[JSON_KEY.KEY]
+            else:
+                raise ValueError(f'Missing timestamp for view {view}')
             device_id = str(input_data[JSON_KEY.ID_INTRINSIC])  # device_id must be a string for kapture
             device_identifiers[pose_id] = device_id
             timestamp_for_pose[pose_id] = timestamp
-
             kapture_filename = _import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
                                                           kapture_images_path, image_action)
-
+            records_camera[(timestamp, device_id)] = path_secure(kapture_filename)
             progress_bar and progress_bar.update(1)
 
-            key = (timestamp, device_id)  # tuple of int,str
-            records_camera[key] = path_secure(kapture_filename)
         progress_bar and progress_bar.close()
     return records_camera
 
@@ -302,8 +301,8 @@ def _import_openmvg_image_file(input_data, openmvg_images_dir, root_path, kaptur
 
 def _import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_pose):
     trajectories = kapture.Trajectories()
-    if input_json.get(JSON_KEY.EXTRINSICS):
-        extrinsics = input_json[JSON_KEY.EXTRINSICS]
+    extrinsics = input_json.get(JSON_KEY.EXTRINSICS)
+    if extrinsics:
         logger.info(f'Importing {len(extrinsics)} extrinsics -> trajectories')
         for pose in extrinsics:
             pose_id = pose[JSON_KEY.KEY]
