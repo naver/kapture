@@ -1,10 +1,9 @@
-= kapture:  data format
 :sectnums:
 :sectnumlevels: 1
 :toc: macro
 :toclevels: 2
 
-image::assets/kapture_newlogo.png["KAPTURE", width=64px]
+image::assets/kapture_banner.png["KAPTURE", width=800px]
 
 toc::[]
 
