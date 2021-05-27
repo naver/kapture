@@ -307,10 +307,6 @@ def _import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_p
         logger.info(f'Importing {len(extrinsics)} extrinsics -> trajectories')
         for pose in extrinsics:
             pose_id = pose[JSON_KEY.KEY]
-            center = pose[JSON_KEY.VALUE][JSON_KEY.CENTER]
-            rotation = pose[JSON_KEY.VALUE][JSON_KEY.ROTATION]
-            kap_translation = -1 * np.matmul(rotation, center)
-            kap_pose = kapture.PoseTransform(quaternion.from_rotation_matrix(rotation), kap_translation)
             timestamp = timestamp_for_pose.get(pose_id)
             if timestamp is None:
                 logger.warning(f'Missing timestamp for extrinsic {pose_id}')
@@ -319,6 +315,10 @@ def _import_openmvg_trajectories(input_json, device_identifiers, timestamp_for_p
             if device_id is None:
                 logger.warning(f'Missing device for extrinsic {pose_id}')
                 continue
+            center = pose[JSON_KEY.VALUE][JSON_KEY.CENTER]
+            rotation = pose[JSON_KEY.VALUE][JSON_KEY.ROTATION]
+            kap_translation = -1 * np.matmul(rotation, center)
+            kap_pose = kapture.PoseTransform(quaternion.from_rotation_matrix(rotation), kap_translation)
             trajectories[(timestamp, device_id)] = kap_pose  # tuple of int,str -> 6D pose
     return trajectories
 
@@ -338,7 +338,7 @@ def _import_openmvg_regions(
         image_describer = json.load(f)
 
     # retrieve what type of keypoints it is.
-    keypoints_type = image_describer.get('regions_type', {}).get('polymorphic_name', 'UNDEFINED')
+    keypoints_type = image_describer.get('regions_type', {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
     keypoints_name = {
         'SIFT_Regions': 'SIFT',
         'AKAZE_Float_Regions': 'AKAZE'
@@ -346,7 +346,7 @@ def _import_openmvg_regions(
     kapture_keypoints = kapture.Keypoints(type_name=keypoints_name, dtype=float, dsize=4)
 
     # retrieve what type of descriptors it is.
-    descriptors_type = image_describer.get('image_describer', {}).get('polymorphic_name', 'UNDEFINED')
+    descriptors_type = image_describer.get('image_describer', {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
     descriptors_props = {
         'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128,
                                      keypoints_type=keypoints_type,
@@ -373,9 +373,7 @@ def _import_openmvg_regions(
             assert keypoints_data.shape[1] == 4
             kapture_keypoints.add(image_name)
             # and convert file
-            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type,
-                                                                kapture_path,
-                                                                image_name)
+            kapture_keypoints_filepath = get_keypoints_fullpath(keypoints_type, kapture_path, image_name)
             array_to_file(kapture_keypoints_filepath, keypoints_data)
 
         # descriptors
@@ -392,9 +390,7 @@ def _import_openmvg_regions(
             # descriptors_data.reshape((keypoints_data.shape[0], -1))
             kapture_descriptors.add(image_name)
             # and convert file
-            kapture_descriptors_filepath = get_descriptors_fullpath(descriptors_type,
-                                                                    kapture_path,
-                                                                    image_name)
+            kapture_descriptors_filepath = get_descriptors_fullpath(descriptors_type, kapture_path, image_name)
             array_to_file(kapture_descriptors_filepath, descriptors_data)
 
     kapture_data.keypoints = {keypoints_type: kapture_keypoints}
