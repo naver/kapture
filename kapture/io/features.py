@@ -39,6 +39,48 @@ FEATURE_PAIR_PATH_SEPARATOR = {
 }
 
 
+def guess_feature_name_from_path(feature_path: str) -> str:
+    """
+    try to find keypoints_type, descriptors_type, global_features_type from their full path
+
+    :param feature_path: examples,  dataset/local_features/r2d2/keypoints ;
+                                    dataset/local_features/r2d2 ;
+                                    kapture_path/reconstruction/keypoints/r2d2
+                                    dataset/global_features/apgem/global_features ;
+                                    dataset/global_features/apgem ;
+                                    kapture_path/reconstruction/global_features/apgem ;
+    """
+    feature_path_c = path.abspath(feature_path).replace('\\', '/').rstrip('/')
+    feature_path_split = feature_path_c.split('/')
+    feature_name = None
+    # if path given doesn't end with the kapture name, assume the last bit is the feature name
+    # ex dataset/local_features/r2d2
+    # ex kapture_path/reconstruction/keypoints/r2d2
+    if feature_path_split[-1] not in ['keypoints', 'descriptors', 'global_features', 'matches']:
+        feature_name = feature_path_split[-1]
+    else:
+        # path given look like it follows the kapture-localization recommendation
+        # search for the local_features; global_features keywords
+        for parent_folder_name in ['local_features', 'global_features']:
+            if feature_name is not None:
+                break
+            try:
+                indices = [i for i, x in enumerate(feature_path_split) if x == parent_folder_name]
+                if len(indices) > 0:
+                    # from last occurence to first
+                    for index in reversed(indices):
+                        # ignore if keyword is at the very end of the sequence
+                        # would happen for dataset/global_features/apgem/global_features
+                        if index + 1 < len(feature_path_split):
+                            feature_name = feature_path_split[index + 1]
+                            break
+            except Exception:
+                continue
+    if feature_name is None:
+        raise ValueError(f'failed to guess feature name from path {feature_path}')
+    return feature_name
+
+
 # get file path for binary files in kapture ############################################################################
 def get_features_fullpath(
     data_type: Any,

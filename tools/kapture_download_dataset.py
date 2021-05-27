@@ -21,7 +21,7 @@ import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size
 from kapture.converter.downloader.archives import untar_file, compute_sha256sum
 from kapture.io.csv import get_version_from_csv_file
-from kapture.utils.upgrade import upgrade_1_0_to_1_1_inplace
+from kapture.utils.upgrade import upgrade_1_0_to_1_1_inplace, upgrade_1_0_to_1_1_orphan_features
 
 logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
@@ -290,6 +290,32 @@ class Dataset:
                     logger.info(f'{filename} already in 1.1, no need to upgrade')
                 else:
                     logger.warning(f'{filename} - version {version} is unknown')
+            # attempt upgrade of orphan features
+            csv_feature_names = ['keypoints.txt', 'descriptors.txt', 'global_features.txt']
+            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
+                         for f in filenames if f in csv_feature_names]
+            orphan_lfeat_paths = set()
+            orphan_gfeat_paths = set()
+            for filename in file_list:
+                version = get_version_from_csv_file(filename)
+                if version is None or version == '1.0':
+                    filename_c = path.abspath(filename).replace('\\', '/').rstrip('/')
+                    filename_split = filename_c.split('/')
+                    if len(filename) > 1 and \
+                        (filename_split[-1] == 'keypoints.txt' or filename_split[-1] == 'descriptors.txt') and \
+                            (filename_split[-2] == 'keypoints' or filename_split[-2] == 'descriptors'):
+                        orphan_lfeat_paths.add('/'.join(filename_split[0:-2]))
+                    elif len(filename) > 1 and \
+                            filename_split[-1] == 'global_features.txt' and \
+                            filename_split[-2] == 'global_features':
+                        orphan_gfeat_paths.add('/'.join(filename_split[0:-2]))
+            try:
+                if len(orphan_lfeat_paths) > 0 or len(orphan_gfeat_paths) > 0:
+                    logger.info(f'upgrade orphan features for {orphan_lfeat_paths} {orphan_gfeat_paths}')
+                    upgrade_1_0_to_1_1_orphan_features(list(orphan_lfeat_paths), list(orphan_gfeat_paths))
+                upgrade_successful = True
+            except Exception as e:
+                logger.warning(f'upgrade_1_0_to_1_1_orphan_features {e} for {orphan_lfeat_paths} {orphan_gfeat_paths}')
             return upgrade_successful
         else:
             logger.warning('dataset not yet installed, cannot attempt upgrade')

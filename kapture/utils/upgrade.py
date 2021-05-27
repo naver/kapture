@@ -6,7 +6,7 @@ Upgrade operations.
 
 import os
 import os.path as path
-from typing import Optional
+from typing import List, Optional
 import shutil
 # import numpy as np like in kapture.io.csv
 # so that types written as "np.float32" are understood by read_old_image_features_csv
@@ -231,4 +231,57 @@ def upgrade_1_0_to_1_1_inplace(kapture_dirpath: str,  # noqa: C901: function a b
                     for image_path, keypoint_id in zip(image_paths, keypoints_ids):
                         observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
         kapture.io.csv.observations_to_file(observations_csv_path, observations)
-    getLogger().debug('all done!')
+    getLogger().info('upgrade_1_0_to_1_1_inplace - all done!')
+
+
+def upgrade_1_0_to_1_1_orphan_features(local_features_paths: List[str],
+                                       global_features_paths: List[str]) -> None:
+    """
+    upgrade orphan features to kapture 1.1. Orphan features are features stored outside the kapture folder
+    they must follow the kapture-localization recommendation
+    https://github.com/naver/kapture-localization/blob/main/doc/tutorial.adoc#recommended-dataset-structure
+
+    :param local_features_paths: examples dataset/local_features/r2d2 dataset/local_features/d2_tf
+    :param global_features_paths: examples dataset/global_features/apgem dataset/global_features/delg
+    """
+    for local_features_path in local_features_paths:
+        keypoints_path = os.path.join(local_features_path, 'keypoints')
+        keypoints_type = kapture.io.features.guess_feature_name_from_path(keypoints_path)
+        keypoints_csv_path = path.join(keypoints_path, 'keypoints.txt')
+        if path.isfile(keypoints_csv_path):
+            old_version = kapture.io.csv.get_version_from_csv_file(keypoints_csv_path)
+            if old_version is not None and old_version != '1.0':
+                getLogger().warning(f'{keypoints_path} not in version 1.0; skipped')
+            else:
+                getLogger().debug(f'upgrading {keypoints_path}')
+                name, dtype, dsize = read_old_image_features_csv(keypoints_csv_path)
+                keypoints = kapture.Keypoints(name, dtype, dsize)
+                kapture.io.csv.keypoints_to_file(keypoints_csv_path, keypoints)
+
+        descriptors_path = os.path.join(local_features_path, 'descriptors')
+        descriptors_csv_path = path.join(descriptors_path, 'descriptors.txt')
+        if path.isfile(descriptors_csv_path):
+            old_version = kapture.io.csv.get_version_from_csv_file(descriptors_csv_path)
+            if old_version is not None and old_version != '1.0':
+                getLogger().warning(f'{descriptors_path} not in version 1.0; skipped')
+            else:
+                getLogger().debug(f'upgrading {descriptors_csv_path}')
+                name, dtype, dsize = read_old_image_features_csv(descriptors_csv_path)
+                descriptors = kapture.Descriptors(name, dtype, dsize, keypoints_type, 'L2')
+                kapture.io.csv.descriptors_to_file(descriptors_csv_path, descriptors)
+
+    for global_features_path in global_features_paths:
+        # global_features_type = kapture.io.features.guess_feature_name_from_path(global_features_path)
+        global_features_csv_path = path.join(global_features_path, 'global_features.txt')
+        if not path.isfile(global_features_csv_path):
+            global_features_csv_path = path.join(global_features_path, 'global_features', 'global_features.txt')
+        if path.isfile(global_features_csv_path):
+            old_version = kapture.io.csv.get_version_from_csv_file(global_features_csv_path)
+            if old_version is not None and old_version != '1.0':
+                getLogger().warning(f'{global_features_path} not in version 1.0; skipped')
+                continue
+            getLogger().debug(f'upgrading {global_features_csv_path}')
+            name, dtype, dsize = read_old_image_features_csv(global_features_csv_path)
+            global_features = kapture.GlobalFeatures(name, dtype, dsize, 'L2')
+            kapture.io.csv.global_features_to_file(global_features_csv_path, global_features)
+    getLogger().info('upgrade_1_0_to_1_1_orphan_features - all done!')
