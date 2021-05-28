@@ -27,6 +27,8 @@ from kapture.utils.paths import path_secure
 from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_DEFAULT_REGIONS_FILE_NAME
 from .openmvg_commons import CameraModel
 
+EMPTY_POINT3D = [0.0]*kapture.Points3d.XYZRGB
+
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
 
@@ -251,7 +253,8 @@ def _import_openmvg_images(sfm_data_json: Dict[str, Union[int, str, Dict]],
             progress_bar = None
         view: Dict[str, Union[int, str, Dict]]
         for view in views:
-            input_data: Dict[str, Union[int, str, Dict]] = view[JSON_KEY.VALUE][JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
+            view_value: Dict[str, Union[int, str, Dict]] = view[JSON_KEY.VALUE]
+            input_data: Dict[str, Union[int, str, Dict]] = view_value[JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
             pose_id = input_data[JSON_KEY.ID_POSE]
             # All two values should be the same (?)
             if JSON_KEY.ID_VIEW in input_data:
@@ -344,10 +347,11 @@ def _import_openmvg_structure(structure_data_json: Dict[str, Union[int, str, Dic
                               kapture_path: str):
     if structure_data_json:
         keypoints_type: str = try_get_only_key_from_collection(kapture_data.keypoints)
+        # We will load the 3D points with their indexes, and stored these associations.
+        # We have no guarantee that they are ordered, and that all indexes are present.
         points_3d: Dict[int, List[float]] = {}  # 3d points keyed by their index
-        max_point_idx: int = 0 # Biggest index
+        max_point_idx: int = 0  # Biggest index
         kapture_observations = kapture.Observations()
-        tar_handlers = kcsv.get_all_tar_handlers(kapture_path)
         logger.info(f'Importing {len(structure_data_json)} 3D points')
         point3d: Dict[str, Union[int, str, Dict]]
         for point3d in structure_data_json:
@@ -355,15 +359,17 @@ def _import_openmvg_structure(structure_data_json: Dict[str, Union[int, str, Dic
             max_point_idx = max(max_point_idx, point_idx)
             point3d_value: Dict[str, Union[List[float], List[Dict]]] = point3d[JSON_KEY.VALUE]
             coords: List[float] = point3d_value[JSON_KEY.X]
-            points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value ???
-            observations: Dict[str, Union[int, str, Dict]] = point3d_value[JSON_KEY.OBSERVATIONS]
+            points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value in JSON file
+            observations = point3d_value[JSON_KEY.OBSERVATIONS]
 
-        # Put the 3d points read in a list ordered by their index
+        # Put the 3d points read in a list of array of 6 floats ordered by their index
         points_3d_list: List[List[float]] = []
+        # We should fill an array from 0 to the max index defined and thought fill in the holes
         for point_idx in range(0, max_point_idx+1):
             coords = points_3d.get(point_idx)
-            points_3d_list.append(coords if coords else [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+            points_3d_list.append(coords if coords else EMPTY_POINT3D)
         kapture_data.points3d = kapture.Points3d(points_3d_list)
+        kapture_data.observations = kapture_observations
 
 
 def _import_openmvg_regions(openmvg_regions_directory_path: str,
