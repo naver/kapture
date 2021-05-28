@@ -12,7 +12,7 @@ import os
 import os.path as path
 import shutil
 from tqdm import tqdm
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 # kapture
 import kapture
 import kapture.io.csv as kcsv
