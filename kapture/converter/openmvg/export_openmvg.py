@@ -26,9 +26,9 @@ from kapture.io.records import get_image_fullpath
 import kapture.io.structure
 from kapture.io.tar import TarCollection
 from kapture.utils.Collections import try_get_only_key_from_collection
-from kapture.utils.paths import safe_remove_file, safe_remove_any_path
+from kapture.utils.paths import safe_remove_file
 # local
-from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_JSON_FILE_NAME
+from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER
 from .openmvg_commons import CameraModel, OPENMVG_DEFAULT_REGIONS_FILE_NAME
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
