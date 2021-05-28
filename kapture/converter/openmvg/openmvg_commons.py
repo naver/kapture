@@ -29,9 +29,10 @@ class JSON_KEY:
     FILENAME = "filename"
     WIDTH = "width"
     HEIGHT = "height"
-    ID_VIEW = "id_view"
+    ID_FEAT = "id_feat"
     ID_INTRINSIC = "id_intrinsic"
     ID_POSE = "id_pose"
+    ID_VIEW = "id_view"
     INTRINSICS = "intrinsics"
     POLYMORPHIC_NAME = "polymorphic_name"
     VALUE0 = "value0"
@@ -48,7 +49,10 @@ class JSON_KEY:
     USE_POSE_CENTER_PRIOR = "use_pose_center_prior"
     CENTER_WEIGHT = "center_weight"
     CENTER = "center"
+    X = "X"
+    x = "x"
     STRUCTURE = "structure"
+    OBSERVATIONS = "observations"
     CONTROL_POINTS = "control_points"
 
 

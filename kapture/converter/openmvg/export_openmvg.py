@@ -400,28 +400,24 @@ def _export_openmvg_structure(
         return None
 
     xyz_coordinates = kapture_points_3d[:, 0:3]
-    include_2d_observations = kapture_observations is not None
     openmvg_structure = []
     # this loop can be very long, lets show some progress
     hide_progress_bars = logger.getEffectiveLevel() > logging.INFO
 
     for point_idx, coords in enumerate(tqdm(xyz_coordinates, disable=hide_progress_bars)):
         point_3d_structure = {
-            'key': point_idx,
-            'value': {
-                'X': coords.tolist(),
-                'observations': []
+            JSON_KEY.KEY: point_idx,
+            JSON_KEY.VALUE: {
+                JSON_KEY.X: coords.tolist(),
+                JSON_KEY.OBSERVATIONS: []
             }
         }
-        if include_2d_observations and \
-                kapture_observations is not None and \
-                point_idx in kapture_observations and \
-                keypoints_type is not None and \
-                keypoints_type in kapture_observations[point_idx]:
+        if kapture_observations is not None and point_idx in kapture_observations and \
+                keypoints_type is not None and keypoints_type in kapture_observations[point_idx]:
             for kapture_image_name, feature_point_id in kapture_observations[point_idx, keypoints_type]:
                 openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
-                point_2d_observation = {'key': openmvg_view_id,
-                                        'value': {'id_feat': feature_point_id, }}
+                point_2d_observation = {JSON_KEY.KEY: openmvg_view_id,
+                                        JSON_KEY.VALUE: {JSON_KEY.ID_FEAT: feature_point_id, }}
 
                 if kapture_path and kapture_keypoints is not None:
                     # if given, load keypoints to populate 2D coordinates of the feature.
@@ -431,13 +427,14 @@ def _export_openmvg_structure(
                                                                  tar_handlers)
                     try:
                         keypoints_data = image_keypoints_from_file(keypoints_file_path,
-                                                                   dtype=kapture_keypoints.dtype,
-                                                                   dsize=kapture_keypoints.dsize)
-                        point_2d_observation['value']['x'] = keypoints_data[feature_point_id, 0:2].tolist()
+                                                                   kapture_keypoints.dtype,
+                                                                   kapture_keypoints.dsize)
+                        point_2d_observation[JSON_KEY.VALUE][JSON_KEY.x] = \
+                            keypoints_data[feature_point_id, 0:2].tolist()
                     except FileNotFoundError:
                         logger.warning(f'unable to load keypoints file {keypoints_file_path}')
 
-                point_3d_structure['value']['observations'].append(point_2d_observation)
+                point_3d_structure[JSON_KEY.VALUE][JSON_KEY.OBSERVATIONS].append(point_2d_observation)
 
         openmvg_structure.append(point_3d_structure)
 
