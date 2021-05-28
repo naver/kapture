@@ -21,6 +21,7 @@ from kapture.io.records import TransferAction, get_image_fullpath
 from kapture.io.features import get_keypoints_fullpath, get_descriptors_fullpath
 from kapture.io.features import get_matches_fullpath
 from kapture.io.binary import array_to_file
+from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.utils.paths import path_secure
 # local
 from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME
@@ -59,9 +60,10 @@ def import_openmvg(
     kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
 
     logger.info(f'Loading sfm_data file {sfm_data_path}')
+    sfm_data_json: Dict[str, Union[int, str, Dict]]
     with open(sfm_data_path, 'r') as f:
-        input_json = json.load(f)
-        kapture_data = import_openmvg_sfm_data_json(input_json, kapture_path, image_action)
+        sfm_data_json = json.load(f)
+        kapture_data = import_openmvg_sfm_data_json(sfm_data_json, kapture_path, image_action)
 
     if regions_dir_path:
         logger.info(f'Loading regions from {regions_dir_path}')
@@ -70,6 +72,9 @@ def import_openmvg(
     if matches_file_path:
         logger.info(f'Loading matches from {matches_file_path}')
         _import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
+
+    structure_data_json = sfm_data_json.get(JSON_KEY.STRUCTURE)
+    _import_openmvg_structure(structure_data_json, kapture_data,  kapture_path, )
 
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
@@ -334,11 +339,38 @@ def _import_openmvg_trajectories(sfm_data_json: Dict[str, Union[int, str, Dict]]
     return trajectories
 
 
+def _import_openmvg_structure(structure_data_json: Dict[str, Union[int, str, Dict]],
+                              kapture_data: kapture.Kapture,
+                              kapture_path: str):
+    if structure_data_json:
+        keypoints_type: str = try_get_only_key_from_collection(kapture_data.keypoints)
+        points_3d: Dict[int, List[float]] = {}  # 3d points keyed by their index
+        max_point_idx: int = 0 # Biggest index
+        kapture_observations = kapture.Observations()
+        tar_handlers = kcsv.get_all_tar_handlers(kapture_path)
+        logger.info(f'Importing {len(structure_data_json)} 3D points')
+        point3d: Dict[str, Union[int, str, Dict]]
+        for point3d in structure_data_json:
+            point_idx: int = point3d[JSON_KEY.KEY]
+            max_point_idx = max(max_point_idx, point_idx)
+            point3d_value: Dict[str, Union[List[float], List[Dict]]] = point3d[JSON_KEY.VALUE]
+            coords: List[float] = point3d_value[JSON_KEY.X]
+            points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value ???
+            observations: Dict[str, Union[int, str, Dict]] = point3d_value[JSON_KEY.OBSERVATIONS]
+
+        # Put the 3d points read in a list ordered by their index
+        points_3d_list: List[List[float]] = []
+        for point_idx in range(0, max_point_idx+1):
+            coords = points_3d.get(point_idx)
+            points_3d_list.append(coords if coords else [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        kapture_data.points3d = kapture.Points3d(points_3d_list)
+
+
 def _import_openmvg_regions(openmvg_regions_directory_path: str,
                             kapture_data: kapture.Kapture,
                             kapture_path: str):
     # look for the "image_describer.json"
-    image_describer_path = path.join(openmvg_regions_directory_path, 'image_describer.json')
+    image_describer_path = path.join(openmvg_regions_directory_path, OPENMVG_DEFAULT_REGIONS_FILE_NAME)
     if not path.isfile(image_describer_path):
         logger.debug(f'file not found : {image_describer_path}')
         return
@@ -347,7 +379,7 @@ def _import_openmvg_regions(openmvg_regions_directory_path: str,
         image_describer = json.load(f)
 
     # retrieve what type of keypoints it is.
-    keypoints_type = image_describer.get('regions_type', {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
+    keypoints_type = image_describer.get(JSON_KEY.REGIONS_TYPE, {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
     keypoints_name = {
         'SIFT_Regions': 'SIFT',
         'AKAZE_Float_Regions': 'AKAZE'
