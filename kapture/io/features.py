@@ -100,6 +100,7 @@ def get_features_fullpath(
     :param tar_handler: collection of preloaded tar archives
     :return: Feature full path
     """
+    assert feature_type is not None
     tar_local_handler = retrieve_tar_handler_from_collection(data_type, feature_type, tar_handler)
     if tar_local_handler is None:
         subdir = FEATURES_DATA_DIRNAMES[data_type]
