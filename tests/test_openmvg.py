@@ -86,7 +86,8 @@ class TestOpenMvg(unittest.TestCase):
         json_file = path.join(self._openmvg_sample_path, 'sfm_data_small.json')
         with open(json_file, 'r') as f:
             sfm_data = json.load(f)
-            kapture_data = import_openmvg_sfm_data_json(sfm_data, self._kapture_path)
+            views_id_to_filenames: Dict[int, str] = {}
+            kapture_data = import_openmvg_sfm_data_json(sfm_data, self._kapture_path, views_id_to_filenames)
             self._verify_data(kapture_data)
 
     def test_import_openmvg(self) -> None:
