@@ -128,7 +128,8 @@ def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[int, str, List, 
     return kapture_data
 
 
-def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str, Dict]]]) -> kapture.Sensors:  # noqa: C901
+def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str, Dict]]])\
+        -> kapture.Sensors:  # noqa: C901
     kapture_cameras = kapture.Sensors()
     if intrinsics_data_json:
         polymorphic_id_to_value = {}
@@ -253,7 +254,7 @@ def _import_openmvg_images(views_data_json: List[Dict[str, Union[int, str, Dict]
         # Progress bar only in debug or info level
         if image_action != TransferAction.skip and image_action != TransferAction.root_link \
                 and logger.getEffectiveLevel() <= logging.INFO:
-            progress_bar = tqdm(total=len(views))
+            progress_bar = tqdm(total=len(views_data_json))
         else:
             progress_bar = None
         view: Dict[str, Union[int, str, Dict]]
