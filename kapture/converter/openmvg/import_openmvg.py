@@ -62,10 +62,11 @@ def import_openmvg(
     kapture.io.structure.delete_existing_kapture_files(kapture_path, force_overwrite_existing)
 
     logger.info(f'Loading sfm_data file {sfm_data_path}')
+    view_ids_to_filename: Dict[int, str] = {}  # view identifiers to kapture image file name
     sfm_data_json: Dict[str, Union[int, str, Dict, List]]
     with open(sfm_data_path, 'r') as f:
         sfm_data_json = json.load(f)
-        kapture_data = import_openmvg_sfm_data_json(sfm_data_json, kapture_path, image_action)
+        kapture_data = import_openmvg_sfm_data_json(sfm_data_json, kapture_path, view_ids_to_filename, image_action)
 
     if regions_dir_path:
         logger.info(f'Loading regions from {regions_dir_path}')
@@ -75,7 +76,7 @@ def import_openmvg(
         logger.info(f'Loading matches from {matches_file_path}')
         _import_openmvg_matches(matches_file_path, kapture_data, kapture_path)
 
-    _import_openmvg_structure(sfm_data_json.get(JSON_KEY.STRUCTURE), kapture_data, kapture_path)
+    _import_openmvg_structure(sfm_data_json.get(JSON_KEY.STRUCTURE), kapture_data, view_ids_to_filename)
 
     logger.info(f'Saving to kapture {kapture_path}')
     kcsv.kapture_to_dir(kapture_path, kapture_data)
@@ -87,13 +88,16 @@ ID_POSE_NOT_LOCALIZED = 4294967295  # 11111111 11111111 11111111 11111111
 
 def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[int, str, List, Dict]],
                                  kapture_path: str,
+                                 view_ids_to_filename: Dict[int, str],
                                  image_action=TransferAction.skip) -> kapture.Kapture:
     """
     Imports an openMVG sfm_data json structure to a kapture object.
+    Fills in the mapping from openmvg view id to filename for the other processing.
     Also copy, move or link the images files if necessary.
 
     :param sfm_data_json: the openmvg JSON parsed as a dictionary
     :param kapture_path: top directory to create the kapture images tree
+    :param view_ids_to_filename: mapping of openmvg view id to the filename
     :param image_action: action to apply on images: link, copy, move or do nothing.
     :return: the constructed kapture object
     """
@@ -113,9 +117,10 @@ def import_openmvg_sfm_data_json(sfm_data_json: Dict[str, Union[int, str, List, 
     device_identifiers: Dict[int, str] = {}  # Pose id -> device id
     timestamp_for_pose: Dict[int, int] = {}  # Pose id -> timestamp
     # Imports the images as records_camera,
-    # but also fills in the devices_identifiers and timestamp_for_pose dictionaries
+    # but also fills in the openmvg_view_ids_to_filename, devices_identifiers and timestamp_for_pose dictionaries
     records_camera = _import_openmvg_images(sfm_data_json.get(JSON_KEY.VIEWS), image_action, kapture_path,
-                                            openmvg_images_dir, data_root_path, device_identifiers, timestamp_for_pose)
+                                            openmvg_images_dir, data_root_path, view_ids_to_filename,
+                                            device_identifiers, timestamp_for_pose)
     trajectories = _import_openmvg_trajectories(sfm_data_json.get(JSON_KEY.EXTRINSICS), device_identifiers,
                                                 timestamp_for_pose)
 
@@ -233,6 +238,7 @@ def _import_openmvg_images(views_data_json: List[Dict[str, Union[int, str, Dict]
                            kapture_path: str,
                            openmvg_images_dir: str,
                            root_path: str,
+                           view_ids_to_filename: Dict[int, str],
                            device_identifiers: Dict[int, str],
                            timestamp_for_pose: Dict[int, int]):
     records_camera = kapture.RecordsCamera()
@@ -256,18 +262,21 @@ def _import_openmvg_images(views_data_json: List[Dict[str, Union[int, str, Dict]
             input_data: Dict[str, Union[int, str, Dict]] = view_value[JSON_KEY.PTR_WRAPPER][JSON_KEY.DATA]
             pose_id = input_data[JSON_KEY.ID_POSE]
             # All two values should be the same (?)
+            view_id: int
             if JSON_KEY.ID_VIEW in input_data:
-                timestamp = input_data[JSON_KEY.ID_VIEW]
+                view_id = input_data[JSON_KEY.ID_VIEW]
             elif JSON_KEY.KEY in view:
-                timestamp = view[JSON_KEY.KEY]
+                view_id = view[JSON_KEY.KEY]
             else:
-                raise ValueError(f'Missing timestamp for view {view}')
+                raise ValueError(f'Missing view_id for view {view}')
+
             device_id = str(input_data[JSON_KEY.ID_INTRINSIC])  # device_id must be a string for kapture
             device_identifiers[pose_id] = device_id
-            timestamp_for_pose[pose_id] = timestamp
+            timestamp_for_pose[pose_id] = view_id
             kapture_filename = _import_openmvg_image_file(input_data, openmvg_images_dir, root_path,
                                                           kapture_path, image_action)
-            records_camera[(timestamp, device_id)] = path_secure(kapture_filename)
+            records_camera[(view_id, device_id)] = path_secure(kapture_filename)
+            view_ids_to_filename[view_id] = kapture_filename
             progress_bar and progress_bar.update(1)
 
         progress_bar and progress_bar.close()
@@ -342,7 +351,7 @@ def _import_openmvg_trajectories(extrinsics_data_json: List[Dict[str, Union[int,
 
 def _import_openmvg_structure(structure_data_json: List[Dict[str, Union[int, str, Dict]]],
                               kapture_data: kapture.Kapture,
-                              kapture_path: str):
+                              view_ids_to_kapture_filename: Dict[int, str]):
     if structure_data_json:
         keypoints_type: str = try_get_only_key_from_collection(kapture_data.keypoints)
         # We will load the 3D points with their indexes, and stored these associations.
@@ -359,6 +368,18 @@ def _import_openmvg_structure(structure_data_json: List[Dict[str, Union[int, str
             coords: List[float] = point3d_value[JSON_KEY.X]
             points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value in JSON file
             observations = point3d_value[JSON_KEY.OBSERVATIONS]
+            if observations:
+                if keypoints_type is None:
+                    logger.warning('Can not import observations without keypoints type')
+                    return
+                for observation in observations:
+                    openmvg_view_id: int = observation[JSON_KEY.KEY]
+                    kapture_image_name = view_ids_to_kapture_filename.get(openmvg_view_id)
+                    if not kapture_image_name:
+                        raise ValueError(f'openmvg_view_id {openmvg_view_id} not in views')
+                    observation_value: Dict[str, Union[int, str, List[float]]] = observation[JSON_KEY.VALUE]
+                    feature_point_id: int = observation_value[JSON_KEY.ID_FEAT]
+                    kapture_observations.add(point_idx, keypoints_type, kapture_image_name, feature_point_id)
 
         # Put the 3d points read in a list of array of 6 floats ordered by their index
         points_3d_list: List[List[float]] = []
