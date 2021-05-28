@@ -24,7 +24,7 @@ from kapture.io.binary import array_to_file
 from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.utils.paths import path_secure
 # local
-from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME
+from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_DEFAULT_REGIONS_FILE_NAME
 from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
