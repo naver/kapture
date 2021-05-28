@@ -52,6 +52,9 @@ class JSON_KEY:
     X = "X"
     x = "x"
     STRUCTURE = "structure"
+    REGIONS_TYPE = "regions_type"
+    VALID = "valid"
+    VALUE1 = "value1"
     OBSERVATIONS = "observations"
     CONTROL_POINTS = "control_points"
 

@@ -29,7 +29,7 @@ from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.utils.paths import safe_remove_file, safe_remove_any_path
 # local
 from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_JSON_FILE_NAME
-from .openmvg_commons import CameraModel
+from .openmvg_commons import CameraModel, OPENMVG_DEFAULT_REGIONS_FILE_NAME
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
@@ -638,12 +638,17 @@ def _export_openmvg_regions(
     os.makedirs(openmvg_regions_dir_path, exist_ok=True)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     # create image_describer.json
-    fake_regions_type = {"ptr_wrapper": {"valid": 1, "data": {"value0": [], "value1": []}}}
+    fake_regions_type = {JSON_KEY.PTR_WRAPPER: {JSON_KEY.VALID: 1,
+                                                JSON_KEY.DATA: {JSON_KEY.VALUE0: [],
+                                                                JSON_KEY.VALUE1: []
+                                                                }
+                                                }
+                         }
     fake_regions_type.update(polymorphic_registry.get_ids_dict('SIFT_Regions'))
     image_describer = {
-        'regions_type': fake_regions_type
+        JSON_KEY.REGIONS_TYPE: fake_regions_type
     }
-    image_describer_file_path = path.join(openmvg_regions_dir_path, 'image_describer.json')
+    image_describer_file_path = path.join(openmvg_regions_dir_path, OPENMVG_DEFAULT_REGIONS_FILE_NAME)
     with open(image_describer_file_path, 'w') as fid:
         json.dump(image_describer, fid, indent=4)
 
