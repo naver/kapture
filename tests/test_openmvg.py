@@ -11,6 +11,7 @@ import sys
 import os
 import os.path as path
 import tempfile
+from typing import Dict
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
