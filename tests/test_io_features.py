@@ -43,6 +43,9 @@ class TestKeypoints(unittest.TestCase):
         self.assertEqual(image_keypoints.dtype, image_keypoints_read.dtype)
         self.assertAlmostEqual(image_keypoints.tolist(), image_keypoints_read.tolist())
 
+    def test_feature_type_none(self):
+        self.assertRaises(AssertionError, binary.get_features_fullpath, kapture.Keypoints, None, '')
+
 
 class TestMatches(unittest.TestCase):
     def setUp(self):
