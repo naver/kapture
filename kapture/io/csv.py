@@ -1262,7 +1262,7 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
                                     Containing directory is created if needed.
     :param observations: input observations to be written.
     """
-    assert path.basename(observations_filepath) == 'observations.txt'
+    assert path.basename(observations_filepath) == path.basename(CSV_FILENAMES[kapture.Observations])
     assert isinstance(observations, kapture.Observations)
     saving_start = datetime.datetime.now()
     header = '# point3d_id, keypoints_type, [image_path, feature_id]*'
@@ -1291,7 +1291,7 @@ def observations_from_file(observations_filepath: str, loaded_keypoints: Optiona
                                         You can get from set(kapture.keypoints)
     :return: observations
     """
-    assert path.basename(observations_filepath) == 'observations.txt'
+    assert path.basename(observations_filepath) == path.basename(CSV_FILENAMES[kapture.Observations])
     assert loaded_keypoints is None \
         or (isinstance(loaded_keypoints, dict) and len(loaded_keypoints) > 0)
     assert loaded_keypoints is None or all([isinstance(keypoints, set) for keypoints in loaded_keypoints.values()])
@@ -1317,7 +1317,7 @@ def observations_from_file(observations_filepath: str, loaded_keypoints: Optiona
                     observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
                 nb_observations += int(len(pairs)/2)
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'{len(table):12,d} lines with {nb_observations:12,d} {kapture.Observations}'
+    logger.debug(f'{len(table):12,d} lines with {nb_observations} {kapture.Observations}'
                  f' in {loading_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
     return observations
 
