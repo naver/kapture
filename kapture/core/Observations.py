@@ -61,6 +61,16 @@ class Observations(Dict[int, Dict[str, List[Tuple[str, int]]]]):
             for keypoints_type in per_feature_observations.keys()
         ]
 
+    def observations_number(self) -> int:
+        """
+        Get the number of observations
+        """
+        nb = 0
+        for per_feature_observations in self.values():
+            for observations_list in per_feature_observations.values():
+                nb += len(observations_list)
+        return nb
+
     def __contains__(self, key: Union[int, Tuple[int, str]]):
         if isinstance(key, tuple):
             # key is a pair of (point3d_idx, keypoints_type)
