@@ -230,7 +230,8 @@ def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
             print_key_value(f'nb types {feature_name}', nb_feature_types, file=output_stream, show_none=show_all)
             if feature_collection is not None:
                 for feature_type, features in feature_collection.items():
-                    print_key_value(f' └─ nb images {feature_type} ', len(features), file=output_stream, show_none=show_all)
+                    print_key_value(f' └─ nb images {feature_type} ', len(features), file=output_stream,
+                                    show_none=show_all)
         elif feature_collection is not None or show_all:
             print_title(feature_name, file=output_stream)
             if feature_collection is not None:
