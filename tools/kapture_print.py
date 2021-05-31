@@ -280,7 +280,9 @@ def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
         print_title('points 3-D', file=output_stream)
         print_key_value(' └─ nb points 3-D', nb_points3d, file=output_stream, show_none=show_all)
     # observations
-    nb_observations_3d = len(kapture_data.observations) if kapture_data.observations is not None else None
+    nb_observations_3d = kapture_data.observations.observations_number()\
+        if kapture_data.observations is not None\
+        else None
     nb_observations_2d = len([feat
                               for observations in kapture_data.observations.values()
                               for feats in observations.values()
