@@ -5,12 +5,8 @@
 Convert kapture data in version 1.0 to version 1.1 inplace
 """
 
-import logging
-import os
-import os.path as path
 import argparse
-from typing import Optional
-import shutil
+import logging
 # import numpy as np like in kapture.io.csv
 # so that types written as "np.float32" are understood by read_old_image_features_csv
 import numpy as np  # noqa: F401

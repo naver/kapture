@@ -6,7 +6,7 @@ Distances computation and comparison of kapture objects
 
 import math
 import numpy as np
-from typing import Dict, List, Optional, Set, Tuple, Any, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 import inspect
 
 import kapture

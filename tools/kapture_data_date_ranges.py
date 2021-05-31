@@ -10,9 +10,7 @@ import logging
 import os
 import os.path as path
 import re
-from typing import Optional, Tuple
 from datetime import datetime
-import time
 
 import path_to_kapture  # noqa: F401
 import kapture
