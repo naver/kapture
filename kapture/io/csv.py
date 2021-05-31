@@ -1274,10 +1274,10 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     )
     os.makedirs(path.dirname(observations_filepath), exist_ok=True)
     with open(observations_filepath, 'w') as file:
-        nb_records = table_to_file(file, table, header=header)
+        nb_lines = table_to_file(file, table, header=header)
         saving_elapsed = datetime.datetime.now() - saving_start
-        logger.debug(f'wrote {nb_records:12,d} {type(observations)} in {saving_elapsed.total_seconds():.3f} seconds'
-                     .replace(',', ' '))
+        logger.debug(f'wrote {nb_lines:12,d} lines {observations.observations_number()} {type(observations)}'
+                     f' in {saving_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
 
 
 def observations_from_file(observations_filepath: str, loaded_keypoints: Optional[Dict[str, Set[str]]] = None)\
@@ -1300,7 +1300,7 @@ def observations_from_file(observations_filepath: str, loaded_keypoints: Optiona
     loading_start = datetime.datetime.now()
     with open(observations_filepath) as file:
         table = table_from_file(file)
-        nb_records = 0
+        nb_observations = 0
         # point3d_id, keypoints_type, [image_path, feature_id]*
         for points3d_id_str, keypoints_type, *pairs in table:
             if loaded_keypoints is not None and \
@@ -1315,10 +1315,10 @@ def observations_from_file(observations_filepath: str, loaded_keypoints: Optiona
                         # image_path does not exist in kapture (perhaps it was removed), ignore it
                         continue
                     observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
-                    nb_records += 1
+                nb_observations += int(len(pairs)/2)
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'{nb_records:12,d} {kapture.Observations} in {loading_elapsed.total_seconds():.3f} seconds'
-                 .replace(',', ' '))
+    logger.debug(f'{len(table):12,d} lines {nb_observations:12,d} {kapture.Observations}'
+                 f' in {loading_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
     return observations
 
 
