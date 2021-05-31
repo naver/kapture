@@ -1276,7 +1276,7 @@ def observations_to_file(observations_filepath: str, observations: kapture.Obser
     with open(observations_filepath, 'w') as file:
         nb_lines = table_to_file(file, table, header=header)
         saving_elapsed = datetime.datetime.now() - saving_start
-        logger.debug(f'wrote {nb_lines:12,d} lines {observations.observations_number()} {type(observations)}'
+        logger.debug(f'wrote {nb_lines:12,d} lines with {observations.observations_number()} {type(observations)}'
                      f' in {saving_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
 
 
@@ -1317,7 +1317,7 @@ def observations_from_file(observations_filepath: str, loaded_keypoints: Optiona
                     observations.add(points3d_id, keypoints_type, image_path, int(keypoint_id))
                 nb_observations += int(len(pairs)/2)
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'{len(table):12,d} lines {nb_observations:12,d} {kapture.Observations}'
+    logger.debug(f'{len(table):12,d} lines with {nb_observations:12,d} {kapture.Observations}'
                  f' in {loading_elapsed.total_seconds():.3f} seconds'.replace(',', ' '))
     return observations
 
