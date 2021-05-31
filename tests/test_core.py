@@ -820,6 +820,8 @@ class TestObservations(unittest.TestCase):
             1: {'R2D2': [('c/c.jpg', 1), ('c/c.jpg', 2)],
                 'D2NET': [('c/c.jpg', 0), ('c/c.jpg', 1)]}
         })
+        self.assertEqual(2, len(observations))
+        self.assertEqual(7, observations.observations_number())
         self.assertTrue(0 in observations)
         self.assertTrue((0, 'R2D2') in observations)
         self.assertEqual(len(observations[0, 'R2D2']), 2)
@@ -833,9 +835,13 @@ class TestObservations(unittest.TestCase):
         self.assertEqual(len(observations[1, 'D2NET']), 2)
 
         observations.add(0, 'R2D2', 'c/c.jpg', 3)
+        self.assertEqual(2, len(observations))
+        self.assertEqual(8, observations.observations_number())
         self.assertEqual(len(observations[0, 'R2D2']), 3)
 
         observations.add(2, 'R2D2', 'a/a.jpg', 3)
+        self.assertEqual(3, len(observations))
+        self.assertEqual(9, observations.observations_number())
         self.assertTrue(2 in observations)
         self.assertTrue((2, 'R2D2') in observations)
         self.assertTrue((2, 'D2NET') not in observations)
