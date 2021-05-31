@@ -471,11 +471,10 @@ def _import_openmvg_matches(
     if kapture_data.records_camera is None:
         logger.warning('no images in records_camera, cannot import matches')
         return
-    if kapture_data.keypoints is None:
+    keypoints_type = try_get_only_key_from_collection(kapture_data.keypoints)
+    if keypoints_type is None:
         logger.warning('no keypoints, cannot import matches')
         return
-    assert len(kapture_data.keypoints) == 1
-    keypoints_type = next(iter(kapture_data.keypoints.keys()))
 
     # idx image1 idx image 2
     # nb pairs
