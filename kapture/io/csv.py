@@ -1472,6 +1472,7 @@ def kapture_from_dir(
     sensors_file_path = csv_file_paths[kapture.Sensors]
     if sensors_file_path:
         logger.debug(f'loading sensors {sensors_file_path} ...')
+        assert path.isfile(sensors_file_path)
         kapture_data.__version__ = get_version_from_csv_file(sensors_file_path)
         assert kapture_data.__version__ == current_format_version()
         kapture_data.sensors = sensors_from_file(sensors_file_path)
