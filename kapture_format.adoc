@@ -789,13 +789,20 @@ with:
 
 It may also optionally contains some comments (lines starting with `#`) or blank lines.
 
-==== example
+==== examples
 
 .reconstruction/keypoints/r2d2_WASF-N8_20k/keypoints.txt
 [source,txt]
 ----
 # name, dtype, dsize
-SIFT, float32, 6
+r2d2, float32, 3
+----
+
+.reconstruction/keypoints/SIFT/keypoints.txt
+[source,txt]
+----
+# name, dtype, dsize
+SIFT, float32, 4
 ----
 
 === `│ │ │ ├─ *.kpt`
@@ -814,7 +821,17 @@ The meaning of those values depends on the key-point type (e.g. scale and orient
 
 ==== example
 
+
 .reconstruction/keypoints/r2d2_WASF-N8_20k/map/cam_01/image000.jpg.kpt (in binary format)
+[source,txt]
+----
+#  x,   y, scale
+[100, 100, 0,
+ ...
+ 640, 480, 1]
+----
+
+.reconstruction/keypoints/SIFT/map/cam_01/image000.jpg.kpt (in binary format)
 [source,txt]
 ----
 #  x,   y, scale, orient.
@@ -890,7 +907,14 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 [source,txt]
 ----
 # name, dtype, dsize, keypoints_type, metric_type
-SIFT, uint8, 128, r2d2_WASF-N8_20k, L2
+r2d2, float32, 128, r2d2_WASF-N8_20k, L2
+----
+
+`reconstruction/descriptors/SIFT/descriptors.txt`:
+[source,txt]
+----
+# name, dtype, dsize, keypoints_type, metric_type
+SIFT, uint8, 128, SIFT, L2
 ----
 
 === `│ │ │ ├─ *.desc`
