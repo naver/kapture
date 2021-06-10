@@ -501,12 +501,12 @@ def _export_openmvg_sfm_data(
     # Compute openMVG identifiers
     kapture_images_data: List[Tuple[int, str, str]] = []  # List of (timestamp, kapture_cam_id, image_name)
     sub_root_path: str = ''
-    image_dirs: Set[str] = set()  # all images directories
+    image_dirs: List[str] = []  # all images directories
     kapture_to_openmvg_cam_ids: Dict[str:int] = {}  # kapture_cam_id -> openmvg_cam_id
     for timestamp, image_data in kapture_data.records_camera.items():
         for kapture_cam_id, kapture_image_name in image_data.items():
             kapture_images_data.append((timestamp, kapture_cam_id, kapture_image_name))
-            image_dirs.add(path.dirname(kapture_image_name))
+            image_dirs.append(path.dirname(kapture_image_name))
             _compute_openmvg_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
             _compute_openmvg_id(kapture_image_name, kapture_to_openmvg_view_ids)
     if len(image_dirs) > 1:
