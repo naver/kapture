@@ -339,7 +339,9 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         self.assertTrue(path.isfile(trajectories_file_path), "Trajectories file written")
         keypoints_file_path = kcsv.get_feature_csv_fullpath(kapture.Keypoints, self.KEYPOINTS_TYPE, self._kapture_path)
         self.assertTrue(path.isfile(keypoints_file_path), "keypoints file written")
-        descriptors_file_path = kcsv.get_feature_csv_fullpath(kapture.Descriptors, "SIFT_Image_describer", self._kapture_path)
+        descriptors_file_path = kcsv.get_feature_csv_fullpath(kapture.Descriptors,
+                                                              "SIFT_Image_describer",
+                                                              self._kapture_path)
         self.assertTrue(path.isfile(descriptors_file_path), "descriptors file written")
         points3d_file_path = kcsv.get_csv_fullpath(kapture.Points3d, self._kapture_path)
         self.assertTrue(path.isfile(points3d_file_path), "3D points file written")

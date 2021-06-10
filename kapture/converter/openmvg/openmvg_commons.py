@@ -17,6 +17,7 @@ OPENMVG_DESC_HEADER_DTYPE = np.uint64
 OPENMVG_DESC_HEADER_SIZE = 64  # int64 storing the number of descriptors
 OPENMVG_DESC_HEADER_BYTES_NUMBER = int(OPENMVG_DESC_HEADER_SIZE / 8)  # size of a byte
 
+
 # XML names
 class JSON_KEY:
     SFM_DATA_VERSION = "sfm_data_version"
