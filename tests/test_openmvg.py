@@ -7,9 +7,10 @@ OpenMVG import and export to kapture unit tests.
 
 import json
 import logging
-import sys
+import numpy
 import os
 import os.path as path
+import sys
 import tempfile
 from typing import Dict
 import unittest
@@ -18,7 +19,9 @@ import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_poses
 import kapture.io.csv as kcsv
+from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
 from kapture.io.records import TransferAction, get_image_fullpath
+
 from kapture.converter.openmvg.import_openmvg import import_openmvg, import_openmvg_sfm_data_json  # noqa: E402
 from kapture.converter.openmvg.export_openmvg import export_openmvg  # noqa: E402
 from kapture.converter.openmvg.openmvg_commons import OPENMVG_SFM_DATA_VERSION_NUMBER, JSON_KEY
@@ -224,9 +227,12 @@ class TestOpenMvg(unittest.TestCase):
 
 class TestOpenMvgReconstruction(unittest.TestCase):
 
+    FIRST_IMAGE_NAME = "ChateauMaupertuisTest/MaupertuisTest_01.jpg"
     FIRST_TRAJECTORY_TRANSLATION = [-0.02839049268018459, 0.00255775313260552, 0.02473073308745868]
     FIRST_TRAJECTORY_ROTATION = [0.9999935675163499, 0.0004312835445997, 0.0033445836819604, -0.0012217530116397]
-    KEYPOINTS_TYPE = "SIFT_Regions"
+    FEATURE_TYPE = "SIFT"
+    DESCRIPTOR_TYPE = FEATURE_TYPE+"_Image_describer"
+    KEYPOINTS_TYPE = FEATURE_TYPE+"_Regions"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -250,7 +256,7 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         self._kapture_path = path.join(self._tempdir.name, 'from_openmvg')
         os.makedirs(self._kapture_path, exist_ok=True)
 
-    def _verify_data(self, kapture_data) -> None:
+    def _verify_data(self, kapture_data, kapture_path: str) -> None:
         # Cameras
         cameras = kapture_data.cameras
         self.assertIsNotNone(cameras, "Cameras exist")
@@ -265,7 +271,7 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         self.assertEqual(4, len(records_camera), "Number of images")
         first_record = records_camera[0]
         img_path = next(iter(first_record.values()))
-        self.assertEqual("ChateauMaupertuisTest/MaupertuisTest_01.jpg", img_path, "Image path")
+        self.assertEqual(self.FIRST_IMAGE_NAME, img_path, "Image path")
         # Poses
         trajectories = kapture_data.trajectories
         self.assertEqual(4, len(trajectories), "Trajectories points")
@@ -273,7 +279,20 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         ref_pose = kapture.PoseTransform(t=self.FIRST_TRAJECTORY_TRANSLATION, r=self.FIRST_TRAJECTORY_ROTATION)
         self.assertTrue(equal_poses(ref_pose, k_pose6d), "First trajectory pose")
         # Keypoints
-        self.assertEqual(4, len(kapture_data.keypoints[self.KEYPOINTS_TYPE]), "Keypoints")
+        kapture_keypoints = kapture_data.keypoints[self.KEYPOINTS_TYPE]
+        self.assertEqual(4, len(kapture_keypoints), "Keypoints")
+        self.assertEqual(self.FEATURE_TYPE, kapture_keypoints.type_name, "Keypoints feature type")
+        self.assertIs(float, kapture_keypoints.dtype, "Keypoints dtype")
+        self.assertEqual(4, kapture_keypoints.dsize, "Keypoints dsize")
+        keypoints_file_path = get_keypoints_fullpath(self.KEYPOINTS_TYPE,
+                                                     kapture_path,
+                                                     self.FIRST_IMAGE_NAME,
+                                                     None)
+        first_keypoints_data = image_keypoints_from_file(keypoints_file_path,
+                                                         kapture_keypoints.dtype,
+                                                         kapture_keypoints.dsize)
+        self.assertEqual((1850, 4), first_keypoints_data.shape, "Keypoints shape")
+        self.assertEqual(numpy.float64, first_keypoints_data.dtype, "Keypoints dtype")
         # Observations
         self.assertEqual(365, len(kapture_data.observations), "Observations")
         # 3D Points
@@ -311,7 +330,7 @@ class TestOpenMvgReconstruction(unittest.TestCase):
 
         # Reload data and verify
         kapture_data = kcsv.kapture_from_dir(self._kapture_path)
-        self._verify_data(kapture_data)
+        self._verify_data(kapture_data, self._kapture_path)
 
     def tearDown(self) -> None:
         """
