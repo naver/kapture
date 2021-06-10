@@ -1645,10 +1645,7 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     """
 
     # features
-    image_filenames = set(image_name
-                          for _, _, image_name in
-                          kapture.flatten(kapture_data.records_camera)) \
-        if kapture_data.records_camera is not None else set()
+    image_filenames = set(kapture_data.records_camera.data_list()) if kapture_data.records_camera else set()
     # keypoints
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
