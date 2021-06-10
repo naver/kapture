@@ -4,6 +4,8 @@
 Openmvg constants values useful for conversion from and to.
 """
 
+import numpy as np
+
 from kapture.utils.Collections import AutoEnum
 from enum import auto
 
@@ -11,6 +13,9 @@ OPENMVG_DEFAULT_JSON_FILE_NAME = 'sfm_data.json'
 OPENMVG_DEFAULT_REGIONS_FILE_NAME = 'image_describer.json'
 OPENMVG_SFM_DATA_VERSION_NUMBER = "0.3"
 
+OPENMVG_DESC_HEADER_DTYPE = np.uint64
+OPENMVG_DESC_HEADER_SIZE = 64  # int64 storing the number of descriptors
+OPENMVG_DESC_HEADER_BYTES_NUMBER = int(OPENMVG_DESC_HEADER_SIZE / 8)  # size of a byte
 
 # XML names
 class JSON_KEY:
