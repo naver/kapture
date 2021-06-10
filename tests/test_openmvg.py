@@ -19,6 +19,7 @@ import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_poses
 import kapture.io.csv as kcsv
+from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
 from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
 from kapture.io.records import TransferAction, get_image_fullpath
 
@@ -256,7 +257,7 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         self._kapture_path = path.join(self._tempdir.name, 'from_openmvg')
         os.makedirs(self._kapture_path, exist_ok=True)
 
-    def _verify_data(self, kapture_data, kapture_path: str) -> None:
+    def _verify_data(self, kapture_data: kapture.Kapture, kapture_path: str) -> None:
         # Cameras
         cameras = kapture_data.cameras
         self.assertIsNotNone(cameras, "Cameras exist")
@@ -278,6 +279,22 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         k_pose6d = next(iter(trajectories[0].values()))  # Kapture.PoseTransform
         ref_pose = kapture.PoseTransform(t=self.FIRST_TRAJECTORY_TRANSLATION, r=self.FIRST_TRAJECTORY_ROTATION)
         self.assertTrue(equal_poses(ref_pose, k_pose6d), "First trajectory pose")
+        # Descriptors
+        kapture_descriptors = kapture_data.descriptors[self.DESCRIPTOR_TYPE]
+        self.assertEqual(4, len(kapture_descriptors), "Descriptors")
+        self.assertEqual(self.FEATURE_TYPE, kapture_descriptors.type_name, "Descriptors feature type")
+        self.assertEqual(self.KEYPOINTS_TYPE, kapture_descriptors.keypoints_type, "Descriptors keypoints type")
+        self.assertIs(numpy.uint8, kapture_descriptors.dtype, "Descriptors dtype")
+        self.assertEqual(128, kapture_descriptors.dsize, "Descriptors dsize")
+        descriptors_file_path = get_descriptors_fullpath(self.DESCRIPTOR_TYPE,
+                                                         self._kapture_path,
+                                                         self.FIRST_IMAGE_NAME)
+        first_descriptors_data = image_descriptors_from_file(descriptors_file_path,
+                                                             kapture_descriptors.dtype,
+                                                             kapture_descriptors.dsize)
+        self.assertEqual((1850, 128), first_descriptors_data.shape, "Descriptors shape")
+        self.assertEqual(numpy.uint8, first_descriptors_data.dtype, "Descriptors dtype")
+
         # Keypoints
         kapture_keypoints = kapture_data.keypoints[self.KEYPOINTS_TYPE]
         self.assertEqual(4, len(kapture_keypoints), "Keypoints")
@@ -293,6 +310,7 @@ class TestOpenMvgReconstruction(unittest.TestCase):
                                                          kapture_keypoints.dsize)
         self.assertEqual((1850, 4), first_keypoints_data.shape, "Keypoints shape")
         self.assertEqual(numpy.float64, first_keypoints_data.dtype, "Keypoints dtype")
+
         # Observations
         self.assertEqual(365, len(kapture_data.observations), "Observations")
         # 3D Points
