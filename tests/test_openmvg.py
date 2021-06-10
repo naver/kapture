@@ -26,17 +26,17 @@ from kapture.converter.openmvg.openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')
 
-# Constants related to the dataset to import
-FIRST_TRAJECTORY_TRANSLATION = [-2.1192500000000005, -0.4327849999999997, -4.07387]
-FIRST_TRAJECTORY_ROTATION = [0.9926160706165561, -0.08600940611886934, 0.0843934060039041, 0.01390940098954065]
-
-# Constants related to the dataset exported (M1X)
-FIRST_BASLER_SENSOR_ID = "22970285"
-FIRST_BASLER_OPENMVG_ID = 2147483649
-LIDAR1 = "lidar1"
-
 
 class TestOpenMvg(unittest.TestCase):
+
+    # Constants related to the dataset to import
+    FIRST_TRAJECTORY_TRANSLATION = [-2.1192500000000005, -0.4327849999999997, -4.07387]
+    FIRST_TRAJECTORY_ROTATION = [0.9926160706165561, -0.08600940611886934, 0.0843934060039041, 0.01390940098954065]
+
+    # Constants related to the dataset exported (M1X)
+    FIRST_BASLER_SENSOR_ID = "22970285"
+    FIRST_BASLER_OPENMVG_ID = 2147483649
+    LIDAR1 = "lidar1"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -74,7 +74,7 @@ class TestOpenMvg(unittest.TestCase):
         trajectories = kapture_data.trajectories
         self.assertEqual(5, len(trajectories), "Trajectories points")
         k_pose6d = next(iter(trajectories[0].values()))  # Kapture.PoseTransform
-        ref_pose = kapture.PoseTransform(t=FIRST_TRAJECTORY_TRANSLATION, r=FIRST_TRAJECTORY_ROTATION)
+        ref_pose = kapture.PoseTransform(t=self.FIRST_TRAJECTORY_TRANSLATION, r=self.FIRST_TRAJECTORY_ROTATION)
         self.assertTrue(equal_poses(ref_pose, k_pose6d), "First trajectory pose")
         self.assertIsNone(kapture_data.keypoints, "No keypoints")
         self.assertIsNone(kapture_data.observations, "No observations")
@@ -154,9 +154,9 @@ class TestOpenMvg(unittest.TestCase):
             for intrinsic in intrinsics:
                 camera_id = intrinsic.get(JSON_KEY.VALUE, {}).get(JSON_KEY.PTR_WRAPPER, {}).get(JSON_KEY.ID)
                 camera_ids.add(camera_id)
-                if camera_id == FIRST_BASLER_OPENMVG_ID:
+                if camera_id == self.FIRST_BASLER_OPENMVG_ID:
                     basler = intrinsic.get(JSON_KEY.VALUE)
-                elif camera_id == LIDAR1:
+                elif camera_id == self.LIDAR1:
                     lidar = intrinsic.get(JSON_KEY.VALUE)
             self.assertEqual(9, len(camera_ids), "All camera identifiers are different")
             self.assertIsNotNone(basler, "First basler camera")
@@ -183,7 +183,7 @@ class TestOpenMvg(unittest.TestCase):
                     break
             self.assertIsNotNone(image_record, "4th image record")
             local_path = image_record.get(JSON_KEY.LOCAL_PATH)
-            self.assertEqual(FIRST_BASLER_SENSOR_ID, local_path, "Local path is the camera id")
+            self.assertEqual(self.FIRST_BASLER_SENSOR_ID, local_path, "Local path is the camera id")
             self.assertEqual(camera_params.get(JSON_KEY.WIDTH), image_record.get(JSON_KEY.WIDTH),
                              "Image has camera width")
             self.assertEqual(camera_params.get(JSON_KEY.HEIGHT), image_record.get(JSON_KEY.HEIGHT),
