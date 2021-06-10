@@ -25,6 +25,7 @@ from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.utils.paths import path_secure
 # local
 from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_DEFAULT_REGIONS_FILE_NAME
+from .openmvg_commons import OPENMVG_DESC_HEADER_DTYPE, OPENMVG_DESC_HEADER_BYTES_NUMBER
 from .openmvg_commons import CameraModel
 
 EMPTY_POINT3D = [0.0]*kapture.Points3d.XYZRGB
@@ -183,7 +184,7 @@ def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str,
                     camera_data[JSON_KEY.DISTO_K3][0],
                     camera_data[JSON_KEY.DISTO_K3][1]
                 ])
-                # camera_data["disto_k3"][2] ignored: radial model has two distortion param, while openMVG's has three
+                # camera_data["disto_k3"][2] ignored: radial model has two distortion param, while openMVG has three
             elif camera_model == CameraModel.pinhole_brown_t2:
                 # w, h, f, cx, cy, k1, k2, k3, t1, t2
                 if float(camera_data[JSON_KEY.DISTO_T2][2]) != 0:
@@ -415,7 +416,7 @@ def _import_openmvg_regions(openmvg_regions_directory_path: str,
     # retrieve what type of descriptors it is.
     descriptors_type = image_describer.get('image_describer', {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
     descriptors_props = {
-        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.int32, dsize=128,
+        'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.uint8, dsize=128,
                                      keypoints_type=keypoints_type,
                                      metric_type='L2'),
         'AKAZE_Image_describer_SURF': dict(type_name='AKAZE', dtype=np.int32, dsize=128,
@@ -451,10 +452,13 @@ def _import_openmvg_regions(openmvg_regions_directory_path: str,
             # assumes descriptors shape from keypoints_data shape
             descriptors_data_bytes = np.fromfile(openmvg_descriptors_filepath, dtype=np.uint8)
             nb_features = keypoints_data.shape[0] if keypoints_data is not None else 0
-            descriptors_shape = descriptors_data_bytes[0:8].view(descriptors_props['dtype'])
+            # Read the number of descriptors from the openMVG descriptor file
+            descriptors_shape = descriptors_data_bytes[0:OPENMVG_DESC_HEADER_BYTES_NUMBER]\
+                .view(OPENMVG_DESC_HEADER_DTYPE)
             assert descriptors_shape[0] == nb_features
-            descriptors_data = descriptors_data_bytes[8:].view(np.uint8).reshape((nb_features, 128))
-            # descriptors_data.reshape((keypoints_data.shape[0], -1))
+            descriptors_data = descriptors_data_bytes[OPENMVG_DESC_HEADER_BYTES_NUMBER:]\
+                .view(descriptors_props['dtype'])\
+                .reshape(nb_features, descriptors_props['dsize'])
             kapture_descriptors.add(image_name)
             # and convert file
             kapture_descriptors_filepath = get_descriptors_fullpath(descriptors_type, kapture_path, image_name)
