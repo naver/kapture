@@ -28,8 +28,9 @@ from kapture.io.tar import TarCollection
 from kapture.utils.Collections import try_get_only_key_from_collection
 from kapture.utils.paths import safe_remove_file
 # local
-from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER
-from .openmvg_commons import CameraModel, OPENMVG_DEFAULT_REGIONS_FILE_NAME
+from .openmvg_commons import JSON_KEY, OPENMVG_SFM_DATA_VERSION_NUMBER, OPENMVG_DEFAULT_REGIONS_FILE_NAME
+from .openmvg_commons import OPENMVG_DESC_HEADER_DTYPE, OPENMVG_DESC_HEADER_BYTES_NUMBER
+from .openmvg_commons import CameraModel
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
@@ -687,9 +688,10 @@ def _export_openmvg_regions(
                                                                kapture_descriptors.dtype,
                                                                kapture_descriptors.dsize)
         # assign a byte array of [size_t[1] + uint8[nb features x 128]
-        size_t_len = 64 // 8
+        size_t_len = OPENMVG_DESC_HEADER_BYTES_NUMBER
         openmvg_descriptors_data = np.empty(dtype=np.uint8, shape=(kapture_descriptors_data.size + size_t_len,))
-        openmvg_descriptors_data[0:size_t_len].view(dtype=np.uint64)[0] = kapture_descriptors_data.shape[0]
+        openmvg_descriptors_data[0:size_t_len] \
+            .view(dtype=OPENMVG_DESC_HEADER_DTYPE)[0] = kapture_descriptors_data.shape[0]
         openmvg_descriptors_data[size_t_len:] = kapture_descriptors_data.flatten()
         array_to_file(openmvg_descriptors_file_path, openmvg_descriptors_data)
 
