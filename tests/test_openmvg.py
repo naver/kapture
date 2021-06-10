@@ -119,8 +119,8 @@ class TestOpenMvg(unittest.TestCase):
         self._verify_data(kapture_data)
         if not self.isWindows:
             # Test images path
-            all_records_camera = list(kapture.flatten(kapture_data.records_camera))
-            for _, _, name in all_records_camera:
+            records_camera_files = kapture_data.records_camera.data_list()
+            for name in records_camera_files:
                 img_path = get_image_fullpath(self._kapture_path, name)
                 self.assertTrue(path.islink(img_path), f"image link {img_path}")
 
@@ -214,6 +214,104 @@ class TestOpenMvg(unittest.TestCase):
             pose_rotation = pose.get(JSON_KEY.ROTATION)
             self.assertEqual(view_center, pose_center, "Center are equal")
             self.assertEqual(view_rotation, pose_rotation, "Rotations are equal")
+
+    def tearDown(self) -> None:
+        """
+        Clean up after every test
+        """
+        self._tempdir.cleanup()
+
+
+class TestOpenMvgReconstruction(unittest.TestCase):
+
+    FIRST_TRAJECTORY_TRANSLATION = [-0.02839049268018459, 0.00255775313260552, 0.02473073308745868]
+    FIRST_TRAJECTORY_ROTATION = [0.9999935675163499, 0.0004312835445997, 0.0033445836819604, -0.0012217530116397]
+    KEYPOINTS_TYPE = "SIFT_Regions"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup variables for all the tests
+        """
+        logger.setLevel(logging.CRITICAL)
+        cls.isWindows = sys.platform.startswith("win") or sys.platform.startswith("cygwin")
+        test_file_path = path.dirname(__file__)
+        cls._openmvg_sample_path = path.abspath(path.join(test_file_path,
+                                                          '../samples/maupertuis_openMVG/ChateauMaupertuisTest'))
+        cls._kapture_sample_path = path.join(test_file_path,
+                                             '../samples/maupertuis_openMVG/kapture_ChateauMaupertuisTest')
+        cls._kapture_sample_path = path.abspath(cls._kapture_sample_path)
+
+    def setUp(self) -> None:
+        """
+        Setup before every test
+        """
+        self._tempdir = tempfile.TemporaryDirectory()
+        self._kapture_path = path.join(self._tempdir.name, 'from_openmvg')
+        os.makedirs(self._kapture_path, exist_ok=True)
+
+    def _verify_data(self, kapture_data) -> None:
+        # Cameras
+        cameras = kapture_data.cameras
+        self.assertIsNotNone(cameras, "Cameras exist")
+        self.assertEqual(1, len(cameras), "One camera")
+        camera = next(iter(cameras.values()))  # just take the first camera defined
+        self.assertEqual(camera.camera_type, kapture.CameraType.RADIAL, "Type Radial")
+        camera_params = camera.camera_params
+        self.assertEqual(1600, camera_params[0], "width")
+        self.assertEqual(1200, camera_params[1], "height")
+        # Images
+        records_camera = kapture_data.records_camera
+        self.assertEqual(4, len(records_camera), "Number of images")
+        first_record = records_camera[0]
+        img_path = next(iter(first_record.values()))
+        self.assertEqual("ChateauMaupertuisTest/MaupertuisTest_01.jpg", img_path, "Image path")
+        # Poses
+        trajectories = kapture_data.trajectories
+        self.assertEqual(4, len(trajectories), "Trajectories points")
+        k_pose6d = next(iter(trajectories[0].values()))  # Kapture.PoseTransform
+        ref_pose = kapture.PoseTransform(t=self.FIRST_TRAJECTORY_TRANSLATION, r=self.FIRST_TRAJECTORY_ROTATION)
+        self.assertTrue(equal_poses(ref_pose, k_pose6d), "First trajectory pose")
+        # Keypoints
+        self.assertEqual(4, len(kapture_data.keypoints[self.KEYPOINTS_TYPE]), "Keypoints")
+        # Observations
+        self.assertEqual(365, len(kapture_data.observations), "Observations")
+        # 3D Points
+        self.assertEqual(372, len(kapture_data.points3d), "3D points")
+
+    def test_import_openmvg_reconstruction(self) -> None:
+        """
+        Test the import_openmvg function on a reconstruction JSON file with keypoints, 3D points and observations
+        """
+        self.assertTrue(path.isdir(self._openmvg_sample_path))
+        self.assertTrue(path.exists(self._kapture_path), "Kapture directory exists")
+        sfm_file = path.join(self._openmvg_sample_path, 'reconstruction_global', 'sfm_data.json')
+        openmvg_matches_dir = path.join(self._openmvg_sample_path, 'matches')
+        openmvg_matches_file = path.join(openmvg_matches_dir, 'matches.f.txt')
+        import_openmvg(sfm_file, openmvg_matches_dir, openmvg_matches_file, self._kapture_path, TransferAction.skip)
+        #  test presence or absence of kapture files
+        cameras_file_path = kcsv.get_csv_fullpath(kapture.Sensors, self._kapture_path)
+        self.assertTrue(path.isfile(cameras_file_path), "Camera file written")
+        rigs_file_path = kcsv.get_csv_fullpath(kapture.Rigs, self._kapture_path)
+        self.assertFalse(path.isfile(rigs_file_path), "Rigs file should be missing")
+        records_file_path = kcsv.get_csv_fullpath(kapture.RecordsCamera, self._kapture_path)
+        self.assertTrue(path.isfile(records_file_path), "Camera Records file written")
+        lidars_file_path = kcsv.get_csv_fullpath(kapture.RecordsLidar, self._kapture_path)
+        self.assertFalse(path.isfile(lidars_file_path), "Lidar Records file should be missing")
+        trajectories_file_path = kcsv.get_csv_fullpath(kapture.Trajectories, self._kapture_path)
+        self.assertTrue(path.isfile(trajectories_file_path), "Trajectories file written")
+        keypoints_file_path = kcsv.get_feature_csv_fullpath(kapture.Keypoints, self.KEYPOINTS_TYPE, self._kapture_path)
+        self.assertTrue(path.isfile(keypoints_file_path), "keypoints file written")
+        descriptors_file_path = kcsv.get_feature_csv_fullpath(kapture.Descriptors, "SIFT_Image_describer", self._kapture_path)
+        self.assertTrue(path.isfile(descriptors_file_path), "descriptors file written")
+        points3d_file_path = kcsv.get_csv_fullpath(kapture.Points3d, self._kapture_path)
+        self.assertTrue(path.isfile(points3d_file_path), "3D points file written")
+        observations_file_path = kcsv.get_csv_fullpath(kapture.Observations, self._kapture_path)
+        self.assertTrue(path.isfile(observations_file_path), "observations file written")
+
+        # Reload data and verify
+        kapture_data = kcsv.kapture_from_dir(self._kapture_path)
+        self._verify_data(kapture_data)
 
     def tearDown(self) -> None:
         """
