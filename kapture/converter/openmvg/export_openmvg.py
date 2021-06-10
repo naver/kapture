@@ -38,6 +38,9 @@ DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
 
 class CerealPointerRegistry:
+    """
+    A Cereal registry ticketing system.
+    """
     NULL_ID = 1 << 30  # 01000000 00000000 00000000 00000000
 
     def __init__(self, value_key, id_key):
@@ -747,7 +750,7 @@ def export_openmvg(
     :param openmvg_regions_dir_path: optional input path to openMVG regions (feat, desc) directory to be created.
     :param openmvg_matches_file_path: optional input path to openMVG matches file to be created.
     :param image_action: an action to apply on the images: relative linking, absolute linking, copy or move. Or top
-     directory linking or skip to do nothing. If not "skip" equires openmvg_image_root_path to be defined.
+     directory linking or skip to do nothing. If not "skip" requires openmvg_image_root_path to be defined.
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
     :param force: if true, will remove existing openMVG data without prompting the user.
     :param keypoints_type: key points type if any
