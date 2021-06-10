@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- SVG graphic -->
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
+width="35px" height="35px" preserveAspectRatio="xMinYMin meet" viewBox="0 0 35 35" version="1.1">
+<rect x="5" y="0" width="2.5" height="2.5" fill="rgb(255,0,0)" tooltip="enable"><title>(1,0 1023)</title></rect><rect x="10" y="0" width="2.5" height="2.5" fill="rgb(94,0,160)" tooltip="enable"><title>(2,0 378)</title></rect><rect x="15" y="0" width="2.5" height="2.5" fill="rgb(41,0,213)" tooltip="enable"><title>(3,0 167)</title></rect><rect x="10" y="5" width="2.5" height="2.5" fill="rgb(151,0,103)" tooltip="enable"><title>(2,1 607)</title></rect><rect x="15" y="5" width="2.5" height="2.5" fill="rgb(67,0,187)" tooltip="enable"><title>(3,1 270)</title></rect><rect x="15" y="10" width="2.5" height="2.5" fill="rgb(219,0,35)" tooltip="enable"><title>(3,2 882)</title></rect><text x="25" y="5" font-size="5" fill="black">0</text>
+<text x="25" y="15" font-size="5" fill="black">4</text>
+<polyline points="25,10,25,10" stroke="black" stroke-width="1" fill="none"/>
+<text x="5" y="25" font-size="5" fill="black">0</text>
+<text x="15" y="25" font-size="5" fill="black">4</text>
+<polyline points="10,25,10,25" stroke="black" stroke-width="1" fill="none"/>
+</svg>

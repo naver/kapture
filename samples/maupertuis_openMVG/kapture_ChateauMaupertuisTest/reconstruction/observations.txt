@@ -1,0 +1,367 @@
+# kapture format: 1.1
+# point3d_id, keypoints_type, [image_path, feature_id]*
+0, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 4, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 5
+1, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 24, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 33, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 32, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 675
+2, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 29, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 39, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 35, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 689
+3, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 32, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 43, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 40, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 57
+4, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 43, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 554, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 49
+5, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 46, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 56, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 55, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 68
+6, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 47, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 57, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 56
+7, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 48, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 58, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 57
+8, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 72, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 102, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 124
+9, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 96, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 609, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 159
+10, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 110, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 159, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 182, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 195
+11, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 154, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 216, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 242
+12, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 157, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 222, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 248
+13, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 184, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 250, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 276
+14, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 200, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 728, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 323
+15, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 212, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 731, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 863, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 921
+16, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 226, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 307, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 357
+17, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 229, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 311, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 363
+18, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 230, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 312, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 364
+19, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 238, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 757, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 377, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 376
+20, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 239, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 758, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 378, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 377
+21, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 242, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 760, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 382, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 382
+22, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 244, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 324, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 380
+23, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 249, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 333, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 391
+24, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 350, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 449, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 497
+25, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 357, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 856, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 509
+26, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 358, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 857, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 510
+27, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 449, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 516, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 6
+28, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 450, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 517, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 7
+29, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 451, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 518, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 609
+30, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 453, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 923, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1409, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1530
+31, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 454, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 924, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1410, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1531
+32, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 456, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 12, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2
+33, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 457, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 11, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1
+34, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 458, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 522, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1057, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1163
+35, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 461, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 525, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1059, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1166
+36, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 470, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 542, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 33
+37, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 478, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 552, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 47
+38, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 480, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 556, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 50, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 63
+39, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 481, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 557, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 58, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 71
+40, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 482, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 559, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 59
+41, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 483, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 560, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 60, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 70
+42, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 484, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 59, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 62
+43, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 486, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 960, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 662, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 705
+44, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 489, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 565, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 67
+45, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 490, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 566, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 69, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 79
+46, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 491, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 567, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 70, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 80
+47, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 497, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 572, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 81, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 97
+48, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 498, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 573, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 680
+49, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 507, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 581, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 90, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 106
+50, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 512, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 94, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 111
+51, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 516, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 94, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 114
+52, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 534, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 613, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 160, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 177
+53, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 536, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 614, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 163
+54, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 537, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 622, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 727, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 180
+55, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 541, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 627, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 175
+56, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 542, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 628, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 176
+57, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 546, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 637, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 180, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 192
+58, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 558, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 754, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 822
+59, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 562, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 658, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 764, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 227
+60, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 567, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 672, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 231, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 240
+61, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 568, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 673, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 232, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 241
+62, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 570, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1053, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1196
+63, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 574, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 681, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 797, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 251
+64, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 575, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 682, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 798, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 252
+65, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 578, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 677, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 239
+66, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 579, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 684, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 802
+67, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 607, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 715, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 287
+68, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 613, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 722, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 304
+69, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 624, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 733, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1284, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 922
+70, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 633, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 741, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 346
+71, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 634, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 742, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 347
+72, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 645, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 756, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 374
+73, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 739, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 851, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 506
+74, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 800, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 926, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1414
+75, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 804, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 928, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 623, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 655
+76, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 805, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 931, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 627, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 658
+77, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 806, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 930, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 626
+78, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 809, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 936, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 628, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 657
+79, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 813, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 944, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1075, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1197
+80, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 814, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 947, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1076, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1198
+81, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 817, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 953, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1081, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 694
+82, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 818, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1287, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1087, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1205
+83, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 819, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1288, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1088, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1206
+84, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 823, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 965, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 676, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 92
+85, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 824, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 969, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 687, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 731
+86, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 834, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 988, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1120, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 755
+87, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 840, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 991, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 710, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 770
+88, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 842, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 994, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 139
+89, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 844, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 996, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 714
+90, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 846, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 998, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1131, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1255
+91, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 849, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1002, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 716, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 166
+92, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 851, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1006, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1134
+93, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 852, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1007, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 719, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 174
+94, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 863, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 744, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 813
+95, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 867, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1356, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1185, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1308
+96, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 875, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1048, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 781
+97, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 876, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1049, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 782
+98, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 887, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1062, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 805
+99, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 896, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1077, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1227
+100, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 900, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1388, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1229, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1366
+103, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 917, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1112, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1267
+104, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 918, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1113, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1268, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 904
+105, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 922, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1110, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1264
+107, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 924, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1115, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 849, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 908
+108, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 928, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1122, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 854, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 327
+109, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 929, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1123, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 855, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 328
+110, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 932, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1121, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 853, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1397
+111, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 936, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1118, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1272
+112, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 943, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1133, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1278, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1403
+113, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 944, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1139, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 864
+114, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 946, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1141, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 868
+115, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 947, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1146, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1285, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1411
+116, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 948, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1144, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1283, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1412
+117, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 949, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1147, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1287, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 925
+118, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 954, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1149, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 876, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 927
+119, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 962, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1156, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 894, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 366
+120, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 964, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1158, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 899
+121, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 965, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1160, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1305
+122, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 968, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1167, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 396
+123, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1041, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1229, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1005
+124, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1051, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1015, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1090
+125, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1076, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1265, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1066
+126, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1081, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1274, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1071, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1189
+127, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1099, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1290, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1089
+128, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1115, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1304, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1094, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1230
+129, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1119, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1312, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1105, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1240
+130, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1120, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1314, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1108
+131, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1137, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1331, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1136, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1265
+132, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1141, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1334, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1147
+133, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1149, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1340, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1157, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1287
+134, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1152, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1166, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1294
+135, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1155, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1352, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1186
+136, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1164, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1368, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 795, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 254
+137, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1173, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1386, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1226, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1358
+138, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1176, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1389, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1233
+139, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1177, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1394, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1238, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 886
+140, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1179, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1083, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 822
+141, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1187, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1405, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1798, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1981
+142, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1188, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1398, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1583
+143, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1195, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1094, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1251, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 897
+144, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1196, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1418, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1270, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 906
+145, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1203, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1422, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1279
+146, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1204, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1423, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1280
+147, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1205, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1425, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1282, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1410
+148, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1210, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1431, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1292, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 355
+149, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1223, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1439, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1302
+150, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1231, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1448, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1312, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 963
+151, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1232, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1451, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1315
+152, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1236, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1456, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1321, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 977
+153, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1258, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1678, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1355
+154, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1299, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1510, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1411, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1534
+155, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1305, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1516, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1421
+156, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1306, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1518, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1706, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1886
+157, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1307, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1519, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1426, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1556
+158, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1311, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1424, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1885
+159, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1323, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1531, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1443
+160, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1325, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1534, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1447, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1580
+161, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1327, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1536, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1451
+162, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1330, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1539, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1454, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1585
+163, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1345, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1554, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1497, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1627
+164, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1351, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1560, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1510
+165, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1360, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1752, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1759, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1659
+166, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1361, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1753, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1760, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1660
+167, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1364, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1587, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1762
+168, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1368, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1593, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1767
+169, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1369, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1594, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1539
+170, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1372, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1597, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1776, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1948
+171, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1375, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1599, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1544, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1685
+172, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1378, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1604, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1549, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1694
+173, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1384, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1613, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1563, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1335
+174, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1402, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1622, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1576, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1974
+175, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1406, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1629, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1585
+176, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1408, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1631, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 856
+177, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1410, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1635, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1597
+178, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1414, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1640, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1811, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1752
+179, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1419, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1652, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1605, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1421
+180, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1422, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1656, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1608, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1431
+181, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1424, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1810, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1835, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1772
+182, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1427, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1659, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1614, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1436
+183, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1429, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1661, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1618, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1776
+184, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1430, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1662, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1619, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1777
+185, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1473, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1709, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1707, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1888
+186, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1474, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1710, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1708, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1889
+187, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1481, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1718, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1714
+188, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1482, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1720, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1902, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2094
+189, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1486, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1726, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1904, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2105
+190, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1488, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1727, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1717, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1591
+191, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1492, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1732, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1909, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2114
+192, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1494, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1735, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1731
+193, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1499, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1739, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1918, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2120
+194, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1503, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1749, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1932, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1937
+195, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1507, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1578, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1528
+196, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1518, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1769, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1780, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1324
+197, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1519, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1765, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1946, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2144
+198, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1525, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1772, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1784, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1702
+199, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1526, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1776, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1790
+200, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1532, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1792, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1808, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1987
+201, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1542, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1799, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1823
+202, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1543, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1802, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1826, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2007
+203, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1547, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1907, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1979
+204, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1548, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1803, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1830, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2010
+205, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1552, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1805, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1832
+206, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1557, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1815, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1985, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2020
+207, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1578, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1838, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2015
+208, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1585, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1842, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1903, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2095
+209, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1589, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1845, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2026, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2108
+210, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1595, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1852, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1914, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1919
+211, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1603, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1871, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1936
+212, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1608, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1951, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1952
+213, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1610, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1880, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1952
+214, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1618, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1890, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1960, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2162
+215, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1619, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1891, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1961, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2163
+216, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1620, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1897, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2072
+217, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1632, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1909, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1982, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2017
+218, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1661, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1933, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2021
+219, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1662, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2023, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2099
+220, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1663, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1934, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2024
+221, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1668, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1996, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2115, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2247
+223, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1679, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1953, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2056, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2277
+224, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1684, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1958, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2148, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2395
+227, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1692, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1968, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2161, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2407
+228, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1694, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1970, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2073, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2305
+229, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1699, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1977, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2080, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2191
+230, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1710, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1999, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2030, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2251
+231, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1722, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2008, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2131, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2383
+232, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1735, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2025, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2157, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2295
+233, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1764, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2066, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2264, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2459
+234, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1765, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2102, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2265
+235, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1771, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2074, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2212, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2304
+236, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1784, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2087, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2238, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2491
+237, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1786, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2088, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2239, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2439
+238, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1788, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2092, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2248, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2444
+239, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1793, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2100, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2262, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2456
+240, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1794, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2101, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2263, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2457
+241, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1796, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2106, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2272, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2508
+242, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1797, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2103, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2210, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2302
+243, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1807, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2119, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2300, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2528
+244, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_01.jpg, 1824, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2140, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2327
+246, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 61, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 61, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 69
+247, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 71, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 76, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 88
+248, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 80, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 72, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 714
+249, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 93, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 82, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 90
+250, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 98, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 87, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 98
+251, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 113, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 135, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 769
+252, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 123, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 128, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 131
+253, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 128, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 130, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 134
+254, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 136, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 155, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 171
+255, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 138, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 136, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 142
+256, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 141, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 142, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 148
+257, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 147, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 148, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 768
+258, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 151, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 731, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 190
+259, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 190, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 194, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 209
+260, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 246, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 270, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 283
+261, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 533, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 24, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 29
+262, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 534, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 624, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 649
+263, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 535, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 625, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 650
+264, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 540, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 635, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 43
+265, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 546, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 642, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 676
+266, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 547, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 643, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 677
+267, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 550, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 657, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 690
+268, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 561, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 66, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 78
+269, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 563, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 665, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 715
+270, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 575, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 85, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 100
+271, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 587, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 103, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 116
+272, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 588, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 104, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 117
+273, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 590, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 110, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 745
+274, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 596, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 691, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1236
+275, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 598, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1489, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1619
+276, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 601, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1109, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1239
+277, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 603, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1110, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1611
+278, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 607, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 718, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 780
+279, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 618, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 153, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 167
+280, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 639, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1143, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1264
+281, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 649, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 743, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 810
+282, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 665, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1537, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1668
+283, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 670, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1543, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1682
+284, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 679, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 792, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 850
+285, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 709, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1241, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1386
+286, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 714, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 837, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 301
+287, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 739, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 342, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 934
+288, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 740, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 871, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1414
+289, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 753, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 367, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 367
+290, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 762, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 905, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 388
+291, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 774, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1318, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1445
+292, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 775, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1319, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1446
+293, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 866, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 519, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 546
+294, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 938, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 636, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 40
+295, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 941, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1423, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1546
+296, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 942, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1422, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1545
+297, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 945, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1073, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 679
+298, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 986, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1483, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1612
+299, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 987, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1484, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1613
+300, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 989, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1116, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1247
+301, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1001, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1487, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1609
+302, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1009, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1133, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1257
+303, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1011, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 721, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 783
+304, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1031, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1753, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2134
+305, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1038, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1178, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1669
+306, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1042, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 775, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 842
+307, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1061, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 804, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 261
+308, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1075, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1794, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2156
+309, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1143, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1274, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1407
+310, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1162, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 902, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 384
+311, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1166, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 908, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 395
+312, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1176, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1633, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1790
+313, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1215, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 987, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1064
+314, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1296, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1091, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1221
+315, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1308, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1099, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1234
+316, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1313, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1462, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1592
+317, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1327, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1475, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1601
+318, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1329, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1479, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1602
+319, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1350, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1752, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2133
+320, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1351, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1177, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 826
+321, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1375, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1785, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1963
+322, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1395, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1581, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1377
+323, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1404, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1245, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 889
+324, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1408, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1797, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1979
+325, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1440, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1303, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1768
+326, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1449, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1620, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1437
+327, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1501, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1375, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1485
+328, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1552, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1730, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1917
+329, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1561, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1740, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2122
+330, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1565, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1921, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2121
+331, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1566, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1920, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2256
+332, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1567, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1923, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2259
+333, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1630, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1962, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2165
+334, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1634, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1965, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2170
+335, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1639, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1810, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1753
+336, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1641, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1599, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1757
+337, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1650, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1299, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 937
+338, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1660, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1310, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 964
+339, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1700, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1881, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2071
+340, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1748, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1751, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1650
+341, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1763, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1947, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2145
+342, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1766, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1545, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1692
+343, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1773, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2055, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2276
+344, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1774, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1562, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1332
+345, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1790, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1971, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2180
+346, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1801, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1825, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2006
+347, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1837, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2007, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2062
+348, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1843, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2019, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2097
+349, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1859, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2120, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2369
+350, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1864, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1927, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2129
+351, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1892, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1970, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1990
+352, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1895, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 1812, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 1995
+353, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1903, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2074, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2184
+354, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1936, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2025, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2107
+355, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1960, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2147, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2453
+356, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1967, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2070, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2301
+357, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1989, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2180, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2339
+358, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1991, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2108, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2352
+359, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1993, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2112, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2358
+360, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 1994, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2187, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2362
+361, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2013, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2054, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2147
+362, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2017, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2143, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2283
+363, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2018, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2144, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2284
+364, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2019, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2146, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2288
+365, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2071, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2209, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2405
+366, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2073, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2160, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2303
+367, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2094, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2329, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2555
+368, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2134, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2348, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2584
+369, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2135, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2349, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2585
+370, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2141, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2342, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2570
+371, SIFT_Regions, ChateauMaupertuisTest/MaupertuisTest_02.jpg, 2164, ChateauMaupertuisTest/MaupertuisTest_03.jpg, 2350, ChateauMaupertuisTest/MaupertuisTest_04.jpg, 2572

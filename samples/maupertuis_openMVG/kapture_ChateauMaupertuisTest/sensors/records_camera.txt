@@ -1,0 +1,6 @@
+# kapture format: 1.1
+# timestamp, device_id, image_path
+0, 0, ChateauMaupertuisTest/MaupertuisTest_01.jpg
+1, 0, ChateauMaupertuisTest/MaupertuisTest_02.jpg
+2, 0, ChateauMaupertuisTest/MaupertuisTest_03.jpg
+3, 0, ChateauMaupertuisTest/MaupertuisTest_04.jpg

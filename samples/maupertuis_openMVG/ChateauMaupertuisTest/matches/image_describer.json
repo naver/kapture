@@ -1,0 +1,31 @@
+{
+    "image_describer": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "SIFT_Image_describer",
+        "ptr_wrapper": {
+            "valid": 1,
+            "data": {
+                "params": {
+                    "first_octave": 0,
+                    "num_octaves": 6,
+                    "num_scales": 3,
+                    "edge_threshold": 10.0,
+                    "peak_threshold": 0.03999999910593033,
+                    "root_sift": true
+                },
+                "bOrientation": true
+            }
+        }
+    },
+    "regions_type": {
+        "polymorphic_id": 2147483650,
+        "polymorphic_name": "SIFT_Regions",
+        "ptr_wrapper": {
+            "valid": 1,
+            "data": {
+                "value0": [],
+                "value1": []
+            }
+        }
+    }
+}

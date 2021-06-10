@@ -1,0 +1,3 @@
+# kapture format: 1.1
+# name, dtype, dsize, keypoints_type, metric_type
+SIFT, uint8, 128, SIFT_Regions, L2
