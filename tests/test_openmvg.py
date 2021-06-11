@@ -308,11 +308,20 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         first_keypoints_data = image_keypoints_from_file(keypoints_file_path,
                                                          kapture_keypoints.dtype,
                                                          kapture_keypoints.dsize)
-        self.assertEqual((1850, 4), first_keypoints_data.shape, "Keypoints shape")
-        self.assertEqual(numpy.float64, first_keypoints_data.dtype, "Keypoints dtype")
+        self.assertEqual(first_keypoints_data.shape, (1850, 4), "Keypoints shape")
+        self.assertEqual(first_keypoints_data.dtype, numpy.float64, "Keypoints dtype")
 
         # Observations
-        self.assertEqual(365, len(kapture_data.observations), "Observations")
+        kapture_observations = kapture_data.observations
+        self.assertEqual(len(kapture_observations), 365, "Observations")
+        self.assertEqual(kapture_observations.observations_number(), 1228, "Number of observations")
+        image_name_subdir = path.dirname(self.FIRST_IMAGE_NAME)
+        for per_feature_observations in kapture_observations.values():
+            for keypoints_type, observations_list in per_feature_observations.items():
+                self.assertEqual(keypoints_type, self.KEYPOINTS_TYPE, "Observation keypoints type")
+                self.assertLessEqual(len(observations_list), 4, "observations per 3D point")
+                for observation in observations_list:
+                    self.assertTrue(observation[0].startswith(image_name_subdir), "Observation image name sub-directory")
         # 3D Points
         self.assertEqual(372, len(kapture_data.points3d), "3D points")
 
