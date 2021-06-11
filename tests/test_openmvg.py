@@ -17,7 +17,7 @@ import unittest
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
-from kapture.algo.compare import equal_poses
+from kapture.algo.compare import equal_poses, equal_kapture
 import kapture.io.csv as kcsv
 from kapture.io.features import get_descriptors_fullpath, image_descriptors_from_file
 from kapture.io.features import get_keypoints_fullpath, image_keypoints_from_file
@@ -359,6 +359,9 @@ class TestOpenMvgReconstruction(unittest.TestCase):
 
         # Reload data and verify
         kapture_data = kcsv.kapture_from_dir(self._kapture_path)
+        kapture_sample_data = kcsv.kapture_from_dir(self._kapture_sample_path)
+        self.assertTrue(equal_kapture(kapture_sample_data, kapture_data), "Created kapture is equal to sample")
+        # Compare with kapture sample
         self._verify_data(kapture_data, self._kapture_path)
 
     def tearDown(self) -> None:
