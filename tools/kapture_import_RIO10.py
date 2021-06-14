@@ -146,7 +146,7 @@ def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
         rig_sensor_id = senquence_path
         sensors[rgb_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[senquence_path])
         sensors[depth_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[senquence_path],
-                                                  SENSOR_TYPE_DEPTH_CAM)
+                                                  sensor_type=SENSOR_TYPE_DEPTH_CAM)
         rigs[rig_sensor_id, rgb_sensor_id] = kapture.PoseTransform()
         rigs[rig_sensor_id, depth_sensor_id] = kapture.PoseTransform()
 
