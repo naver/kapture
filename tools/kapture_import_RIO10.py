@@ -261,7 +261,7 @@ def import_RIO10(dRIO10_path: str,
                                    path.join(kapture_dir_path, f'scene{scene_id:02d}', 'validation'),
                                    images_import_method, force_overwrite_existing)
         testing_sequences = [v
-                             for k, v in seq_subfolders.items()
+                             for k, v in sorted(seq_subfolders.items())
                              if k != MAPPING_SEQUENCE_ID and k != VALIDATION_SEQUENCE_ID]
         if len(testing_sequences) > 0:
             _import_RIO10_sequence(seq_path, testing_sequences,
