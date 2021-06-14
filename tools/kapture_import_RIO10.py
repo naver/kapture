@@ -17,14 +17,11 @@ from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import logging
 import os
 import os.path as path
-from pathlib import Path
 import re
 import numpy as np
 import quaternion
-from typing import Optional
 from PIL import Image
 from tqdm import tqdm
-from scipy import ndimage
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
@@ -33,8 +30,7 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
-from kapture.utils.paths import path_secure
-from typing import List, Dict
+from typing import List
 
 logger = logging.getLogger('RIO10')
 
