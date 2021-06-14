@@ -323,7 +323,8 @@ class TestOpenMvgReconstruction(unittest.TestCase):
                 for observation in observations_list:
                     self.assertTrue(observation[0].startswith(image_name_subdir), "Observation image name sub-directory")
         # 3D Points
-        self.assertEqual(372, len(kapture_data.points3d), "3D points")
+        kapture_points3d = kapture_data.points3d
+        self.assertEqual(kapture_points3d.shape, (372,kapture.Points3d.XYZRGB), "3D points shape")
 
     def test_import_openmvg_reconstruction(self) -> None:
         """
