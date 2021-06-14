@@ -275,7 +275,7 @@ def import_12scenes(d12scenes_path: str,
 
     # import (copy) image files.
     logger.info('copying image files ...')
-    image_filenames = [f for _, _, f in kapture.flatten(snapshots)]
+    image_filenames = snapshots.data_list()
     import_record_data_from_dir_auto(d12images_path, kapture_dir_path, image_filenames, images_import_method)
 
     # import (copy) depth map files.
