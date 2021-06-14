@@ -13,7 +13,6 @@ all seqXX_02+ are hidden sequences (only *.color.jpg and *.rendered.depth.png)
 """
 
 import argparse
-from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import logging
 import os
 import os.path as path
@@ -24,6 +23,7 @@ from PIL import Image
 from tqdm import tqdm
 # kapture
 import path_to_kapture  # noqa: F401
+from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
