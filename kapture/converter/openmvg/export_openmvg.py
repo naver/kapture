@@ -253,6 +253,7 @@ def _export_openmvg_views(
         kapture_to_openmvg_view_ids: Dict[str, int],
         polymorphic_registry: CerealPointerRegistry,
         ptr_wrapper_registry: CerealPointerRegistry,
+        sub_root_path: str,
         image_path_flatten: bool,
 ) -> List:
     """
@@ -294,9 +295,13 @@ def _export_openmvg_views(
     """
     # process all images
     for timestamp, kapture_cam_id, kapture_image_name in kapture_images_data:
-        openmvg_cam_id = kapture_to_openmvg_cam_ids.get(kapture_cam_id)
-        openmvg_view_id = kapture_to_openmvg_view_ids.get(kapture_image_name)
-        openmvg_image_filepath = _get_openmvg_image_path(kapture_image_name, image_path_flatten)
+        openmvg_cam_id = kapture_to_openmvg_cam_ids[kapture_cam_id]
+        openmvg_view_id = kapture_to_openmvg_view_ids[kapture_image_name]
+        if sub_root_path:
+            openmvg_image_filepath = _get_openmvg_image_path(path.relpath(kapture_image_name, sub_root_path),
+                                                             image_path_flatten)
+        else:
+            openmvg_image_filepath = _get_openmvg_image_path(kapture_image_name, image_path_flatten)
         openmvg_image_filename = path.basename(openmvg_image_filepath)
         openmvg_image_local_path = path.dirname(openmvg_image_filepath)
         kapture_camera_params = kapture_cameras[kapture_cam_id].camera_params
@@ -505,26 +510,21 @@ def _export_openmvg_sfm_data(
     # Compute openMVG identifiers
     kapture_images_data: List[Tuple[int, str, str]] = []  # List of (timestamp, kapture_cam_id, image_name)
     sub_root_path: str = ''
-    image_dirs: List[str] = []  # all images directories
+    image_dirs: Set[str] = set()  # all images directories
     kapture_to_openmvg_cam_ids: Dict[str:int] = {}  # kapture_cam_id -> openmvg_cam_id
     for timestamp, image_data in kapture_data.records_camera.items():
         for kapture_cam_id, kapture_image_name in image_data.items():
             kapture_images_data.append((timestamp, kapture_cam_id, kapture_image_name))
-            image_dirs.append(path.dirname(kapture_image_name))
+            image_dirs.add(path.dirname(kapture_image_name))
             _compute_openmvg_id(kapture_cam_id, kapture_to_openmvg_cam_ids)
             _compute_openmvg_id(kapture_image_name, kapture_to_openmvg_view_ids)
     if len(image_dirs) > 1:
         # Find if they share a top path
-        sub_root_path = path.commonpath(image_dirs)
+        sub_root_path = path.commonpath(list(image_dirs))
     elif len(image_dirs) == 1:
         sub_root_path = image_dirs.pop()
     if sub_root_path:
-        openmvg_image_root_path = os.path.abspath(path.join(openmvg_image_root_path, sub_root_path))
-        # Update image name to be stored
-        shortened_images_data = []
-        for timestamp, kapture_cam_id, kapture_image_name in kapture_images_data:
-            shortened_images_data.append((timestamp, kapture_cam_id, path.relpath(kapture_image_name, sub_root_path)))
-        kapture_images_data = shortened_images_data
+        openmvg_image_root_path = path.abspath(path.join(openmvg_image_root_path, sub_root_path))
     if image_action == TransferAction.root_link:
         if not sub_root_path:
             # We can not link directly to the top destination openmvg directory
@@ -553,6 +553,7 @@ def _export_openmvg_sfm_data(
         kapture_to_openmvg_view_ids,
         polymorphic_registry,
         ptr_wrapper_registry,
+        sub_root_path,
         image_path_flatten
     )
     logger.debug('exporting extrinsics ...')
@@ -596,7 +597,10 @@ def _export_openmvg_sfm_data(
         job_copy = (
             (  # source path -> destination path
                 get_image_fullpath(kapture_path, kapture_image_name),
-                path.join(openmvg_image_root_path, _get_openmvg_image_path(kapture_image_name, image_path_flatten))
+                path.join(openmvg_image_root_path,
+                          _get_openmvg_image_path(path.relpath(kapture_image_name, sub_root_path) if sub_root_path
+                                                  else kapture_image_name,
+                                                  image_path_flatten))
             )
             for kapture_image_name in kapture_data.records_camera.data_list()
         )
