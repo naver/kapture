@@ -322,10 +322,10 @@ class TestOpenMvgReconstruction(unittest.TestCase):
                 self.assertEqual(keypoints_type, self.KEYPOINTS_TYPE, "Observation keypoints type")
                 self.assertLessEqual(len(observations_list), 4, "observations per 3D point")
                 for observation in observations_list:
-                    self.assertTrue(observation[0].startswith(image_name_subdir), "Observation image name sub-directory")
+                    self.assertTrue(observation[0].startswith(image_name_subdir), "Observation image name subdirectory")
         # 3D Points
         kapture_points3d = kapture_data.points3d
-        self.assertEqual(kapture_points3d.shape, (372,kapture.Points3d.XYZRGB), "3D points shape")
+        self.assertEqual(kapture_points3d.shape, (372, kapture.Points3d.XYZRGB), "3D points shape")
 
     def test_import_openmvg_reconstruction(self) -> None:
         """
