@@ -9,7 +9,7 @@ import logging
 import os
 import os.path as path
 from tqdm import tqdm
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import quaternion
