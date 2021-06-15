@@ -228,6 +228,7 @@ class TestOpenMvg(unittest.TestCase):
 
 class TestOpenMvgReconstruction(unittest.TestCase):
 
+    UNIQUE_CAMERA_OPENMVG_ID = 2147483649
     FIRST_IMAGE_NAME = "ChateauMaupertuisTest/MaupertuisTest_01.jpg"
     FIRST_TRAJECTORY_TRANSLATION = [-0.02839049268018459, 0.00255775313260552, 0.02473073308745868]
     FIRST_TRAJECTORY_ROTATION = [0.9999935675163499, 0.0004312835445997, 0.0033445836819604, -0.0012217530116397]
@@ -364,6 +365,94 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         self.assertTrue(equal_kapture(kapture_sample_data, kapture_data), "Created kapture is equal to sample")
         # Compare with kapture sample
         self._verify_data(kapture_data, self._kapture_path)
+
+    def test_kapture_to_openmvg_reconstruction(self) -> None:
+        """
+        Test the kapture_to_openmvg export function on a small kapture dataset with 3D reconstruction data
+        """
+        self.assertTrue(path.exists(self._kapture_sample_path), "Kapture directory exists")
+        kapture_sample_data = kcsv.kapture_from_dir(self._kapture_sample_path)
+        openmvg_json_file = path.join(self._tempdir.name, 'sfm_export.json')
+        openmvg_image_root_path = path.join(self._tempdir.name, 'images')
+        export_openmvg(kapture_path=self._kapture_sample_path,
+                       openmvg_sfm_data_file_path=openmvg_json_file,
+                       openmvg_image_root_path=openmvg_image_root_path,
+                       image_action=TransferAction.copy,
+                       force=True)
+        self.assertTrue(path.isfile(openmvg_json_file), "Openmvg JSON file created")
+        with open(openmvg_json_file, 'r') as f:
+            sfm_data = json.load(f)
+            self.assertEqual(OPENMVG_SFM_DATA_VERSION_NUMBER,
+                             sfm_data.get(JSON_KEY.SFM_DATA_VERSION), "Sfm data version number")
+            root_path: str = sfm_data.get(JSON_KEY.ROOT_PATH)
+            self.assertIsNotNone(root_path, "Root path exported")
+            self.assertTrue(root_path.startswith(openmvg_image_root_path), "Root path correct")
+            kapture_camera: kapture.Camera = kapture_sample_data.cameras.get('0')
+            kapture_camera_params = kapture_camera.camera_params
+            intrinsics = sfm_data.get(JSON_KEY.INTRINSICS)
+            self.assertIsNotNone(intrinsics, "Intrinsics")
+            self.assertEqual(1, len(intrinsics), "Camera")
+            intrinsic = intrinsics[0]
+            unique_camera = intrinsic.get(JSON_KEY.VALUE)
+            self.assertIsNotNone(unique_camera, "Unique camera")
+            self.assertEqual(CameraModel.pinhole_radial_k3.name,
+                             unique_camera.get(JSON_KEY.POLYMORPHIC_NAME), "Polymorphic name")
+            camera_id = unique_camera.get(JSON_KEY.PTR_WRAPPER, {}).get(JSON_KEY.ID)
+            self.assertEqual(self.UNIQUE_CAMERA_OPENMVG_ID, camera_id, "Unique openmvg camera id")
+            camera_params = unique_camera.get(JSON_KEY.PTR_WRAPPER, {}).get(JSON_KEY.DATA)
+            self.assertIsNotNone(camera_params, "Camera params")
+            self.assertEqual(kapture_camera_params[0], camera_params.get(JSON_KEY.WIDTH), "Camera width")
+            self.assertEqual(kapture_camera_params[1], camera_params.get(JSON_KEY.HEIGHT), "Camera height")
+            self.assertAlmostEqual(kapture_camera_params[2], camera_params.get(JSON_KEY.FOCAL_LENGTH), msg="Focal len")
+            principal_point = camera_params.get(JSON_KEY.PRINCIPAL_POINT)
+            self.assertEqual(kapture_camera_params[3], principal_point[0], "Principal point X")
+            self.assertEqual(kapture_camera_params[4], principal_point[1], "Principal point Y")
+            disto_k3 = camera_params.get(JSON_KEY.DISTO_K3)
+            self.assertIsNotNone(disto_k3, "Disto_k3 defined")
+            self.assertEqual(kapture_camera_params[5], disto_k3[0], "Disto K1")
+            self.assertEqual(kapture_camera_params[6], disto_k3[1], "Disto K2")
+            # Recorded images: views in openmvg format
+            views = sfm_data.get(JSON_KEY.VIEWS)
+            self.assertIsNotNone(views, "Views")
+            self.assertEqual(4, len(views), "Recorded images")
+            image_record = None
+            for view in views:
+                if view.get(JSON_KEY.KEY) == 0:
+                    image_record = view.get(JSON_KEY.VALUE).get(JSON_KEY.PTR_WRAPPER).get(JSON_KEY.DATA)
+                    break
+            self.assertIsNotNone(image_record, "1th image record")
+            local_path = image_record.get(JSON_KEY.LOCAL_PATH)
+            self.assertEqual("", local_path, "Local path is empty")
+            self.assertEqual(camera_params.get(JSON_KEY.WIDTH), image_record.get(JSON_KEY.WIDTH),
+                             "Image has camera width")
+            self.assertEqual(camera_params.get(JSON_KEY.HEIGHT), image_record.get(JSON_KEY.HEIGHT),
+                             "Image has camera height")
+            filename = image_record.get(JSON_KEY.FILENAME)
+            self.assertIsNotNone(filename, "Filename is defined")
+            copied_image_path = path.join(root_path, local_path, filename)
+            self.assertTrue(path.isfile(copied_image_path), "Image copied")
+            pose_id = image_record.get(JSON_KEY.ID_POSE)
+            self.assertIsNotNone(pose_id, "Pose id")
+            self.assertTrue(image_record.get(JSON_KEY.USE_POSE_ROTATION_PRIOR), "Use pose rotation prior is true")
+            view_center = image_record.get(JSON_KEY.CENTER)
+            view_rotation = image_record.get(JSON_KEY.ROTATION)
+            self.assertIsNotNone(view_center, "Center of image")
+            self.assertIsNotNone(view_rotation, "Rotation of image")
+            # poses: extrinsics in openmvg format
+            extrinsics = sfm_data.get(JSON_KEY.EXTRINSICS)
+            self.assertIsNotNone(extrinsics, "Extrinsics")
+            self.assertEqual(4, len(extrinsics), "Trajectory points")
+            # Search for the pose of the above image
+            pose = None
+            for extrinsic in extrinsics:
+                if extrinsic.get(JSON_KEY.KEY) == pose_id:
+                    pose = extrinsic.get(JSON_KEY.VALUE)
+                    break
+            self.assertIsNotNone(pose, "Pose for image")
+            pose_center = pose.get(JSON_KEY.CENTER)
+            pose_rotation = pose.get(JSON_KEY.ROTATION)
+            self.assertEqual(view_center, pose_center, "Center are equal")
+            self.assertEqual(view_rotation, pose_rotation, "Rotations are equal")
 
     def tearDown(self) -> None:
         """
