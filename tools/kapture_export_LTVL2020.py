@@ -30,7 +30,8 @@ logger = logging.getLogger('LTVL2020')
 def export_ltvl(kapture_dirpath: str,
                 ltvl_filepath: str,
                 prepend_camera_name: bool = False,
-                keep_full_file_name: bool = False) -> None:
+                keep_full_file_name: bool = False,
+                rio10_format: bool = False) -> None:
     """
     Export kapture data to a Long-term Visual Localization challenge format file.
 
@@ -47,6 +48,14 @@ def export_ltvl(kapture_dirpath: str,
     trajectories_filepath = kapture.io.csv.get_csv_fullpath(kapture.Trajectories, kapture_dirpath)
     logger.debug(f'loading {trajectories_filepath}')
     trajectories = kapture.io.csv.trajectories_from_file(trajectories_filepath)
+
+    # 2.2: load rigs if it exists
+    rigs_filepath = kapture.io.csv.get_csv_fullpath(kapture.Rigs, kapture_dirpath)
+    if path.isfile(rigs_filepath):
+        logger.debug(f'loading {rigs_filepath}')
+        rigs = kapture.io.csv.rigs_from_file(rigs_filepath)
+        trajectories = kapture.rigs_remove(trajectories, rigs)
+
     # 3: find (timestamp, camera_id) that are both in records and trajectories.
     valid_keys = set(records_cameras.key_pairs()).intersection(set(trajectories.key_pairs()))
     # collect data for those timestamps.
@@ -59,7 +68,10 @@ def export_ltvl(kapture_dirpath: str,
     if prepend_camera_name:
         image_poses = ((path.join(camera_id, image_filename), pose) for camera_id, image_filename, pose in image_poses)
     else:
-        image_poses = ((image_filename, pose) for camera_id, image_filename, pose in image_poses)
+        image_poses = ((image_filename, pose) for _, image_filename, pose in image_poses)
+
+    if rio10_format:
+        image_poses = ((image_filename[:image_filename.index('.')], pose) for image_filename, pose in image_poses)
 
     # write the files
     image_poses = {image_filename: pose
@@ -92,10 +104,13 @@ def export_ltvl2020_command_line() -> None:
     # export ###########################################################################################################
     parser.add_argument('-i', '--input', required=True, help='input path to kapture directory')
     parser.add_argument('-o', '--output', required=True, help='output file.')
+
     parser.add_argument('-p', '--prepend_cam', action='store_true', default=False,
                         help='prepend camera names to filename (required for some dataset).')
     parser.add_argument('--full_file_name', action='store_true', default=False,
                         help='keep the full file name (default: seq-0/image1.png -> image1.png).')
+    parser.add_argument('--rio10-format', action='store_true', default=False,
+                        help='name is image_name before the first dot')
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -104,7 +119,7 @@ def export_ltvl2020_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    export_ltvl(args.input, args.output, args.prepend_cam, args.full_file_name)
+    export_ltvl(args.input, args.output, args.prepend_cam, args.full_file_name, args.rio10_format)
 
 
 if __name__ == '__main__':
