@@ -323,7 +323,7 @@ def _import_openmvg_image_file(input_data: Dict[str, Union[int, str, Dict]],
                 src_path = path.relpath(src_path, dst_dir)
             os.symlink(src_path, dst_path)
             # Symlink might crash on Windows if the user executing this code has no admin privilege
-    return kapture_filename
+    return path_secure(kapture_filename)
 
 
 def _import_openmvg_trajectories(extrinsics_data_json: List[Dict[str, Union[int, str, Dict]]],
