@@ -369,7 +369,7 @@ def _import_openmvg_structure(structure_data_json: List[Dict[str, Union[int, str
             point3d_value: Dict[str, Union[List[float], List[Dict]]] = point3d[JSON_KEY.VALUE]
             coords: List[float] = point3d_value[JSON_KEY.X]
             points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value in JSON file
-            observations = point3d_value[JSON_KEY.OBSERVATIONS]
+            observations = point3d_value.get(JSON_KEY.OBSERVATIONS)
             if observations:
                 if keypoints_type is None:
                     logger.warning('Can not import observations without keypoints type')
