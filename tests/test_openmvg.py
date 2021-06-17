@@ -372,11 +372,13 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         """
         self.assertTrue(path.exists(self._kapture_sample_path), "Kapture directory exists")
         kapture_sample_data = kcsv.kapture_from_dir(self._kapture_sample_path)
-        openmvg_json_file = path.join(self._tempdir.name, 'sfm_export.json')
+        openmvg_json_file = path.join(self._tempdir.name, 'sfm_export_3d.json')
         openmvg_image_root_path = path.join(self._tempdir.name, 'images')
+        regions_dir_path = path.join(self._tempdir.name, 'regions')
         export_openmvg(kapture_path=self._kapture_sample_path,
                        openmvg_sfm_data_file_path=openmvg_json_file,
                        openmvg_image_root_path=openmvg_image_root_path,
+                       openmvg_regions_dir_path=regions_dir_path,
                        image_action=TransferAction.copy,
                        force=True)
         self.assertTrue(path.isfile(openmvg_json_file), "Openmvg JSON file created")
@@ -453,6 +455,24 @@ class TestOpenMvgReconstruction(unittest.TestCase):
             pose_rotation = pose.get(JSON_KEY.ROTATION)
             self.assertEqual(view_center, pose_center, "Center are equal")
             self.assertEqual(view_rotation, pose_rotation, "Rotations are equal")
+            # Check the openmvg structure
+            openmvg_structure = sfm_data.get(JSON_KEY.STRUCTURE)
+            kapture_points3d = kapture_sample_data.points3d
+            nb_3d_points = kapture_points3d.shape[0]
+            self.assertEqual(nb_3d_points, len(openmvg_structure), "All 3D points in openmvg structure")
+            # check that all keys are different
+            point_idx_set = set()
+            for point_3d_structure in openmvg_structure:
+                point_idx = point_3d_structure.get(JSON_KEY.KEY)
+                self.assertIsNotNone(point_idx, "Point 3D index")
+                point_idx_set.add(point_idx)
+                point3d_value = point_3d_structure.get(JSON_KEY.VALUE)
+                self.assertIsNotNone(point3d_value)
+                coords: List[float] = point3d_value.get(JSON_KEY.X)
+                self.assertIsNotNone(coords, "3D coordinates")
+                observations = point3d_value.get(JSON_KEY.OBSERVATIONS)
+                self.assertIsNotNone(observations, "Observations")
+            self.assertEqual(nb_3d_points, len(point_idx_set), "All point 3D indexes are different")
 
     def tearDown(self) -> None:
         """
