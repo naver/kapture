@@ -10,9 +10,7 @@ The 4Seasons dataset contains recordings from a stereo-inertial camera system co
 
 For each sequence, the recorded data is stored in the following structure:
 ├── KeyFrameData
-├── distorted_images
-│   ├── cam0
-│   └── cam1
+├── distorted_images ...
 ├── undistorted_images
 │   ├── cam0
 │   └── cam1
@@ -22,6 +20,15 @@ For each sequence, the recorded data is stored in the following structure:
 ├── result.txt
 ├── septentrio.nmea
 └── times.txt
+
+The calibration folder has the following structure:
+├── calib_0.txt
+├── calib_1.txt
+├── calib_stereo.txt
+├── camchain.yaml
+├── undistorted_calib_0.txt
+├── undistorted_calib_1.txt
+└── undistorted_calib_stereo.txt
 """
 
 import argparse
@@ -47,9 +54,49 @@ from typing import List
 logger = logging.getLogger('4seasons')
 
 
+def _import_4seasons_sensors(
+        calibration_dir_path: str,
+        kapture_dir_path: str,
+):
+    sensors = kapture.Sensors()
+
+    # this dataset is made with a single stereo camera (2 cams).
+
+    """
+    Pinhole 501.4757919305817 501.4757919305817 421.7953735163109 167.65799492501083 0.0 0.0 0.0 0.0
+    800 400
+    crop
+    800 400
+    """
+    intrinsic_file_names = {
+        'cam0': 'undistorted_calib_0.txt',
+        'cam1': 'undistorted_calib_1.txt',
+    }
+    for cam_id, intrinsic_file_name in intrinsic_file_names.items():
+        intrinsic_file_path = path.join(calibration_dir_path, intrinsic_file_name)
+        with open(intrinsic_file_path, 'r') as intrinsic_file:
+            line = intrinsic_file.readline().split(' ')
+            # 1st line looks like:
+            #     Pinhole 501.4757919305817 501.4757919305817 421.7953735163109 167.65799492501083 0.0 0.0 0.0 0.0
+            # assuming fx fy cx cy distortion coef (null)
+            if line[0] != 'Pinhole':  # sanity check
+                raise ValueError(f'unexpected camera model {line[0]} (only is Pinhole valid).')
+            fx, fy, cx, cy = (float(e) for e in line[1:5])
+
+            line = intrinsic_file.readline().split(' ')
+            # second line looks like :
+            #   800 400
+            # assuming image_width image_height
+            w, h = (int(e) for e in line)
+            sensors[cam_id] = kapture.Camera(kapture.CameraType.PINHOLE, [w, h, fx, fy, cx, cy], name=cam_id)
+
+    rigs = kapture.Rigs()
+
+    print(sensors)
+
+
 def _import_4seasons_sequence(
-        sequence_root: str,
-        sequence_list: List[str],
+        recording_dir_path: str,
         kapture_dir_path: str,
         images_import_method: TransferAction,
         force_overwrite_existing: bool):
@@ -62,26 +109,68 @@ def _import_4seasons_sequence(
     rigs = kapture.Rigs()
     sensors = kapture.Sensors()
 
+    """
+    recording_dir_path contains : 
+    KeyFrameData: contains the KeyFrameFiles.
+    distorted_images: contains both the distorted images from the left and right camera, respectively.
+    undistorted_images: contains both the undistorted images from the left and right camera, respectively.
+    GNSSPoses.txt: is a list of 7DOF globally optimized poses (include scale from VIO to GNSS frame) for all keyframes (after GNSS fusion and loop closure detection). Each line is specified as frame_id, translation (t_x, t_y, t_z), rotation as quaternion (q_x, q_y, q_z, w), scale, fusion_quality (not relevant), and v3 (not relevant).
+    Transformations.txt: defines transformations between different coordinate frames.
+    imu.txt: contains raw IMU measurements. Each line is specified as frame_id, (angular velocity (w_x, w_y, w_z), and linear acceleration (a_x, a_y, a_z)).
+    result.txt: contains the 6DOF visual interial odometry poses for every frame (not optimized). Each line is specified as timestamp (in seconds), translation (t_x, t_y, t_z), rotation as quaternion (q_x, q_y, q_z, w).
+    septentrio.nmea: contains the raw GNSS measurements in the NMEA format.
+    times.txt is a list of times in unix timestamps (in seconds), and exposure times (in milliseconds) for each frame (frame_id, timestamp, exposure).
+    """
+    
+    # sensors
+    # take undistorted images as granted
+
+
+    # Transformations.txt defines rig
+
+    # imux.txt defines accel and gyro
+
+
 
 def import_4seasons(
-        d4seasons_path: str,
+        d4seasons_dir_path: str,
         kapture_dir_path: str,
-        force_overwrite_existing: bool = False,
-        images_import_method: TransferAction = TransferAction.skip
+        images_import_method: TransferAction = TransferAction.skip,
+        force_overwrite_existing: bool = False
 ) -> None:
     """
     Imports 4seasons dataset and save them as kapture.
-    :param d4seasons_path: path to the 4seasons root path
+    :param d4seasons_dir_path: path to the 4seasons root path
     :param kapture_dir_path: path to kapture output top directory
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     :param images_import_method: choose how to import actual image files
+    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     """
     os.makedirs(kapture_dir_path, exist_ok=True)
+
+    # sensors
+    calibration_dir_path = path.join(d4seasons_dir_path, 'calibration')
+    _import_4seasons_sensors(calibration_dir_path=calibration_dir_path,
+                             kapture_dir_path=kapture_dir_path)
+
+    # recordings
+    recording_names = [
+        'recording_2020-10-07_14-47-51'
+    ]
+    recording_dir_paths = (path.join(d4seasons_dir_path, recording_name) for recording_name in recording_names)
+    for recording_dir_path in recording_dir_paths:
+        logger.debug(f'processing : {recording_dir_path}')
+        _import_4seasons_sequence(
+            recording_dir_path=recording_dir_path,
+            kapture_dir_path=kapture_dir_path,
+            images_import_method=images_import_method,
+            force_overwrite_existing=force_overwrite_existing
+        )
 
 
 def import_4seasons_command_line() -> None:
     """
     Imports 4seasons dataset and save them as kapture using the parameters given on the command line.
+    It assumes images are undistorted.
     """
     parser = argparse.ArgumentParser(
         description='Imports 4seasons dataset files to the kapture format.')
@@ -95,7 +184,7 @@ def import_4seasons_command_line() -> None:
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete output if already exists.')
     # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to RIO10 root path')
+    parser.add_argument('-i', '--input', required=True, help='input path to 4seasons root path')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
                         help=f'How to import images [link_absolute], '
                              f'choose among: {", ".join(a.name for a in TransferAction)}')
@@ -108,10 +197,10 @@ def import_4seasons_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_4seasons(d4seasons_path=args.input,
+    import_4seasons(d4seasons_dir_path=args.input,
                     kapture_dir_path=args.output,
-                    force_overwrite_existing=args.force,
-                    images_import_method=args.image_transfer)
+                    images_import_method=args.image_transfer,
+                    force_overwrite_existing=args.force)
 
 
 if __name__ == '__main__':
