@@ -646,6 +646,15 @@ def _export_openmvg_regions(
     os.makedirs(openmvg_regions_dir_path, exist_ok=True)
     polymorphic_registry = CerealPointerRegistry(id_key=JSON_KEY.POLYMORPHIC_ID, value_key=JSON_KEY.POLYMORPHIC_NAME)
     # create image_describer.json
+    image_describer_props = {JSON_KEY.PTR_WRAPPER: {JSON_KEY.VALID: 1,
+                                                    JSON_KEY.DATA: {JSON_KEY.PARAMS: {
+                                                        "root_sift": True
+                                                    }
+                                                    },
+                                                    "bOrientation": True
+                                                    }
+                             }
+    image_describer_props.update(polymorphic_registry.get_ids_dict('SIFT_Image_describer'))
     fake_regions_type = {JSON_KEY.PTR_WRAPPER: {JSON_KEY.VALID: 1,
                                                 JSON_KEY.DATA: {JSON_KEY.VALUE0: [],
                                                                 JSON_KEY.VALUE1: []
@@ -654,6 +663,7 @@ def _export_openmvg_regions(
                          }
     fake_regions_type.update(polymorphic_registry.get_ids_dict('SIFT_Regions'))
     image_describer = {
+        JSON_KEY.IMAGE_DESCRIBER: image_describer_props,
         JSON_KEY.REGIONS_TYPE: fake_regions_type
     }
     image_describer_file_path = path.join(openmvg_regions_dir_path, OPENMVG_DEFAULT_REGIONS_FILE_NAME)

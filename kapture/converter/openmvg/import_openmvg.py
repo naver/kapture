@@ -414,7 +414,7 @@ def _import_openmvg_regions(openmvg_regions_directory_path: str,
     kapture_keypoints = kapture.Keypoints(type_name=keypoints_name, dtype=float, dsize=4)
 
     # retrieve what type of descriptors it is.
-    descriptors_type = image_describer.get('image_describer', {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
+    descriptors_type = image_describer.get(JSON_KEY.IMAGE_DESCRIBER, {}).get(JSON_KEY.POLYMORPHIC_NAME, 'UNDEFINED')
     descriptors_props = {
         'SIFT_Image_describer': dict(type_name='SIFT', dtype=np.uint8, dsize=128,
                                      keypoints_type=keypoints_type,
