@@ -12,7 +12,7 @@ import os
 import os.path as path
 import sys
 import tempfile
-from typing import Dict
+from typing import Dict, List
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
