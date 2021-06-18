@@ -31,10 +31,11 @@ def export_ltvl(kapture_dirpath: str,
                 ltvl_filepath: str,
                 keep_full_file_name: bool = False,
                 prepend_camera_name: bool = False,
-                truncate_extensions: bool = False) -> None:
+                truncate_extensions: bool = False,
+                inverse_pose: bool = False) -> None:
     """
     Export kapture data to a Long-term Visual Localization challenge format file.
-    With --keep_full_file_name and --truncate_extensions it is identical to the rio10 submission format
+    With --keep_full_file_name, --truncate_extensions and --inverse-pose it is identical to the rio10 submission format
 
     :param kapture_dirpath: kapture data top directory
     :param ltvl_filepath: LTVL file path to write
@@ -83,6 +84,8 @@ def export_ltvl(kapture_dirpath: str,
     os.makedirs(str(p.parent.resolve()), exist_ok=True)
     with open(ltvl_filepath, 'wt') as f:
         for image_filename, pose in tqdm(image_poses.items(), disable=logger.getEffectiveLevel() > logging.INFO):
+            if inverse_pose:
+                pose = pose.inverse()
             line = [image_filename] + pose.r_raw + pose.t_raw
             line = ' '.join(str(v) for v in line) + '\n'
             f.write(line)
@@ -120,6 +123,8 @@ def export_ltvl2020_command_line() -> None:
                         help=('2nd operation applied: '
                               'when False (default), nothing is changed.'
                               'when True, name is image_name before the first dot'))
+    parser.add_argument('--inverse-pose', action='store_true', default=False,
+                        help=('write pose as camera to world instead of world to camera'))
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -128,7 +133,8 @@ def export_ltvl2020_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    export_ltvl(args.input, args.output, args.full_file_name, args.prepend_cam, args.truncate_extensions)
+    export_ltvl(args.input, args.output, args.full_file_name, args.prepend_cam, args.truncate_extensions,
+                args.inverse_pose)
 
 
 if __name__ == '__main__':
