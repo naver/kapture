@@ -29,15 +29,18 @@ logger = logging.getLogger('LTVL2020')
 
 def export_ltvl(kapture_dirpath: str,
                 ltvl_filepath: str,
-                prepend_camera_name: bool = False,
                 keep_full_file_name: bool = False,
-                rio10_format: bool = False) -> None:
+                prepend_camera_name: bool = False,
+                truncate_extensions: bool = False) -> None:
     """
     Export kapture data to a Long-term Visual Localization challenge format file.
+    With --keep_full_file_name and --truncate_extensions it is identical to the rio10 submission format
 
     :param kapture_dirpath: kapture data top directory
     :param ltvl_filepath: LTVL file path to write
-    :param prepend_camera_name: if True, it will prepend the camera name to the image file names.
+    :param keep_full_file_name: 1st operation, if False, basename is kept for image name
+    :param prepend_camera_name: 2nd operation, if True, it will prepend the camera name to the image file names
+    :param truncate_extensions: 3rd operation, if True, name is image_name before the first dot
     """
     # only load (1) image records + (2) trajectories (that all that matters).
     # 1: load records
@@ -70,7 +73,7 @@ def export_ltvl(kapture_dirpath: str,
     else:
         image_poses = ((image_filename, pose) for _, image_filename, pose in image_poses)
 
-    if rio10_format:
+    if truncate_extensions:
         image_poses = ((image_filename[:image_filename.index('.')], pose) for image_filename, pose in image_poses)
 
     # write the files
@@ -105,12 +108,18 @@ def export_ltvl2020_command_line() -> None:
     parser.add_argument('-i', '--input', required=True, help='input path to kapture directory')
     parser.add_argument('-o', '--output', required=True, help='output file.')
 
-    parser.add_argument('-p', '--prepend_cam', action='store_true', default=False,
-                        help='prepend camera names to filename (required for some dataset).')
     parser.add_argument('--full_file_name', action='store_true', default=False,
-                        help='keep the full file name (default: seq-0/image1.png -> image1.png).')
-    parser.add_argument('--rio10-format', action='store_true', default=False,
-                        help='name is image_name before the first dot')
+                        help=('1st operation applied: '
+                              'when False (default), basename is kept for image name: (seq-0/image1.png -> image1.png).'
+                              'when True, full file name is preserved'))
+    parser.add_argument('-p', '--prepend_cam', action='store_true', default=False,
+                        help=('2nd operation applied: '
+                              'when False (default), nothing is changed.'
+                              'wen True, prepend camera names to filename (required for some dataset)'))
+    parser.add_argument('--truncate-extensions', action='store_true', default=False,
+                        help=('2nd operation applied: '
+                              'when False (default), nothing is changed.'
+                              'when True, name is image_name before the first dot'))
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -119,7 +128,7 @@ def export_ltvl2020_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    export_ltvl(args.input, args.output, args.prepend_cam, args.full_file_name, args.rio10_format)
+    export_ltvl(args.input, args.output, args.full_file_name, args.prepend_cam, args.truncate_extensions)
 
 
 if __name__ == '__main__':
