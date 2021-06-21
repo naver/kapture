@@ -473,6 +473,14 @@ class TestOpenMvgReconstruction(unittest.TestCase):
                 observations = point3d_value.get(JSON_KEY.OBSERVATIONS)
                 self.assertIsNotNone(observations, "Observations")
             self.assertEqual(nb_3d_points, len(point_idx_set), "All point 3D indexes are different")
+            # Check that features and descriptors files are there
+            kaptures_images_files = kapture_sample_data.records_camera.data_list()
+            for kapture_image_file in kaptures_images_files:
+                image_file_name = path.splitext(path.basename(kapture_image_file))[0]
+                feature_image_file = path.join(regions_dir_path, image_file_name)+'.feat'
+                self.assertTrue(path.isfile(feature_image_file), f"Features file for {image_file_name}")
+                descriptor_image_file = path.join(regions_dir_path, image_file_name)+'.desc'
+                self.assertTrue(path.isfile(descriptor_image_file), f"Descriptors file for {image_file_name}")
 
     def tearDown(self) -> None:
         """
