@@ -35,6 +35,8 @@ def export_ltvl(kapture_dirpath: str,
                 inverse_pose: bool = False) -> None:
     """
     Export kapture data to a Long-term Visual Localization challenge format file.
+    With -p, it is identical to the RobotCar_Seasons format for https://www.visuallocalization.net/
+    with --keep_full_file_name, it is identical to the Gangnam Station and Hyundai Department Store format
     With --keep_full_file_name, --truncate_extensions and --inverse-pose it is identical to the rio10 submission format
 
     :param kapture_dirpath: kapture data top directory
@@ -96,8 +98,13 @@ def export_ltvl2020_command_line() -> None:
     Do the LTVL 2020 export using the parameters given on the command line.
     """
     parser = argparse.ArgumentParser(
-        description='convert file to Long-term Visual Localization challenge format '
-                    '(https://www.visuallocalization.net/submission/).')
+        description=('convert file to Long-term Visual Localization challenge format '
+                     '(https://www.visuallocalization.net/submission/). '
+                     'With -p, it is identical to the RobotCar_Seasons format for https://www.visuallocalization.net/ '
+                     'with --keep_full_file_name, it is identical to the Gangnam Station '
+                     'and Hyundai Department Store format '
+                     '  --keep_full_file_name, --truncate_extensions and --inverse-pose '
+                     'it is identical to the rio10 submission format (http://vmnavab26.in.tum.de/RIO10/)'))
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
