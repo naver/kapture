@@ -85,28 +85,24 @@ def export_openmvg_command_line():
         args.matches = path.join(args.openmvg, 'matches', 'matches.txt')
         logger.debug(f'guessing output matches is {args.matches}')
 
-    # no image dir == sip transfer
+    # no image dir == skip transfer
     if args.images is None:
+        logger.info('No images directory provided, skipping image files transfer')
         args.image_action = TransferAction.skip
     if args.image_action == TransferAction.skip:
         args.images = None
 
-    if not args.image_action == TransferAction.skip:
-        if args.images is None:
-            raise ValueError(f'You must specify an image root path for this transfer ({args.image_action})')
-
-    export_openmvg(
-        kapture_path=args.kapture,
-        openmvg_sfm_data_file_path=args.sfm_data,
-        openmvg_image_root_path=args.images,
-        openmvg_regions_dir_path=args.regions,
-        openmvg_matches_file_path=args.matches,
-        image_action=args.image_action,
-        image_path_flatten=args.image_path_flatten,
-        force=args.force,
-        keypoints_type=args.keypoints_type,
-        descriptors_type=args.descriptors_type
-    )
+    export_openmvg(args.kapture,
+                   args.sfm_data,
+                   args.images,
+                   args.regions,
+                   args.matches,
+                   args.image_action,
+                   args.image_path_flatten,
+                   args.keypoints_type,
+                   args.descriptors_type,
+                   args.force
+                   )
 
 
 if __name__ == '__main__':
