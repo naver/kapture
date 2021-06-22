@@ -38,7 +38,8 @@ import os.path as path
 import re
 import numpy as np
 import quaternion
-from PIL import Image
+from glob import glob
+#from PIL import Image
 from tqdm import tqdm
 # kapture
 import path_to_kapture  # noqa: F401
@@ -49,19 +50,17 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
-from typing import List
+from typing import List, Dict
 
 logger = logging.getLogger('4seasons')
 
 
-def _import_4seasons_sensors(
-        calibration_dir_path: str,
-        kapture_dir_path: str,
+def load_4seasons_sensors(
+        calibration_dir_path: str
 ):
-    sensors = kapture.Sensors()
-
     # this dataset is made with a single stereo camera (2 cams).
 
+    sensors = kapture.Sensors()
     """
     Pinhole 501.4757919305817 501.4757919305817 421.7953735163109 167.65799492501083 0.0 0.0 0.0 0.0
     800 400
@@ -90,24 +89,123 @@ def _import_4seasons_sensors(
             w, h = (int(e) for e in line)
             sensors[cam_id] = kapture.Camera(kapture.CameraType.PINHOLE, [w, h, fx, fy, cx, cy], name=cam_id)
 
+    # rigs
     rigs = kapture.Rigs()
+    stereo_matrix_file_name = path.join(calibration_dir_path, "undistorted_calib_stereo.txt")
+    # 4x4 matrix denoting the rigid transformation from XXX to XXX camera.
+    # cam0 = left, cam1 = right
+    pose_matrix = np.loadtxt(stereo_matrix_file_name)
+    r = pose_matrix[0:3, 0:3]
+    q = quaternion.from_rotation_matrix(r)
+    t = pose_matrix[0:3, 3]
+    cam0_from_cam1 = kapture.PoseTransform(q, t)
+    rigs['rig', 'cam0'] = kapture.PoseTransform()
+    # TODO
 
-    print(sensors)
+    # trajectories from
+    return sensors, rigs
+
+
+def load_times_ids(
+        times_file_path: str
+):
+    table = np.loadtxt(times_file_path)
+    shots_ids = table[:, 0].astype(int)
+    timestamps_ns = (table[:, 1] * 1e9).astype(int)
+    shot_id_to_timestamp = {}
+    for shot_id, timestamp_ns in zip(shots_ids, timestamps_ns):
+        timestamp_ns = int(timestamp_ns)
+        shot_id = f'{shot_id:19d}'
+        # shot_id should match timestamp in ns
+        assert str(timestamp_ns) == shot_id
+        shot_id_to_timestamp[shot_id] = timestamp_ns
+
+    return shot_id_to_timestamp
+
+
+def import_4seasons_images(
+        recording_dir_path: str,
+        kapture_dir_path: str,
+        shot_id_to_timestamp: Dict[str, int],
+        sensors: kapture.Sensors,
+        images_import_method: TransferAction,
+):
+    kapture_images = kapture.RecordsCamera()
+    logger.info('importing images ...')
+    season_image_dir_path = path.join(recording_dir_path, 'undistorted_images')
+    for sensor_id in sensors:
+        for shot_id, timestamp_ns  in shot_id_to_timestamp.items():
+            image_file_name = path.join(sensor_id, f'{shot_id}.png')
+            kapture_images[timestamp_ns, sensor_id] = image_file_name
+
+    filename_list = [f for _, _, f in kapture.flatten(kapture_images)]
+    import_record_data_from_dir_auto(
+        source_record_dirpath=season_image_dir_path,
+        destination_kapture_dirpath=kapture_dir_path,
+        filename_list=filename_list,
+        copy_strategy=images_import_method)
+    return kapture_images
+
+
+def load_4season_keyframe_data(
+        keyframes_file_path: str
+):
+    # first pass, read pose
+    with open(keyframes_file_path, 'rt') as fin:
+        for i in range(10):
+            line = fin.readline()
+            if line.startswith('# camToWorld:'):
+                break
+        if not line.startswith('# camToWorld:'):
+            raise ValueError(f'pose not found in {path.basename(keyframes_file_path)}')
+        # translation vector, rotation quaternion
+        line = fin.readline()
+    line = [float(v) for v in line.split(',')]
+    t = line[0:3]
+    q = line[3:]
+    pose = kapture.PoseTransform(r=q, t=t)
+    # pose found
+    return pose
+
+
+def load_4seasons_keyframes(
+        keyframes_dir_path: str,
+        kapture_dir_path: str,
+        shot_id_to_timestamp: Dict[str, int],
+        sensors: kapture.Sensors,
+):
+    trajectories = kapture.Trajectories()
+    #                                   KeyFrame_1602074967051661568.txt
+    keyframe_filename_re = re.compile(r'^KeyFrame_(?P<shot_id>\d{19})\.txt$')
+    filename_it = (path.basename(f) for f in glob(path.join(keyframes_dir_path, '*.txt')))
+    filename_it = (filename for filename in filename_it
+                   if keyframe_filename_re.match(filename))
+    filename_it = (keyframe_filename_re.match(filename) for filename in filename_it)
+    filename_it = {filename[0]: filename[1] for filename in filename_it}
+    for filename, shot_id in filename_it.items():
+        assert shot_id in shot_id_to_timestamp
+        timestamp_ns = shot_id_to_timestamp[shot_id]
+        keyframes_file_path = path.join(keyframes_dir_path, filename)
+        pose = load_4season_keyframe_data(keyframes_file_path).inverse()
+        trajectories[timestamp_ns, 'rig'] = pose
+
+    return trajectories
 
 
 def _import_4seasons_sequence(
+        calibration_dir_path: str,
         recording_dir_path: str,
         kapture_dir_path: str,
         images_import_method: TransferAction,
         force_overwrite_existing: bool):
     os.makedirs(kapture_dir_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
+    # delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
 
-    snapshots = kapture.RecordsCamera()
-    depth_maps = kapture.RecordsDepth()
-    trajectories = kapture.Trajectories()
-    rigs = kapture.Rigs()
-    sensors = kapture.Sensors()
+    # snapshots = kapture.RecordsCamera()
+    # depth_maps = kapture.RecordsDepth()
+    # trajectories = kapture.Trajectories()
+    # rigs = kapture.Rigs()
+    # sensors = kapture.Sensors()
 
     """
     recording_dir_path contains : 
@@ -121,15 +219,39 @@ def _import_4seasons_sequence(
     septentrio.nmea: contains the raw GNSS measurements in the NMEA format.
     times.txt is a list of times in unix timestamps (in seconds), and exposure times (in milliseconds) for each frame (frame_id, timestamp, exposure).
     """
-    
+
     # sensors
-    # take undistorted images as granted
+    sensors, rigs = load_4seasons_sensors(calibration_dir_path=calibration_dir_path)
 
+    # timestamps
+    times_filename = path.join(recording_dir_path, 'times.txt')
+    shot_id_to_timestamp = load_times_ids(times_filename)
 
-    # Transformations.txt defines rig
+    # images
+    if False:
+        kapture_images = import_4seasons_images(
+            recording_dir_path=recording_dir_path,
+            kapture_dir_path=kapture_dir_path,
+            shot_id_to_timestamp=shot_id_to_timestamp,
+            sensors=sensors,
+            images_import_method=images_import_method
+        )
 
-    # imux.txt defines accel and gyro
+    # trajectorie uses keyframes
+    keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
+    trajectories = load_4seasons_keyframes(
+        keyframes_dir_path=keyframes_dir_path,
+        kapture_dir_path=kapture_dir_path,
+        shot_id_to_timestamp=shot_id_to_timestamp,
+        sensors=sensors,
+    )
 
+    # imu.txt defines accel and gyro
+    imported_kapture = kapture.Kapture(
+        sensors=sensors,
+        rigs=rigs,
+        trajectories=trajectories)
+    kapture_to_dir(kapture_dir_path, imported_kapture)
 
 
 def import_4seasons(
@@ -149,8 +271,6 @@ def import_4seasons(
 
     # sensors
     calibration_dir_path = path.join(d4seasons_dir_path, 'calibration')
-    _import_4seasons_sensors(calibration_dir_path=calibration_dir_path,
-                             kapture_dir_path=kapture_dir_path)
 
     # recordings
     recording_names = [
@@ -160,6 +280,7 @@ def import_4seasons(
     for recording_dir_path in recording_dir_paths:
         logger.debug(f'processing : {recording_dir_path}')
         _import_4seasons_sequence(
+            calibration_dir_path=calibration_dir_path,
             recording_dir_path=recording_dir_path,
             kapture_dir_path=kapture_dir_path,
             images_import_method=images_import_method,
