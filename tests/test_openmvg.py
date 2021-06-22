@@ -482,6 +482,33 @@ class TestOpenMvgReconstruction(unittest.TestCase):
                 descriptor_image_file = path.join(regions_dir_path, image_file_name)+'.desc'
                 self.assertTrue(path.isfile(descriptor_image_file), f"Descriptors file for {image_file_name}")
 
+    def test_kapture_export_to_openmvg_reconstruction(self) -> None:
+        """
+          Test the export_openmvg function on a small kapture dataset with 3D reconstruction data
+          by doing a round trip kapture -> openmvg -> kapture conversion
+        """
+
+        self.assertTrue(path.exists(self._kapture_sample_path), "Kapture directory exists")
+        openmvg_json_file = path.join(self._tempdir.name, 'sfm_export_3d.json')
+        openmvg_image_root_path = path.join(self._tempdir.name, 'images')
+        regions_dir_path = path.join(self._tempdir.name, 'regions')
+        matches_file_path = path.join(self._tempdir.name, 'matches', 'matches.f.txt')
+        export_openmvg(self._kapture_sample_path,
+                       openmvg_json_file,
+                       openmvg_image_root_path,
+                       regions_dir_path,
+                       matches_file_path,
+                       TransferAction.copy)
+        self.assertTrue(path.isfile(openmvg_json_file), "Openmvg JSON file created")
+        self.assertTrue(path.isdir(regions_dir_path), "Openmvg regions dir created")
+        self.assertTrue(path.isfile(matches_file_path), "Openmvg matches file")
+        # Reimport the exported data
+        import_openmvg(openmvg_json_file, regions_dir_path, matches_file_path, self._kapture_path, TransferAction.copy)
+        kapture_data = kcsv.kapture_from_dir(self._kapture_path)
+        # Compare to the original sample
+        kapture_sample_data = kcsv.kapture_from_dir(self._kapture_sample_path)
+        self.assertTrue(equal_kapture(kapture_sample_data, kapture_data), "Kaptures are equal")
+
     def tearDown(self) -> None:
         """
         Clean up after every test
