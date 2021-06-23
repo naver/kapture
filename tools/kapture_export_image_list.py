@@ -30,7 +30,7 @@ def export_image_list(kapture_path: str, output_path: str, export_camera_params:
     :param export_camera_params: if True, add camera parameters after every file name
     :param force: Silently overwrite image list file if already exists.
     """
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     safe_remove_file(output_path, force)
     skip_heavy_useless = [kapture.Trajectories,
                           kapture.RecordsLidar, kapture.RecordsWifi,
