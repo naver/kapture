@@ -36,6 +36,7 @@ import logging
 import os
 import os.path as path
 import re
+import math
 import numpy as np
 import quaternion
 from glob import glob
@@ -55,6 +56,12 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 
 logger = logging.getLogger('4seasons')
 
+MASTER_CAM_ID = 'cam0'
+
+q = quaternion.from_rotation_matrix(np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
+CAM_AXES_KAPTURE_FROM_4SEASONS = kapture.PoseTransform(r=q)
+CAM_AXES_4SEASONS_FROM_KAPTURE = CAM_AXES_KAPTURE_FROM_4SEASONS.inverse()
+
 
 def load_4seasons_sensors(
         calibration_dir_path: str
@@ -72,6 +79,10 @@ def load_4seasons_sensors(
         'cam0': 'undistorted_calib_0.txt',
         'cam1': 'undistorted_calib_1.txt',
     }
+    cam_names = {
+        'cam0': 'cam_left',
+        'cam1': 'cam_right'
+    }
     for cam_id, intrinsic_file_name in intrinsic_file_names.items():
         intrinsic_file_path = path.join(calibration_dir_path, intrinsic_file_name)
         with open(intrinsic_file_path, 'r') as intrinsic_file:
@@ -88,20 +99,23 @@ def load_4seasons_sensors(
             #   800 400
             # assuming image_width image_height
             w, h = (int(e) for e in line)
-            sensors[cam_id] = kapture.Camera(kapture.CameraType.PINHOLE, [w, h, fx, fy, cx, cy], name=cam_id)
+            sensors[cam_id] = kapture.Camera(kapture.CameraType.PINHOLE, [w, h, fx, fy, cx, cy], name=cam_names[cam_id])
 
     # rigs
     rigs = kapture.Rigs()
     stereo_matrix_file_name = path.join(calibration_dir_path, "undistorted_calib_stereo.txt")
-    # 4x4 matrix denoting the rigid transformation from XXX to XXX camera.
+    # contains the 4x4 matrix denoting the rigid transformation from the right to the left camera.
     # cam0 = left, cam1 = right
-    pose_matrix = np.loadtxt(stereo_matrix_file_name)
-    r = pose_matrix[0:3, 0:3]
+    car_from_cam1_matrix = np.loadtxt(stereo_matrix_file_name)
+    r = car_from_cam1_matrix[0:3, 0:3]
     q = quaternion.from_rotation_matrix(r)
-    t = pose_matrix[0:3, 3]
-    cam0_from_cam1 = kapture.PoseTransform(q, t)
-    rigs['rig', 'cam0'] = kapture.PoseTransform()
-    # TODO
+    t = car_from_cam1_matrix[0:3, 3]
+    cam0_4s_from_cam1_4s = kapture.PoseTransform(q, t)
+    cam0_from_cam1 = kapture.PoseTransform.compose([CAM_AXES_KAPTURE_FROM_4SEASONS,
+                                                    cam0_4s_from_cam1_4s,
+                                                    CAM_AXES_4SEASONS_FROM_KAPTURE])
+    rigs['car', MASTER_CAM_ID] = kapture.PoseTransform()
+    rigs['car', 'cam1'] = cam0_from_cam1.inverse()
 
     # trajectories from
     return sensors, rigs
@@ -135,7 +149,7 @@ def import_4seasons_images(
     logger.info('importing images ...')
     season_image_dir_path = path.join(recording_dir_path, 'undistorted_images')
     for sensor_id in sensors:
-        for shot_id, timestamp_ns  in shot_id_to_timestamp.items():
+        for shot_id, timestamp_ns in shot_id_to_timestamp.items():
             image_file_name = path.join(sensor_id, f'{shot_id}.png')
             kapture_images[timestamp_ns, sensor_id] = image_file_name
 
@@ -167,14 +181,14 @@ def load_4season_pose_from_keyframe_data(
 ):
     # read pose
     with open(keyframes_file_path, 'rt') as file:
-        line = read_until_tag(file, KEYFRAME_TAG_POSE)
+        read_until_tag(file, KEYFRAME_TAG_POSE)
         # translation vector, rotation quaternion
         line = file.readline()
     line = [float(v) for v in line.split(',')]
-    t, q = line[0:3], line[3:]
-    rig_from_world = kapture.PoseTransform(r=q, t=t).inverse()
+    tx, ty, tz, qx, qy, qz, qw = line  # NOTE: qw is at the end
+    car_from_world = kapture.PoseTransform(r=[qw, qx, qy, qz], t=[tx, ty, tz]).inverse()
     # pose found
-    return rig_from_world
+    return car_from_world
 
 
 @dataclass
@@ -214,14 +228,15 @@ def load_4season_depth_from_keyframe_data(
 def convert_depth_data_to_depth_map(
         depth_data: DepthData,
         undefined_value=-1.0
-):
+) -> np.ndarray:
+    """ converts depth map from 4 season format to kapture format """
     depth_map = np.ones(depth_data.image_size, dtype=np.float32)
     depth_map *= undefined_value
     assert depth_data.coords.shape[1] == 3  # u, v, d
     for u, v, d in depth_data.coords:
         # convert d to metric according to given formula
         # d =  inverse depth value in 1/m
-        depth_map[ int(u), int(v)] = 1./ d
+        depth_map[int(u), int(v)] = 1. / d if not math.isclose(d, 0.) else 0.
     return depth_map
 
 
@@ -230,12 +245,22 @@ def import_4seasons_keyframes(
         kapture_dir_path: str,
         shot_id_to_timestamp: Dict[str, int],
         sensors: kapture.Sensors,
-): # -> (kapture.Trajectories, kapture.RecordsDepth):
+) -> (kapture.Trajectories, kapture.RecordsDepth):
+    """
+    imports both trajectories and depth maps
+
+    :param keyframes_dir_path:
+    :param kapture_dir_path:
+    :param shot_id_to_timestamp:
+    :param sensors:
+    :return:
+    """
     trajectories = kapture.Trajectories()
     depth_maps = kapture.RecordsDepth()
 
     # make sure depth maps hosting directory exists
     depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
+    os.makedirs(depth_records_path, exist_ok=True)
     #                                   KeyFrame_1602074967051661568.txt
     keyframe_filename_re = re.compile(r'^KeyFrame_(?P<shot_id>\d{19})\.txt$')
     filename_it = (path.basename(f) for f in glob(path.join(keyframes_dir_path, '*.txt')))
@@ -249,13 +274,13 @@ def import_4seasons_keyframes(
         keyframes_file_path = path.join(keyframes_dir_path, filename)
 
         # kapture.io.records.get_depth_map_fullpath()
-        rig_from_world = load_4season_pose_from_keyframe_data(keyframes_file_path)
-        trajectories[timestamp_ns, 'rig'] = rig_from_world
+        car_from_world = load_4season_pose_from_keyframe_data(keyframes_file_path)
+        trajectories[timestamp_ns, 'car'] = car_from_world
 
         season_depth_data = load_4season_depth_from_keyframe_data(keyframes_file_path)
         # records_depth_to_file
-        depth_map_file_name = f'{shot_id}.depth'
-        depth_maps[timestamp_ns, 'cam0'] = depth_map_file_name
+        depth_map_file_name = f'{MASTER_CAM_ID}/{shot_id}.depth'
+        depth_maps[timestamp_ns, MASTER_CAM_ID] = depth_map_file_name
         depth_map = convert_depth_data_to_depth_map(season_depth_data)
         depth_map_file_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path, depth_map_file_name)
         kapture.io.records.records_depth_to_file(depth_map_file_path, depth_map)
@@ -299,16 +324,15 @@ def _import_4seasons_sequence(
     shot_id_to_timestamp = load_times_ids(times_filename)
 
     # images
-    if False:
-        kapture_images = import_4seasons_images(
-            recording_dir_path=recording_dir_path,
-            kapture_dir_path=kapture_dir_path,
-            shot_id_to_timestamp=shot_id_to_timestamp,
-            sensors=sensors,
-            images_import_method=images_import_method
-        )
+    records_camera = import_4seasons_images(
+        recording_dir_path=recording_dir_path,
+        kapture_dir_path=kapture_dir_path,
+        shot_id_to_timestamp=shot_id_to_timestamp,
+        sensors=sensors,
+        images_import_method=images_import_method
+    )
 
-    # trajectorie uses keyframes
+    # trajectories uses keyframes
     keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
     trajectories, depth_maps = import_4seasons_keyframes(
         keyframes_dir_path=keyframes_dir_path,
@@ -321,6 +345,7 @@ def _import_4seasons_sequence(
     imported_kapture = kapture.Kapture(
         sensors=sensors,
         rigs=rigs,
+        records_camera=records_camera,
         trajectories=trajectories)
     kapture_to_dir(kapture_dir_path, imported_kapture)
 
