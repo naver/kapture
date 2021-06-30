@@ -4,7 +4,7 @@ import setuptools
 import warnings
 import os.path as path
 from glob import glob
-from subprocess import check_call
+from subprocess import SubprocessError, check_call
 import os
 import tempfile
 import sys
@@ -31,7 +31,7 @@ def read_doc(filepath):
                        shell=use_shell)
             content = read_file(md_filepath)
 
-    except FileNotFoundError:
+    except (FileNotFoundError, SubprocessError):
         warnings.warn('cannot convert asciidoc to markdown.')
         content = read_file(filepath)
 
