@@ -49,6 +49,7 @@ import path_to_kapture  # noqa: F401
 from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import kapture
 import kapture.utils.logging
+from kapture.utils.paths import path_secure
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
@@ -288,20 +289,24 @@ def import_4seasons_keyframes(
     return trajectories, depth_maps
 
 
-def _import_4seasons_sequence(
+def import_4seasons_sequence(
         calibration_dir_path: str,
         recording_dir_path: str,
         kapture_dir_path: str,
         images_import_method: TransferAction,
         force_overwrite_existing: bool):
-    os.makedirs(kapture_dir_path, exist_ok=True)
-    # delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
+    """
+    converts a 4 seasons recorded sequence (eg. recording_2020-10-07_14-47-51) to kapture format.
 
-    # snapshots = kapture.RecordsCamera()
-    # depth_maps = kapture.RecordsDepth()
-    # trajectories = kapture.Trajectories()
-    # rigs = kapture.Rigs()
-    # sensors = kapture.Sensors()
+    :param calibration_dir_path: path to input calibration directory
+    :param recording_dir_path: path to input sequence directory (e.g. recording_2020-10-07_14-47-51)
+    :param kapture_dir_path: path to output kapture directory
+    :param images_import_method:
+    :param force_overwrite_existing:
+    :return:
+    """
+    delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
+    os.makedirs(kapture_dir_path, exist_ok=True)
 
     """
     recording_dir_path contains : 
@@ -318,6 +323,7 @@ def _import_4seasons_sequence(
 
     # sensors
     sensors, rigs = load_4seasons_sensors(calibration_dir_path=calibration_dir_path)
+    imported_kapture = kapture.Kapture(sensors=sensors, rigs=rigs)
 
     # timestamps
     times_filename = path.join(recording_dir_path, 'times.txt')
@@ -331,6 +337,7 @@ def _import_4seasons_sequence(
         sensors=sensors,
         images_import_method=images_import_method
     )
+    imported_kapture.records_camera = records_camera
 
     # trajectories uses keyframes
     keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
@@ -340,48 +347,12 @@ def _import_4seasons_sequence(
         shot_id_to_timestamp=shot_id_to_timestamp,
         sensors=sensors,
     )
+    imported_kapture.trajectories = trajectories
 
-    # imu.txt defines accel and gyro
-    imported_kapture = kapture.Kapture(
-        sensors=sensors,
-        rigs=rigs,
-        records_camera=records_camera,
-        trajectories=trajectories)
+    # TODO: imu.txt defines accel and gyro
+
+    # finally save the kapture csv files
     kapture_to_dir(kapture_dir_path, imported_kapture)
-
-
-def import_4seasons(
-        d4seasons_dir_path: str,
-        kapture_dir_path: str,
-        images_import_method: TransferAction = TransferAction.skip,
-        force_overwrite_existing: bool = False
-) -> None:
-    """
-    Imports 4seasons dataset and save them as kapture.
-    :param d4seasons_dir_path: path to the 4seasons root path
-    :param kapture_dir_path: path to kapture output top directory
-    :param images_import_method: choose how to import actual image files
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    """
-    os.makedirs(kapture_dir_path, exist_ok=True)
-
-    # sensors
-    calibration_dir_path = path.join(d4seasons_dir_path, 'calibration')
-
-    # recordings
-    recording_names = [
-        'recording_2020-10-07_14-47-51'
-    ]
-    recording_dir_paths = (path.join(d4seasons_dir_path, recording_name) for recording_name in recording_names)
-    for recording_dir_path in recording_dir_paths:
-        logger.debug(f'processing : {recording_dir_path}')
-        _import_4seasons_sequence(
-            calibration_dir_path=calibration_dir_path,
-            recording_dir_path=recording_dir_path,
-            kapture_dir_path=kapture_dir_path,
-            images_import_method=images_import_method,
-            force_overwrite_existing=force_overwrite_existing
-        )
 
 
 def import_4seasons_command_line() -> None:
@@ -401,7 +372,10 @@ def import_4seasons_command_line() -> None:
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete output if already exists.')
     # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to 4seasons root path')
+    parser.add_argument('-i', '--input', required=True,
+                        help='input path to 4 seasons record directory (e.g. ./recording_2020-10-07_14-47-51)')
+    parser.add_argument('-c', '--calibration', required=False,
+                        help='input path to 4 seasons calibration. If not given, assumed to be alongside input.')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
                         help=f'How to import images [link_absolute], '
                              f'choose among: {", ".join(a.name for a in TransferAction)}')
@@ -414,10 +388,16 @@ def import_4seasons_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_4seasons(d4seasons_dir_path=args.input,
-                    kapture_dir_path=args.output,
-                    images_import_method=args.image_transfer,
-                    force_overwrite_existing=args.force)
+    recording_dir_path = path.abspath(args.input)
+    calibration_dir_path = args.calibration or path.join(recording_dir_path, '..', 'calibration')
+    calibration_dir_path = path.abspath(calibration_dir_path)
+
+    import_4seasons_sequence(
+        calibration_dir_path=calibration_dir_path,
+        recording_dir_path=recording_dir_path,
+        kapture_dir_path=args.output,
+        images_import_method=args.image_transfer,
+        force_overwrite_existing=args.force)
 
 
 if __name__ == '__main__':
