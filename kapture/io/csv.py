@@ -349,7 +349,7 @@ def rigs_from_file(filepath: str, sensor_ids: Optional[Set[str]] = None) -> kapt
     with open(filepath) as file:
         table = table_from_file(file)
         for rig_id, sensor_id, qw, qx, qy, qz, tx, ty, tz in table:
-            if rig_id in sensor_ids:
+            if sensor_ids is not None and rig_id in sensor_ids:
                 raise ValueError(f'collision between a sensor ID and rig ID ({rig_id})')
             rotation = float_array_or_none([qw, qx, qy, qz])
             translation = float_array_or_none([tx, ty, tz])
