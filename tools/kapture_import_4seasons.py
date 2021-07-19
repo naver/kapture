@@ -43,7 +43,7 @@ from glob import glob
 from PIL import Image
 from tqdm import tqdm
 from dataclasses import dataclass
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 # kapture
 import path_to_kapture  # noqa: F401
 from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
@@ -54,6 +54,8 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
+from kapture.algo.merge_remap import merge_sensors
+from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 
 logger = logging.getLogger('4seasons')
 
@@ -137,6 +139,17 @@ def load_times_ids(
         shot_id_to_timestamp[shot_id] = timestamp_ns
 
     return shot_id_to_timestamp
+
+
+def guess_timestamp(
+        shot_id: Union[str, int]
+) -> int:
+    # improvise a timestamp for shots not registered in times.txt
+    # 1602074877621449728 -> 1602074877.621449728 sec -> 1602074877621449.728 u sec
+    if not isinstance(shot_id, int):
+        shot_id = int(shot_id)
+    timestamp = int(float(shot_id) * 1e-9 * 1e6)
+    return timestamp
 
 
 def import_4seasons_images(
@@ -289,6 +302,32 @@ def import_4seasons_keyframes(
     return trajectories, depth_maps
 
 
+def import_4seasons_imu(
+        imu_file_path: str,
+        shot_id_to_timestamp: Dict[str, int]
+) -> (kapture.Sensors, kapture.RecordsAccelerometer, kapture.RecordsGyroscope):
+    sensors = kapture.Sensors()
+    accelerometer_id, gyroscope_id = 'accelero', 'gyro'
+    sensors[accelerometer_id] = kapture.Sensor(
+        sensor_type='accelerometer', name=accelerometer_id)
+    sensors[gyroscope_id] = kapture.Sensor(
+        sensor_type='gyroscope', name=gyroscope_id)
+
+    accelerometer = kapture.RecordsAccelerometer()
+    gyroscope = kapture.RecordsGyroscope()
+    # Each line is specified as frame_id, (angular velocity (w_x, w_y, w_z), and linear acceleration (a_x, a_y, a_z)).
+    # 1602074877342319360 -0.009163 0.018326 -0.070250 0.189211 0.860048 9.657110
+    data = np.loadtxt(imu_file_path)
+    shot_ids = data[:, 0].astype(np.int).astype(str)
+    rotation_speeds = data[:, 1:4]
+    translation_accels = data[:, 4:7]
+    for shot_id, (rx, ry, rz), (ax, ay, az) in zip(shot_ids, rotation_speeds, translation_accels):
+        timestamp = shot_id_to_timestamp.get(shot_id, guess_timestamp(shot_id))
+        accelerometer[timestamp, accelerometer_id] = kapture.RecordAccelerometer(ax, ay, az)
+        gyroscope[timestamp, gyroscope_id] = kapture.RecordGyroscope(rx, ry, rz)
+    return sensors, accelerometer, gyroscope
+
+
 def import_4seasons_sequence(
         calibration_dir_path: str,
         recording_dir_path: str,
@@ -349,7 +388,25 @@ def import_4seasons_sequence(
     )
     imported_kapture.trajectories = trajectories
 
-    # TODO: imu.txt defines accel and gyro
+    # imu.txt to accel and gyro
+    imu_file_path = path.join(recording_dir_path, 'imu.txt')
+    imu_sensors, records_accelerometer, records_gyroscope = import_4seasons_imu(
+        imu_file_path=imu_file_path,
+        shot_id_to_timestamp=shot_id_to_timestamp)
+    sensors.update(imu_sensors)
+    imported_kapture.records_accelerometer = records_accelerometer
+    imported_kapture.records_gyroscope = records_gyroscope
+
+    # TODO: register the imu into the rig.
+
+    # GNSS data
+    nmea_file_path = path.join(recording_dir_path, 'septentrio.nmea')
+    gnss_sensors, records_gnss = extract_gnss_from_nmea(
+        nmea_file_path=nmea_file_path, gnss_id='GNSS'
+    )
+    sensors.update(gnss_sensors)
+    imported_kapture.records_gnss = records_gnss
+    # TODO: register the GPS into the rig.
 
     # finally save the kapture csv files
     kapture_to_dir(kapture_dir_path, imported_kapture)

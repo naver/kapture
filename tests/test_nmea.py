@@ -34,16 +34,17 @@ class TestImportNmea(unittest.TestCase):
 
     def test_read_nmea(self):
         nmea_file_path = path.join(self._tmu_sample_path, 'recording_2020-10-07_14-47-51', 'septentrio.nmea')
-        kapture_sensors, records_gnss = extract_gps_from_nmea(nmea_file_path)
+        gnss_id = 'my_gps'
+        kapture_sensors, records_gnss = extract_gnss_from_nmea(nmea_file_path, gnss_id=gnss_id)
 
         # check sensor part
         self.assertIsInstance(kapture_sensors, kapture.Sensors)
         self.assertEqual(len(kapture_sensors), 1)
-        self.assertIn('gps01', kapture_sensors)
-        gnss_sensor = kapture_sensors['gps01']
+        self.assertIn(gnss_id, kapture_sensors)
+        gnss_sensor = kapture_sensors[gnss_id]
         self.assertEqual(gnss_sensor.sensor_type, 'gnss')
         self.assertEqual(gnss_sensor.sensor_params[0], 'EPSG:4326')
-        self.assertEqual(gnss_sensor.name, 'gps01')
+        self.assertEqual(gnss_sensor.name, gnss_id)
 
         # check records
         self.assertIsInstance(records_gnss, kapture.RecordsGnss)
@@ -52,9 +53,8 @@ class TestImportNmea(unittest.TestCase):
         range = np.min(timestamps), np.max(timestamps)
         self.assertEqual(range, (1602074797700000000, 1602075208800000000))
         first_records = records_gnss[1602074797700000000]
-        self.assertIn('gps01', first_records)
-        first_record = first_records['gps01']
+        self.assertIn(gnss_id, first_records)
+        first_record = first_records[gnss_id]
         first_record_expected = kapture.RecordGnss(x=11.619441895, y=48.19602170666667, z=494.6412,
                                                    utc=1602074797700000000, dop=2.6)
         self.assertEqual(first_record, first_record_expected)
-        

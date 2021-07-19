@@ -9,7 +9,7 @@ from PIL import Image
 from datetime import datetime, timezone, timedelta
 import pytz
 import logging
-from typing import Tuple, Dict
+from typing import Tuple, Optional
 from tqdm import tqdm
 import kapture
 from kapture.io.csv import table_from_file
@@ -76,27 +76,25 @@ def nmea_coord_to_lla(
     return lat_dec, lon_dec, alt_dec
 
 
-def extract_gps_from_nmea(
-        nmea_file_path: str
+def extract_gnss_from_nmea(
+        nmea_file_path: str,
+        gnss_id: Optional[str]='gnss'
 ):
     """
-    Extract GPS coordinates from NMEA file, returns the new sensor and gnss records.
-    - Gnss timestamps are:
-    - sensor ids are:
+    Extract coordinates from NMEA file, returns sensors with the new gnss sensor in it and gnss records.
+    - Gnss timestamps are: in nanoseconds
 
     :param nmea_file_path: path to nmea input file..
+    :param gnss_id: ID of the GNSS sensor.
     :return:
     """
     # only load sensors + records_data:
     disable_tqdm = logger.getEffectiveLevel() != logging.INFO
 
-    # make up new gps ids
-    GPS_ID = 'gps01'
-
     # add new gps ids to sensors
     gnss_kapture_sensors = kapture.Sensors()
-    gnss_kapture_sensors[GPS_ID] = kapture.Sensor(
-        sensor_type='gnss', name=GPS_ID,
+    gnss_kapture_sensors[gnss_id] = kapture.Sensor(
+        sensor_type='gnss', name=gnss_id,
         sensor_params=['EPSG:4326'])  # aka WGS84
     #  x, y, z, utc, dop
     records_gnss = kapture.RecordsGnss()
@@ -121,33 +119,7 @@ def extract_gps_from_nmea(
                 lat, lon, alt = nmea_coord_to_lla(lat, ns, lon, ew, alt)
                 # x, y, z, utc, dop
                 gps_record = kapture.RecordGnss(x=lon, y=lat, z=alt, utc=timestamp_ns, dop=dop)
-                records_gnss[timestamp_ns, GPS_ID] = gps_record
+                records_gnss[timestamp_ns, gnss_id] = gps_record
 
     return gnss_kapture_sensors, records_gnss
 
-
-def import_gps_from_nmea(
-        nmea_file_path: str,
-        kapture_dir_path: str
-):
-    """
-    Imports (extracts and writes) GPS data from NMEA files
-
-    :param nmea_file_path: path to nmea input file..
-    :param kapture_dir_path: path to kapture directory. kapture data are modified.
-    :return:
-    """
-    logger.info('loading kapture partial ...')
-
-    # load exifs
-    gnss_kapture_sensors, records_gnss = extract_gps_from_nmea(nmea_file_path)
-
-    # kapture_data.sensors.update(gnss_kapture_sensors)
-
-    # overwrite sensors and gnss only
-    # sensors_filepath = get_csv_fullpath(kapture.Sensors, kapture_dirpath)
-    # logger.info(f'writing {sensors_filepath} ...')
-    # kapture.io.csv.sensors_to_file(sensors_filepath, kapture_data.sensors)
-    # records_gnss_filepath = get_csv_fullpath(kapture.RecordsGnss, kapture_dirpath)
-    # logger.info(f'writing {records_gnss_filepath} ...')
-    # kapture.io.csv.records_gnss_to_file(records_gnss_filepath, records_gnss)
