@@ -60,6 +60,7 @@ from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 logger = logging.getLogger('4seasons')
 
 MASTER_CAM_ID = 'cam0'
+RIG_ID = 'car'
 
 q = quaternion.from_rotation_matrix(np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
 CAM_AXES_KAPTURE_FROM_4SEASONS = kapture.PoseTransform(r=q)
@@ -68,7 +69,7 @@ CAM_AXES_4SEASONS_FROM_KAPTURE = CAM_AXES_KAPTURE_FROM_4SEASONS.inverse()
 
 def load_4seasons_sensors(
         calibration_dir_path: str
-):
+) -> (kapture.Sensors, kapture.Rigs):
     # this dataset is made with a single stereo camera (2 cams).
 
     sensors = kapture.Sensors()
@@ -117,8 +118,8 @@ def load_4seasons_sensors(
     cam0_from_cam1 = kapture.PoseTransform.compose([CAM_AXES_KAPTURE_FROM_4SEASONS,
                                                     cam0_4s_from_cam1_4s,
                                                     CAM_AXES_4SEASONS_FROM_KAPTURE])
-    rigs['car', MASTER_CAM_ID] = kapture.PoseTransform()
-    rigs['car', 'cam1'] = cam0_from_cam1.inverse()
+    rigs[RIG_ID, MASTER_CAM_ID] = kapture.PoseTransform()
+    rigs[RIG_ID, 'cam1'] = cam0_from_cam1.inverse()
 
     # trajectories from
     return sensors, rigs
@@ -158,7 +159,7 @@ def import_4seasons_images(
         shot_id_to_timestamp: Dict[str, int],
         sensors: kapture.Sensors,
         images_import_method: TransferAction,
-):
+) -> kapture.RecordsCamera:
     kapture_images = kapture.RecordsCamera()
     logger.info('importing images ...')
     season_image_dir_path = path.join(recording_dir_path, 'undistorted_images')
@@ -396,7 +397,6 @@ def import_4seasons_sequence(
     sensors.update(imu_sensors)
     imported_kapture.records_accelerometer = records_accelerometer
     imported_kapture.records_gyroscope = records_gyroscope
-
     # TODO: register the imu into the rig.
 
     # GNSS data
@@ -406,7 +406,8 @@ def import_4seasons_sequence(
     )
     sensors.update(gnss_sensors)
     imported_kapture.records_gnss = records_gnss
-    # TODO: register the GPS into the rig.
+    gnss_id = next(iter(gnss_sensors))
+    imported_kapture.rigs[RIG_ID, gnss_id] = kapture.PoseTransform()
 
     # finally save the kapture csv files
     kapture_to_dir(kapture_dir_path, imported_kapture)
