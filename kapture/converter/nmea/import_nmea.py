@@ -113,13 +113,15 @@ def extract_gnss_from_nmea(
             if '$GPGGA' == trame_type:  # GPS coordinates
                 # UTC time, Latitude, hemisphere, Longitude, meridian, 1 (for GPS), #satellites used, HDOP, Altitude,...
                 time_str, lat, ns, lon, ew, t, sats, dop, alt = trame[1:10]
-                timestamp_dt = nmea_str_to_datetime(day, time_str)
-                timestamp_ns = int(timestamp_dt.timestamp() * 1e9)
-                # todo: apply time shift from gps to camera
-                lat, lon, alt = nmea_coord_to_lla(lat, ns, lon, ew, alt)
-                # x, y, z, utc, dop
-                gps_record = kapture.RecordGnss(x=lon, y=lat, z=alt, utc=timestamp_ns, dop=dop)
-                records_gnss[timestamp_ns, gnss_id] = gps_record
+                try:
+                    timestamp_dt = nmea_str_to_datetime(day, time_str)
+                    timestamp_ns = int(timestamp_dt.timestamp() * 1e9)
+                    lat, lon, alt = nmea_coord_to_lla(lat, ns, lon, ew, alt)
+                    # x, y, z, utc, dop
+                    gps_record = kapture.RecordGnss(x=lon, y=lat, z=alt, utc=timestamp_ns, dop=dop)
+                    records_gnss[timestamp_ns, gnss_id] = gps_record
+                except Exception as e:
+                    logger.debug(f'skipping malformed nmea frame {e}')
 
     return gnss_kapture_sensors, records_gnss
 
