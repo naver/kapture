@@ -54,20 +54,23 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
-from kapture.algo.merge_remap import merge_sensors
+from kapture.utils.logging import getLogger
 from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 
-logger = logging.getLogger('4seasons')
+logger = getLogger()
 
 MASTER_CAM_ID = 'cam0'
 RIG_ID = 'car'
+ACCELEROMETER_ID = 'accelero'
+GYROSCOPE_ID = 'gyro'
+DEPTH_ID = 'depth_sensor'
 
 q = quaternion.from_rotation_matrix(np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]]))
 CAM_AXES_KAPTURE_FROM_4SEASONS = kapture.PoseTransform(r=q)
 CAM_AXES_4SEASONS_FROM_KAPTURE = CAM_AXES_KAPTURE_FROM_4SEASONS.inverse()
 
 
-def load_4seasons_sensors(
+def load_4seasons_cameras(
         calibration_dir_path: str
 ) -> (kapture.Sensors, kapture.Rigs):
     # this dataset is made with a single stereo camera (2 cams).
@@ -162,10 +165,10 @@ def import_4seasons_images(
 ) -> kapture.RecordsCamera:
     kapture_images = kapture.RecordsCamera()
     logger.info('importing images ...')
-    season_image_dir_path = path.join(recording_dir_path, 'undistorted_images')
+    season_image_dir_path = recording_dir_path
     for sensor_id in sensors:
         for shot_id, timestamp_ns in shot_id_to_timestamp.items():
-            image_file_name = path.join(sensor_id, f'{shot_id}.png')
+            image_file_name = path.join('undistorted_images', sensor_id, f'{shot_id}.png')
             kapture_images[timestamp_ns, sensor_id] = image_file_name
 
     filename_list = [f for _, _, f in kapture.flatten(kapture_images)]
@@ -217,7 +220,6 @@ class DepthData:
 def load_4season_depth_from_keyframe_data(
         keyframes_file_path: str
 ) -> DepthData:
-    # read pose
     with open(keyframes_file_path, 'rt') as file:
         read_until_tag(file, KEYFRAME_TAG_CAM)
         fx, fy, cx, cy, width, height, *_ = (float(v) for v in file.readline().split(','))
@@ -255,52 +257,94 @@ def convert_depth_data_to_depth_map(
     return depth_map
 
 
-def import_4seasons_keyframes(
-        keyframes_dir_path: str,
-        kapture_dir_path: str,
-        shot_id_to_timestamp: Dict[str, int],
-        sensors: kapture.Sensors,
-) -> (kapture.Trajectories, kapture.RecordsDepth):
-    """
-    imports both trajectories and depth maps
-
-    :param keyframes_dir_path:
-    :param kapture_dir_path:
-    :param shot_id_to_timestamp:
-    :param sensors:
-    :return:
-    """
-    trajectories = kapture.Trajectories()
-    depth_maps = kapture.RecordsDepth()
-
-    # make sure depth maps hosting directory exists
-    depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
-    os.makedirs(depth_records_path, exist_ok=True)
-    #                                   KeyFrame_1602074967051661568.txt
+def get_keyframe_file_names(
+        keyframes_dir_path: str
+) -> List[str]:
+    """ populates keyframe directory and return dict with {filename: shot_id} """
     keyframe_filename_re = re.compile(r'^KeyFrame_(?P<shot_id>\d{19})\.txt$')
     filename_it = (path.basename(f) for f in glob(path.join(keyframes_dir_path, '*.txt')))
     filename_it = (filename for filename in filename_it
                    if keyframe_filename_re.match(filename))
     filename_it = (keyframe_filename_re.match(filename) for filename in filename_it)
     filename_it = {filename[0]: filename[1] for filename in filename_it}
-    for filename, shot_id in filename_it.items():
+    return filename_it
+
+
+def import_4seasons_trajectory(
+        keyframes_dir_path: str,
+        kapture_dir_path: str,
+        shot_id_to_timestamp: Dict[str, int],
+) -> kapture.Trajectories:
+    """
+    imports trajectories
+
+    :param keyframes_dir_path:
+    :param kapture_dir_path:
+    :param shot_id_to_timestamp:
+    :return:
+    """
+    logger.info('importing images')
+    trajectories = kapture.Trajectories()
+
+    # make sure depth maps hosting directory exists
+    depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
+    os.makedirs(depth_records_path, exist_ok=True)
+    #                                   KeyFrame_1602074967051661568.txt
+    filename_it = get_keyframe_file_names(keyframes_dir_path)
+    hide_progress_bar = getLogger().getEffectiveLevel() > logging.INFO
+    for filename, shot_id in tqdm(filename_it.items(), disable=hide_progress_bar):
         assert shot_id in shot_id_to_timestamp
         timestamp_ns = shot_id_to_timestamp[shot_id]
         keyframes_file_path = path.join(keyframes_dir_path, filename)
-
-        # kapture.io.records.get_depth_map_fullpath()
         car_from_world = load_4season_pose_from_keyframe_data(keyframes_file_path)
         trajectories[timestamp_ns, 'car'] = car_from_world
 
+    return trajectories
+
+
+def import_4seasons_depth(
+        keyframes_dir_path: str,
+        kapture_dir_path: str,
+        shot_id_to_timestamp: Dict[str, int],
+        images: kapture.RecordsCamera,
+        camera: kapture.Camera
+) -> (kapture.Sensors, kapture.RecordsDepth):
+    """
+    imports depth maps
+
+    :param keyframes_dir_path:
+    :param kapture_dir_path:
+    :param shot_id_to_timestamp:
+    :param images: input kapture images (used to make up depth map file names)
+    :return:
+    """
+
+    logger.info('importing depth maps')
+    sensors = kapture.Sensors()
+    sensors[DEPTH_ID] = kapture.Camera(
+        sensor_type='depth',  name=DEPTH_ID, camera_type=camera.camera_type, camera_params=camera.camera_params)
+    depth_maps = kapture.RecordsDepth()  # todo: copy cam0 intrinsics
+
+    # make sure depth maps hosting directory exists
+    depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
+    os.makedirs(depth_records_path, exist_ok=True)
+    #                                   KeyFrame_1602074967051661568.txt
+    filename_it = get_keyframe_file_names(keyframes_dir_path)
+    hide_progress_bar = getLogger().getEffectiveLevel() > logging.INFO
+    for keyframe_filename, shot_id in tqdm(filename_it.items(), disable=hide_progress_bar):
+        assert shot_id in shot_id_to_timestamp
+        timestamp_ns = shot_id_to_timestamp[shot_id]
+        keyframes_file_path = path.join(keyframes_dir_path, keyframe_filename)
+        image_file_name = images[timestamp_ns, MASTER_CAM_ID]
         season_depth_data = load_4season_depth_from_keyframe_data(keyframes_file_path)
         # records_depth_to_file
-        depth_map_file_name = f'{MASTER_CAM_ID}/{shot_id}.depth'
-        depth_maps[timestamp_ns, MASTER_CAM_ID] = depth_map_file_name
+        depth_map_file_name = f'{path.splitext(image_file_name)[0]}.depth'
+        depth_maps[timestamp_ns, DEPTH_ID] = depth_map_file_name
         depth_map = convert_depth_data_to_depth_map(season_depth_data)
         depth_map_file_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path, depth_map_file_name)
         kapture.io.records.records_depth_to_file(depth_map_file_path, depth_map)
 
-    return trajectories, depth_maps
+    return sensors, depth_maps
 
 
 def import_4seasons_imu(
@@ -308,11 +352,10 @@ def import_4seasons_imu(
         shot_id_to_timestamp: Dict[str, int]
 ) -> (kapture.Sensors, kapture.RecordsAccelerometer, kapture.RecordsGyroscope):
     sensors = kapture.Sensors()
-    accelerometer_id, gyroscope_id = 'accelero', 'gyro'
-    sensors[accelerometer_id] = kapture.Sensor(
-        sensor_type='accelerometer', name=accelerometer_id)
-    sensors[gyroscope_id] = kapture.Sensor(
-        sensor_type='gyroscope', name=gyroscope_id)
+    sensors[ACCELEROMETER_ID] = kapture.Sensor(
+        sensor_type='accelerometer', name=ACCELEROMETER_ID)
+    sensors[GYROSCOPE_ID] = kapture.Sensor(
+        sensor_type='gyroscope', name=GYROSCOPE_ID)
 
     accelerometer = kapture.RecordsAccelerometer()
     gyroscope = kapture.RecordsGyroscope()
@@ -324,8 +367,8 @@ def import_4seasons_imu(
     translation_accels = data[:, 4:7]
     for shot_id, (rx, ry, rz), (ax, ay, az) in zip(shot_ids, rotation_speeds, translation_accels):
         timestamp = shot_id_to_timestamp.get(shot_id, guess_timestamp(shot_id))
-        accelerometer[timestamp, accelerometer_id] = kapture.RecordAccelerometer(ax, ay, az)
-        gyroscope[timestamp, gyroscope_id] = kapture.RecordGyroscope(rx, ry, rz)
+        accelerometer[timestamp, ACCELEROMETER_ID] = kapture.RecordAccelerometer(ax, ay, az)
+        gyroscope[timestamp, GYROSCOPE_ID] = kapture.RecordGyroscope(rx, ry, rz)
     return sensors, accelerometer, gyroscope
 
 
@@ -362,7 +405,7 @@ def import_4seasons_sequence(
     """
 
     # sensors
-    sensors, rigs = load_4seasons_sensors(calibration_dir_path=calibration_dir_path)
+    sensors, rigs = load_4seasons_cameras(calibration_dir_path=calibration_dir_path)
     imported_kapture = kapture.Kapture(sensors=sensors, rigs=rigs)
 
     # timestamps
@@ -379,15 +422,25 @@ def import_4seasons_sequence(
     )
     imported_kapture.records_camera = records_camera
 
-    # trajectories uses keyframes
+    # trajectories from keyframes
     keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
-    trajectories, depth_maps = import_4seasons_keyframes(
+    trajectories = import_4seasons_trajectory(
+        keyframes_dir_path=keyframes_dir_path,
+        kapture_dir_path=kapture_dir_path,
+        shot_id_to_timestamp=shot_id_to_timestamp
+    )
+    imported_kapture.trajectories = trajectories
+
+    # depth maps from keyframes
+    depth_sensors, depth_maps = import_4seasons_depth(
         keyframes_dir_path=keyframes_dir_path,
         kapture_dir_path=kapture_dir_path,
         shot_id_to_timestamp=shot_id_to_timestamp,
-        sensors=sensors,
+        images=imported_kapture.records_camera,
+        camera=imported_kapture.sensors[MASTER_CAM_ID]
     )
-    imported_kapture.trajectories = trajectories
+    imported_kapture.records_depth = depth_maps
+    sensors.update(depth_sensors)
 
     # imu.txt to accel and gyro
     imu_file_path = path.join(recording_dir_path, 'imu.txt')
@@ -397,7 +450,9 @@ def import_4seasons_sequence(
     sensors.update(imu_sensors)
     imported_kapture.records_accelerometer = records_accelerometer
     imported_kapture.records_gyroscope = records_gyroscope
-    # TODO: register the imu into the rig.
+    for imu_id in imu_sensors:
+        imported_kapture.rigs[RIG_ID, imu_id] = kapture.PoseTransform()
+        # TODO: set the orientation of imu into the rig.
 
     # GNSS data
     nmea_file_path = path.join(recording_dir_path, 'septentrio.nmea')
