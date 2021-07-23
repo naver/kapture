@@ -74,6 +74,7 @@ setuptools.setup(
         'pyyaml>=5.1',
         'wcmatch>=5.0',
         'tabulate>=0.8.7',
+        'pytz>=2021.1'
     ],
     extras_require={
         'dev': ['pytest'],
