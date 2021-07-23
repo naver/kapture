@@ -11,7 +11,7 @@ import numpy as np
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.records import images_to_filepaths, get_image_fullpath
-from kapture.converter.nmea.import_nmea import extract_gps_from_nmea
+from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 
 from kapture.algo.compare import equal_kapture, equal_records_gnss
 
@@ -50,8 +50,8 @@ class TestImportNmea(unittest.TestCase):
         self.assertIsInstance(records_gnss, kapture.RecordsGnss)
         self.assertEqual(len(records_gnss), 3413)
         timestamps = np.array([int(k) for k in records_gnss.keys()])
-        range = np.min(timestamps), np.max(timestamps)
-        self.assertEqual(range, (1602074797700000000, 1602075208800000000))
+        timestamp_range = np.min(timestamps), np.max(timestamps)
+        self.assertEqual(timestamp_range, (1602074797700000000, 1602075208800000000))
         first_records = records_gnss[1602074797700000000]
         self.assertIn(gnss_id, first_records)
         first_record = first_records[gnss_id]
