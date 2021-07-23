@@ -441,6 +441,7 @@ def import_4seasons_sequence(
     )
     imported_kapture.records_depth = depth_maps
     sensors.update(depth_sensors)
+    # todo: add depth sensor to rig
 
     # imu.txt to accel and gyro
     imu_file_path = path.join(recording_dir_path, 'imu.txt')
