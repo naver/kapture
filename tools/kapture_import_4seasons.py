@@ -321,7 +321,6 @@ def import_4seasons_depth(
         keyframes_dir_path: str,
         kapture_dir_path: str,
         shot_id_to_timestamp: Dict[str, int],
-        images: kapture.RecordsCamera,
         intrinsics: kapture.Camera
 ) -> (kapture.Sensors, kapture.RecordsDepth):
     """
@@ -330,7 +329,6 @@ def import_4seasons_depth(
     :param keyframes_dir_path:
     :param kapture_dir_path:
     :param shot_id_to_timestamp:
-    :param images: input kapture images (used to make up depth map file names)
     :param intrinsics: input kapture camera (used to build depth sensor intrinsics)
     :return:
     """
@@ -452,8 +450,7 @@ def import_4seasons_sequence(
         keyframes_dir_path=keyframes_dir_path,
         kapture_dir_path=kapture_dir_path,
         shot_id_to_timestamp=shot_id_to_timestamp,
-        images=imported_kapture.records_camera,
-        camera=imported_kapture.sensors[MASTER_CAM_ID]
+        intrinsics=imported_kapture.sensors[MASTER_CAM_ID]
     )
     imported_kapture.records_depth = depth_maps
     sensors.update(depth_sensors)
