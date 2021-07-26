@@ -163,12 +163,27 @@ def import_4seasons_images(
         sensors: kapture.Sensors,
         images_import_method: TransferAction,
 ) -> kapture.RecordsCamera:
+    """
+    imports and copy image files
+
+    :param recording_dir_path:
+    :param kapture_dir_path:
+    :param shot_id_to_timestamp:
+    :param sensors:
+    :param images_import_method:
+    :return:
+    """
     kapture_images = kapture.RecordsCamera()
     logger.info('importing images ...')
     season_image_dir_path = recording_dir_path
     for sensor_id in sensors:
         for shot_id, timestamp_ns in shot_id_to_timestamp.items():
             image_file_name = path.join('undistorted_images', sensor_id, f'{shot_id}.png')
+            # check image file is available
+            if not path.isfile(path.join(season_image_dir_path, image_file_name)):
+                logger.warning(f'image file is missing (and ignored) : {image_file_name}')
+                # just throw it away
+                continue
             kapture_images[timestamp_ns, sensor_id] = image_file_name
 
     filename_list = [f for _, _, f in kapture.flatten(kapture_images)]
