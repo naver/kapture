@@ -322,7 +322,7 @@ def import_4seasons_depth(
         kapture_dir_path: str,
         shot_id_to_timestamp: Dict[str, int],
         images: kapture.RecordsCamera,
-        camera: kapture.Camera
+        intrinsics: kapture.Camera
 ) -> (kapture.Sensors, kapture.RecordsDepth):
     """
     imports depth maps
@@ -331,14 +331,16 @@ def import_4seasons_depth(
     :param kapture_dir_path:
     :param shot_id_to_timestamp:
     :param images: input kapture images (used to make up depth map file names)
+    :param intrinsics: input kapture camera (used to build depth sensor intrinsics)
     :return:
     """
 
     logger.info('importing depth maps')
     sensors = kapture.Sensors()
+    # copy intrinsics
     sensors[DEPTH_ID] = kapture.Camera(
-        sensor_type='depth',  name=DEPTH_ID, camera_type=camera.camera_type, camera_params=camera.camera_params)
-    depth_maps = kapture.RecordsDepth()  # todo: copy cam0 intrinsics
+        sensor_type='depth',  name=DEPTH_ID, camera_type=intrinsics.camera_type, camera_params=intrinsics.camera_params)
+    depth_maps = kapture.RecordsDepth()
 
     # make sure depth maps hosting directory exists
     depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
@@ -350,10 +352,9 @@ def import_4seasons_depth(
         assert shot_id in shot_id_to_timestamp
         timestamp_ns = shot_id_to_timestamp[shot_id]
         keyframes_file_path = path.join(keyframes_dir_path, keyframe_filename)
-        image_file_name = images[timestamp_ns, MASTER_CAM_ID]
         season_depth_data = load_4season_depth_from_keyframe_data(keyframes_file_path)
         # records_depth_to_file
-        depth_map_file_name = f'{path.splitext(image_file_name)[0]}.depth'
+        depth_map_file_name = path.join('undistorted_images', 'depth', f'{shot_id}.depth')
         depth_maps[timestamp_ns, DEPTH_ID] = depth_map_file_name
         depth_map = convert_depth_data_to_depth_map(season_depth_data)
         depth_map_file_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path, depth_map_file_name)
