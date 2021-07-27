@@ -13,9 +13,10 @@ import os.path as path
 import requests
 import yaml
 import fnmatch
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Set
 from tqdm import tqdm
 import path_to_kapture  # noqa: F401
+from dataclasses import dataclass
 # import kapture
 import kapture.utils.logging
 from kapture.converter.downloader.download import download_file, get_remote_file_size
@@ -27,9 +28,12 @@ logger = logging.getLogger('downloader')
 logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
 
 INDEX_FILENAME = 'kapture_dataset_index.yaml'
+INSTALL_LOG_FILENAME = 'kapture_dataset_installed.yaml'
 DEFAULT_DATASET_PATH = path.normpath(path.abspath('.'))
 DEFAULT_REPOSITORY_URL = 'https://github.com/naver/kapture/raw/main/dataset'
-# DEFAULT_REPOSITORY_URL = 'https://download.europe.naverlabs.com/kapture/'
+
+# absolute path to root directory where all datasets are installed, its set for the all runtime
+install_dirpath = None
 
 
 def ask_confirmation(question):
@@ -44,72 +48,144 @@ def ask_confirmation(question):
     return user_choice in validate
 
 
+class InstallDir:
+    """  """
+
+    def __init__(
+            self,
+            index_filepath: str,
+            install_dir_path: str):
+        self._index_filepath = index_filepath
+        self._install_dir_path = install_dir_path
+        self._dataset_index_filepath = path.join(install_dir_path, INDEX_FILENAME)
+        self._dataset_installed_list_filepath = path.join(install_dir_path, INSTALL_LOG_FILENAME)
+
+        self._dataset_index = None
+        self._installed_index_cache = None  # list of already installed
+
+    @property
+    def install_root_path(self) -> str:
+        return self._install_dir_path
+
+    def _load_installed_index(self):
+        """ load installed index from file. Index is empty if file does not exists. """
+        logger.debug(f'loading {self._dataset_installed_list_filepath}')
+        if path.isfile(self._dataset_installed_list_filepath):
+            with open(self._dataset_installed_list_filepath, 'rt') as f:
+                installed_index = set(yaml.safe_load(f))
+        else:
+            installed_index = set()
+        self._installed_index_cache = installed_index
+
+    def _write_installed_index(self):
+        """ write installed index to file """
+        logger.debug(f'writing {self._dataset_installed_list_filepath}')
+        with open(self._dataset_installed_list_filepath, 'wt') as f:
+            yaml.dump(list(self._installed_index), f)
+
+    # Installed index
+    @property
+    def _installed_index(self) -> Set[str]:
+        if self._installed_index_cache is None:
+            # first time, need to be loaded
+            self._load_installed_index()
+        assert self._installed_index_cache is not None
+        return self._installed_index_cache
+
+    def mark_as_installed(self, dataset_name: str, installed: bool = True):
+        _ = self._installed_index  # make sure its up to date
+        if not self.is_installed(dataset_name) and installed:
+            logger.debug(f'dataset marked installed {dataset_name} ')
+            self._installed_index_cache.add(dataset_name)
+            self._write_installed_index()
+        if self.is_installed(dataset_name) and not installed:
+            logger.debug(f'dataset marked uninstalled {dataset_name} ')
+            self._installed_index_cache.discard(dataset_name)
+            self._write_installed_index()
+
+    def is_installed(self, dataset_name: str) -> bool:
+        return dataset_name in self._installed_index
+
+    # dataset index
+    def load_datasets_from_file(
+            self,
+            filter_patterns: Optional[List[str]] = None
+    ):
+        """
+        Parses and load data from the index files, under yaml format.
+        the yaml file looks like :
+        ----
+        robotcar_seasons_02:
+          url: http://download.europe.naverlabs.com//kapture/robotcar_seasons_02.tar.gz
+          sha256sum: 542ef47c00d5e387cfb0dcadb2459ae2fb17d59010cc51bae0c49403b4fa6a18
+          license: https://filesamples.com/samples/document/txt/sample3.txt # optional
+        ----
+
+        :param filter_patterns: optional input list of unix-like patterns (e.g. SiLDa*) to filter datasets
+        :return: dict name -> [url, sub_path, sha256sum]
+        """
+        if not path.isfile(self._index_filepath):
+            raise FileNotFoundError('no index file: do an update.')
+        with open(self._index_filepath, 'rt') as f:
+            datasets_yaml = yaml.safe_load(f)
+
+        if len(datasets_yaml) == 0:
+            raise FileNotFoundError('invalid index file: do an update.')
+
+        nb_total = len(datasets_yaml)
+        # filter only dataset matching filter_patterns
+        if filter_patterns:
+            datasets_yaml = {dataset_name: data_yaml
+                             for dataset_name, data_yaml in datasets_yaml.items()
+                             if any(fnmatch.fnmatch(dataset_name, pattern) for pattern in filter_patterns)}
+
+        logger.debug(f'will prob status for {len(datasets_yaml)}/{nb_total} datasets ...')
+        datasets = {}
+        hide_progress_bar = True or logger.getEffectiveLevel() > logging.INFO
+        for dataset_name, data_yaml in tqdm(datasets_yaml.items(), disable=hide_progress_bar):
+            datasets[dataset_name] = Dataset(name=dataset_name,
+                                             install_dir=self,
+                                             archive_url=data_yaml['url'],
+                                             archive_sha256sum=data_yaml['sha256sum'],
+                                             install_script_filename=data_yaml.get('install_script'),
+                                             license_url=data_yaml.get('license_url'))
+
+        return datasets
+
+
 class Dataset:
     def __init__(
             self,
             name: str,
-            install_dirpath: str,
+            install_dir: InstallDir,
             archive_url: str,
             archive_sha256sum: str,
-            install_script_filename: Optional[str] = None
+            install_script_filename: Optional[str] = None,
+            license_url: Optional[str] = None
     ):
         """
         :param name: name of the archive (dataset or part of a dataset)
-        :param install_dirpath: input absolute path to root directory where all datasets are installed.
+        :param install_dir: root directory where all datasets are installed.
         :param archive_url: remote url of the dataset archive (tar).
         :param archive_sha256sum: expected sha256 sum of the archive file.
         :param install_script_filename: if given, this script is to be called to finish installation (eg. dl 3rd party).
+        :param license_url: if given, url to license file to agree on.
         """
         self._name = name
 
-        self._install_local_path = install_dirpath
-        self._archive_filepath = path.join(install_dirpath, name + '.tar.gz')
-        self._dataset_index_filepath = path.join(install_dirpath, 'kapture_dataset_index.yaml')
-        self._dataset_install_list_filepath = path.join(install_dirpath, 'kapture_dataset_installed.yaml')
+        self._install_dir = install_dir
+        self._archive_filepath = path.join(install_dir.install_root_path, name + '.tar.gz')
         self._archive_url = archive_url
         self._archive_sha256sum_remote = archive_sha256sum
         self._install_script_filename = install_script_filename
-        self._is_installed = None
+        # license
+        self._license_url = license_url
 
     def mark_as_installed(self, installed=True):
-        # load previous version
-        if path.isfile(self._dataset_install_list_filepath):
-            with open(self._dataset_install_list_filepath, 'rt') as f:
-                datasets_list = set(yaml.safe_load(f))
-        else:
-            datasets_list = set()
+        self._install_dir.mark_as_installed(self._name, installed)
 
-        if installed:
-            datasets_list.add(self._name)
-        else:
-            datasets_list.discard(self._name)
-
-        # update with current dataset status
-        # write updated version
-        logger.debug(f'saving {"installed" if installed else "not installed"} in {self._dataset_install_list_filepath}')
-        with open(self._dataset_install_list_filepath, 'wt') as f:
-            yaml.dump(list(datasets_list), f)
-
-        self._is_installed = installed
-
-    def is_installed(self, installation_list_cache=None) -> bool:
-        """
-        :param installation_list_cache: spare the read of the yaml file if already loaded before.
-        """
-        if self._is_installed is not None:
-            return self._is_installed
-
-        if installation_list_cache is not None:
-            installation_list = installation_list_cache
-        elif path.isfile(self._dataset_install_list_filepath):
-            with open(self._dataset_install_list_filepath, 'rt') as f:
-                installation_list = yaml.safe_load(f)
-        else:
-            installation_list = []
-
-        assert isinstance(installation_list, list)
-        self._is_installed = self._name in installation_list
-        return self._is_installed
+    def is_installed(self) -> bool:
+        return self._install_dir.is_installed(self._name)
 
     def is_sha256_consistent(self) -> bool:
         """ check sha256sum of the archive against the expected sha256. Returns true if they are the same. """
@@ -129,6 +205,10 @@ class Dataset:
     @property
     def url(self) -> str:
         return self._archive_url
+
+    @property
+    def license_url(self) -> Optional[str]:
+        return self._license_url
 
     def prob_status(self, check_online=False) -> str:
         """
@@ -158,7 +238,7 @@ class Dataset:
             else:
                 remote_file_size_in_bytes = get_remote_file_size(url=self._archive_url)
                 if remote_file_size_in_bytes is not None:
-                    probing_status = f'online {remote_file_size_in_bytes/(1024*1024):5.0f} MB '
+                    probing_status = f'online {remote_file_size_in_bytes / (1024 * 1024):5.0f} MB '
                 else:
                     probing_status = 'not reachable'
 
@@ -236,7 +316,7 @@ class Dataset:
 
         status = self.prob_status()
         if status == 'installed':
-            logger.info(f'{self._install_local_path} already exists: skipped')
+            logger.info(f'{self._install_dir.install_root_path} already exists: skipped')
             return status
 
         # download (lets try it twice
@@ -248,13 +328,13 @@ class Dataset:
             return status
 
         # deflating
-        logger.debug(f'deflating {path.basename(self._archive_filepath)} to {self._install_local_path}')
-        untar_file(self._archive_filepath, self._install_local_path)
+        logger.debug(f'deflating {path.basename(self._archive_filepath)} to {self._install_dir.install_root_path}')
+        untar_file(self._archive_filepath, self._install_dir.install_root_path)
 
         # optionally: script ?
         if self._install_script_filename is not None:
             logger.debug(f'installation script  {self._install_script_filename}')
-            install_script_filepath = path.join(self._install_local_path, self._install_script_filename)
+            install_script_filepath = path.join(self._install_dir.install_root_path, self._install_script_filename)
             logger.debug(f'applying installation script {install_script_filepath}')
             os.system(install_script_filepath)
         # optionally: clean tar.gz file
@@ -274,7 +354,7 @@ class Dataset:
         status = self.prob_status()
         if status == 'installed':
             # list all sensors.txt files
-            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
+            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_dir.install_root_path)
                          for f in filenames if f == 'sensors.txt']
             upgrade_successful = False
             # check version
@@ -292,7 +372,7 @@ class Dataset:
                     logger.warning(f'{filename} - version {version} is unknown')
             # attempt upgrade of orphan features
             csv_feature_names = ['keypoints.txt', 'descriptors.txt', 'global_features.txt']
-            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_local_path)
+            file_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(self._install_dir.install_root_path)
                          for f in filenames if f in csv_feature_names]
             orphan_lfeat_paths = set()
             orphan_gfeat_paths = set()
@@ -302,7 +382,7 @@ class Dataset:
                     filename_c = path.abspath(filename).replace('\\', '/').rstrip('/')
                     filename_split = filename_c.split('/')
                     if len(filename) > 1 and \
-                        (filename_split[-1] == 'keypoints.txt' or filename_split[-1] == 'descriptors.txt') and \
+                            (filename_split[-1] == 'keypoints.txt' or filename_split[-1] == 'descriptors.txt') and \
                             (filename_split[-2] == 'keypoints' or filename_split[-2] == 'descriptors'):
                         orphan_lfeat_paths.add('/'.join(filename_split[0:-2]))
                     elif len(filename) > 1 and \
@@ -322,52 +402,54 @@ class Dataset:
             return False
 
 
-def load_datasets_from_index(
-        index_filepath: str,
-        install_path: str,
-        filter_patterns: Optional[List[str]] = None
-) -> Dict[str, Dataset]:
+def check_licenses(
+        install_dir: InstallDir,
+        datasets: Dict[str, Dataset]
+):
     """
-    Parses and load data from the index files, under yaml format.
-    the yaml file looks like :
-    ----
-    robotcar_seasons_02:
-      url: http://download.europe.naverlabs.com//kapture/robotcar_seasons_02.tar.gz
-      sha256sum: 542ef47c00d5e387cfb0dcadb2459ae2fb17d59010cc51bae0c49403b4fa6a18
-    ----
+    Check user is aware of licences.
+    To simplify interactions, the same license is only asked once.
+    Consider the user is already aware, license concerns already installed datasets.
+    If user disagree a license, the concerned datasets are pruned from dataset_index.
 
-    :param index_filepath: input absolute path to index file
-    :param install_path: input absolute path to install directory
-    :param filter_patterns: optional input list of unix-like patterns (e.g. SiLDa*) to filter datasets
-    :return: dict name -> [url, sub_path, sha256sum]
+    :param install_dir:
+    :param datasets:
+    :return:
     """
-    if not path.isfile(index_filepath):
-        raise FileNotFoundError('no index file: do an update.')
-    with open(index_filepath, 'rt') as f:
-        datasets_yaml = yaml.safe_load(f)
 
-    if len(datasets_yaml) == 0:
-        raise FileNotFoundError('invalid index file: do an update.')
+    # regroup licenses
+    licenses = {}  # license_url -> [list of datasets referring to that license]
+    for name, dataset in datasets.items():
+        if dataset.license_url is not None:
+            licenses.setdefault(dataset.license_url, list())
+            licenses[dataset.license_url].append(name)
+    logger.debug(f'licences {len(licenses)}')
 
-    nb_total = len(datasets_yaml)
-    # filter only dataset matching filter_patterns
-    if filter_patterns:
-        datasets_yaml = {dataset_name: data_yaml
-                         for dataset_name, data_yaml in datasets_yaml.items()
-                         if any(fnmatch.fnmatch(dataset_name, pattern) for pattern in filter_patterns)}
+    # removes the ones already acknowledged
+    licenses_to_be_pruned = set()
+    for license_url, names in licenses.items():
+        if any(install_dir.is_installed(name) for name in names):
+            logger.debug(f'license {license_url} already approved.')
+            licenses_to_be_pruned.add(license_url)
 
-    logger.debug(f'will prob status for {len(datasets_yaml)}/{nb_total} datasets ...')
-    datasets = {}
+    for undesired in licenses_to_be_pruned:
+        del licenses[undesired]
 
-    hide_progress_bar = True or logger.getEffectiveLevel() > logging.INFO
-    for dataset_name, data_yaml in tqdm(datasets_yaml.items(), disable=hide_progress_bar):
-        datasets[dataset_name] = Dataset(name=dataset_name,
-                                         install_dirpath=install_path,
-                                         archive_url=data_yaml['url'],
-                                         archive_sha256sum=data_yaml['sha256sum'],
-                                         install_script_filename=data_yaml.get('install_script'))
-
-    return datasets
+    if licenses:
+        # some licenses remains to be approved
+        logger.info(f'{len(licenses)} to be approved:')
+        for license_url, names in licenses.items():
+            r = requests.get(license_url, allow_redirects=True)
+            if r.status_code != requests.codes.ok:
+                raise ConnectionError(f'unable to grab {license_url} (code:{r.status_code})')
+            logger.info(f'here after the license terms for : {", ".join(names)}')
+            print(r.text)
+            agree = ask_confirmation('do you agree on terms ?')
+            if not agree:
+                # remove all dataset with that license
+                for name_of_disagrement in names:
+                    logger.info(f'removing dataset {name_of_disagrement} due to license disagrement.')
+                    del datasets[name_of_disagrement]
 
 
 def kapture_download_dataset(args, index_filepath: str):
@@ -375,6 +457,7 @@ def kapture_download_dataset(args, index_filepath: str):
     Do the dataset download command
     """
     global_status = 0
+    install_dir = InstallDir(index_filepath=index_filepath, install_dir_path=args.install_path)
     if args.cmd == 'update':
         logger.info(f'updating dataset list from {args.repo} ...')
         index_remote_url = args.repo + '/' + INDEX_FILENAME
@@ -384,15 +467,12 @@ def kapture_download_dataset(args, index_filepath: str):
             raise ConnectionError(f'unable to grab {index_remote_url} (code:{r.status_code})')
         with open(index_filepath, 'wt') as f:
             f.write(r.text)
-        datasets = load_datasets_from_index(index_filepath=index_filepath,
-                                            install_path=args.install_path)
+        datasets = install_dir.load_datasets_from_file()
         logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
 
     elif args.cmd == 'list':
         logger.info(f'listing dataset {index_filepath} ...')
-        datasets = load_datasets_from_index(index_filepath=index_filepath,
-                                            install_path=args.install_path,
-                                            filter_patterns=args.dataset)
+        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
         for name, dataset in datasets.items():
             status = dataset.prob_status(check_online=args.full)
             if status == "not reachable" or status == "incomplete" or status == "corrupted":
@@ -401,43 +481,40 @@ def kapture_download_dataset(args, index_filepath: str):
 
     elif args.cmd == 'install':
         logger.debug(f'will install dataset: {args.dataset} ...')
-        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                 install_path=args.install_path,
-                                                 filter_patterns=args.dataset)
-        if len(dataset_index) == 0:
+        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
+        if len(datasets) == 0:
             raise ValueError('There is no matching dataset.'
                              ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
 
-        logger.info(f'{len(dataset_index)} dataset will be installed.')
-        for name, dataset in dataset_index.items():
+        # ask for license agreement
+        check_licenses(install_dir=install_dir, datasets=datasets)
+
+        logger.info(f'{len(datasets)} dataset will be installed.')
+        for name, dataset in datasets.items():
             logger.info(f'{name}: starting installation  ...')
             status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
             logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
 
     elif args.cmd == 'upgrade':
         logger.debug(f'will install dataset: {args.dataset} ...')
-        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                 install_path=args.install_path,
-                                                 filter_patterns=args.dataset)
-        if len(dataset_index) == 0:
+        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
+        if len(datasets) == 0:
             raise ValueError('There is no matching dataset.'
                              ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
 
-        logger.info(f'{len(dataset_index)} dataset will be installed.')
-        for name, dataset in dataset_index.items():
+        logger.info(f'{len(datasets)} dataset will be installed.')
+        for name, dataset in datasets.items():
             logger.info(f'{name}: starting installation  ...')
             dataset.upgrade()
 
     elif args.cmd == 'download':
         logger.debug(f'will download dataset: {args.dataset} ...')
-        dataset_index = load_datasets_from_index(index_filepath=index_filepath,
-                                                 install_path=args.install_path,
-                                                 filter_patterns=args.dataset)
-        if len(dataset_index) == 0:
+        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
+        if len(datasets) == 0:
             raise ValueError('There is no matching dataset.'
                              ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
-        logger.info(f'{len(dataset_index)} dataset will be downloaded.')
-        for name, dataset in dataset_index.items():
+        logger.info(f'{len(datasets)} dataset will be downloaded.')
+        for name, dataset in datasets.items():
             logger.info(f'downloading {name} ...')
             dataset.download(force_overwrite=args.force)
 
@@ -512,7 +589,8 @@ def kapture_download_dataset_cli():
 
     except Exception as e:
         logger.critical(e)
-        # raise e
+        if logger.getEffectiveLevel() >= logging.DEBUG:
+            raise e
         return -1
 
 
