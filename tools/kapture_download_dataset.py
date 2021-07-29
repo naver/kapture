@@ -15,6 +15,7 @@ import yaml
 import fnmatch
 from typing import Dict, Optional, List, Set
 from tqdm import tqdm
+import textwrap
 import path_to_kapture  # noqa: F401
 from dataclasses import dataclass
 # import kapture
@@ -29,6 +30,7 @@ logging.basicConfig(format='%(levelname)-8s::%(name)s: %(message)s')
 
 INDEX_FILENAME = 'kapture_dataset_index.yaml'
 INSTALL_LOG_FILENAME = 'kapture_dataset_installed.yaml'
+LICENSE_LOG_FILENAME = 'kapture_dataset_licenses.yaml'
 DEFAULT_DATASET_PATH = path.normpath(path.abspath('.'))
 DEFAULT_REPOSITORY_URL = 'https://github.com/naver/kapture/raw/main/dataset'
 
@@ -49,8 +51,7 @@ def ask_confirmation(question):
 
 
 class InstallDir:
-    """  """
-
+    """ Manage access to dataset installation dir and files into  """
     def __init__(
             self,
             index_filepath: str,
@@ -59,6 +60,7 @@ class InstallDir:
         self._install_dir_path = install_dir_path
         self._dataset_index_filepath = path.join(install_dir_path, INDEX_FILENAME)
         self._dataset_installed_list_filepath = path.join(install_dir_path, INSTALL_LOG_FILENAME)
+        self._license_agreed_list_filepath = path.join(install_dir_path, LICENSE_LOG_FILENAME)
 
         self._dataset_index = None
         self._installed_index_cache = None  # list of already installed
@@ -151,6 +153,23 @@ class InstallDir:
                                              license_url=data_yaml.get('license_url'))
 
         return datasets
+
+    def read_licenses(self) -> Set[str]:
+        """ returns the list of licences already agreed by user """
+        if not path.isfile(self._license_agreed_list_filepath):
+            # not licences yet
+            return set()
+
+        with open(self._license_agreed_list_filepath, 'rt') as file:
+            license_list = set(yaml.safe_load(file))
+        return license_list
+
+    def update_licenses(self, licenses_list_updt: Set[str]):
+        """ updates the list licences by adding the givens ones  """
+        licenses_list = self.read_licenses()
+        licenses_list.update(licenses_list_updt)
+        with open(self._license_agreed_list_filepath, 'wt') as file:
+            yaml.dump(list(licenses_list), file)
 
 
 class Dataset:
@@ -408,9 +427,11 @@ def check_licenses(
 ):
     """
     Check user is aware of licences.
-    To simplify interactions, the same license is only asked once.
-    Consider the user is already aware, license concerns already installed datasets.
-    If user disagree a license, the concerned datasets are pruned from dataset_index.
+    expected behavior:
+    - license == url,
+    - only ask user once per url,
+    - dont ask user if one of already installed dataset uses the same license,
+    - If user disagree a license, prevent corresponding datasets to be installed.
 
     :param install_dir:
     :param datasets:
@@ -426,7 +447,7 @@ def check_licenses(
     logger.debug(f'licences {len(licenses)}')
 
     # removes the ones already acknowledged
-    licenses_to_be_pruned = set()
+    licenses_to_be_pruned = install_dir.read_licenses()
     for license_url, names in licenses.items():
         if any(install_dir.is_installed(name) for name in names):
             logger.debug(f'license {license_url} already approved.')
@@ -434,22 +455,34 @@ def check_licenses(
 
     for undesired in licenses_to_be_pruned:
         del licenses[undesired]
+    licenses_to_be_pruned = set()
 
-    if licenses:
-        # some licenses remains to be approved
-        logger.info(f'{len(licenses)} to be approved:')
-        for license_url, names in licenses.items():
-            r = requests.get(license_url, allow_redirects=True)
-            if r.status_code != requests.codes.ok:
-                raise ConnectionError(f'unable to grab {license_url} (code:{r.status_code})')
-            logger.info(f'here after the license terms for : {", ".join(names)}')
-            print(r.text)
-            agree = ask_confirmation('do you agree on terms ?')
-            if not agree:
-                # remove all dataset with that license
-                for name_of_disagrement in names:
-                    logger.info(f'removing dataset {name_of_disagrement} due to license disagrement.')
-                    del datasets[name_of_disagrement]
+    if not licenses:
+        # nothing to be done
+        return
+
+    # some licenses remains to be approved
+    logger.info(f'{len(licenses)} to be approved:')
+
+    for license_url, names in licenses.items():
+        r = requests.get(license_url, allow_redirects=True)
+        if r.status_code != requests.codes.ok:
+            raise ConnectionError(f'unable to grab {license_url} (code:{r.status_code})')
+        logger.info(f'here after the license terms for : {", ".join(names)}')
+        wrapper = textwrap.TextWrapper(width=80)
+        print(wrapper.fill(text=r.text))
+        agree = ask_confirmation('do you agree on terms ?')
+        if not agree:
+            # remove all dataset with that license
+            licenses_to_be_pruned.add(license_url)
+            for name_of_disagrement in names:
+                logger.info(f'removing dataset {name_of_disagrement} due to license disagrement.')
+                del datasets[name_of_disagrement]
+
+    logger.debug(f'update list of agreed licences.')
+    for undesired in licenses_to_be_pruned:
+        del licenses[undesired]
+    install_dir.update_licenses(licenses)
 
 
 def kapture_download_dataset(args, index_filepath: str):
