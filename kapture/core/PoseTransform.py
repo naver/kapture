@@ -132,6 +132,21 @@ class PoseTransform:
             pose_composed._t = new_t
         return pose_composed
 
+    @staticmethod
+    def rescale(pose: 'PoseTransform', scale: float) -> 'PoseTransform':
+        """
+        rescales translation part
+        :param pose:
+        :param scale:
+        :return: scaled pose
+        """
+        new_r = pose.r.copy() if pose.r else None
+        new_t = pose.t * scale if pose.t else None
+        pose_scaled = PoseTransform.__new__(PoseTransform)
+        pose_scaled._r = new_r
+        pose_scaled._t = new_t
+        return pose_scaled
+
     def transform_points(self, points3d: np.ndarray) -> np.ndarray:
         """
         Applies the self transformation to the given 3d points.

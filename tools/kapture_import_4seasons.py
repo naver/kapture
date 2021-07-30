@@ -51,7 +51,7 @@ import kapture
 import kapture.utils.logging
 from kapture.utils.paths import path_secure
 from kapture.io.structure import delete_existing_kapture_files
-from kapture.io.csv import kapture_to_dir
+from kapture.io.csv import kapture_to_dir, table_from_file
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.utils.logging import getLogger
@@ -314,24 +314,69 @@ def load_gnss_poses_file(
     return trajectories
 
 
+def load_transformations_file(
+    transformations_file_path: str
+) -> Tuple[Dict[str, kapture.PoseTransform], float]:
+    """
+    loads Transformations.txt into a dict [name] -> kapture.PoseTransform
+    where
+     - transform_S_AS: is from SLAM internal scale to metric scale.
+     - TS_cam_imu is from IMU to the camera.
+     - transform_w_gpsw: is from local GPS world (ENU) to visual world.
+     - transform_gps_imu: is from IMU to GPS.
+     - transform_e_gpsw: is from local GPS world (ENU) to global Earth frame (ECEF).
+     - GNSS scale: scalar
+     - Translation vector values correspond to x, y, z components of translation.
+     - Rotation quaternion values correspond to q_x, q_y, q_z, w components of quaternion.
+
+    frame notations:
+     - gpsw = The Scene East-North-Up (Scene ENU) coordinate system
+
+    """
+    with open(transformations_file_path, 'rt') as transformations_file:
+        lines = (line.strip() for line in transformations_file.readlines())
+        lines = (line for line in lines if line)  # prune empty lines
+        lines = list(lines)
+    names = [line.split(':')[0][2:] for line in lines if line.startswith('#')]
+    arrays = [np.fromstring(line, sep=',') for line in lines if not line.startswith('#')]
+    transformations = {}
+    for name, array in zip(names, arrays):
+        if 'GNSS scale' == name:
+            gnss_scale = arrays[0]
+        else:
+            tx, ty, tz, qx, qy, qz, qw = array.tolist()
+            transformations[name] = kapture.PoseTransform(r=[qw, qx, qy, qz], t=[tx, ty, tz])
+    return transformations, gnss_scale
+
+
 def import_4seasons_trajectory(
         poses_file_path: str,
+        transformations_file_path: str
 ) -> kapture.Trajectories:
     """
     imports trajectories.
     Using the globally optimized poses (inside GNSSPoses.txt),
     and transforming them using the chain of matrix multiplication from the Transformations.txt
 
-    :param poses_file_path:
-    :param kapture_dir_path:
-    :param shot_id_to_timestamp:
+    :param poses_file_path: full path to GNSSPoses.txt (name included)
+    :param transformations_file_path: full path to Transformations.txt (name included)
     :return:
     """
     logger.info('importing images')
     # load gnss optimized poses
     trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
     # TODO: transforming them using the chain of matrix multiplication from the Transformations.txt
-    # kapture.trajectory_transform_inplace(trajectories, pose_transform_pre=kapture.PoseTransform())
+    # # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
+    # transformations, gnss_scale = load_transformations_file(transformations_file_path)
+    # transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
+    # transformations['transformations_e_AS'] = kapture.PoseTransform.compose([
+    #     transformations['transform_e_gpsw'],
+    #     transformations['transformations_gpsw_w'],
+    #     transformations['transform_S_AS']
+    # ])
+    # kapture.trajectory_transform_inplace(trajectories,
+    #                                      pose_transform_post=kapture.PoseTransform(),
+    #                                      scale=gnss_scale)
     return trajectories
 
 
@@ -456,8 +501,10 @@ def import_4seasons_sequence(
 
     # trajectories from keyframes
     poses_file_path = path.join(recording_dir_path, 'GNSSPoses.txt')
+    transformations_file_path = path.join(recording_dir_path, 'Transformations.txt')
     trajectories = import_4seasons_trajectory(
-        poses_file_path=poses_file_path
+        poses_file_path=poses_file_path,
+        transformations_file_path=transformations_file_path
     )
     imported_kapture.trajectories = trajectories
 

@@ -401,15 +401,19 @@ def compute_intermediate_pose(timestamp: int,
 def trajectory_transform_inplace(
         trajectories: Trajectories,
         pose_transform_pre: PoseTransform = PoseTransform(),
-        pose_transform_post: PoseTransform = PoseTransform()
+        pose_transform_post: PoseTransform = PoseTransform(),
+        scale: float=1.0
 ):
     """
     Apply a PoseTransform to all poses in trajectories.
+    new_pose = compose([pose_transform_pre, pose, pose_transform_post])
 
     :param trajectories:
     :param pose_transform_pre:
     :param pose_transform_post:
+    :param scale:
     :return:
     """
     for timestamp, sensor_id, pose in flatten(trajectories):
+        pose = PoseTransform.rescale(pose)
         trajectories[timestamp, sensor_id] = PoseTransform.compose([pose_transform_pre, pose, pose_transform_post])
