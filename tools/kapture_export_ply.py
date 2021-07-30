@@ -27,8 +27,8 @@ logger = logging.getLogger('plot')
 
 def plot_ply(kapture_path: str,  # noqa: C901
              ply_path: str,
-             keypoints_type: Optional[str],
              axis_length: float,
+             keypoints_type: Optional[str] = None,
              only: Optional[list] = None,
              skip: Optional[list] = None
              ) -> None:
@@ -38,6 +38,7 @@ def plot_ply(kapture_path: str,  # noqa: C901
     :param kapture_path: top directory of the kapture
     :param ply_path: path to the ply file to create
     :param axis_length: length of axis representation (in world unit)
+    :param keypoints_type:
     :param only: list of the only kapture objects to plot (optional)
     :param skip: list of the kapture objects to skip
     """

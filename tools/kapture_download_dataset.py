@@ -430,7 +430,7 @@ def check_licenses(
     expected behavior:
     - license == url,
     - only ask user once per url,
-    - dont ask user if one of already installed dataset uses the same license,
+    - dont ask user for licenses already approved (and registered in a dedicated file),
     - If user disagree a license, prevent corresponding datasets to be installed.
 
     :param install_dir:
