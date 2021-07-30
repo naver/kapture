@@ -132,7 +132,7 @@ def trajectories_to_ply_stream(stream, trajectories: kapture.Trajectories, axis_
     # create 4 points per pose: 1 for center, 3 for axis
     points_colored_list = []
     for pose_tr in pose_list:
-        axis = get_axis_in_world(pose_tr, axis_length)
+        axis = get_axis_in_world(pose_device_from_world=pose_tr, length=axis_length)
         points_colored_list += [p + AXIS_COLORS[i] for i, p in enumerate(axis.tolist())]
 
     # write points into ply
@@ -160,7 +160,7 @@ def trajectories_to_ply(
     """
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as fout:
-        trajectories_to_ply_stream(fout, trajectories, axis_length)
+        trajectories_to_ply_stream(stream=fout, trajectories=trajectories, axis_length=axis_length)
 
 
 def points3d_to_stream(stream, points3d: kapture.Points3d) -> None:

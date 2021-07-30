@@ -66,7 +66,9 @@ def plot_ply(kapture_path: str,  # noqa: C901
             if _should_do('trajectories') and kapture_data.trajectories:
                 trajectories_ply_filepath = path.join(ply_path, 'trajectories.ply')
                 logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
-                ply.trajectories_to_ply(trajectories_ply_filepath, kapture_data.trajectories, axis_length)
+                ply.trajectories_to_ply(filepath=trajectories_ply_filepath,
+                                        trajectories=kapture_data.trajectories,
+                                        axis_length=axis_length)
 
             if _should_do('points3d') and kapture_data.points3d:
                 points3d_ply_filepath = path.join(ply_path, 'points3d.ply')
@@ -169,7 +171,11 @@ def export_ply_command_line() -> None:
     if args.only:
         args.skip = []
     logger.debug(''.join(['\n\t{:13} = {}'.format(k, v) for k, v in vars(args).items()]))
-    plot_ply(args.input, args.output, args.keypoints_type, args.axis_length, args.only, args.skip)
+    plot_ply(kapture_path=args.input,
+             ply_path=args.output,
+             axis_length=args.axis_length,
+             keypoints_type=args.keypoints_type,
+             only=args.only, skip=args.skip)
 
 
 if __name__ == '__main__':

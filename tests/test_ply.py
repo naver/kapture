@@ -17,7 +17,11 @@ class TestPlot(unittest.TestCase):
 
     def test_plot(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
-            plot_ply(self.toplot_folder, tmpdirname, 'SIFT', 0.2, [], [])
+            plot_ply(kapture_path=self.toplot_folder,
+                     ply_path=tmpdirname,
+                     axis_length=2.0,
+                     keypoints_type='SIFT',
+                     only=[], skip=[])
             self.assertTrue(path.isfile(path.join(tmpdirname, "points3d.ply"))
                             and path.isfile(path.join(tmpdirname, "trajectories.ply"))
                             and path.isfile(path.join(tmpdirname,
