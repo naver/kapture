@@ -74,7 +74,6 @@ def load_4seasons_cameras(
         calibration_dir_path: str
 ) -> (kapture.Sensors, kapture.Rigs):
     # this dataset is made with a single stereo camera (2 cams).
-
     sensors = kapture.Sensors()
     """
     Pinhole 501.4757919305817 501.4757919305817 421.7953735163109 167.65799492501083 0.0 0.0 0.0 0.0
@@ -130,7 +129,8 @@ def load_4seasons_cameras(
 
 def load_times_ids(
         times_file_path: str
-):
+) -> Dict[int, int]:
+    """ load times.txt file to a dict linking shot_id to timestamp in nanoseconds """
     table = np.loadtxt(times_file_path)
     shots_ids = table[:, 0].astype(int)
     timestamps_ns = (table[:, 1] * 1e9).astype(int)
@@ -148,7 +148,10 @@ def load_times_ids(
 def guess_timestamp(
         shot_id: Union[str, int]
 ) -> int:
-    # improvise a timestamp for shots not registered in times.txt
+    """
+     make up a timestamp (in ns) from the shot_id (in s).
+     Always prefer the given table from times.txt since last decimal digits may differ.
+    """
     # 1602074877621449728 -> 1602074877.621449728 sec -> 1602074877621449.728 u sec
     if not isinstance(shot_id, int):
         shot_id = int(shot_id)
@@ -164,7 +167,7 @@ def import_4seasons_images(
         images_import_method: TransferAction,
 ) -> kapture.RecordsCamera:
     """
-    imports and copy image files
+    imports and copy image files.
 
     :param recording_dir_path:
     :param kapture_dir_path:
@@ -200,7 +203,11 @@ KEYFRAME_TAG_CAM = '# fx, fy, cx, cy, width, height'
 KEYFRAME_TAG_DEPTH = '# color information'
 
 
-def read_until_tag(file, tag):
+def read_until_tag(file, tag: str) -> str:
+    """
+     reads given file until it finds the given tags. Helps parsing basic 4seasons text files.
+    it returns the line with the tag.
+    """
     while True:
         line = file.readline()
         if line == '':
@@ -211,7 +218,13 @@ def read_until_tag(file, tag):
 
 def load_4season_pose_from_keyframe_data(
         keyframes_file_path: str
-):
+) -> kapture.PoseTransform:
+    """
+    Imports pose from keyframe file. Note this pose is the result of VIO.
+
+    :param keyframes_file_path:
+    :return:
+    """
     # read pose
     with open(keyframes_file_path, 'rt') as file:
         read_until_tag(file, KEYFRAME_TAG_POSE)
@@ -285,35 +298,40 @@ def get_keyframe_file_names(
     return filename_it
 
 
+def load_gnss_poses_file(
+    poses_file_path: str,
+    sensor_id: str
+) -> kapture.Trajectories:
+    """ load GNSSPoses.txt to a kapture trajectories """
+    pose_table = np.loadtxt(poses_file_path, delimiter=',', skiprows=1)
+    timestamps_ns = pose_table[:, 0].astype(int)
+    season_poses = pose_table[:, 1:8]
+    trajectories = kapture.Trajectories()
+    for timestamp_ns, (tx, ty, tz, qx, qy, qz, qw) in zip(timestamps_ns, season_poses):
+        timestamp_ns = int(timestamp_ns)
+        car_from_world = kapture.PoseTransform(r=[qw, qx, qy, qz], t=[tx, ty, tz]).inverse()
+        trajectories[timestamp_ns, sensor_id] = car_from_world
+    return trajectories
+
+
 def import_4seasons_trajectory(
-        keyframes_dir_path: str,
-        kapture_dir_path: str,
-        shot_id_to_timestamp: Dict[str, int],
+        poses_file_path: str,
 ) -> kapture.Trajectories:
     """
-    imports trajectories
+    imports trajectories.
+    Using the globally optimized poses (inside GNSSPoses.txt),
+    and transforming them using the chain of matrix multiplication from the Transformations.txt
 
-    :param keyframes_dir_path:
+    :param poses_file_path:
     :param kapture_dir_path:
     :param shot_id_to_timestamp:
     :return:
     """
     logger.info('importing images')
-    trajectories = kapture.Trajectories()
-
-    # make sure depth maps hosting directory exists
-    depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
-    os.makedirs(depth_records_path, exist_ok=True)
-    #                                   KeyFrame_1602074967051661568.txt
-    filename_it = get_keyframe_file_names(keyframes_dir_path)
-    hide_progress_bar = getLogger().getEffectiveLevel() > logging.INFO
-    for filename, shot_id in tqdm(filename_it.items(), disable=hide_progress_bar):
-        assert shot_id in shot_id_to_timestamp
-        timestamp_ns = shot_id_to_timestamp[shot_id]
-        keyframes_file_path = path.join(keyframes_dir_path, filename)
-        car_from_world = load_4season_pose_from_keyframe_data(keyframes_file_path)
-        trajectories[timestamp_ns, 'car'] = car_from_world
-
+    # load gnss optimized poses
+    trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
+    # TODO: transforming them using the chain of matrix multiplication from the Transformations.txt
+    # kapture.trajectory_transform_inplace(trajectories, pose_transform_pre=kapture.PoseTransform())
     return trajectories
 
 
@@ -437,15 +455,14 @@ def import_4seasons_sequence(
     imported_kapture.records_camera = records_camera
 
     # trajectories from keyframes
-    keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
+    poses_file_path = path.join(recording_dir_path, 'GNSSPoses.txt')
     trajectories = import_4seasons_trajectory(
-        keyframes_dir_path=keyframes_dir_path,
-        kapture_dir_path=kapture_dir_path,
-        shot_id_to_timestamp=shot_id_to_timestamp
+        poses_file_path=poses_file_path
     )
     imported_kapture.trajectories = trajectories
 
     # depth maps from keyframes
+    keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
     depth_sensors, depth_maps = import_4seasons_depth(
         keyframes_dir_path=keyframes_dir_path,
         kapture_dir_path=kapture_dir_path,
