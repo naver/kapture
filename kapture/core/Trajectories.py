@@ -396,3 +396,20 @@ def compute_intermediate_pose(timestamp: int,
                    low_p.t[1] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[1] - low_p.t[1]),
                    low_p.t[2] + (timestamp - low_ts) / (up_ts - low_ts) * (up_p.t[2] - low_p.t[2])]
     return PoseTransform(rotation, translation)
+
+
+def trajectory_transform_inplace(
+        trajectories: Trajectories,
+        pose_transform_pre: PoseTransform = PoseTransform(),
+        pose_transform_post: PoseTransform = PoseTransform()
+):
+    """
+    Apply a PoseTransform to all poses in trajectories.
+
+    :param trajectories:
+    :param pose_transform_pre:
+    :param pose_transform_post:
+    :return:
+    """
+    for timestamp, sensor_id, pose in flatten(trajectories):
+        trajectories[timestamp, sensor_id] = PoseTransform.compose([pose_transform_pre, pose, pose_transform_post])
