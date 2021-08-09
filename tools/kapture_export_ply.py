@@ -19,7 +19,7 @@ import kapture.io.csv as csv
 import kapture.io.ply as ply
 import kapture.io.image as image
 import kapture.io.features
-from kapture.io.records import records_depth_from_file
+from kapture.io.records import depth_map_from_file
 from typing import Optional
 
 logger = logging.getLogger('plot')
@@ -38,7 +38,7 @@ def plot_ply(kapture_path: str,  # noqa: C901
     :param kapture_path: top directory of the kapture
     :param ply_path: path to the ply file to create
     :param axis_length: length of axis representation (in world unit)
-    :param keypoints_type:
+    :param keypoints_type: select the type of keypoints to output. If not given, takes the first one.
     :param only: list of the only kapture objects to plot (optional)
     :param skip: list of the kapture objects to skip
     """
@@ -113,7 +113,7 @@ def plot_ply(kapture_path: str,  # noqa: C901
                     os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
                     depth_sensor_id = map_depth_to_sensor[depth_map_name]
                     depth_map_sizes = tuple(int(x) for x in kapture_data.sensors[depth_sensor_id].sensor_params[1:3])
-                    depth_map = records_depth_from_file(depth_map_filepath, depth_map_sizes)
+                    depth_map = depth_map_from_file(depth_map_filepath, depth_map_sizes)
                     # min max scaling
                     depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
                     depth_map = (depth_map * 255.).astype(np.uint8)

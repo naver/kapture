@@ -170,7 +170,7 @@ def depth_maps_to_filepaths(depth_records: kapture.RecordsDepth, kapture_dirpath
 
 
 # depth maps IO ########################################################################################################
-def records_depth_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
+def depth_map_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
     """
     Load the depth map from binary file to a numpy array.
 
@@ -186,7 +186,7 @@ def records_depth_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
     return bitmap
 
 
-def records_depth_to_file(filepath: str, depth_map: np.array) -> None:
+def depth_map_to_file(filepath: str, depth_map: np.array) -> None:
     """
     Writes the depth map from numpy array to binary file.
 
