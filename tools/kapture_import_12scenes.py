@@ -289,11 +289,11 @@ def import_12scenes(d12scenes_path: str,
         depth_map = np.array(Image.open(depth_map_filepath_12scenes))
         # depth maps is in mm in 12scenes, convert it to meters
         depth_map = depth_map.astype(np.float32) * 1.0e-3
-        kapture.io.records.records_depth_to_file(depth_map_filepath_kapture, depth_map)
+        kapture.io.records.depth_map_to_file(depth_map_filepath_kapture, depth_map)
         # register depth to rgb
         reg_depth_map = register_depth(get_K(camera_type, depth_camera_params), get_K(camera_type, rgb_camera_params),
                                        np.eye(4), depth_map, rgb_camera_params[0], rgb_camera_params[1])
-        kapture.io.records.records_depth_to_file(depth_map_filepath_kapture + '.reg', reg_depth_map)
+        kapture.io.records.depth_map_to_file(depth_map_filepath_kapture + '.reg', reg_depth_map)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(

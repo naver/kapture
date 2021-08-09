@@ -199,7 +199,7 @@ def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
         depth_map = np.array(Image.open(depth_map_filepath_rio10))
         # depth maps is in mm in rio10, convert it to meters
         depth_map = depth_map.astype(np.float32) * DEPTH_TO_METER
-        kapture.io.records.records_depth_to_file(depth_map_filepath_kapture, depth_map)
+        kapture.io.records.depth_map_to_file(depth_map_filepath_kapture, depth_map)
 
     imported_kapture = kapture.Kapture(
         records_camera=snapshots,

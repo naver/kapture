@@ -263,7 +263,7 @@ def load_4season_depth_from_keyframe_data(
             line1 = [float(v) for v in line1.split(',')]
             depth_coords.append(line1[0:3])  # u, v, d
 
-        depth_coords = np.array(depth_coords)
+        depth_coords = np.array(depth_coords, dtype=float)
         depth_data = DepthData(f=(fx, fy), c=(cx, cy),
                                image_size=(int(width), int(height)),
                                coords=depth_coords)
@@ -275,7 +275,7 @@ def convert_depth_data_to_depth_map(
         undefined_value=-1.0
 ) -> np.ndarray:
     """ converts depth map from 4 season format to kapture format """
-    depth_map = np.ones(depth_data.image_size, dtype=np.float32)
+    depth_map = np.ones(depth_data.image_size, dtype=depth_data.coords.dtype)
     depth_map *= undefined_value
     assert depth_data.coords.shape[1] == 3  # u, v, d
     for u, v, d in depth_data.coords:
@@ -414,12 +414,12 @@ def import_4seasons_depth(
         timestamp_ns = shot_id_to_timestamp[shot_id]
         keyframes_file_path = path.join(keyframes_dir_path, keyframe_filename)
         season_depth_data = load_4season_depth_from_keyframe_data(keyframes_file_path)
-        # records_depth_to_file
+        # depth
         depth_map_file_name = path.join('undistorted_images', 'depth', f'{shot_id}.depth')
         depth_maps[timestamp_ns, DEPTH_ID] = depth_map_file_name
         depth_map = convert_depth_data_to_depth_map(season_depth_data)
         depth_map_file_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path, depth_map_file_name)
-        kapture.io.records.records_depth_to_file(depth_map_file_path, depth_map)
+        kapture.io.records.depth_map_to_file(depth_map_file_path, depth_map)
 
     return sensors, depth_maps
 
