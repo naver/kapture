@@ -9,6 +9,7 @@ import os.path as path
 from typing import Dict, Optional, Union, Iterable, Tuple
 import numpy as np
 import kapture
+from kapture.core.Records import RecordsDepth
 from kapture.utils.paths import path_secure
 from kapture.utils.logging import getLogger
 from kapture.io.binary import TransferAction, transfer_files_from_dir, array_from_file, array_to_file
@@ -193,4 +194,7 @@ def depth_map_to_file(filepath: str, depth_map: np.array) -> None:
     :param filepath: file path
     :param depth_map: depth map as a numpy array
     """
+    # ensure depth maps are expected type RecordsDepth.dtype (aka float32)
+    if not depth_map.dtype == RecordsDepth.dtype:
+        depth_map = depth_map.astype(RecordsDepth.dtype)
     array_to_file(filepath, depth_map)

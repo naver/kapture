@@ -263,9 +263,9 @@ def load_4season_depth_from_keyframe_data(
             line1 = [float(v) for v in line1.split(',')]
             depth_coords.append(line1[0:3])  # u, v, d
 
-        depth_coords = np.array(depth_coords, dtype=float)
+        depth_coords = np.array(depth_coords, dtype=kapture.RecordsDepth.dtype)
         depth_data = DepthData(f=(fx, fy), c=(cx, cy),
-                               image_size=(int(width), int(height)),
+                               image_size=(int(height), int(width)),
                                coords=depth_coords)
         return depth_data
 
@@ -281,7 +281,7 @@ def convert_depth_data_to_depth_map(
     for u, v, d in depth_data.coords:
         # convert d to metric according to given formula
         # d =  inverse depth value in 1/m
-        depth_map[int(u), int(v)] = 1. / d if not math.isclose(d, 0.) else 0.
+        depth_map[int(v), int(u)] = 1. / d if not math.isclose(d, 0.) else 0.
     return depth_map
 
 
@@ -401,7 +401,7 @@ def import_4seasons_depth(
     # copy intrinsics
     sensors[DEPTH_ID] = kapture.Camera(
         sensor_type='depth',  name=DEPTH_ID, camera_type=intrinsics.camera_type, camera_params=intrinsics.camera_params)
-    depth_maps = kapture.RecordsDepth()
+    records_depth_maps = kapture.RecordsDepth()
 
     # make sure depth maps hosting directory exists
     depth_records_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path)
@@ -416,12 +416,12 @@ def import_4seasons_depth(
         season_depth_data = load_4season_depth_from_keyframe_data(keyframes_file_path)
         # depth
         depth_map_file_name = path.join('undistorted_images', 'depth', f'{shot_id}.depth')
-        depth_maps[timestamp_ns, DEPTH_ID] = depth_map_file_name
+        records_depth_maps[timestamp_ns, DEPTH_ID] = depth_map_file_name
         depth_map = convert_depth_data_to_depth_map(season_depth_data)
         depth_map_file_path = kapture.io.records.get_depth_map_fullpath(kapture_dir_path, depth_map_file_name)
         kapture.io.records.depth_map_to_file(depth_map_file_path, depth_map)
 
-    return sensors, depth_maps
+    return sensors, records_depth_maps
 
 
 def import_4seasons_imu(
