@@ -106,6 +106,16 @@ class PoseTransform:
         pose_inv._t = t_inv
         return pose_inv
 
+    def rescale(self, scale: float):
+        """
+        rescales translation part
+        :param pose:
+        :param scale:
+        :return: scaled pose
+        """
+        if self._t is not None:
+            self._t = self._t * scale
+
     @staticmethod
     def compose(pose_list: List['PoseTransform']) -> 'PoseTransform':
         """
@@ -131,21 +141,6 @@ class PoseTransform:
             pose_composed._r = new_r
             pose_composed._t = new_t
         return pose_composed
-
-    @staticmethod
-    def rescale(pose: 'PoseTransform', scale: float) -> 'PoseTransform':
-        """
-        rescales translation part
-        :param pose:
-        :param scale:
-        :return: scaled pose
-        """
-        new_r = pose.r.copy() if pose.r else None
-        new_t = pose.t * scale if pose.t else None
-        pose_scaled = PoseTransform.__new__(PoseTransform)
-        pose_scaled._r = new_r
-        pose_scaled._t = new_t
-        return pose_scaled
 
     def transform_points(self, points3d: np.ndarray) -> np.ndarray:
         """

@@ -13,7 +13,7 @@ from datetime import datetime
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
-from kapture.algo.compare import equal_trajectories, equal_rigs
+from kapture.algo.compare import equal_trajectories, equal_rigs, equal_poses
 
 
 # FLATTEN ##############################################################################################################
@@ -363,6 +363,28 @@ class TestTrajectories(unittest.TestCase):
 
         self.assertRaises(TypeError, traj.__delitem__, invalid_ts)
         self.assertRaises(TypeError, traj.__delitem__, (valid_ts, invalid_id))
+
+    def test_inverse(self):
+        pose1 = kapture.PoseTransform()
+        pose2 = kapture.PoseTransform(
+            r=[-0.09465784241766664, 0.4240600207396319, -0.6602839272564094, 0.6125664478512957],
+            t=[-81525.97101792274, 6362571.7626688825, 216599.32985438255]
+        )
+        pose3 = kapture.PoseTransform(
+            r=[-0.07509999120329255, 0.428687830189451, -0.6630694170354837, 0.6090368344187961],
+            t=[49418.858719801996, 6364643.125801517, 157364.12971148116]
+        )
+        traj = kapture.Trajectories()
+        traj[(0, 'dummy1')] = pose1
+        traj[(1, 'dummy1')] = pose2
+        traj[(0, 'dummy2')] = pose2
+        traj[(1, 'dummy2')] = pose3
+        traj_inv = traj.inverse()
+
+        self.assertEqual(traj.key_pairs(), traj_inv.key_pairs())
+        self.assertTrue(equal_poses(traj_inv[0, 'dummy1'], pose1))  # identity
+        self.assertTrue(equal_poses(traj_inv[1, 'dummy1'], pose2.inverse()))  #
+        self.assertTrue(equal_poses(traj_inv[1, 'dummy2'], pose3.inverse()))  #
 
     def test_rig_remove(self):
         rigs = kapture.Rigs()

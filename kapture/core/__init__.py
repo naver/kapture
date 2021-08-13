@@ -11,7 +11,7 @@ from .Sensors import SENSOR_TYPE_CAMERA, SENSOR_TYPE_DEPTH_CAM, ALL_CAMERA_SENSO
 from .Rigs import Rigs  # noqa: F401
 from .Trajectories import Trajectories  # noqa: F401
 from .Trajectories import rigs_remove, rigs_remove_inplace, rigs_recover, rigs_recover_inplace  # noqa: F401
-from .Trajectories import trajectory_transform_inplace  # noqa: F401
+from .Trajectories import trajectory_transform_inplace, trajectory_rescale_inplace  # noqa: F401
 from .Records import RecordsBase, RecordsArray, RecordsCamera, RecordsDepth, RecordsLidar  # noqa: F401
 from .Records import RecordsWifi, RecordWifi, RecordWifiSignal  # noqa: F401
 from .Records import RecordBluetooth, RecordsBluetooth, RecordBluetoothSignal  # noqa: F401

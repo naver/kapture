@@ -242,6 +242,13 @@ class Trajectories(Dict[int, Dict[str, PoseTransform]]):
         next_pose = self.__getitem__(next_ts).__getitem__(device_id)
         return compute_intermediate_pose(timestamp, previous_ts, previous_pose, next_ts, next_pose)
 
+    def inverse(self) -> 'Trajectories':
+        """ :return: new trajectories with all pose inverted """
+        trajectories_inverted = Trajectories()
+        for timestamp, sensor_id in self.key_pairs():
+            trajectories_inverted[timestamp, sensor_id] = self[timestamp, sensor_id].inverse()
+        return trajectories_inverted
+
 
 def rigs_remove(trajectories: Trajectories, rigs: Rigs) -> Trajectories:
     """
@@ -401,19 +408,30 @@ def compute_intermediate_pose(timestamp: int,
 def trajectory_transform_inplace(
         trajectories: Trajectories,
         pose_transform_pre: PoseTransform = PoseTransform(),
-        pose_transform_post: PoseTransform = PoseTransform(),
-        scale: float=1.0
+        pose_transform_post: PoseTransform = PoseTransform()
 ):
     """
     Apply a PoseTransform to all poses in trajectories.
     new_pose = compose([pose_transform_pre, pose, pose_transform_post])
 
-    :param trajectories:
+    :param trajectories: the trajectories to bu updated
     :param pose_transform_pre:
     :param pose_transform_post:
-    :param scale:
     :return:
     """
     for timestamp, sensor_id, pose in flatten(trajectories):
-        pose = PoseTransform.rescale(pose)
         trajectories[timestamp, sensor_id] = PoseTransform.compose([pose_transform_pre, pose, pose_transform_post])
+
+
+def trajectory_rescale_inplace(
+        trajectories: Trajectories,
+        scale: float
+):
+    """ apply scale factor to trajectories (translation part only)
+
+    :param trajectories: the trajectories to bu updated.
+    :param scale: scale factor
+    """
+    for timestamp, sensor_id, pose in flatten(trajectories):
+        if pose.t is not None:
+            pose.rescale(scale)
