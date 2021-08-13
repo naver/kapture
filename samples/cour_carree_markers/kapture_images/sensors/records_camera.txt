@@ -1,0 +1,7 @@
+# kapture format: 1.1
+# timestamp, device_id, image_path
+1603467720, logitech, floor2_01.jpg
+1603467740, logitech, floor2_02.jpg
+1603467759, logitech, floor2_03.jpg
+1603467778, logitech, floor2_04.jpg
+1603467797, logitech, floor2_05.jpg
