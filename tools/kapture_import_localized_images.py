@@ -31,7 +31,8 @@ logger = logging.getLogger('import_localized_images')
 def import_localized_images(localized_file_path: str,
                             kapture_path: str,
                             force_overwrite_existing: bool = False,
-                            images_import_method: TransferAction = TransferAction.skip) -> None:
+                            images_import_method: TransferAction = TransferAction.skip,
+                            do_not_import_images: bool = False) -> None:
     """
     Imports the list of images to a kapture. This creates only images and cameras.
 
@@ -39,6 +40,7 @@ def import_localized_images(localized_file_path: str,
     :param kapture_path: path to kapture root directory.
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     :param images_import_method: choose how to import actual image files.
+    :param do_not_import_images: when true, do not import the image files.
     """
     if not path.exists(localized_file_path):
         raise FileNotFoundError(trajectory_file_path)
@@ -78,9 +80,10 @@ def import_localized_images(localized_file_path: str,
                 except (OSError, PIL.UnidentifiedImageError):
                     # It is not a valid image: skip it
                     logger.info(f'Skipping invalid image file {image_path}')
-                image_name = path.relpath(image_path, images_dirpath)
-                image_name_list.append(image_name)
-                images[(int(timestamp), camera_id)] = image_name
+                if not do_not_import_images:
+                    image_name = path.relpath(image_path, images_dirpath)
+                    image_name_list.append(image_name)
+                    images[(int(timestamp), camera_id)] = image_name
             else:
                 logger.debug(f'Missing image file {image_path}')
             # Create pose
@@ -94,8 +97,9 @@ def import_localized_images(localized_file_path: str,
             trajectories[(int(timestamp), camera_id)] = pose
 
     # import (copy) image files.
-    logger.info('import image files ...')
-    import_record_data_from_dir_auto(images_dirpath, kapture_path, image_name_list, images_import_method)
+    if not do_not_import_images:
+        logger.info('import image files ...')
+        import_record_data_from_dir_auto(images_dirpath, kapture_path, image_name_list, images_import_method)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories)
@@ -124,6 +128,8 @@ def import_localized_images_command_line() -> None:
     parser.add_argument('--image_action', type=TransferAction, default=TransferAction.copy,
                         help=f'How to import images [copy], '
                              f'choose among: {", ".join(a.name for a in TransferAction)}')
+    parser.add_argument('--do_not_import_images', action='store_true', default=False,
+                        help='Do not import the images files, but their poses (the trajectory) only.')
     ####################################################################################################################
     args = parser.parse_args()
 
@@ -139,7 +145,7 @@ def import_localized_images_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_localized_images(args.localized_file, args.kapture, args.force, args.image_action)
+    import_localized_images(args.localized_file, args.kapture, args.force, args.image_action, args.do_not_import_images)
 
 
 if __name__ == '__main__':
