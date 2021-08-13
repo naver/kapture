@@ -342,7 +342,7 @@ def load_transformations_file(
     transformations = {}
     for name, array in zip(names, arrays):
         if 'GNSS scale' == name:
-            gnss_scale = arrays[0]
+            gnss_scale = array[0]
         else:
             tx, ty, tz, qx, qy, qz, qw = array.tolist()
             transformations[name] = kapture.PoseTransform(r=[qw, qx, qy, qz], t=[tx, ty, tz])
@@ -365,18 +365,27 @@ def import_4seasons_trajectory(
     logger.info('importing images')
     # load gnss optimized poses
     trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
-    # TODO: transforming them using the chain of matrix multiplication from the Transformations.txt
-    # # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
-    # transformations, gnss_scale = load_transformations_file(transformations_file_path)
-    # transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
-    # transformations['transformations_e_AS'] = kapture.PoseTransform.compose([
-    #     transformations['transform_e_gpsw'],
-    #     transformations['transformations_gpsw_w'],
-    #     transformations['transform_S_AS']
-    # ])
-    # kapture.trajectory_transform_inplace(trajectories,
-    #                                      pose_transform_post=kapture.PoseTransform(),
-    #                                      scale=gnss_scale)
+    # transforming them using the chain of matrix multiplication from the Transformations.txt
+    # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
+    #   - AS: SLAM internal scale
+    #   - S: metric scale
+    #   - w: visual world
+    #   - gpsw: local GPS world (ENU)
+    #   - e: global Earth frame (ECEF).
+
+    transformations, gnss_scale = load_transformations_file(transformations_file_path)
+    transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
+    transformations_ecef_from_slam = kapture.PoseTransform.compose([
+        transformations['transform_e_gpsw'],
+        transformations['transformations_gpsw_w'],
+        transformations['transform_S_AS']
+    ])
+    # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
+    poses = trajectories.inverse()
+    kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
+    kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
+    # switch back to kapture (world -> cam)
+    trajectories = poses.inverse()
     return trajectories
 
 
