@@ -26,6 +26,10 @@ class TestImageList(unittest.TestCase):
         self._kapture_path = path.join(self._tempdir.name, 'kapture_local')
         os.makedirs(self._kapture_path, exist_ok=True)
 
+    def test_import_images_missing_file(self):
+        self.assertRaises(FileNotFoundError, import_localized_images,
+                          '', '', self._kapture_path, True, TransferAction.copy, False)
+
     def test_import_images_missing_dir(self):
         self.assertRaises(ValueError, import_localized_images,
                           self._localized_file, '', self._kapture_path, True, TransferAction.copy, False)
