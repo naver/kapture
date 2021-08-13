@@ -29,6 +29,7 @@ logger = logging.getLogger('import_localized_images')
 
 
 def import_localized_images(localized_file_path: str,
+                            images_dir_path: str,
                             kapture_path: str,
                             force_overwrite_existing: bool = False,
                             images_import_method: TransferAction = TransferAction.skip,
@@ -37,6 +38,8 @@ def import_localized_images(localized_file_path: str,
     Imports the list of images to a kapture. This creates only images and cameras.
 
     :param localized_file_path: file containing the list of localized images with their poses
+    :param images_dir_path: top directory of the images path. If not defined, the images path in the localized file
+        must be full path.
     :param kapture_path: path to kapture root directory.
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     :param images_import_method: choose how to import actual image files.
@@ -59,15 +62,21 @@ def import_localized_images(localized_file_path: str,
         localized_data = table_from_file(file)
         for localized_line in localized_data:
             image_path = localized_line[2]
+            if not do_not_import_images and not images_dir_path and not path.isabs(image_path):
+                raise ValueError(f'Can not import a relative image file without top directory: {image_path}')
+            if not path.isabs(image_path) and images_dir_path:
+                image_path = path.join(images_dir_path, image_path)
             filename_list.append(image_path)
-    images_dirpath = path.commonpath(filename_list)
+    common_images_path = path.commonpath(filename_list)
 
     # Parse localized data file
     with open(localized_file_path, 'rt') as file:
         localized_data = table_from_file(file)
         for localized_line in localized_data:
             timestamp, camera_id, image_path, qw, qx, qy, qz, tx, ty, tz = localized_line
-            # Add existing images to list of files to import
+            # Add top directory if necessary
+            if not path.isabs(image_path) and images_dir_path:
+                image_path = path.join(images_dir_path, image_path)
             if path.exists(image_path):
                 # Create corresponding camera model
                 model = kapture.CameraType.UNKNOWN_CAMERA.value
@@ -81,7 +90,7 @@ def import_localized_images(localized_file_path: str,
                     # It is not a valid image: skip it
                     logger.info(f'Skipping invalid image file {image_path}')
                 if not do_not_import_images:
-                    image_name = path.relpath(image_path, images_dirpath)
+                    image_name = path.relpath(image_path, common_images_path)
                     image_name_list.append(image_name)
                     images[(int(timestamp), camera_id)] = image_name
             else:
@@ -99,7 +108,7 @@ def import_localized_images(localized_file_path: str,
     # import (copy) image files.
     if not do_not_import_images:
         logger.info('import image files ...')
-        import_record_data_from_dir_auto(images_dirpath, kapture_path, image_name_list, images_import_method)
+        import_record_data_from_dir_auto(common_images_path, kapture_path, image_name_list, images_import_method)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories)
@@ -124,6 +133,9 @@ def import_localized_images_command_line() -> None:
     # import ###########################################################################################################
     parser.add_argument('-l', '--localized_file', required=True,
                         help='path to localized images list file')
+    parser.add_argument('--top_dir_images', default='',
+                        help='path to top directory of images.'
+                             ' Necessary only if the images path are relative in the localized file')
     parser.add_argument('-k', '--kapture', required=True, help='kapture directory')
     parser.add_argument('--image_action', type=TransferAction, default=TransferAction.copy,
                         help=f'How to import images [copy], '
@@ -133,19 +145,14 @@ def import_localized_images_command_line() -> None:
     ####################################################################################################################
     args = parser.parse_args()
 
-    """
-    image_name camera_type camera_params
-    example: image_name SIMPLE_RADIAL w h f cx cy r
-    or
-    image_name
-    """
-
     logger.setLevel(args.verbose)
     if args.verbose <= logging.DEBUG:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_localized_images(args.localized_file, args.kapture, args.force, args.image_action, args.do_not_import_images)
+    import_localized_images(args.localized_file, args.top_dir_images,
+                            args.kapture, args.force,
+                            args.image_action, args.do_not_import_images)
 
 
 if __name__ == '__main__':
