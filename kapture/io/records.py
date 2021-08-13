@@ -196,5 +196,6 @@ def depth_map_to_file(filepath: str, depth_map: np.array) -> None:
     """
     # ensure depth maps are expected type RecordsDepth.dtype (aka float32)
     if not depth_map.dtype == RecordsDepth.dtype:
+        logger.warning('depth maps are converted to float')
         depth_map = depth_map.astype(RecordsDepth.dtype)
     array_to_file(filepath, depth_map)
