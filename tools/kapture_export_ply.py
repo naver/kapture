@@ -49,10 +49,10 @@ def plot_ply(kapture_path: str,  # noqa: C901
         with csv.get_all_tar_handlers(kapture_path) as tar_handlers:
             kapture_data = csv.kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
 
-            def _should_do(choice: str) -> bool:
-                ok_only = only is None or choice in only
-                ok_skip = skip is None or choice not in skip
-                return ok_only or ok_skip
+            def _should_do(candidate: str) -> bool:
+                pass_only = candidate in only if only else True
+                pass_skip = candidate not in skip if skip else False
+                return pass_only or pass_skip
 
             logger.info('plotting  ...')
             if _should_do('rigs') and kapture_data.rigs:
@@ -129,7 +129,7 @@ def export_ply_command_line() -> None:
     """
     Do the plot to ply file using the parameters given on the command line.
     """
-    plot_choices = {
+    export_choices = {
         # cmd : help
         'rigs': 'plot the rig geometry, ie. relative pose of sensors into the rig.',
         'rig_stat': 'plot the sensor relative poses for each trajectory timestamp.',
@@ -151,11 +151,11 @@ def export_ply_command_line() -> None:
                         help='input path to kapture data root directory')
     parser.add_argument('-o', '--output', required=False,
                         help='output directory (PLY file format).')
-    parser.add_argument('--only', nargs='+', choices=plot_choices.keys(), default=[],
-                        help='things to plot : ' + ' // '.join('{}: {}'.format(k, v) for k, v in plot_choices.items()))
+    parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
+                        help='things to plot : ' + ' // '.join('{}: {}'.format(k, v) for k, v in export_choices.items()))
     parser.add_argument('--keypoints-type', default=None, help='types of keypoints.')
-    parser.add_argument('--skip', nargs='+', choices=plot_choices.keys(), default=['keypoints'],
-                        help='things to not plot : ' + ' // '.join(plot_choices.keys()))
+    parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=['keypoints'],
+                        help='things to not plot : ' + ' // '.join(export_choices.keys()))
     parser.add_argument('--axis_length', type=float, default=0.1,
                         help='length of axis representation (in world unit).')
     args = parser.parse_args()
