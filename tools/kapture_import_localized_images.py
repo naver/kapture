@@ -46,7 +46,7 @@ def import_localized_images(localized_file_path: str,
     :param do_not_import_images: when true, do not import the image files.
     """
     if not path.exists(localized_file_path):
-        raise FileNotFoundError(trajectory_file_path)
+        raise FileNotFoundError(localized_file_path)
     os.makedirs(kapture_path, exist_ok=True)
     delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
 
