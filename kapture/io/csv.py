@@ -19,8 +19,8 @@ from typing import Any, Dict, List, Optional, Set, Type, Union
 import kapture
 import kapture.io.features
 from kapture.utils.logging import getLogger
-from .tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler
-from .tar import get_feature_tar_fullpath, retrieve_tar_handler_from_collection
+from kapture.io.tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler
+from kapture.io.tar import get_feature_tar_fullpath, retrieve_tar_handler_from_collection
 
 logger = kapture.logger
 gettrace = getattr(sys, 'gettrace', None)
