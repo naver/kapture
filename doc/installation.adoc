@@ -162,10 +162,11 @@ You should get something like this:
 [source,bash]
 ----
 nb sensors               : 3
-nb trajectories records  : 3
-nb records_camera records: 3
-nb keypoints             : 3
+nb trajectories          : 3
+nb records_camera        : 3
+nb types keypoints       : 1
+ └─ nb images sift       : 3
 nb points 3-D            : 5
-nb observed 3-D points   : 5
+nb observed 3-D points   : 27
 nb observation 2-D points: 27
 ----
