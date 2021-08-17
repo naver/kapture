@@ -1253,7 +1253,7 @@ pose_kapture = kapture.PoseTransform.compose([matrix_ros_to_kapture, pose_ros, m
 
 ==== 1.0
 
-Initial version of the format [here](https://github.com/naver/kapture/blob/1.0.17/kapture_format.adoc)
+Initial version of the format https://github.com/naver/kapture/blob/1.0.17/kapture_format.adoc[here]
 
 ==== 1.1
 
