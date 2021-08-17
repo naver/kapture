@@ -247,7 +247,7 @@ def print_features(kapture_data, output_stream, show_detail, show_all) -> None:
                         print_key_value(' | ├─ metric_type', features.metric_type,
                                         file=output_stream, show_none=show_all)
                     print_key_value(' | └─ nb images ', len(list(features)), file=output_stream, show_none=show_all)
-            print_key_value(f'nb types {feature_name}', nb_feature_types, file=output_stream, show_none=show_all)
+            print_key_value(f' └─ nb types {feature_name}', nb_feature_types, file=output_stream, show_none=show_all)
 
 
 def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
@@ -268,7 +268,7 @@ def print_matches(kapture_data, output_stream, show_detail, show_all) -> None:
             for kpt_type, matches in kapture_data.matches.items():
                 print_key_value(' ├─ keypoints_type ', kpt_type, output_stream, show_all)
                 print_key_value(' | └─ nb pairs ', len(list(matches)), output_stream, show_all)
-            print_key_value('nb types ', nb_kpts_types, output_stream, show_all)
+        print_key_value(' └─ nb types ', nb_kpts_types, output_stream, show_all)
 
 
 def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
