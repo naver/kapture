@@ -2,8 +2,11 @@
 FROM nvidia/cudagl:10.0-devel-ubuntu18.04
 MAINTAINER naverlabs "kapture@naverlabs.com"
 
+# set local (see more on https://leimao.github.io/blog/Docker-Locale/)
+ENV     LANG C.UTF-8
+ENV     LC_ALL C.UTF-8
+
 # Set correct environment variables.
-ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ARG MAKE_OPTIONS="-j8"
 ARG SOURCE_PREFIX="/opt/src"
