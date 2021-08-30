@@ -17,7 +17,8 @@ from kapture.core.Sensors import Camera, CameraType
 import kapture.io.csv as kcsv
 # tools
 from kapture.converter.ros_tools.import_utbm_sensor import BB2_CAMERA_IDENTIFIERS, TOPICS_BB2
-from kapture.converter.ros_tools.import_utbm_sensor import import_ros_camera_calibration, import_utbm_sensors
+from kapture.converter.ros_tools.import_utbm_sensor import import_utbm_sensors
+from kapture.utils.open_cv import import_opencv_camera_calibration
 try:
     import rosbag  # noqa: F401
     from kapture.converter.ros_tools.import_rosbag import RosBagImporter
@@ -153,7 +154,7 @@ class TestImportUtbmRosbag(unittest.TestCase):
         """
         cam_info_file = path.join(self._samples_utbm_folder, 'bb2_wrongk3.yaml')
         with self.assertRaises(AssertionError, msg='when K3 is not zero'):
-            import_ros_camera_calibration(cam_info_file)
+            import_opencv_camera_calibration(cam_info_file)
 
     @unittest.skipIf(not has_rosbag, "rosbag module is missing")
     def test_utbm_images_rosbag_import(self) -> None:
