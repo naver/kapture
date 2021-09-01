@@ -24,7 +24,7 @@ import kapture.utils.logging
 import kapture.io.features
 import kapture.io.csv
 
-logger = logging.getLogger('LTVL2020')
+logger = logging.getLogger('ETH_MS_LTVL')
 
 
 def export_ETH_MS_LTVL(kapture_dirpath: str,
