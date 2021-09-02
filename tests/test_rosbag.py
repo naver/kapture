@@ -148,13 +148,18 @@ class TestImportUtbmRosbag(unittest.TestCase):
         self.assertEqual(1024, camera.camera_params[0], "Image width")
         self.assertEqual(768, camera.camera_params[1], "Image height")
 
-    def test_read_wrong_bb2_camera_info(self) -> None:
+    def test_read_bb2_with_k3_camera_info(self) -> None:
         """
         Test exception thrown when a camera info file k3 parameter is not zero
         """
-        cam_info_file = path.join(self._samples_utbm_folder, 'bb2_wrongk3.yaml')
-        with self.assertRaises(AssertionError, msg='when K3 is not zero'):
-            import_opencv_camera_calibration(cam_info_file)
+        cam_info_file = path.join(self._samples_utbm_folder, 'bb2_with_k3.yaml')
+        camera = import_opencv_camera_calibration(cam_info_file)
+        self.assertIsInstance(camera, Camera, "Is of type Camera")
+        self.assertEqual(CameraType.FULL_OPENCV, camera.camera_type, "of type full openCV")
+        self.assertEqual('bb2_cam', camera.name, "Named bb2_cam")
+        self.assertEqual(1024, camera.camera_params[0], "Image width")
+        self.assertEqual(768, camera.camera_params[1], "Image height")
+        self.assertNotEqual(0.0, camera.camera_params[10], "K3 is not null")
 
     @unittest.skipIf(not has_rosbag, "rosbag module is missing")
     def test_utbm_images_rosbag_import(self) -> None:
