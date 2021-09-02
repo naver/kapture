@@ -3,6 +3,7 @@
 
 """
 Convert kapture data to ETH-Microsoft Long-term Visual Localization challenge format
+See https://github.com/cvg/visloc-iccv2021
 
 This line should store the
 result as `timestamp/camera_or_rig_id qw qx qy qz tx ty tz`.
