@@ -16,35 +16,57 @@ from tools.kapture_import_localized_images import import_localized_images
 class TestImageList(unittest.TestCase):
 
     def setUp(self):
-        samples_folder = path.abspath(path.join(path.dirname(__file__),  '../samples/cour_carree_markers/'))
-        self._localized_file = path.join(samples_folder, 'map/localized_images.txt')
-        self._images_folder = path.join(samples_folder, 'map')
-        self._kapture_with_images_path = path.join(samples_folder, 'kapture_images')
-        self._kapture_no_images_path = path.join(samples_folder, 'kapture_no_images')
+        self._samples_folder = path.abspath(path.join(path.dirname(__file__),  '../samples/cour_carree_markers/'))
+        self._localized_file = path.join(self._samples_folder, 'map/localized_images.txt')
+        self._images_folder = path.join(self._samples_folder, 'map')
+        self._camera_model_path = path.join(path.join(self._samples_folder, 'map'), 's10.yml')
         self._tempdir = tempfile.TemporaryDirectory()
         self._kapture_path = path.join(self._tempdir.name, 'kapture_local')
         os.makedirs(self._kapture_path, exist_ok=True)
 
     def test_import_images_missing_file(self):
         self.assertRaises(FileNotFoundError, import_localized_images,
-                          '', '', self._kapture_path, True, TransferAction.copy, False)
+                          '', self._images_folder, self._camera_model_path,
+                          self._kapture_path, True, TransferAction.copy)
 
     def test_import_images_missing_dir(self):
         self.assertRaises(ValueError, import_localized_images,
-                          self._localized_file, '', self._kapture_path, True, TransferAction.copy, False)
+                          self._localized_file, '', self._camera_model_path,
+                          self._kapture_path, True, TransferAction.copy)
 
     def test_import_with_images(self):
-        import_localized_images(self._localized_file, self._images_folder, self._kapture_path, True,
-                                TransferAction.copy, False)
+        import_localized_images(self._localized_file, self._images_folder, self._camera_model_path,
+                                self._kapture_path, True, TransferAction.copy)
 
-        expected_kapture = kapture_from_dir(self._kapture_with_images_path)
+        ref_kapture_path = path.join(self._samples_folder, 'kapture_images')
+        expected_kapture = kapture_from_dir(ref_kapture_path)
+        imported_kapture = kapture_from_dir(self._kapture_path)
+        self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
+
+    def test_import_images_no_camera(self):
+        import_localized_images(self._localized_file, self._images_folder, '',
+                                self._kapture_path, True, TransferAction.copy)
+
+        ref_kapture_path = path.join(self._samples_folder, 'kapture_images_no_camera')
+        expected_kapture = kapture_from_dir(ref_kapture_path)
         imported_kapture = kapture_from_dir(self._kapture_path)
         self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
 
     def test_import_no_images(self):
-        import_localized_images(self._localized_file, '', self._kapture_path, True, TransferAction.copy, True)
+        import_localized_images(self._localized_file, '', self._camera_model_path,
+                                self._kapture_path, True, TransferAction.copy, True)
 
-        expected_kapture = kapture_from_dir(self._kapture_no_images_path)
+        ref_kapture_path = path.join(self._samples_folder, 'kapture_no_images')
+        expected_kapture = kapture_from_dir(ref_kapture_path)
+        imported_kapture = kapture_from_dir(self._kapture_path)
+        self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
+
+    def test_import_no_images_nor_camera(self):
+        import_localized_images(self._localized_file, '', '',
+                                self._kapture_path, True, TransferAction.copy, True)
+
+        ref_kapture_path = path.join(self._samples_folder, 'kapture_no_images_nor_camera')
+        expected_kapture = kapture_from_dir(ref_kapture_path)
         imported_kapture = kapture_from_dir(self._kapture_path)
         self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
 
