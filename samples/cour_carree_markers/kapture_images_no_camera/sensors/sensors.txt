@@ -1,0 +1,3 @@
+# kapture format: 1.1
+# sensor_id, name, sensor_type, [sensor_params]+
+s10Leo, s10Leo, camera, UNKNOWN_CAMERA, 1080, 1920
