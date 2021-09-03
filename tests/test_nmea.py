@@ -3,17 +3,12 @@
 
 import os.path as path
 import tempfile
-import shutil
 import unittest
-import piexif
 import numpy as np
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
-from kapture.io.records import images_to_filepaths, get_image_fullpath
 from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
-
-from kapture.algo.compare import equal_kapture, equal_records_gnss
 
 
 class TestImportNmea(unittest.TestCase):

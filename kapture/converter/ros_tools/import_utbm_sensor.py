@@ -9,7 +9,6 @@ The files have been produced by the ROS camera_calibration package:
 https://wiki.ros.org/camera_calibration
 """
 
-from os import path
 from typing import List, Union
 
 from kapture.core.Sensors import Sensors

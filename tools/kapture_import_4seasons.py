@@ -40,18 +40,15 @@ import math
 import numpy as np
 import quaternion
 from glob import glob
-from PIL import Image
 from tqdm import tqdm
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Union
 # kapture
 import path_to_kapture  # noqa: F401
-from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import kapture
 import kapture.utils.logging
-from kapture.utils.paths import path_secure
 from kapture.io.structure import delete_existing_kapture_files
-from kapture.io.csv import kapture_to_dir, table_from_file
+from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.utils.logging import getLogger
@@ -478,16 +475,22 @@ def import_4seasons_sequence(
     os.makedirs(kapture_dir_path, exist_ok=True)
 
     """
-    recording_dir_path contains : 
+    recording_dir_path contains :
     KeyFrameData: contains the KeyFrameFiles.
     distorted_images: contains both the distorted images from the left and right camera, respectively.
     undistorted_images: contains both the undistorted images from the left and right camera, respectively.
-    GNSSPoses.txt: is a list of 7DOF globally optimized poses (include scale from VIO to GNSS frame) for all keyframes (after GNSS fusion and loop closure detection). Each line is specified as frame_id, translation (t_x, t_y, t_z), rotation as quaternion (q_x, q_y, q_z, w), scale, fusion_quality (not relevant), and v3 (not relevant).
+    GNSSPoses.txt: is a list of 7DOF globally optimized poses (include scale from VIO to GNSS frame) for all keyframes
+    (after GNSS fusion and loop closure detection). Each line is specified as frame_id, translation (t_x, t_y, t_z),
+     rotation as quaternion (q_x, q_y, q_z, w), scale, fusion_quality (not relevant), and v3 (not relevant).
     Transformations.txt: defines transformations between different coordinate frames.
-    imu.txt: contains raw IMU measurements. Each line is specified as frame_id, (angular velocity (w_x, w_y, w_z), and linear acceleration (a_x, a_y, a_z)).
-    result.txt: contains the 6DOF visual interial odometry poses for every frame (not optimized). Each line is specified as timestamp (in seconds), translation (t_x, t_y, t_z), rotation as quaternion (q_x, q_y, q_z, w).
+    imu.txt: contains raw IMU measurements. Each line is specified as frame_id, (angular velocity (w_x, w_y, w_z),
+    and linear acceleration (a_x, a_y, a_z)).
+    result.txt: contains the 6DOF visual interial odometry poses for every frame (not optimized).
+    Each line is specified as timestamp (in seconds), translation (t_x, t_y, t_z), rotation as
+    quaternion (q_x, q_y, q_z, w).
     septentrio.nmea: contains the raw GNSS measurements in the NMEA format.
-    times.txt is a list of times in unix timestamps (in seconds), and exposure times (in milliseconds) for each frame (frame_id, timestamp, exposure).
+    times.txt is a list of times in unix timestamps (in seconds), and exposure times (in milliseconds)
+    for each frame (frame_id, timestamp, exposure).
     """
 
     # sensors

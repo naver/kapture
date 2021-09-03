@@ -3,18 +3,14 @@
 """
 Extract GNSS data from NMEA 0183 files
 """
-import re
-from typing import Optional
-from PIL import Image
-from datetime import datetime, timezone, timedelta
-import pytz
+from datetime import datetime, timedelta
 import logging
+import pytz
+import re
 from typing import Tuple, Optional
-from tqdm import tqdm
+
 import kapture
 from kapture.io.csv import table_from_file
-from kapture.io.records import images_to_filepaths
-from warnings import warn
 
 logger = logging.getLogger('nmea')
 
@@ -89,7 +85,6 @@ def extract_gnss_from_nmea(
     :return:
     """
     # only load sensors + records_data:
-    disable_tqdm = logger.getEffectiveLevel() != logging.INFO
 
     # add new gps ids to sensors
     gnss_kapture_sensors = kapture.Sensors()
@@ -124,4 +119,3 @@ def extract_gnss_from_nmea(
                     logger.debug(f'skipping malformed nmea frame {e}')
 
     return gnss_kapture_sensors, records_gnss
-

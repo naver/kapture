@@ -13,7 +13,6 @@ result as `timestamp/camera_or_rig_id qw qx qy qz tx ty tz`.
 """
 import logging
 import os
-import os.path as path
 import pathlib
 import argparse
 from tqdm import tqdm

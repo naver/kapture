@@ -5,8 +5,6 @@
 Export the list of images of a kapture into a file listing the image files, and optionally their camera parameters.
 """
 
-from kapture.core.Records import RecordBluetooth, RecordGnss, RecordGyroscope,\
-    RecordsAccelerometer, RecordsDepth, RecordsMagnetic
 import logging
 import os
 import argparse

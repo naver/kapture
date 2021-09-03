@@ -152,7 +152,8 @@ def export_ply_command_line() -> None:
     parser.add_argument('-o', '--output', required=False,
                         help='output directory (PLY file format).')
     parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
-                        help='things to plot : ' + ' // '.join('{}: {}'.format(k, v) for k, v in export_choices.items()))
+                        help='things to plot : ' + ' // '.join('{}: {}'.format(k, v)
+                                                               for k, v in export_choices.items()))
     parser.add_argument('--keypoints-type', default=None, help='types of keypoints.')
     parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=['keypoints'],
                         help='things to not plot : ' + ' // '.join(export_choices.keys()))
