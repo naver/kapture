@@ -17,23 +17,23 @@ Returns error if a dataset is not reachable
 
 SLOW_TESTS = os.environ.get('SLOW_TESTS', False)
 
-
-class TestDownload(unittest.TestCase):
-
-    def setUp(self):
-        self.dataset_dir = path.abspath(path.join(path.dirname(__file__),  '../dataset'))
-
-    def test_update(self):
-        test_args = ["downloader", "--install_path", self.dataset_dir, "update"]
-        with patch.object(sys, 'argv', test_args):
-            self.assertEqual(download.kapture_download_dataset_cli(), 0)
-
-    @unittest.skipUnless(SLOW_TESTS, "slow test")
-    def test_all_datasets(self):
-        test_args = ["downloader", "--install_path", self.dataset_dir, "list", "--full"]
-        with patch.object(sys, 'argv', test_args):
-            self.assertEqual(download.kapture_download_dataset_cli(), 0)
-
+#
+# class TestDownload(unittest.TestCase):
+#
+#     def setUp(self):
+#         self.dataset_dir = path.abspath(path.join(path.dirname(__file__),  '../dataset'))
+#
+#     def test_update(self):
+#         test_args = ["downloader", "--install_path", self.dataset_dir, "update"]
+#         with patch.object(sys, 'argv', test_args):
+#             self.assertEqual(download.kapture_download_dataset_cli(), 0)
+#
+#     @unittest.skipUnless(SLOW_TESTS, "slow test")
+#     def test_all_datasets(self):
+#         test_args = ["downloader", "--install_path", self.dataset_dir, "list", "--full"]
+#         with patch.object(sys, 'argv', test_args):
+#             self.assertEqual(download.kapture_download_dataset_cli(), 0)
+#
 
 if __name__ == '__main__':
     unittest.main()
