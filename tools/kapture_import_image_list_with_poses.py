@@ -26,21 +26,21 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.utils.open_cv import import_opencv_camera_calibration
 
-logger = logging.getLogger('import_localized_images')
+logger = logging.getLogger('import_image_list_with_poses')
 
 
-def import_localized_images(localized_file_path: str,
-                            images_dir_path: str,
-                            camera_calibration_file_path: str,
-                            kapture_path: str,
-                            force_overwrite_existing: bool = False,
-                            images_import_method: TransferAction = TransferAction.skip,
-                            do_not_import_images: bool = False) -> None:
+def import_image_list_with_poses(images_list_file_path: str,
+                                 images_dir_path: str,
+                                 camera_calibration_file_path: str,
+                                 kapture_path: str,
+                                 force_overwrite_existing: bool = False,
+                                 images_import_method: TransferAction = TransferAction.skip,
+                                 do_not_import_images: bool = False) -> None:
     """
-    Imports the list of images to a kapture. This creates only images and cameras.
+    Imports the list of images with their poses to a kapture. This creates only images and cameras.
 
-    :param localized_file_path: file containing the list of localized images with their poses
-    :param images_dir_path: top directory of the images path. If not defined, the images path in the localized file
+    :param images_list_file_path: file containing the list of images with their poses
+    :param images_dir_path: top directory of the images path. If not defined, the images path in the list file
         must be full path.
     :param camera_calibration_file_path: path to the calibration camera file in opencv format.
     If missing, will compute a simple camera model based on the images
@@ -49,8 +49,8 @@ def import_localized_images(localized_file_path: str,
     :param images_import_method: choose how to import actual image files.
     :param do_not_import_images: when true, do not import the image files.
     """
-    if not path.exists(localized_file_path):
-        raise FileNotFoundError(localized_file_path)
+    if not path.exists(images_list_file_path):
+        raise FileNotFoundError(images_list_file_path)
     os.makedirs(kapture_path, exist_ok=True)
     delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
 
@@ -67,12 +67,12 @@ def import_localized_images(localized_file_path: str,
     filename_list: List[str] = []
     image_name_list: List[str] = []
 
-    logger.info(f'Loading data from {localized_file_path}')
+    logger.info(f'Loading data from {images_list_file_path}')
     # Find the top directory of all image files
-    with open(localized_file_path, 'rt') as file:
-        localized_data = table_from_file(file)
-        for localized_line in localized_data:
-            image_path = localized_line[2]
+    with open(images_list_file_path, 'rt') as file:
+        images_list_data = table_from_file(file)
+        for image_line in images_list_data:
+            image_path = image_line[2]
             if not do_not_import_images and not images_dir_path and not path.isabs(image_path):
                 raise ValueError(f'Can not import a relative image file without top directory: {image_path}')
             if not path.isabs(image_path) and images_dir_path:
@@ -80,11 +80,11 @@ def import_localized_images(localized_file_path: str,
             filename_list.append(image_path)
     common_images_path = path.commonpath(filename_list)
 
-    # Parse localized data file
-    with open(localized_file_path, 'rt') as file:
-        localized_data = table_from_file(file)
-        for localized_line in localized_data:
-            timestamp, camera_id, image_path, qw, qx, qy, qz, tx, ty, tz = localized_line
+    # Parse image list data file
+    with open(images_list_file_path, 'rt') as file:
+        images_list_data = table_from_file(file)
+        for image_line in images_list_data:
+            timestamp, camera_id, image_path, qw, qx, qy, qz, tx, ty, tz = image_line
             # Add top directory if necessary
             if not path.isabs(image_path) and images_dir_path:
                 image_path = path.join(images_dir_path, image_path)
@@ -128,11 +128,12 @@ def import_localized_images(localized_file_path: str,
     kapture_to_dir(kapture_path, imported_kapture)
 
 
-def import_localized_images_command_line() -> None:
+def import_image_list_with_poses_command_line() -> None:
     """
-    Do the localized images import to kapture using the parameters given on the command line.
+    Do the images list import to kapture using the parameters given on the command line.
     """
-    parser = argparse.ArgumentParser(description='import localized images (trajectory+images) to the kapture format.')
+    parser = argparse.ArgumentParser(description='import images with their poses (trajectory+images)'
+                                                 ' to the kapture format.')
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
@@ -143,13 +144,13 @@ def import_localized_images_command_line() -> None:
     parser.add_argument('-f', '--force', action='store_true', default=False,
                         help='force delete output if already exists.')
     # import ###########################################################################################################
-    parser.add_argument('-l', '--localized_file', required=True,
-                        help='path to localized images list file')
+    parser.add_argument('-l', '--images_list_file', required=True,
+                        help='path to images (with their poses) list file')
     parser.add_argument('--top_dir_images', default='',
                         help='path to top directory of images.'
-                             ' Necessary only if the images path are relative in the localized file')
+                             ' Necessary only if the images path are relative in the list file')
     parser.add_argument('-c', '--camera_model_file',
-                        help='path to opencv camera calibration YAML file.'
+                        help='path to opencv camera calibration YAML file. Must be in YAML 1.1.'
                              'If missing, will make a model based on images')
     parser.add_argument('-k', '--kapture', required=True, help='kapture directory')
     parser.add_argument('--image_action', type=TransferAction, default=TransferAction.copy,
@@ -165,10 +166,10 @@ def import_localized_images_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_localized_images(args.localized_file, args.top_dir_images, args.camera_model_file,
-                            args.kapture, args.force,
-                            args.image_action, args.do_not_import_images)
+    import_image_list_with_poses(args.images_list_file, args.top_dir_images, args.camera_model_file,
+                                 args.kapture, args.force,
+                                 args.image_action, args.do_not_import_images)
 
 
 if __name__ == '__main__':
-    import_localized_images_command_line()
+    import_image_list_with_poses_command_line()
