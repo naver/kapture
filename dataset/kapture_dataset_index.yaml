@@ -1,3 +1,131 @@
+RIO10_scene01_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: f981a3aa79ec8b6ccde2e1a2e2030fe79d05465a60a6bc241ddbaafb227b4181
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene01_mapping.tar.gz
+RIO10_scene01_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: ebc2be72898bebb58f45d7d4dd88761168ec7434606ab521179abaa87cfd3cf0
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene01_testing.tar.gz
+RIO10_scene01_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 00146ba950db59955c4e6fe9856d837d43f7e4d6306bef90bd5ea1511a703f93
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene01_validation.tar.gz
+RIO10_scene02_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: d89a11c597aa85d1be90938ef930c17128784179a5a3707be275c300cced9f63
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene02_mapping.tar.gz
+RIO10_scene02_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 16b10fcd0a1fac1978610ec399783f12ae77d57b7f06a1f0e29bedd6a36bd45a
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene02_testing.tar.gz
+RIO10_scene02_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: d281e841efdb9a42cc3d72f8b15ddfd97f13dfc599b679c9a3e834d8fa1b7e3e
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene02_validation.tar.gz
+RIO10_scene03_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 701ee5b392e5c41bfaa016606f94e7d47a3e612eaafd82def3f665b9e3079827
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene03_mapping.tar.gz
+RIO10_scene03_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 9abc8253a19237f9df3358c3e68f6f2a33fa93f1d48a3fc9dab2abb1cdbcf561
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene03_testing.tar.gz
+RIO10_scene03_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 1e5b05c31184f4c87b7d2cfd873aac7c8e1e2ffbaf104ef7271e3316921d0859
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene03_validation.tar.gz
+RIO10_scene04_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 79fe96f618c6596fdf668ad842efa9f42f99fad16b1dc35434a4fc24aaaa6c8b
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene04_mapping.tar.gz
+RIO10_scene04_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: c900457663e89b121ca87aaf496190f621da316373b401253dbad8b6d6acd808
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene04_testing.tar.gz
+RIO10_scene04_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 1d62afd939fbfabe2a9a120539e73efc4f11d4479b702d8bc6215fd7e4b0f57a
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene04_validation.tar.gz
+RIO10_scene05_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 23635e9e66bbed1746b7b28c586e1dab6d4c418541e8d5249cc877161a7baba8
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene05_mapping.tar.gz
+RIO10_scene05_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: d1087b3c03e12cb0c5b45598c8977ce99ef7f79a45419aa29b3d4015ed7a4bc0
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene05_testing.tar.gz
+RIO10_scene05_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 6461c8359f48d622cfc631b1a84c12ddcb6172f138550243d2ff108fe2d96530
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene05_validation.tar.gz
+RIO10_scene06_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 224e258c9ddd749ccbe473e6ec7194b829735017c24ecd8506302f54d27c0f37
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene06_mapping.tar.gz
+RIO10_scene06_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: fb7055f71a23d4fa1a20e25e48735d1ed37ba647506e2a1099e7d7fe5e0070b3
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene06_testing.tar.gz
+RIO10_scene06_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 7d0c3e21b60acbf57cbee2d84701b7806ee7595ceae4483971a53ce6ff1cec7d
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene06_validation.tar.gz
+RIO10_scene07_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 7c19f22d2c3d24da6f401e4c5153c2e04575f83ee9acffa45b802a7babccb281
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene07_mapping.tar.gz
+RIO10_scene07_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: c16b69f81e70226b207adfd0b446ac893278e89cf6bf2b31750ddff68839de93
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene07_testing.tar.gz
+RIO10_scene07_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 5e654966136f1b0a10cf32b01cf96120641843a66af18b141ac896a65c69bd3f
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene07_validation.tar.gz
+RIO10_scene08_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 959ab9d7e92fd8ea1fdc82314b81a633644e7ee915e14825406b8713902a8ed6
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene08_mapping.tar.gz
+RIO10_scene08_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 5657333757a90db708b65274dc1960e6968a69cc852907c06894066e7547f591
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene08_testing.tar.gz
+RIO10_scene08_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 2f793e0353c117148a40867ffaf68b31adcbd6f403f601bad855aa31218ec9cb
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene08_validation.tar.gz
+RIO10_scene09_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: a65fe762d0981c1cfedc62f1517991a565ac990e525a2baaba1d635efdd61233
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene09_mapping.tar.gz
+RIO10_scene09_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 6a79658e7c9b8c1757997dcdcd6d4f36944ac0835e97b2615ada3ce66a7d530a
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene09_testing.tar.gz
+RIO10_scene09_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: af0cecd08538c54a84e628e4679bb8d646299d4d6527fa281eb46db2b59cd735
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene09_validation.tar.gz
+RIO10_scene10_mapping:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: d9fa7526a59128490c0c497021f0942b5de02d36d73613c94398a67c0c3eab13
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene10_mapping.tar.gz
+RIO10_scene10_testing:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: e193d03e510915201e7fda18f63bb5a77ad00ef8f46b0288016df8a2c6823bd5
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene10_testing.tar.gz
+RIO10_scene10_validation:
+  license: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_LICENSE.txt
+  sha256sum: 911f1aa2d4282332e65178d7e8a61173d7f783faf2a81df87805ae9ea4a5d89e
+  url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene10_validation.tar.gz
+ETH-Microsoft_ICCV2021_preview_mapping:
+  license: https://cvg-data.inf.ethz.ch/eth_ms_dataset/iccv2021/kapture/ETH-Microsoft_ICCV2021_preview_LICENSE.txt
+  sha256sum: 4da25a6be9eb086295e32503d0d82cf668e3004874835d54d6300109a3d7abb0
+  url: https://cvg-data.inf.ethz.ch/eth_ms_dataset/iccv2021/kapture/ETH-Microsoft_ICCV2021_preview_mapping.tar.gz
+ETH-Microsoft_ICCV2021_preview_query:
+  license: https://cvg-data.inf.ethz.ch/eth_ms_dataset/iccv2021/kapture/ETH-Microsoft_ICCV2021_preview_LICENSE.txt
+  sha256sum: 4693d16b1675f34d4c2571f6327d1d2ab17dc51a8d2a921df7b5b1a437f2d7c9
+  url: https://cvg-data.inf.ethz.ch/eth_ms_dataset/iccv2021/kapture/ETH-Microsoft_ICCV2021_preview_query.tar.gz
 Aachen-Day-Night-v1.1_mapping:
   sha256sum: f33b706baaaeecc11821112c9a557971c41114e43dd6f44df62ad51d287c231c
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture//Aachen-Day-Night-v1.1_mapping.tar.gz
