@@ -149,7 +149,7 @@ class InstallDir:
                                              archive_url=data_yaml['url'],
                                              archive_sha256sum=data_yaml['sha256sum'],
                                              install_script_filename=data_yaml.get('install_script'),
-                                             license_url=data_yaml.get('license_url'))
+                                             license_url=data_yaml.get('license'))
 
         return datasets
 
@@ -438,50 +438,55 @@ def check_licenses(
     """
 
     # regroup licenses
-    licenses = {}  # license_url -> [list of datasets referring to that license]
+    license_datasets = {}  # license_url -> [list of datasets referring to that license]
     for name, dataset in datasets.items():
         if dataset.license_url is not None:
-            licenses.setdefault(dataset.license_url, list())
-            licenses[dataset.license_url].append(name)
-    logger.debug(f'licences {len(licenses)}')
+            license_datasets.setdefault(dataset.license_url, list())
+            license_datasets[dataset.license_url].append(name)
+    logger.debug(f'dataset refer {len(license_datasets)} licences.')
 
-    # removes the ones already acknowledged
-    licenses_to_be_pruned = install_dir.read_licenses()
-    for license_url, names in licenses.items():
-        if any(install_dir.is_installed(name) for name in names):
-            logger.debug(f'license {license_url} already approved.')
-            licenses_to_be_pruned.add(license_url)
+    # retrieve already agreed licenses.
+    licenses_already_agreed = install_dir.read_licenses()
+    # and filter only the ones we are concerned about.
+    licenses_already_agreed = {
+        license_url
+        for license_url in licenses_already_agreed
+        if license_url in license_datasets
+    }
 
-    for undesired in licenses_to_be_pruned:
-        del licenses[undesired]
-    licenses_to_be_pruned = set()
+    # removes from license_datasets, the the ones already agreed upon.
+    for license_to_skip in licenses_already_agreed:
+        del license_datasets[license_to_skip]
 
-    if not licenses:
-        # nothing to be done
+    if not license_datasets:
+        # no license to agree, job done
         return
 
     # some licenses remains to be approved
-    logger.info(f'{len(licenses)} to be approved:')
-
-    for license_url, names in licenses.items():
+    logger.info(f'{len(license_datasets)} to be approved:')
+    licenses_already_agreed = set()
+    # prompt user for each one
+    for license_url, dataset_names in license_datasets.items():
         r = requests.get(license_url, allow_redirects=True)
         if r.status_code != requests.codes.ok:
             raise ConnectionError(f'unable to grab {license_url} (code:{r.status_code})')
-        logger.info(f'here after the license terms for : {", ".join(names)}')
+        logger.info(f'here after the license terms for : {", ".join(dataset_names)}')
         wrapper = textwrap.TextWrapper(width=80)
         print(wrapper.fill(text=r.text))
+        print('----------------------')
+        print(f'from: {license_url}')
         agree = ask_confirmation('do you agree on terms ?')
         if not agree:
-            # remove all dataset with that license
-            licenses_to_be_pruned.add(license_url)
-            for name_of_disagrement in names:
-                logger.info(f'removing dataset {name_of_disagrement} due to license disagrement.')
-                del datasets[name_of_disagrement]
+            # in case of disagreement: remove all dataset with that license,
+            licenses_already_agreed.add(license_url)
+            for name_of_disagreement in dataset_names:
+                logger.critical(f'removing dataset {name_of_disagreement} due to license disagreement.')
+                del datasets[name_of_disagreement]
 
     logger.debug(f'update list of agreed licences.')
-    for undesired in licenses_to_be_pruned:
-        del licenses[undesired]
-    install_dir.update_licenses(licenses)
+    for license_to_skip in licenses_already_agreed:
+        del license_datasets[license_to_skip]
+    install_dir.update_licenses(license_datasets)
 
 
 def kapture_download_dataset(args, index_filepath: str):
