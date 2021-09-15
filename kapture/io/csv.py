@@ -422,7 +422,7 @@ def trajectories_from_file(filepath: str, device_ids: Optional[Set[str]] = None)
             pose._r = rotation
 
             if tx != '' and ty != '' and tz != '':
-                trans = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=np.float)
+                trans = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=float)
             else:
                 trans = None
             pose._t = trans
