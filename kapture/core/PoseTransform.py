@@ -48,7 +48,7 @@ class PoseTransform:
             self._t = t
         elif isinstance(t, list):
             # its a list: convert to numpy if valid
-            self._t = np.array(t, dtype=np.float)
+            self._t = np.array(t, dtype=float)
         else:
             self._t = None
 
@@ -97,7 +97,7 @@ class PoseTransform:
         assert self._r is not None
         assert self._t is not None
         r_inv = self.r.inverse()
-        rotation_inv_matrix = np.empty((3, 3), dtype=np.float)
+        rotation_inv_matrix = np.empty((3, 3), dtype=float)
         rotation_inv_as_np = np.array([r_inv.w, r_inv.x, r_inv.y, r_inv.z])
         _as_rotation_matrix_njit(rotation_inv_as_np, rotation_inv_matrix)
         t_inv = np.matmul(rotation_inv_matrix, self.t * -1.0)
@@ -131,7 +131,7 @@ class PoseTransform:
             # assert pose_current._r is not None
             # assert pose_current._t is not None
             new_r = pose_composed.r * pose_current.r
-            rotation_matrix = np.empty((3, 3), dtype=np.float)
+            rotation_matrix = np.empty((3, 3), dtype=float)
             rotation_composed_as_np = np.array([pose_composed.r.w, pose_composed.r.x,
                                                 pose_composed.r.y, pose_composed.r.z])
             _as_rotation_matrix_njit(rotation_composed_as_np, rotation_matrix)
@@ -156,7 +156,7 @@ class PoseTransform:
         if points3d.shape[1] == 6:  # expunge RGB
             points3d = points3d[:, 0:3]
         points3d = points3d.transpose()
-        rotation_matrix = np.empty((3, 3), dtype=np.float)
+        rotation_matrix = np.empty((3, 3), dtype=float)
         rotation_as_np = np.array([self.r.w, self.r.x, self.r.y, self.r.z])
         _as_rotation_matrix_njit(rotation_as_np, rotation_matrix)
         points3d = np.add(np.matmul(rotation_matrix, points3d), self.t)
