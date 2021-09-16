@@ -17,17 +17,19 @@ import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
-from kapture.io.csv import kapture_to_dir
+from kapture.io.csv import kapture_to_dir, get_csv_fullpath, sensors_from_file
 from kapture.utils.paths import path_secure
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 
 logger = logging.getLogger('image_folder')
 
 
-def import_image_folder(images_path: str,
-                        kapture_path: str,
-                        force_overwrite_existing: bool = False,
-                        images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_image_folder(
+        images_path: str,
+        kapture_path: str,
+        force_overwrite_existing: bool = False,
+        images_import_method: TransferAction = TransferAction.skip
+) -> None:
     """
     Imports the images of a folder to a kapture. This creates only images and cameras.
 
@@ -39,7 +41,6 @@ def import_image_folder(images_path: str,
     os.makedirs(kapture_path, exist_ok=True)
     delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
 
-    cameras = kapture.Sensors()
     images = kapture.RecordsCamera()
 
     file_list = [path.relpath(path.join(dirpath, filename), images_path)
@@ -47,34 +48,14 @@ def import_image_folder(images_path: str,
                  for filename in filenames]
     file_list = sorted(file_list)
 
-    sensor_info = {}  # {sensor_id:[sensor_type, sensor_params+]}
-    sensor_flag = True
     try:
-        sensors = open(path.join(images_path, "sensors.txt"), 'r')
-        lines = sensors.readlines()
-        for line in lines:
-            line = line.strip()
-            if line[0] == '#':
-                continue
-            line = line.split(", ")
-            sensor_info[line[0]] = line[3:]
-
+        sensors_filepath = path.join(images_path, 'sensors.txt')
+        sensors = sensors_from_file(sensors_filepath)
+        sensors_given = True
     except OSError:
         logger.info('image folder has no extra sensor info')
-        sensor_flag = False
-
-    camera_types = {'SIMPLE_PINHOLE': kapture.CameraType.SIMPLE_PINHOLE,
-                    'PINHOLE': kapture.CameraType.PINHOLE,
-                    'SIMPLE_RADIAL': kapture.CameraType.SIMPLE_RADIAL,
-                    'RADIAL': kapture.CameraType.RADIAL,
-                    'OPENCV': kapture.CameraType.OPENCV,
-                    'OPENCV_FISHEYE': kapture.CameraType.OPENCV_FISHEYE,
-                    'FULL_OPENCV': kapture.CameraType.FULL_OPENCV,
-                    'FOV': kapture.CameraType.FOV,
-                    'SIMPLE_RADIAL_FISHEYE': kapture.CameraType.SIMPLE_RADIAL_FISHEYE,
-                    'RADIAL_FISHEYE': kapture.CameraType.RADIAL_FISHEYE,
-                    'THIN_PRISM_FISHEYE': kapture.CameraType.THIN_PRISM_FISHEYE,
-                    'UNKNOWN_CAMERA': kapture.CameraType.UNKNOWN_CAMERA}
+        sensors = kapture.Sensors()
+        sensors_given = False
 
     logger.info('starting conversion...')
     for n, filename in enumerate(file_list):
@@ -89,18 +70,24 @@ def import_image_folder(images_path: str,
             logger.info(f'Skipping invalid image file {filename}')
             continue
 
-        if sensor_flag:
-            camera_id = path.dirname(path.join(images_path, filename)).split(os.sep)[-1]
-            images[(n, camera_id)] = path_secure(filename)  # don't forget windows
-            try:
-                cameras[camera_id] = kapture.Camera(camera_types[sensor_info[camera_id][0]], sensor_info[camera_id][1:])
-            except KeyError:
-                logger.info(f'{camera_id} has no valid camera type')
-                cameras[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
+        if sensors_given:
+            if len(sensors) == 1:
+                # in case of single camera, just take the name from sensors.txt
+                camera_id = list(sensors.keys())[0]
+            else:
+                # guess sensor_id from dirname
+                camera_id = path.dirname(path.join(images_path, filename)).split(os.sep)[-1]
+
+            if camera_id not in sensors:
+                logger.critical(f'camera {camera_id} is not found in sensors.txt')
+                # sensors[camera_id] = kapture.Camera(camera_types[sensor_info[camera_id][0]], sensor_info[camera_id][1:])
+                raise KeyError(f'camera {camera_id} is not found in sensors.txt')
+
         else:
             camera_id = f'sensor{n}'
-            images[(n, camera_id)] = path_secure(filename)  # don't forget windows
-            cameras[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
+            sensors[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
+
+        images[(n, camera_id)] = path_secure(filename)  # don't forget windows
 
     # import (copy) image files.
     logger.info('import image files ...')
@@ -108,7 +95,7 @@ def import_image_folder(images_path: str,
     import_record_data_from_dir_auto(images_path, kapture_path, filename_list, images_import_method)
 
     # pack into kapture format
-    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images)
+    imported_kapture = kapture.Kapture(sensors=sensors, records_camera=images)
     logger.info('writing imported data...')
     kapture_to_dir(kapture_path, imported_kapture)
 
