@@ -42,10 +42,39 @@ def import_image_folder(images_path: str,
     cameras = kapture.Sensors()
     images = kapture.RecordsCamera()
 
-    file_list = [os.path.relpath(os.path.join(dirpath, filename), images_path)
+    file_list = [path.relpath(path.join(dirpath, filename), images_path)
                  for dirpath, dirs, filenames in os.walk(images_path)
                  for filename in filenames]
     file_list = sorted(file_list)
+
+    sensor_info = {}  # {sensor_id:[sensor_type, sensor_params+]}
+    sensor_flag = True
+    try:
+        sensors = open(path.join(images_path, "sensors.txt"), 'r')
+        lines = sensors.readlines()
+        for line in lines:
+            line = line.strip()
+            if line[0] == '#':
+                continue
+            line = line.split(", ")
+            sensor_info[line[0]] = line[3:]
+
+    except OSError:
+        logger.info('image folder has no extra sensor info')
+        sensor_flag = False
+
+    camera_types = {'SIMPLE_PINHOLE': kapture.CameraType.SIMPLE_PINHOLE,
+                    'PINHOLE': kapture.CameraType.PINHOLE,
+                    'SIMPLE_RADIAL': kapture.CameraType.SIMPLE_RADIAL,
+                    'RADIAL': kapture.CameraType.RADIAL,
+                    'OPENCV': kapture.CameraType.OPENCV,
+                    'OPENCV_FISHEYE': kapture.CameraType.OPENCV_FISHEYE,
+                    'FULL_OPENCV': kapture.CameraType.FULL_OPENCV,
+                    'FOV': kapture.CameraType.FOV,
+                    'SIMPLE_RADIAL_FISHEYE': kapture.CameraType.SIMPLE_RADIAL_FISHEYE,
+                    'RADIAL_FISHEYE': kapture.CameraType.RADIAL_FISHEYE,
+                    'THIN_PRISM_FISHEYE': kapture.CameraType.THIN_PRISM_FISHEYE,
+                    'UNKNOWN_CAMERA': kapture.CameraType.UNKNOWN_CAMERA}
 
     logger.info('starting conversion...')
     for n, filename in enumerate(file_list):
@@ -60,9 +89,18 @@ def import_image_folder(images_path: str,
             logger.info(f'Skipping invalid image file {filename}')
             continue
 
-        camera_id = f'sensor{n}'
-        images[(n, camera_id)] = path_secure(filename)  # don't forget windows
-        cameras[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
+        if sensor_flag:
+            camera_id = path.dirname(path.join(images_path, filename)).split(os.sep)[-1]
+            images[(n, camera_id)] = path_secure(filename)  # don't forget windows
+            try:
+                cameras[camera_id] = kapture.Camera(camera_types[sensor_info[camera_id][0]], sensor_info[camera_id][1:])
+            except KeyError:
+                logger.info(f'{camera_id} has no valid camera type')
+                cameras[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
+        else:
+            camera_id = f'sensor{n}'
+            images[(n, camera_id)] = path_secure(filename)  # don't forget windows
+            cameras[camera_id] = kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, model_params)
 
     # import (copy) image files.
     logger.info('import image files ...')
