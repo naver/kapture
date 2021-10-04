@@ -361,28 +361,33 @@ def import_4seasons_trajectory(
     """
     logger.info('importing images')
     # load gnss optimized poses
-    trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
-    # transforming them using the chain of matrix multiplication from the Transformations.txt
-    # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
-    #   - AS: SLAM internal scale
-    #   - S: metric scale
-    #   - w: visual world
-    #   - gpsw: local GPS world (ENU)
-    #   - e: global Earth frame (ECEF).
+    trajectories = kapture.Trajectorie()
+    if path.isfile(poses_file_path):
+        trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
 
-    transformations, gnss_scale = load_transformations_file(transformations_file_path)
-    transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
-    transformations_ecef_from_slam = kapture.PoseTransform.compose([
-        transformations['transform_e_gpsw'],
-        transformations['transformations_gpsw_w'],
-        transformations['transform_S_AS']
-    ])
-    # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
-    poses = trajectories.inverse()
-    kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
-    kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
-    # switch back to kapture (world -> cam)
-    trajectories = poses.inverse()
+        if path.isfile(transformations_file_path):
+            # transforming them using the chain of matrix multiplication from the Transformations.txt
+            # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
+            #   - AS: SLAM internal scale
+            #   - S: metric scale
+            #   - w: visual world
+            #   - gpsw: local GPS world (ENU)
+            #   - e: global Earth frame (ECEF).
+
+            transformations, gnss_scale = load_transformations_file(transformations_file_path)
+            transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
+            transformations_ecef_from_slam = kapture.PoseTransform.compose([
+                transformations['transform_e_gpsw'],
+                transformations['transformations_gpsw_w'],
+                transformations['transform_S_AS']
+            ])
+            # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
+            poses = trajectories.inverse()
+            kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
+            kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
+            # switch back to kapture (world -> cam)
+            trajectories = poses.inverse()
+
     return trajectories
 
 
@@ -577,7 +582,7 @@ def import_4seasons_command_line() -> None:
     # import ###########################################################################################################
     parser.add_argument('-i', '--input', required=True,
                         help='input path to 4 seasons record directory (e.g. ./recording_2020-10-07_14-47-51)')
-    parser.add_argument('-c', '--calibration', required=False,
+    parser.add_argument('-c', '--calibration',
                         help='input path to 4 seasons calibration. If not given, assumed to be alongside input.')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
                         help=f'How to import images [link_absolute], '
