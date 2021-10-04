@@ -361,7 +361,7 @@ def import_4seasons_trajectory(
     """
     logger.info('importing images')
     # load gnss optimized poses
-    trajectories = kapture.Trajectorie()
+    trajectories = kapture.Trajectories()
     if path.isfile(poses_file_path):
         trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
 
