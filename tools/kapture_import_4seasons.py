@@ -361,28 +361,33 @@ def import_4seasons_trajectory(
     """
     logger.info('importing images')
     # load gnss optimized poses
-    trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
-    # transforming them using the chain of matrix multiplication from the Transformations.txt
-    # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
-    #   - AS: SLAM internal scale
-    #   - S: metric scale
-    #   - w: visual world
-    #   - gpsw: local GPS world (ENU)
-    #   - e: global Earth frame (ECEF).
+    trajectories = None
+    if path.isfile(poses_file_path):
+        trajectories = load_gnss_poses_file(poses_file_path, sensor_id=RIG_ID)
 
-    transformations, gnss_scale = load_transformations_file(transformations_file_path)
-    transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
-    transformations_ecef_from_slam = kapture.PoseTransform.compose([
-        transformations['transform_e_gpsw'],
-        transformations['transformations_gpsw_w'],
-        transformations['transform_S_AS']
-    ])
-    # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
-    poses = trajectories.inverse()
-    kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
-    kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
-    # switch back to kapture (world -> cam)
-    trajectories = poses.inverse()
+        if path.isfile(transformations_file_path):
+            # transforming them using the chain of matrix multiplication from the Transformations.txt
+            # transform_e_gpsw @ np.linalg.inv(transform_w_gpsw) @ transform_S_AS @ scale_mat
+            #   - AS: SLAM internal scale
+            #   - S: metric scale
+            #   - w: visual world
+            #   - gpsw: local GPS world (ENU)
+            #   - e: global Earth frame (ECEF).
+
+            transformations, gnss_scale = load_transformations_file(transformations_file_path)
+            transformations['transformations_gpsw_w'] = transformations['transform_w_gpsw'].inverse()
+            transformations_ecef_from_slam = kapture.PoseTransform.compose([
+                transformations['transform_e_gpsw'],
+                transformations['transformations_gpsw_w'],
+                transformations['transform_S_AS']
+            ])
+            # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
+            poses = trajectories.inverse()
+            kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
+            kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
+            # switch back to kapture (world -> cam)
+            trajectories = poses.inverse()
+
     return trajectories
 
 
@@ -513,46 +518,50 @@ def import_4seasons_sequence(
 
     # trajectories from keyframes
     poses_file_path = path.join(recording_dir_path, 'GNSSPoses.txt')
-    transformations_file_path = path.join(recording_dir_path, 'Transformations.txt')
-    trajectories = import_4seasons_trajectory(
-        poses_file_path=poses_file_path,
-        transformations_file_path=transformations_file_path
-    )
-    imported_kapture.trajectories = trajectories
+    if path.isfile(poses_file_path):
+        transformations_file_path = path.join(recording_dir_path, 'Transformations.txt')
+        trajectories = import_4seasons_trajectory(
+            poses_file_path=poses_file_path,
+            transformations_file_path=transformations_file_path
+        )
+        imported_kapture.trajectories = trajectories
 
     # depth maps from keyframes
     keyframes_dir_path = path.join(recording_dir_path, 'KeyFrameData')
-    depth_sensors, depth_maps = import_4seasons_depth(
-        keyframes_dir_path=keyframes_dir_path,
-        kapture_dir_path=kapture_dir_path,
-        shot_id_to_timestamp=shot_id_to_timestamp,
-        intrinsics=imported_kapture.sensors[MASTER_CAM_ID]
-    )
-    imported_kapture.records_depth = depth_maps
-    sensors.update(depth_sensors)
-    # todo: add depth sensor to rig
+    if path.isdir(keyframes_dir_path):
+        depth_sensors, depth_maps = import_4seasons_depth(
+            keyframes_dir_path=keyframes_dir_path,
+            kapture_dir_path=kapture_dir_path,
+            shot_id_to_timestamp=shot_id_to_timestamp,
+            intrinsics=imported_kapture.sensors[MASTER_CAM_ID]
+        )
+        imported_kapture.records_depth = depth_maps
+        sensors.update(depth_sensors)
+        # todo: add depth sensor to rig
 
     # imu.txt to accel and gyro
     imu_file_path = path.join(recording_dir_path, 'imu.txt')
-    imu_sensors, records_accelerometer, records_gyroscope = import_4seasons_imu(
-        imu_file_path=imu_file_path,
-        shot_id_to_timestamp=shot_id_to_timestamp)
-    sensors.update(imu_sensors)
-    imported_kapture.records_accelerometer = records_accelerometer
-    imported_kapture.records_gyroscope = records_gyroscope
-    for imu_id in imu_sensors:
-        imported_kapture.rigs[RIG_ID, imu_id] = kapture.PoseTransform()
-        # TODO: set the orientation of imu into the rig.
+    if path.isfile(imu_file_path):
+        imu_sensors, records_accelerometer, records_gyroscope = import_4seasons_imu(
+            imu_file_path=imu_file_path,
+            shot_id_to_timestamp=shot_id_to_timestamp)
+        sensors.update(imu_sensors)
+        imported_kapture.records_accelerometer = records_accelerometer
+        imported_kapture.records_gyroscope = records_gyroscope
+        for imu_id in imu_sensors:
+            imported_kapture.rigs[RIG_ID, imu_id] = kapture.PoseTransform()
+            # TODO: set the orientation of imu into the rig.
 
     # GNSS data
     nmea_file_path = path.join(recording_dir_path, 'septentrio.nmea')
-    gnss_sensors, records_gnss = extract_gnss_from_nmea(
-        nmea_file_path=nmea_file_path, gnss_id='GNSS'
-    )
-    sensors.update(gnss_sensors)
-    imported_kapture.records_gnss = records_gnss
-    gnss_id = next(iter(gnss_sensors))
-    imported_kapture.rigs[RIG_ID, gnss_id] = kapture.PoseTransform()
+    if path.isfile(nmea_file_path):
+        gnss_sensors, records_gnss = extract_gnss_from_nmea(
+            nmea_file_path=nmea_file_path, gnss_id='GNSS'
+        )
+        sensors.update(gnss_sensors)
+        imported_kapture.records_gnss = records_gnss
+        gnss_id = next(iter(gnss_sensors))
+        imported_kapture.rigs[RIG_ID, gnss_id] = kapture.PoseTransform()
 
     # finally save the kapture csv files
     kapture_to_dir(kapture_dir_path, imported_kapture)
@@ -577,7 +586,7 @@ def import_4seasons_command_line() -> None:
     # import ###########################################################################################################
     parser.add_argument('-i', '--input', required=True,
                         help='input path to 4 seasons record directory (e.g. ./recording_2020-10-07_14-47-51)')
-    parser.add_argument('-c', '--calibration', required=False,
+    parser.add_argument('-c', '--calibration',
                         help='input path to 4 seasons calibration. If not given, assumed to be alongside input.')
     parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
                         help=f'How to import images [link_absolute], '
