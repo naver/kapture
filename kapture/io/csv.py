@@ -1474,7 +1474,12 @@ def kapture_from_dir(
         logger.debug(f'loading sensors {sensors_file_path} ...')
         assert path.isfile(sensors_file_path)
         kapture_data.__version__ = get_version_from_csv_file(sensors_file_path)
-        assert kapture_data.__version__ == current_format_version()
+        try:
+            if float(kapture_data.__version__) > float(current_format_version()):
+                raise ValueError(f'unable to load version over {current_format_version()}')
+        except ValueError:
+            raise FileNotFoundError(f'unable to load version over {current_format_version()}')
+
         kapture_data.sensors = sensors_from_file(sensors_file_path)
         sensor_ids = set(kapture_data.sensors.keys()) if kapture_data.sensors is not None else set()
 
@@ -1499,9 +1504,14 @@ def kapture_from_dir(
         kapture_data.trajectories = trajectories_from_file(trajectories_file_path, sensor_ids)
 
     _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data)
-    _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matches_pairs_file_path,
-                                        kapture_loadable_data, kapture_data, tar_handlers)
-    _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
+    # be picky on version number for desc, feat and matches
+    if kapture_data.__version__ and kapture_data.__version__ == current_format_version():
+        _load_features_and_desc_and_matches(data_dir_paths, kapture_dir_path, matches_pairs_file_path,
+                                            kapture_loadable_data, kapture_data, tar_handlers)
+        _load_points3d_and_observations(csv_file_paths, kapture_loadable_data, kapture_data)
+    else:
+        logger.critical(f'unsupported version ({kapture_data.__version__}): skip loading reconstruction part. '
+                        f'Please upgrade to {current_format_version()}.')
 
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'Loaded in {loading_elapsed.total_seconds():.3f} seconds from "{kapture_dir_path}"')
