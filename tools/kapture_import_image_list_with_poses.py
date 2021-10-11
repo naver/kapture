@@ -117,15 +117,15 @@ def import_image_list_with_poses(images_list_file_path: str,
             pose = kapture.PoseTransform(rotation, translation)
             trajectories[(int(timestamp), camera_id)] = pose
 
-    # import (copy) image files.
-    if not do_not_import_images:
-        logger.info('import image files ...')
-        import_record_data_from_dir_auto(common_images_path, kapture_path, image_name_list, images_import_method)
-
     # pack into kapture format
     imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories)
     logger.info('writing imported data...')
     kapture_to_dir(kapture_path, imported_kapture)
+
+    # import (copy) image files.
+    if not do_not_import_images:
+        logger.info('import image files ...')
+        import_record_data_from_dir_auto(common_images_path, kapture_path, image_name_list, images_import_method)
 
 
 def import_image_list_with_poses_command_line() -> None:
