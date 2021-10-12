@@ -90,6 +90,7 @@ def export_4seasons_pairfile(
 
     pairs = load_timestamp_pairs(pairs_file_path)
 
+    poses = []
     for mapping_ts, query_ts in pairs:
         if mapping_ts not in kapture_data.trajectories or query_ts not in kapture_data.trajectories:
             raise IndexError(f'reference pose at time {mapping_ts} or {query_ts} not available in trajectory.')
@@ -100,11 +101,21 @@ def export_4seasons_pairfile(
             raise ValueError(f'ambiguity on sensors in pair files')
 
         # compute relative pose
-        ref_pose = next(iter(ref_pose.values()))
-        query_pose = next(iter(query_pose.values()))
-        # todo: check and fix the composition correct order
-        relative_pose = kapture.PoseTransform.compose([ref_pose, query_pose.inverse()])
-        
+        refer_from_world = next(iter(ref_pose.values()))
+        query_from_world = next(iter(query_pose.values()))
+        # The relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
+        # The 6DOF poses are specified as translation (t_x, t_y, t_z), and quaternion (q_x, q_y, q_z, q_w).
+        refer_from_query = kapture.PoseTransform.compose([refer_from_world, query_from_world.inverse()])
+        query_from_refer = refer_from_query.inverse()
+        t_x, t_y, t_z = query_from_refer.t_raw
+        q_w, q_x, q_y, q_z = query_from_refer.r_raw
+        pose_entry = [mapping_ts, query_ts, t_x, t_y, t_z, q_x, q_y, q_z, q_w]  # note q_w was pushed at the end
+        poses.append(pose_entry)
+
+    with open(poses_file_path, 'wt') as f:
+        for p in poses:
+            f.write(' '.join(str(e) for e in p) + '\n')
+
 
 def export_4seasons_pairs_command_line() -> None:
     """
