@@ -6,28 +6,24 @@ import os.path as path
 import tempfile
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
-from tools.kapture_export_ply import plot_ply
+from tools.kapture_export_ply import export_ply
 
 
 class TestPlot(unittest.TestCase):
 
     def setUp(self):
-        samples_folder = path.abspath(path.join(path.dirname(__file__),  '../samples/'))
+        samples_folder = path.abspath(path.join(path.dirname(__file__), '../samples/'))
         self.toplot_folder = path.join(samples_folder, 'maupertuis', 'kapture')
 
     def test_plot(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
-            plot_ply(kapture_path=self.toplot_folder,
-                     ply_path=tmpdirname,
-                     axis_length=2.0,
-                     keypoints_type='SIFT',
-                     only=[], skip=[])
-            self.assertTrue(path.isfile(path.join(tmpdirname, "points3d.ply"))
-                            and path.isfile(path.join(tmpdirname, "trajectories.ply"))
-                            and path.isfile(path.join(tmpdirname,
-                                                      "reconstruction",
-                                                      "keypoints", 'SIFT',
-                                                      "00.jpg.kpt.jpg")))
+            export_ply(
+                kapture_path=self.toplot_folder,
+                ply_dir_path=tmpdirname,
+                axis_length=2.0,
+                only=[], skip=[])
+            self.assertTrue(path.isfile(path.join(tmpdirname, "points3d.ply")))
+            self.assertTrue(path.isfile(path.join(tmpdirname, "trajectories.ply")))
 
 
 if __name__ == '__main__':

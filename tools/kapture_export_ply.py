@@ -22,28 +22,26 @@ import kapture.io.features
 from kapture.io.records import depth_map_from_file
 from typing import Optional
 
-logger = logging.getLogger('plot')
+logger = logging.getLogger('export_ply')
 
 
-def plot_ply(kapture_path: str,  # noqa: C901
-             ply_path: str,
-             axis_length: float,
-             keypoints_type: Optional[str] = None,
-             only: Optional[list] = None,
-             skip: Optional[list] = None
-             ) -> None:
+def export_ply(kapture_path: str,  # noqa: C901
+               ply_dir_path: str,
+               axis_length: float,
+               only: Optional[list] = None,
+               skip: Optional[list] = None
+               ) -> None:
     """
-    Plot the kapture data in a PLY file.
+    Export the kapture 3D data in a PLY file.
 
     :param kapture_path: top directory of the kapture
-    :param ply_path: path to the ply file to create
+    :param ply_dir_path: path to the ply file to create
     :param axis_length: length of axis representation (in world unit)
-    :param keypoints_type: select the type of keypoints to output. If not given, takes the first one.
     :param only: list of the only kapture objects to plot (optional)
     :param skip: list of the kapture objects to skip
     """
     try:
-        os.makedirs(ply_path, exist_ok=True)
+        os.makedirs(ply_dir_path, exist_ok=True)
 
         logger.info('loading data ...')
         with csv.get_all_tar_handlers(kapture_path) as tar_handlers:
@@ -54,51 +52,26 @@ def plot_ply(kapture_path: str,  # noqa: C901
                 pass_skip = candidate not in skip if skip else False
                 return pass_only or pass_skip
 
-            logger.info('plotting  ...')
+            logger.info('exporting  ...')
             if _should_do('rigs') and kapture_data.rigs:
                 logger.info(f'creating {len(kapture_data.rigs)} rigs.')
                 for rig_id, rig in kapture_data.rigs.items():
-                    rig_ply_filepath = path.join(ply_path, f'rig_{rig_id}.ply')
+                    rig_ply_filepath = path.join(ply_dir_path, f'rig_{rig_id}.ply')
                     logger.info(f'creating rig file : {rig_ply_filepath}.')
                     logger.debug(rig_ply_filepath)
                     ply.rig_to_ply(rig_ply_filepath, rig, axis_length)
 
             if _should_do('trajectories') and kapture_data.trajectories:
-                trajectories_ply_filepath = path.join(ply_path, 'trajectories.ply')
+                trajectories_ply_filepath = path.join(ply_dir_path, 'trajectories.ply')
                 logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
                 ply.trajectories_to_ply(filepath=trajectories_ply_filepath,
                                         trajectories=kapture_data.trajectories,
                                         axis_length=axis_length)
 
             if _should_do('points3d') and kapture_data.points3d:
-                points3d_ply_filepath = path.join(ply_path, 'points3d.ply')
+                points3d_ply_filepath = path.join(ply_dir_path, 'points3d.ply')
                 logger.info(f'creating 3D points file : {points3d_ply_filepath}')
                 ply.points3d_to_ply(points3d_ply_filepath, kapture_data.points3d)
-
-            if _should_do('keypoints') and kapture_data.keypoints:
-                if keypoints_type is None:
-                    if len(kapture_data.keypoints) == 1:
-                        keypoints_type = next(iter(kapture_data.keypoints.keys()))
-                    else:
-                        raise ValueError('should_do(keypoints) is true but keypoints_type '
-                                         'is None and could be multiple values, please specify')
-
-                logger.info('creating keypoints in 3D : '
-                            f'{kapture.io.features.get_keypoints_fullpath(keypoints_type, ply_path)}')
-                keypoints_dsize = kapture_data.keypoints[keypoints_type].dsize
-                keypoints_dtype = kapture_data.keypoints[keypoints_type].dtype
-                keypoints_filepaths = kapture.io.features.keypoints_to_filepaths(kapture_data.keypoints[keypoints_type],
-                                                                                 keypoints_type,
-                                                                                 kapture_path,
-                                                                                 tar_handlers)
-                for image_filename, keypoints_filepath in tqdm(keypoints_filepaths.items(),
-                                                               disable=logger.level >= logging.CRITICAL):
-                    image_filepath = kapture.io.records.get_image_fullpath(kapture_path, image_filename)
-                    image_keypoints_filepath = kapture.io.features.get_keypoints_fullpath(keypoints_type,
-                                                                                          ply_path,
-                                                                                          image_filename) + '.jpg'
-                    image.image_keypoints_to_image_file(
-                        image_keypoints_filepath, image_filepath, keypoints_filepath, keypoints_dtype, keypoints_dsize)
 
             if _should_do('depth') and kapture_data.records_depth:
                 logger.info('creating depth maps in 3D.')
@@ -108,7 +81,7 @@ def plot_ply(kapture_path: str,  # noqa: C901
                                        for _, sensor_id, depth_map_name in kapture.flatten(kapture_data.records_depth)}
                 for depth_map_name, depth_map_filepath in tqdm(depth_records_filepaths.items(),
                                                                disable=logger.level >= logging.CRITICAL):
-                    depth_png_filepath = path.join(ply_path, f'depth_images/{depth_map_name}.png')
+                    depth_png_filepath = path.join(ply_dir_path, f'depth_images/{depth_map_name}.png')
                     logger.debug(f'creating depth map file {depth_png_filepath}')
                     os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
                     depth_sensor_id = map_depth_to_sensor[depth_map_name]
@@ -135,7 +108,6 @@ def export_ply_command_line() -> None:
         'rig_stat': 'plot the sensor relative poses for each trajectory timestamp.',
         'trajectories': 'plot the trajectory of every sensors.',
         'points3d': 'plot the 3-D point cloud.',
-        'keypoints': 'plot keypoints in 3D over the image plane.',
         'depth': 'plot depth maps as point cloud (one per depth map)'
     }
 
@@ -154,8 +126,7 @@ def export_ply_command_line() -> None:
     parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
                         help='things to plot : ' + ' // '.join('{}: {}'.format(k, v)
                                                                for k, v in export_choices.items()))
-    parser.add_argument('--keypoints-type', default=None, help='types of keypoints.')
-    parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=['keypoints'],
+    parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=[],
                         help='things to not plot : ' + ' // '.join(export_choices.keys()))
     parser.add_argument('--axis_length', type=float, default=0.1,
                         help='length of axis representation (in world unit).')
@@ -172,11 +143,10 @@ def export_ply_command_line() -> None:
     if args.only:
         args.skip = []
     logger.debug(''.join(['\n\t{:13} = {}'.format(k, v) for k, v in vars(args).items()]))
-    plot_ply(kapture_path=args.input,
-             ply_path=args.output,
-             axis_length=args.axis_length,
-             keypoints_type=args.keypoints_type,
-             only=args.only, skip=args.skip)
+    export_ply(kapture_path=args.input,
+               ply_dir_path=args.output,
+               axis_length=args.axis_length,
+               only=args.only, skip=args.skip)
 
 
 if __name__ == '__main__':
