@@ -212,6 +212,8 @@ Here is a list of datasets you can directly download in kapture format with the 
 ** RobotCar Seasons v2
 ** InLoc (without images)
 ** SILDa Weather and Time of Day
+** RIO10
+** ETH-Microsoft
 * https://europe.naverlabs.com/research/3d-vision/virtual-gallery-dataset/[Virtual Gallery] dataset
 
 
