@@ -1,5 +1,6 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
-
+import logging
+from tqdm import tqdm
 import os
 import os.path as path
 from random import randint
@@ -9,6 +10,10 @@ import numpy as np
 import kapture
 from .csv import kapture_linesep
 from .features import image_keypoints_from_file
+
+
+logger = logging.getLogger('ply')
+
 
 PLY_HEADER_TEMPLATE = kapture_linesep.join([
     'ply',
@@ -137,7 +142,8 @@ def trajectories_to_ply_stream(stream, trajectories: kapture.Trajectories, axis_
 
     # write points into ply
     header_to_ply_stream(stream, nb_vertex=len(points_colored_list))
-    for p3d in points_colored_list:
+    hide = logger.getEffectiveLevel() >= logging.CRITICAL
+    for p3d in tqdm(points_colored_list, disable=hide):
         line = ['{:<25}'.format(i) for i in p3d[0:3]]
         line += ['{:<4}'.format(i) for i in p3d[3:6]]
         stream.write(' '.join(line) + kapture_linesep)
@@ -186,6 +192,46 @@ def points3d_to_ply(filepath: str, points3d: kapture.Points3d) -> None:
     os.makedirs(path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as f:
         points3d_to_stream(f, points3d)
+
+
+def local_points3d_to_stream(
+        stream,
+        points3d: np.ndarray,
+        transform_world_from_local: kapture.PoseTransform
+) -> None:
+    """
+    Writes the 3D points from a local coordinate system into world into a stream.
+
+    :param stream: an open stream to write to
+    :param points3d: input 3d points as a Nx3 numpy array
+    :param transform_world_from_local: transformation
+    """
+    # sanity check
+    if not isinstance(points3d, np.ndarray) or points3d.shape[1] != 3:
+        raise TypeError('expect 3d points as a numpy array.')
+
+    header_to_ply_stream(stream, nb_vertex=points3d.shape[0])
+    for p3d_local in points3d:
+        p3d_world = transform_world_from_local.transform_points(p3d_local)
+        line = ['{:20}'.format(i) for i in p3d_world]
+        stream.write('  '.join(line) + kapture_linesep)
+
+
+def local_points3d_to_ply(
+        filepath: str,
+        points3d: np.ndarray,
+        transform_world_from_local: kapture.PoseTransform
+) -> None:
+    """
+    Writes 3D points into ply file.
+
+    :param filepath: ply file path.
+    :param points3d: input 3d points as a Nx3 numpy array
+    :param transform_world_from_local: transformation
+    """
+    os.makedirs(path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'w') as f:
+        local_points3d_to_stream(f, points3d, transform_world_from_local)
 
 
 def image_keypoints_to_stream(stream, image_keypoints: np.array) -> None:
