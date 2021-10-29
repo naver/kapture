@@ -612,3 +612,11 @@ HyundaiDepartmentStore_B1_release_test:
 HyundaiDepartmentStore_B1_release_validation:
   sha256sum: 43351bccc0a949ba0b63e22df65ec8231813a9317999d49eed0b889050f6060a
   url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_validation.tar.gz
+symphony_mapping:
+  license: https://www.dropbox.com/s/pvg3vlbf52tfkok/LICENSE.txt?dl=1
+  sha256sum: 6e5e16ef8facad2dbfc24a899bb1e15454fa0746d20e7294982eec8d21e5d9ce
+  url: https://www.dropbox.com/s/frqqzfjebfjcfsh/symphony_mapping.tar.gz?dl=1
+symphony_query:
+  license: https://www.dropbox.com/s/pvg3vlbf52tfkok/LICENSE.txt?dl=1
+  sha256sum: 5174ea262cf688fe56160d661d8a44271e5fb915c252b8bfb50b2c1d7fbbd8a6
+  url: https://www.dropbox.com/s/94g7yd5mxjlr8o3/symphony_query.tar.gz?dl=1
