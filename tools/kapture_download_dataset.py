@@ -71,11 +71,13 @@ class InstallDir:
     def _load_installed_index(self):
         """ load installed index from file. Index is empty if file does not exists. """
         logger.debug(f'loading {self._dataset_installed_list_filepath}')
+        installed_index = set()
         if path.isfile(self._dataset_installed_list_filepath):
             with open(self._dataset_installed_list_filepath, 'rt') as f:
-                installed_index = set(yaml.safe_load(f))
-        else:
-            installed_index = set()
+                installed_index_yaml = yaml.safe_load(f)
+                if installed_index_yaml is not None:
+                    installed_index = set(installed_index_yaml)
+
         self._installed_index_cache = installed_index
 
     def _write_installed_index(self):
@@ -155,12 +157,14 @@ class InstallDir:
 
     def read_licenses(self) -> Set[str]:
         """ returns the list of licences already agreed by user """
-        if not path.isfile(self._license_agreed_list_filepath):
-            # not licences yet
-            return set()
+        license_list = set()
+        if path.isfile(self._license_agreed_list_filepath):
+            # licences exists
+            with open(self._license_agreed_list_filepath, 'rt') as file:
+                license_list_yaml = yaml.safe_load(file)
+                if license_list_yaml is not None:
+                    license_list = set(license_list_yaml)
 
-        with open(self._license_agreed_list_filepath, 'rt') as file:
-            license_list = set(yaml.safe_load(file))
         return license_list
 
     def update_licenses(self, licenses_list_updt: Set[str]):
