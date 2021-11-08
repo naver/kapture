@@ -31,10 +31,8 @@ except ImportError as e:
 
 export_choices = {
     'rigs': 'plot the rig geometry, ie. relative pose of sensors into the rig.',
-    'rig_stat': 'plot the sensor relative poses for each trajectory timestamp.',
     'trajectories': 'plot the trajectory of every sensors.',
     'points3d': 'plot the 3-D point cloud.',
-    'depth': 'plot depth maps as point cloud (one per depth map)',
     'lidar': 'plot depth maps as point cloud (one per depth map)'
 }
 
@@ -133,25 +131,6 @@ def export_ply(kapture_path: str,  # noqa: C901
                 o3d.io.write_point_cloud(lidar_dst_file_path, points3d_o3d)
                 del points3d_o3d
 
-        # if 'depth' in what_to_do and kapture_data.records_depth:
-        #     logger.info('creating depth maps in 3D.')
-        #     depth_records_filepaths = kapture.io.records.depth_maps_to_filepaths(kapture_data.records_depth,
-        #                                                                          kapture_path)
-        #     map_depth_to_sensor = {depth_map_name: sensor_id
-        #                            for _, sensor_id, depth_map_name in kapture.flatten(kapture_data.records_depth)}
-        #     for depth_map_name, depth_map_filepath in tqdm(depth_records_filepaths.items(),
-        #                                                    disable=logger.getEffectiveLevel() >= logging.CRITICAL):
-        #         depth_png_filepath = path.join(ply_dir_path, f'depth_images/{depth_map_name}.png')
-        #         logger.debug(f'creating depth map file {depth_png_filepath}')
-        #         os.makedirs(path.dirname(depth_png_filepath), exist_ok=True)
-        #         depth_sensor_id = map_depth_to_sensor[depth_map_name]
-        #         depth_map_sizes = tuple(int(x) for x in kapture_data.sensors[depth_sensor_id].sensor_params[1:3])
-        #         depth_map = depth_map_from_file(depth_map_filepath, depth_map_sizes)
-        #         # min max scaling
-        #         depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
-        #         depth_map = (depth_map * 255.).astype(np.uint8)
-        #         depth_image = Image.fromarray(depth_map)
-        #         depth_image.save(depth_png_filepath)
             logger.info('done.')
     except Exception as e:
         logging.critical(e)
@@ -162,8 +141,9 @@ def export_ply_command_line() -> None:
     """
     Do the plot to ply file using the parameters given on the command line.
     """
-
-    parser = argparse.ArgumentParser(description='plot out camera geometry to PLY file.')
+    parser = argparse.ArgumentParser(description=f'Export 3D points data ({", ".join(export_choices.keys())})'
+                                                 f' to ply files: ' +
+                                                 ' // '.join(f'{k}: {v}' for k, v in export_choices.items()))
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
@@ -176,10 +156,10 @@ def export_ply_command_line() -> None:
     parser.add_argument('-o', '--output', required=False,
                         help='output directory (PLY file format).')
     parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
-                        help='things to plot : ' + ' // '.join('{}: {}'.format(k, v)
+                        help='things to plot : ' + ', '.join('{}: {}'.format(k, v)
                                                                for k, v in export_choices.items()))
     parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=[],
-                        help='things to not plot : ' + ' // '.join(export_choices.keys()))
+                        help='things to not plot : ' + ', '.join(export_choices.keys()))
     parser.add_argument('--axis_length', type=float, default=0.1,
                         help='length of axis representation (in world unit).')
     args = parser.parse_args()
