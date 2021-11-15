@@ -760,10 +760,10 @@ virtual_gallery_query:
   sha256sum: 7e4906cbb76ef795553f49d37ab48b83d58b13aa0a7c99f3749977070f5d546c
   url: http://download.europe.naverlabs.com/kapture/virtual_gallery_query.tar.gz
 SILDa_mapping:
-  sha256sum: d696504402124ca252b463b3a8fd8e1d52c5ce447b26e1d2f7e712a1f8f74695
+  sha256sum: df51988f0df5e80c051d60b29c2fd8a2bfc381bf48fe7f1c69bfb8c72b882abd
   url: https://imperialcollegelondon.box.com/shared/static/uj0mxs1oesex8upm5d1b8uw0bxcm8x7e.gz
 SILDa_query:
-  sha256sum: 65a41a8ca26c016d7f71418ac085c54043767a34996e9285a13ad7a81913e3b2
+  sha256sum: ef32b8aa61776d14390399f8b890e00e33374245049f93525c157e138c6178a9
   url: https://imperialcollegelondon.box.com/shared/static/yvjyoj1bmp5h978qy7thuuv8uymbjps1.gz
 symphony_mapping:
   license: https://www.dropbox.com/s/pvg3vlbf52tfkok/LICENSE.txt?dl=1
