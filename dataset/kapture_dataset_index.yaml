@@ -119,28 +119,28 @@ RIO10_scene10_validation:
   sha256sum: 911f1aa2d4282332e65178d7e8a61173d7f783faf2a81df87805ae9ea4a5d89e
   url: http://campar.in.tum.de/files/RIO10/Dataset/kapture/RIO10_scene10_validation.tar.gz
 GangnamStation_B1_release_mapping:
-  sha256sum: 284f98b48e5d71d4f73073045b9d0dc61e0c98836e0b4e4c17eb4343a606886d
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 284f98b48e5d71d4f73073045b9d0dc61e0c98836e0b4e4c17eb4343a606886d
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_mapping.tar.gz
 GangnamStation_B1_release_test:
-  sha256sum: 3adf62404ced66401bbc5872cddf6e82d15e65e91a0dd6d274d652cd44f27939
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 3adf62404ced66401bbc5872cddf6e82d15e65e91a0dd6d274d652cd44f27939
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_test.tar.gz
 GangnamStation_B1_release_validation:
-  sha256sum: 51c6468ac9b21972a4e4125f58578e6816bc230424a98264c0f42a9f5cec8f73
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 51c6468ac9b21972a4e4125f58578e6816bc230424a98264c0f42a9f5cec8f73
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_validation.tar.gz
 GangnamStation_B2_release_mapping:
-  sha256sum: 0cf73e739c35cbdfa1a1327acadc76bde04bc179ca11919a2d0834c9cd31aaf9
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 0cf73e739c35cbdfa1a1327acadc76bde04bc179ca11919a2d0834c9cd31aaf9
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_mapping.tar.gz
 GangnamStation_B2_release_test:
-  sha256sum: d773e2b9be6b2dbabd60f4935552440ae74b43b9dbdd9bbfe1c39fd2b0533cd1
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: d773e2b9be6b2dbabd60f4935552440ae74b43b9dbdd9bbfe1c39fd2b0533cd1
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_test.tar.gz
 GangnamStation_B2_release_validation:
-  sha256sum: c425e862cadc79298738e3e5d6afa45ffcd72629f5c04f23a6354d59bdf4a6c7
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: c425e862cadc79298738e3e5d6afa45ffcd72629f5c04f23a6354d59bdf4a6c7
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_validation.tar.gz
 HyundaiDepartmentStore_1F_release_mapping:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
