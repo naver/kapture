@@ -9,6 +9,8 @@ import argparse
 import logging
 import os
 import os.path as path
+import sys
+
 from tqdm import tqdm
 import numpy as np
 import path_to_kapture  # noqa: F401
@@ -24,7 +26,8 @@ logger = logging.getLogger('ply')
 try:
     import open3d as o3d
 except ImportError as e:
-    logger.warning(f'cant import: {e}')
+    # postpone warning to the actual use.
+    logger.debug(f'cant import {e}')
 
 
 export_choices = {
@@ -98,7 +101,8 @@ def export_ply(kapture_path: str,  # noqa: C901
             trajectories_lidars_only = None
             if kapture_data.rigs and kapture_data.trajectories:
                 # compute trajectories for lidars only
-                lidars = [sensor_id for sensor_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == "lidar"]
+                lidars = [sensor_id for sensor_id, sensor in kapture_data.sensors.items()
+                          if sensor.sensor_type == "lidar"]
                 rigs_lidars_only = kapture.Rigs()
                 for rig_id, sensor_id, pose in kapture.flatten(kapture_data.rigs):
                     if sensor_id in lidars:
@@ -107,6 +111,13 @@ def export_ply(kapture_path: str,  # noqa: C901
                 trajectories_lidars_only = kapture.rigs_remove(kapture_data.trajectories, rigs_lidars_only)
 
             lidars = list(kapture.flatten(kapture_data.records_lidar, is_sorted=True))
+            # lidar export requires open3d: warn user
+            if lidars and 'open3d' not in sys.modules:
+                logger.critical(f'exporting lidar point cloud requires the python package open3d. '
+                                f'If you want lidar pcd to be converted, install this module.'
+                                f'If you want to silence this message, uses --skip lidar.')
+                lidars = []  # nice skip
+
             hide_progress = logger.getEffectiveLevel() > logging.INFO
             for timestamp, lidar_id, lidar_src_file_name in tqdm(lidars, disable=hide_progress):
                 # source lidar file may be ply or pcd
