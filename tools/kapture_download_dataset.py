@@ -487,7 +487,7 @@ def check_licenses(
                 logger.critical(f'removing dataset {name_of_disagreement} due to license disagreement.')
                 del datasets[name_of_disagreement]
 
-    logger.debug(f'update list of agreed licences.')
+    logger.debug('update list of agreed licences.')
     for license_to_skip in licenses_already_agreed:
         del license_datasets[license_to_skip]
     install_dir.update_licenses(license_datasets)

@@ -113,9 +113,9 @@ def export_ply(kapture_path: str,  # noqa: C901
             lidars = list(kapture.flatten(kapture_data.records_lidar, is_sorted=True))
             # lidar export requires open3d: warn user
             if lidars and 'open3d' not in sys.modules:
-                logger.critical(f'exporting lidar point cloud requires the python package open3d. '
-                                f'If you want lidar pcd to be converted, install this module.'
-                                f'If you want to silence this message, uses --skip lidar.')
+                logger.critical('exporting lidar point cloud requires the python package open3d. '
+                                'If you want lidar pcd to be converted, install this module.'
+                                'If you want to silence this message, uses --skip lidar.')
                 lidars = []  # nice skip
 
             hide_progress = logger.getEffectiveLevel() > logging.INFO
