@@ -1660,10 +1660,10 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        matches_list = list_features(kapture.Keypoints, kapture_dir_path)
-        if len(matches_list) > 0:
+        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
+        if len(keypoints_list) > 0:
             kapture_data.keypoints = {}
-            for keypoints_type in matches_list:
+            for keypoints_type in keypoints_list:
                 kapture_data.keypoints[keypoints_type] = keypoints_from_dir(keypoints_type,
                                                                             kapture_dir_path,
                                                                             image_filenames,
