@@ -17,7 +17,7 @@ import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
-from kapture.io.csv import kapture_to_dir, get_csv_fullpath, sensors_from_file
+from kapture.io.csv import kapture_to_dir, sensors_from_file
 from kapture.utils.paths import path_secure
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 
@@ -80,7 +80,6 @@ def import_image_folder(
 
             if camera_id not in sensors:
                 logger.critical(f'camera {camera_id} is not found in sensors.txt')
-                # sensors[camera_id] = kapture.Camera(camera_types[sensor_info[camera_id][0]], sensor_info[camera_id][1:])
                 raise KeyError(f'camera {camera_id} is not found in sensors.txt')
 
         else:
