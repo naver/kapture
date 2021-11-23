@@ -2,14 +2,13 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 import os.path as path
-from distutils import file_util, dir_util
+from distutils import dir_util
 import tempfile
 import unittest
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
-from kapture.io.csv import kapture_from_dir, get_csv_fullpath, sensors_from_file
-from kapture.algo.compare import equal_kapture
+from kapture.io.csv import kapture_from_dir
 from kapture.io.records import TransferAction
 from tools.kapture_import_image_folder import import_image_folder
 
@@ -51,14 +50,11 @@ class TestImageFolder(unittest.TestCase):
             sensors_file_path = path.join(tmpdirname_in, 'sensors.txt')
             with open(sensors_file_path, 'wt') as f:
                 f.write("""
-                cam0, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, -0.2465279459531899, 0.2675790139425493
+                cam0, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, \
+                -0.2465279459531899, 0.2675790139425493
                 """)
 
-            import_image_folder(
-                images_path=tmpdirname_in,
-                kapture_path=tmpdirname_out,
-                force_overwrite_existing=True,
-                images_import_method=TransferAction.link_absolute)
+            import_image_folder(tmpdirname_in, tmpdirname_out, True, TransferAction.link_absolute)
 
             kapture_result = kapture_from_dir(tmpdirname_out)
 
@@ -86,15 +82,13 @@ class TestImageFolder(unittest.TestCase):
             sensors_file_path = path.join(tmpdirname_in, 'sensors.txt')
             with open(sensors_file_path, 'wt') as f:
                 f.write("""
-                milestone, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, -0.2465279459531899, 0.2675790139425493
-                nexus4, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, -0.2465279459531899, 0.2675790139425493
+                milestone, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, \
+                -0.2465279459531899, 0.2675790139425493
+                nexus4, , camera, RADIAL, 2832, 2128, 2986.7801886485645, 1463.2779641275515, 1112.2674656244137, \
+                -0.2465279459531899, 0.2675790139425493
                 """)
 
-            import_image_folder(
-                images_path=tmpdirname_in,
-                kapture_path=tmpdirname_out,
-                force_overwrite_existing=True,
-                images_import_method=TransferAction.link_absolute)
+            import_image_folder(tmpdirname_in, tmpdirname_out, True, TransferAction.link_absolute)
 
             kapture_result = kapture_from_dir(tmpdirname_out)
 
