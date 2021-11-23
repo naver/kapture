@@ -166,7 +166,7 @@ def export_ply_command_line() -> None:
                         help='output directory (PLY file format).')
     parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
                         help='things to plot : ' + ', '.join('{}: {}'.format(k, v)
-                                                               for k, v in export_choices.items()))
+                                                             for k, v in export_choices.items()))
     parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=[],
                         help='things to not plot : ' + ', '.join(export_choices.keys()))
     parser.add_argument('--axis_length', type=float, default=0.1,
