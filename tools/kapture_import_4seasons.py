@@ -254,7 +254,7 @@ def load_4season_depth_from_keyframe_data(
         depth_coords = []
         while True:
             line1 = file.readline().strip()  # u,v,idepth_scaled,...
-            _ = file.readline().strip()  # color
+            file.readline().strip()  # color
             if line1 == '':
                 break
             line1 = [float(v) for v in line1.split(',')]
