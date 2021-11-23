@@ -54,7 +54,7 @@ def nmea_coord_to_lla(
     :param lat_str: latitude in nmea format
     :param lat_cardinal: latitude cardinal (N for north, S for south)
     :param lon_str: longitude in nmea format
-    :param lon_cardinal: logitude cardinal (E for east, W for west)
+    :param lon_cardinal: longitude cardinal (E for east, W for west)
     :param alt_str: altitude in nmea format
     :return:
     """
@@ -74,7 +74,7 @@ def nmea_coord_to_lla(
 
 def extract_gnss_from_nmea(
         nmea_file_path: str,
-        gnss_id: Optional[str]='gnss'
+        gnss_id: Optional[str] = 'gnss'
 ):
     """
     Extract coordinates from NMEA file, returns sensors with the new gnss sensor in it and gnss records.
@@ -99,11 +99,11 @@ def extract_gnss_from_nmea(
         table = table_from_file(file)
         for trame in table:
             trame_type = trame[0]
-            if '$GPRMC' == trame_type:  # retrieve date only (dont bother with coords, no altitude available)
+            if '$GPRMC' == trame_type:  # retrieve date only (don't bother with coords, no altitude available)
                 time_str, date_str = trame[1], trame[9]
                 day = day_from_nmea_str(date_str)
 
-            if day is None:  # dont bother do the rest if date is not retrieved yet.
+            if day is None:  # don't bother do the rest if date is not retrieved yet.
                 continue
             if '$GPGGA' == trame_type:  # GPS coordinates
                 # UTC time, Latitude, hemisphere, Longitude, meridian, 1 (for GPS), #satellites used, HDOP, Altitude,...
