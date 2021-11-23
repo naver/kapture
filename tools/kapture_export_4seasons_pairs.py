@@ -10,26 +10,17 @@ https://github.com/pmwenzel/mlad-iccv2021#task
 
 import argparse
 import logging
-import os
 import os.path as path
-import re
-import math
 import numpy as np
 import quaternion
-from glob import glob
-from tqdm import tqdm
-from dataclasses import dataclass
-from typing import List, Dict, Tuple, Union
+
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
-from kapture.io.structure import delete_existing_kapture_files
 import kapture.io.csv as csv
 import kapture.io.features
-from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.utils.logging import getLogger
-from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 
 logger = getLogger()
 
@@ -38,18 +29,14 @@ CAM_AXES_KAPTURE_FROM_4SEASONS = kapture.PoseTransform(r=q)
 CAM_AXES_4SEASONS_FROM_KAPTURE = CAM_AXES_KAPTURE_FROM_4SEASONS.inverse()
 
 
-def load_timestamp_pairs(
-        pairs_file_path: str):
+def load_timestamp_pairs(pairs_file_path: str):
     t = np.loadtxt(pairs_file_path, dtype=int)
     pairs = t.tolist()
     return pairs
 
 
-def heal_timestamps_inplace(
-        records_camera: kapture.RecordsCamera,
-        trajectories: kapture.Trajectories
-):
-    # records_camera_healed = kapture.RecordsCamera()
+def heal_timestamps_inplace(records_camera: kapture.RecordsCamera,
+                            trajectories: kapture.Trajectories):
     # retrieve timestamp/cam_id from filename
     timestamp_old_to_healed = {}
     for timestamp_kapture, cam_id_kapture, image_path in kapture.flatten(records_camera):
@@ -65,18 +52,15 @@ def heal_timestamps_inplace(
             trajectories[timestamp_healed] = trajectories.pop(timestamp_kapture)
 
 
-def export_4seasons_pairfile(
-    kapture_dir_path: str,
-    pairs_file_path: str,
-    poses_file_path: str,
-    heal_timestamps: bool = True,
-    force_overwrite_existing: bool = False):
+def export_4seasons_pairfile(kapture_dir_path: str,
+                             pairs_file_path: str,
+                             poses_file_path: str,
+                             heal_timestamps: bool = True):
     """
     :param kapture_dir_path: input path to kapture directory that contains both localized and mapping.
     :param pairs_file_path:  input path to timestamp pair file.
     :param poses_file_path: output path to relative pose file.
     :param heal_timestamps: overwrite timestamps from filenames.
-    :param force_overwrite_existing:
     :return:
     """
     logger.info('loading kapture data ...')
@@ -98,7 +82,7 @@ def export_4seasons_pairfile(
         ref_pose = kapture_data.trajectories[mapping_ts]
         query_pose = kapture_data.trajectories[query_ts]
         if len(ref_pose) != len(query_pose):
-            raise ValueError(f'ambiguity on sensors in pair files')
+            raise ValueError('ambiguity on sensors in pair files')
 
         # compute relative pose
         refer_from_world = next(iter(ref_pose.values()))
@@ -158,8 +142,7 @@ def export_4seasons_pairs_command_line() -> None:
         kapture_dir_path=kapture_dir_path,
         pairs_file_path=pairs_file_path,
         poses_file_path=poses_file_path,
-        heal_timestamps=not args.no_heal,
-        force_overwrite_existing=args.force)
+        heal_timestamps=not args.no_heal)
 
 
 if __name__ == '__main__':
