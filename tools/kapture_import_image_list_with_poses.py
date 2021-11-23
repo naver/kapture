@@ -29,6 +29,24 @@ from kapture.utils.open_cv import import_opencv_camera_calibration
 logger = logging.getLogger('import_image_list_with_poses')
 
 
+def find_images_files_top_directory(images_list_file_path, images_dir_path, do_not_import_images):
+    """
+    Find the top directory of all image files
+    """
+    filename_list: List[str] = []
+    with open(images_list_file_path, 'rt') as file:
+        images_list_data = table_from_file(file)
+        for image_line in images_list_data:
+            image_path = image_line[2]
+            if not do_not_import_images and not images_dir_path and not path.isabs(image_path):
+                raise ValueError(f'Can not import a relative image file without top directory: {image_path}')
+            if not path.isabs(image_path) and images_dir_path:
+                image_path = path.join(images_dir_path, image_path)
+            filename_list.append(image_path)
+    common_images_path = path.commonpath(filename_list)
+    return common_images_path
+
+
 def import_image_list_with_poses(images_list_file_path: str,
                                  images_dir_path: str,
                                  camera_calibration_file_path: str,
@@ -64,21 +82,10 @@ def import_image_list_with_poses(images_list_file_path: str,
         camera_model_provided = True
     images = kapture.RecordsCamera()
     trajectories = kapture.Trajectories()
-    filename_list: List[str] = []
     image_name_list: List[str] = []
 
     logger.info(f'Loading data from {images_list_file_path}')
-    # Find the top directory of all image files
-    with open(images_list_file_path, 'rt') as file:
-        images_list_data = table_from_file(file)
-        for image_line in images_list_data:
-            image_path = image_line[2]
-            if not do_not_import_images and not images_dir_path and not path.isabs(image_path):
-                raise ValueError(f'Can not import a relative image file without top directory: {image_path}')
-            if not path.isabs(image_path) and images_dir_path:
-                image_path = path.join(images_dir_path, image_path)
-            filename_list.append(image_path)
-    common_images_path = path.commonpath(filename_list)
+    common_images_path = find_images_files_top_directory(images_list_file_path, images_dir_path, do_not_import_images)
 
     # Parse image list data file
     with open(images_list_file_path, 'rt') as file:
