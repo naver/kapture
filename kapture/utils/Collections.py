@@ -56,4 +56,4 @@ def try_get_only_key_from_collection(collection: Optional[dict]) -> Optional[str
         return None
     if len(collection) == 1:
         return next(iter(collection.keys()))
-    raise ValueError(f'{collection} has more than 1 item, cannot decide which to pick')
+    raise ValueError(f'{collection.keys()} has more than 1 key, cannot decide which to pick')
