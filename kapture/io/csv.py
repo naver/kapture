@@ -1633,8 +1633,8 @@ def list_features(kapture_type: Type[Union[kapture.Keypoints,
     """
     subfolders = (
         name
-        for name in os.listdir(os.path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
-        if os.path.isfile(get_feature_csv_fullpath(kapture_type, name, kapture_dir_path))
+        for name in os.listdir(path.join(kapture_dir_path, kapture.io.features.FEATURES_DATA_DIRNAMES[kapture_type]))
+        if path.isfile(get_feature_csv_fullpath(kapture_type, name, kapture_dir_path))
     )
     return list(subfolders)
 
@@ -1660,10 +1660,10 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Keypoints in kapture_loadable_data:
         logger.debug(f'loading keypoints {data_dir_paths[kapture.Keypoints]} ...')
         assert kapture_data.records_camera is not None
-        keypoints_list = list_features(kapture.Keypoints, kapture_dir_path)
-        if len(keypoints_list) > 0:
+        matches_list = list_features(kapture.Keypoints, kapture_dir_path)
+        if len(matches_list) > 0:
             kapture_data.keypoints = {}
-            for keypoints_type in keypoints_list:
+            for keypoints_type in matches_list:
                 kapture_data.keypoints[keypoints_type] = keypoints_from_dir(keypoints_type,
                                                                             kapture_dir_path,
                                                                             image_filenames,
@@ -1696,12 +1696,12 @@ def _load_features_and_desc_and_matches(data_dir_paths: dict, kapture_dir_path: 
     if kapture.Matches in kapture_loadable_data:
         logger.debug(f'loading matches {data_dir_paths[kapture.Matches]} ...')
         assert kapture_data.records_camera is not None
-        keypoints_list = [name
-                          for name in os.listdir(data_dir_paths[kapture.Matches])
-                          if os.path.isdir(os.path.join(data_dir_paths[kapture.Matches], name))]
-        if len(keypoints_list) > 0:
+        matches_list = [name
+                        for name in os.listdir(data_dir_paths[kapture.Matches])
+                        if path.isdir(path.join(data_dir_paths[kapture.Matches], name))]
+        if len(matches_list) > 0:
             kapture_data.matches = {}
-            for keypoints_type in keypoints_list:
+            for keypoints_type in matches_list:
                 kapture_data.matches[keypoints_type] = matches_from_dir(keypoints_type,
                                                                         kapture_dir_path,
                                                                         image_filenames,
