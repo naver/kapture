@@ -75,7 +75,7 @@ def export_depth_images_command_line() -> None:
     export a kapture depth maps to PNG files
     using the parameters given on the command line.
     """
-    parser = argparse.ArgumentParser(description=f'Export depth to images')
+    parser = argparse.ArgumentParser(description='Export depth to images')
     parser_verbosity = parser.add_mutually_exclusive_group()
     parser_verbosity.add_argument(
         '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
@@ -101,7 +101,7 @@ def export_depth_images_command_line() -> None:
     args.input = path.abspath(args.input)
     args.output = path.abspath(args.output)
     if args.range is not None and len(args.range) != 2:
-        parser.error(f'expect 2 floats as range values.')
+        parser.error('expect 2 floats as range values.')
     args.range = tuple(args.range)
 
     print(args.range)
