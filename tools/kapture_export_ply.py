@@ -98,7 +98,6 @@ def export_ply(kapture_path: str,  # noqa: C901
         if 'lidar' in what_to_do and kapture_data.records_lidar:
             lidar_ply_dir_path = path.join(ply_dir_path, 'records_data')
             logger.info(f'creating lidar points files : {lidar_ply_dir_path}')
-            trajectories_lidars_only = None
             if kapture_data.rigs and kapture_data.trajectories:
                 # compute trajectories for lidars only
                 lidars = [sensor_id for sensor_id, sensor in kapture_data.sensors.items()
@@ -109,6 +108,8 @@ def export_ply(kapture_path: str,  # noqa: C901
                         rigs_lidars_only[rig_id, sensor_id] = pose
 
                 trajectories_lidars_only = kapture.rigs_remove(kapture_data.trajectories, rigs_lidars_only)
+            else:
+                trajectories_lidars_only = kapture_data.trajectories
 
             lidars = list(kapture.flatten(kapture_data.records_lidar, is_sorted=True))
             # lidar export requires open3d: warn user
