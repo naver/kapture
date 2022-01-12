@@ -23,7 +23,6 @@ from kapture.io.tar import KAPTURE_TARABLE_TYPES, TarCollection, TarHandler
 from kapture.io.tar import get_feature_tar_fullpath, retrieve_tar_handler_from_collection
 
 logger = kapture.logger
-gettrace = getattr(sys, 'gettrace', None)
 
 # file names conventions
 CSV_FILENAMES = {
@@ -201,19 +200,14 @@ def table_from_file(file):
     :return: an iterable of iterable on kapture objects values
     """
     table = file.readlines()
-    if gettrace is not None and gettrace():
-        table = (re.split(SPLIT_PATTERN, l1.rstrip("\n\r")) for l1 in table if l1.strip() and not l1.startswith('#'))
-        return list(table)
 
-    # remove comment lines, empty lines and trim trailing EOL
-    table = (l1.rstrip("\n\r") for l1 in table if l1.strip() and not l1.startswith('#'))
-    # then split comma (and trim afterwards spaces)
-    content = []
-    for line in table:
-        words = line.split(',')
-        words = list(word.strip() for word in words)
-        content.append(words)
-    return content
+    # remove end of line return, ...
+    table = (line.rstrip("\n\r") for line in table)
+    # remove comment lines or empty lines and trim trailing EOL
+    table = (line for line in table if line.strip() and not line.startswith('#'))
+    # split comma separated
+    table = ([field.strip() for field in line.split(',')] for line in table)
+    return list(table)
 
 
 def get_last_line(opened_file: io.TextIOBase, max_line_size: int = 128) -> str:
