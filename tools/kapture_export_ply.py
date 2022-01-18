@@ -133,8 +133,8 @@ def export_ply(kapture_path: str,  # noqa: C901
                     logger.debug(f'pose not found for lidar "{lidar_id}" records at time {timestamp}.')
                     continue
                 pose_lidar_from_world = trajectories_lidars_only[timestamp, lidar_id]
-                pose_world_form_lidar = pose_lidar_from_world.inverse()
-                points3d_np = pose_world_form_lidar.transform_points(points3d_np)
+                pose_world_from_lidar = pose_lidar_from_world.inverse()
+                points3d_np = pose_world_from_lidar.transform_points(points3d_np)
                 # switch back to open3d to save
                 points3d_o3d = o3d.geometry.PointCloud()
                 points3d_o3d.points = o3d.utility.Vector3dVector(points3d_np)
