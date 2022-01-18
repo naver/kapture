@@ -122,6 +122,10 @@ GangnamStation_B1_release_mapping:
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
   sha256sum: 284f98b48e5d71d4f73073045b9d0dc61e0c98836e0b4e4c17eb4343a606886d
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_mapping.tar.gz
+GangnamStation_B1_release_mapping_lidar_only:
+  license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 214fa843e6a910674d640aac43af646b9016da89a60d6145785ae7db5e32b42d
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B1_release_mapping_lidar_only.tar.gz
 GangnamStation_B1_release_test:
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
   sha256sum: 3adf62404ced66401bbc5872cddf6e82d15e65e91a0dd6d274d652cd44f27939
@@ -134,6 +138,10 @@ GangnamStation_B2_release_mapping:
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
   sha256sum: 0cf73e739c35cbdfa1a1327acadc76bde04bc179ca11919a2d0834c9cd31aaf9
   url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_mapping.tar.gz
+GangnamStation_B2_release_mapping_lidar_only:
+  license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
+  sha256sum: 98147167529e5f3c67a0be021954446b22af4abb1505438405bbae86be1584d7
+  url: https://challenge.naverlabs.com/kapture/GangnamStation_B2_release_mapping_lidar_only.tar.gz
 GangnamStation_B2_release_test:
   license: https://challenge.naverlabs.com/kapture/GangnamStation_LICENSE.txt
   sha256sum: d773e2b9be6b2dbabd60f4935552440ae74b43b9dbdd9bbfe1c39fd2b0533cd1
@@ -146,6 +154,10 @@ HyundaiDepartmentStore_1F_release_mapping:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: b5890ff1fd49847e7b1cbb71ab7bcccbc21b209d2fbf0ca54b3216bf85c71b4a
   url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_1F_release_mapping.tar.gz
+HyundaiDepartmentStore_1F_release_mapping_lidar_only:
+  license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
+  sha256sum: 84bef1f94334ac4f223768839571dba6998b06df90fcac73143498eda221cbc7
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_1F_release_mapping_lidar_only.tar.gz
 HyundaiDepartmentStore_1F_release_test:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: d8815848e43f5913c261e119db80cfb1ac28776c4292544cc89db99b83587ac9
@@ -158,6 +170,10 @@ HyundaiDepartmentStore_4F_release_mapping:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: c889399115c5e0e86f7f5160e76e57311d3037812e5cfa5c06df6a3435f88cff
   url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_4F_release_mapping.tar.gz
+HyundaiDepartmentStore_4F_release_mapping_lidar_only:
+  license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
+  sha256sum: 5f06a7d62466bdfa2aa67ff22ad4c89afcfb15c0a258e82c42cbc6865e0c4efc
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_4F_release_mapping_lidar_only.tar.gz
 HyundaiDepartmentStore_4F_release_test:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: de987207bd752c99ee3ab225e3759fe1011d6c1b08c0dadaf358cd37db71b321
@@ -170,6 +186,10 @@ HyundaiDepartmentStore_B1_release_mapping:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: d585ae1c4e01e48456442fabede1500f5a4508e45e7e255aea674ba6600464aa
   url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_mapping.tar.gz
+HyundaiDepartmentStore_B1_release_mapping_lidar_only:
+  license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
+  sha256sum: 3a1ab5323e5dc6409b01dbb28bffc2849f6ff7dbb1301bda8ce2fb89265cf1df
+  url: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_B1_release_mapping_lidar_only.tar.gz
 HyundaiDepartmentStore_B1_release_test:
   license: https://challenge.naverlabs.com/kapture/HyundaiDepartmentStore_LICENSE.txt
   sha256sum: 8f6ff8e9fa8db7b6b3958420aa001053a9f31be7918f5941bbada37cdc8a7f1f
