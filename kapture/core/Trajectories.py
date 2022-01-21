@@ -433,5 +433,4 @@ def trajectory_rescale_inplace(
     :param scale: scale factor
     """
     for timestamp, sensor_id, pose in flatten(trajectories):
-        if pose.t is not None:
-            pose.rescale(scale)
+        pose.rescale(scale)

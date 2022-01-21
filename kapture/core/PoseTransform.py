@@ -109,7 +109,6 @@ class PoseTransform:
     def rescale(self, scale: float):
         """
         rescales translation part
-        :param pose:
         :param scale:
         :return: scaled pose
         """

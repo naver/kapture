@@ -383,7 +383,7 @@ def import_4seasons_trajectory(
             ])
             # change for the 4season pose def: cam -> world (kapture is wolrd -> cam)
             poses = trajectories.inverse()
-            kapture.trajectory_rescale_inplace(trajectories=trajectories, scale=gnss_scale)
+            kapture.trajectory_rescale_inplace(trajectories=poses, scale=gnss_scale)
             kapture.trajectory_transform_inplace(poses, pose_transform_pre=transformations_ecef_from_slam)
             # switch back to kapture (world -> cam)
             trajectories = poses.inverse()
