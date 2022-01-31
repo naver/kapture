@@ -473,13 +473,17 @@ def check_licenses(
     for license_url, dataset_names in license_datasets.items():
         r = requests.get(license_url, allow_redirects=True)
         if r.status_code != requests.codes.ok:
-            raise ConnectionError(f'unable to grab {license_url} (code:{r.status_code})')
-        logger.info(f'here after the license terms for : {", ".join(dataset_names)}')
-        wrapper = textwrap.TextWrapper(width=80)
-        print(wrapper.fill(text=r.text))
-        print('----------------------')
-        print(f'from: {license_url}')
-        agree = ask_confirmation('do you agree on terms ?')
+            logger.error(f'unable to grab {license_url} (code:{r.status_code})')
+            print(f'license content is not accessible ({license_url}),')
+            print(f'but you will find the license at the root path of the dataset.')
+            agree = ask_confirmation('Please make sure you agree on terms:')
+        else:
+            logger.info(f'here after the license terms for : {", ".join(dataset_names)}')
+            wrapper = textwrap.TextWrapper(width=80)
+            print(wrapper.fill(text=r.text))
+            print('----------------------')
+            print(f'from: {license_url}')
+            agree = ask_confirmation('do you agree on terms ?')
         if not agree:
             # in case of disagreement: remove all dataset with that license,
             licenses_already_agreed.add(license_url)
