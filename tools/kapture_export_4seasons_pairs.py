@@ -119,7 +119,7 @@ def export_4seasons_pairfile(kapture_dir_path: str,
 
         except Exception as e:
             logger.critical(e)
-
+    logger.info(f'localized {len(poses)} ({len(poses) / len(pairs) * 100}%) poses.')
     logger.info(f'writing result to "{poses_file_path}"')
     with open(poses_file_path, 'wt') as f:
         for p in poses:
