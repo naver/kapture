@@ -13,6 +13,7 @@ import logging
 import os.path as path
 import numpy as np
 import quaternion
+from tqdm import tqdm
 
 # kapture
 import path_to_kapture  # noqa: F401
@@ -52,6 +53,10 @@ def heal_timestamps_inplace(records_camera: kapture.RecordsCamera,
             trajectories[timestamp_healed] = trajectories.pop(timestamp_kapture)
 
 
+class NotLocalizedHalt(IndexError):
+    pass
+
+
 def export_4seasons_pairfile(kapture_dir_path: str,
                              pairs_file_path: str,
                              poses_file_path: str,
@@ -68,34 +73,53 @@ def export_4seasons_pairfile(kapture_dir_path: str,
         kapture_data = csv.kapture_from_dir(kapture_dir_path, tar_handlers=tar_handlers)
 
     if heal_timestamps:
+        logger.debug('recovering timestamps from filenames.')
         heal_timestamps_inplace(
             kapture_data.records_camera,
             kapture_data.trajectories)
 
     pairs = load_timestamp_pairs(pairs_file_path)
+    #
+    logger.info(f'removing rigs')
+    kapture.rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
 
     poses = []
-    for mapping_ts, query_ts in pairs:
-        if mapping_ts not in kapture_data.trajectories or query_ts not in kapture_data.trajectories:
-            raise IndexError(f'reference pose at time {mapping_ts} or {query_ts} not available in trajectory.')
+    logger.info(f'Processing poses')
+    for mapping_ts, query_ts in tqdm(pairs):
+        try:
+            if mapping_ts not in kapture_data.trajectories:
+                # mapping, means its probab
+                raise IndexError(f'No pose available in trajectory for mapping at time {mapping_ts}. '
+                                 f'Have you merged mapping and query in the same kapture dataset ?')
 
-        ref_pose = kapture_data.trajectories[mapping_ts]
-        query_pose = kapture_data.trajectories[query_ts]
-        if len(ref_pose) != len(query_pose):
-            raise ValueError('ambiguity on sensors in pair files')
+            if query_ts not in kapture_data.trajectories:
+                raise NotLocalizedHalt(f'No pose available in trajectory for query at time {query_ts}.')
 
-        # compute relative pose
-        refer_from_world = next(iter(ref_pose.values()))
-        query_from_world = next(iter(query_pose.values()))
-        # The relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
-        # The 6DOF poses are specified as translation (t_x, t_y, t_z), and quaternion (q_x, q_y, q_z, q_w).
-        refer_from_query = kapture.PoseTransform.compose([refer_from_world, query_from_world.inverse()])
-        query_from_refer = refer_from_query.inverse()
-        t_x, t_y, t_z = query_from_refer.t_raw
-        q_w, q_x, q_y, q_z = query_from_refer.r_raw
-        pose_entry = [mapping_ts, query_ts, t_x, t_y, t_z, q_x, q_y, q_z, q_w]  # note q_w was pushed at the end
-        poses.append(pose_entry)
+            ref_pose = kapture_data.trajectories[mapping_ts]
+            query_pose = kapture_data.trajectories[query_ts]
+            # compute relative pose
+            # just use one cam of the pair as a comparison, take the first in line.
+            sensor_id = next(iter(query_pose.keys()))
+            query_from_world = query_pose[sensor_id]
+            if sensor_id not in ref_pose:
+                raise NotLocalizedHalt(f'no reference pose for {sensor_id} at time {mapping_ts}')
+            refer_from_world = ref_pose[sensor_id]
+            # The relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
+            # The 6DOF poses are specified as translation (t_x, t_y, t_z), and quaternion (q_x, q_y, q_z, q_w).
+            refer_from_query = kapture.PoseTransform.compose([refer_from_world, query_from_world.inverse()])
+            query_from_refer = refer_from_query.inverse()
+            t_x, t_y, t_z = query_from_refer.t_raw
+            q_w, q_x, q_y, q_z = query_from_refer.r_raw
+            pose_entry = [mapping_ts, query_ts, t_x, t_y, t_z, q_x, q_y, q_z, q_w]  # note q_w was pushed at the end
+            poses.append(pose_entry)
 
+        except NotLocalizedHalt as e:
+            logger.info('unable to localize because: ' + e)
+
+        except Exception as e:
+            logger.critical(e)
+
+    logger.info(f'writing result to "{poses_file_path}"')
     with open(poses_file_path, 'wt') as f:
         for p in poses:
             f.write(' '.join(str(e) for e in p) + '\n')
