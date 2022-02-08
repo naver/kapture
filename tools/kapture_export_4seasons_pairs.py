@@ -85,7 +85,8 @@ def export_4seasons_pairfile(kapture_dir_path: str,
 
     poses = []
     logger.info(f'Processing poses')
-    for mapping_ts, query_ts in tqdm(pairs):
+    hide_progress = logger.getEffectiveLevel() > logging.INFO
+    for mapping_ts, query_ts in tqdm(pairs, disable=hide_progress):
         try:
             if mapping_ts not in kapture_data.trajectories:
                 # mapping, means its probab
