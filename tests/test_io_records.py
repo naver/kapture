@@ -44,11 +44,13 @@ class TestRecordCopy(unittest.TestCase):
         self.assertEqual(set(self._filenames),
                          set(filepaths_retrieved))
 
-    def test_copy(self):
-        origin_filepaths = (path_secure(path.join(self._source_dirpath, filename))
-                            for filename in self._filenames)
-        expected_filepaths = (kapture.io.records.get_image_fullpath(self._dest_dirpath, filename)
-                              for filename in self._filenames)
+    def test_copy_generators(self):
+        origin_filepaths = (
+            path_secure(path.join(self._source_dirpath, filename))
+            for filename in self._filenames)
+        expected_filepaths = (
+            kapture.io.records.get_image_fullpath(self._dest_dirpath, filename)
+            for filename in self._filenames)
 
         transfer_files_from_dir_copy(
             origin_filepaths,
