@@ -79,12 +79,11 @@ def export_4seasons_pairfile(kapture_dir_path: str,
             kapture_data.trajectories)
 
     pairs = load_timestamp_pairs(pairs_file_path)
-    #
-    logger.info(f'removing rigs')
+    logger.info('removing rigs')
     kapture.rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
 
     poses = []
-    logger.info(f'Processing poses')
+    logger.info('Processing poses')
     hide_progress = logger.getEffectiveLevel() > logging.INFO
     for mapping_ts, query_ts in tqdm(pairs, disable=hide_progress):
         try:
