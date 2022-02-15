@@ -87,7 +87,7 @@ def transfer_files_from_dir_link(
     jobs = zip(source_filepath_list, destination_filepath_list)
     logger.debug('Linking data files')
     try:
-        total_progress_bar = max(len(source_filepath_list), len(destination_filepath_list))
+        total_progress_bar = min(len(source_filepath_list), len(destination_filepath_list))
     except TypeError:
         total_progress_bar = None
     for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_progress_bar):
