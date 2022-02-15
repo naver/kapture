@@ -83,16 +83,14 @@ def transfer_files_from_dir_link(
     :param force_overwrite: if True, overwrite destination file.
     :param do_relative_link: if True, do relative links else absolute links.
     """
-    source_filepath_list = list(source_filepath_list)
-    destination_filepath_list = list(destination_filepath_list)
+    hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
     jobs = zip(source_filepath_list, destination_filepath_list)
+    logger.debug('Linking data files')
     try:
-        total_jobs = max(len(list(source_filepath_list)), len(list(destination_filepath_list)))
+        total_progress_bar = max(len(source_filepath_list), len(destination_filepath_list))
     except TypeError:
-        total_jobs = None
-    logger.debug(f'Linking {total_jobs} data files')
-    hide_progress_bar = logger.getEffectiveLevel() > logging.INFO or (total_jobs == 0)
-    for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_jobs):
+        total_progress_bar = None
+    for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_progress_bar):
         # make sure we deal absolute full path
         src = path_secure(path.abspath(src))
         dst = path_secure(path.abspath(dst))
@@ -124,13 +122,9 @@ def transfer_files_from_dir_copy(
     :param force_overwrite: if True, overwrite destination file.
     :param delete_source: if True, delete the imported files from source_record_dirpath.
     """
-    source_filepath_list = list(source_filepath_list)
-    destination_filepath_list = list(destination_filepath_list)
-    jobs = zip(source_filepath_list, destination_filepath_list)
-    total_jobs = max(len(source_filepath_list), len(destination_filepath_list))
-    logger.debug(f'Copying {total_jobs} data files')
-    hide_progress_bar = logger.getEffectiveLevel() > logging.INFO or (total_jobs == 0)
-    for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_jobs):
+    hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
+    logger.debug('Copying data files')
+    for src, dst in tqdm(zip(source_filepath_list, destination_filepath_list), disable=hide_progress_bar):
         os.makedirs(path.dirname(dst), exist_ok=True)
         if force_overwrite and path.lexists(dst):
             os.remove(dst)
