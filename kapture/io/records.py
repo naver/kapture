@@ -115,6 +115,12 @@ def import_record_data_from_dir_auto(
                                 for record_filename in filename_list)
         kapture_filepath_list = (get_record_fullpath(destination_kapture_dirpath, record_filename)
                                  for record_filename in filename_list)
+
+        if isinstance(filename_list, list):
+            # lets convert generators to list right away to help tqdm in transfer_files_from_dir
+            source_filepath_list = list(source_filepath_list)
+            kapture_filepath_list = list(kapture_filepath_list)
+
         transfer_files_from_dir(
             source_filepath_list,
             kapture_filepath_list,
@@ -163,7 +169,7 @@ def depth_maps_to_filepaths(depth_records: kapture.RecordsDepth, kapture_dirpath
     """
     Computes filepaths for depth maps records.
 
-    :param images: images records
+    :param depth_records: depth records
     :param kapture_dirpath: top kapture directory path
     :return: images name to images file path dictionary
     """
