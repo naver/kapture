@@ -617,7 +617,7 @@ def equal_points3d(
     bool_array = np.isclose(points3d_a.as_array(), points3d_b.as_array())
     are_equal = bool_array.all()
     if not are_equal:
-        diffs = [n for n, b in enumerate(bool_array) if not b]
+        diffs = [n for n, b in enumerate(bool_array) if not b.all()]
         diffs = diffs[:15]
         diffs = ['element {} : {} != {}'.format(n, points3d_a[n], points3d_b[n]) for n in diffs]
         getLogger().debug('equal_points3d:\n{}'.format('\n'.join(diffs)))
