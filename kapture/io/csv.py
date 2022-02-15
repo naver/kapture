@@ -1224,7 +1224,7 @@ def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
     os.makedirs(path.dirname(filepath), exist_ok=True)
     saving_start = datetime.datetime.now()
     header = KAPTURE_FORMAT_1[2:] + kapture_linesep + 'X, Y, Z, R, G, B'
-    np.savetxt(filepath, points3d.as_array(), delimiter=',', header=header)
+    np.savetxt(filepath, points3d.as_array(), delimiter=',', header=header, fmt='%.10f')
     saving_elapsed = datetime.datetime.now() - saving_start
     logger.debug(f'wrote {len(points3d):12,d} {type(points3d)} in {saving_elapsed.total_seconds():.3f} seconds'
                  .replace(',', ' '))
@@ -1240,7 +1240,7 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
 
     loading_start = datetime.datetime.now()
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
-    data = data.reshape((-1, 6))  # make sure of the shape, even if single line file.
+    data = data.reshape((-1, kapture.Points3d.XYZRGB))  # make sure of the shape, even if single line file.
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds')
     return kapture.Points3d(data)
