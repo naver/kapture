@@ -123,8 +123,13 @@ def transfer_files_from_dir_copy(
     :param delete_source: if True, delete the imported files from source_record_dirpath.
     """
     hide_progress_bar = logger.getEffectiveLevel() > logging.INFO
+    jobs = zip(source_filepath_list, destination_filepath_list)
     logger.debug('Copying data files')
-    for src, dst in tqdm(zip(source_filepath_list, destination_filepath_list), disable=hide_progress_bar):
+    try:
+        total_progress_bar = min(len(source_filepath_list), len(destination_filepath_list))
+    except TypeError:
+        total_progress_bar = None
+    for src, dst in tqdm(jobs, disable=hide_progress_bar, total=total_progress_bar):
         os.makedirs(path.dirname(dst), exist_ok=True)
         if force_overwrite and path.lexists(dst):
             os.remove(dst)
