@@ -15,7 +15,7 @@ ARG SOURCE_PREFIX="/opt/src"
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git wget curl \
-    python3.6 python3-pip \
+    python3.6 python3-pip python3.6-dev \
     pandoc asciidoctor \
   && rm -rf /var/lib/apt/lists/*
 
@@ -28,7 +28,7 @@ RUN python3 -m pip install --upgrade setuptools wheel twine
 ADD . ${SOURCE_PREFIX}/kapture
 WORKDIR ${SOURCE_PREFIX}/kapture
 RUN git submodule update --init --recursive
-RUN python3 -m pip install -r requirements.txt --use-feature=2020-resolver
+RUN python3 -m pip install -r requirements.txt
 RUN python3 setup.py install
 
 ### FINALIZE ###################################################################
