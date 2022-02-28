@@ -93,7 +93,8 @@ def export_4seasons_pairfile(kapture_dir_path: str,
                                  f'Have you merged mapping and query in the same kapture dataset ?')
 
             if query_ts not in kapture_data.trajectories:
-                raise NotLocalizedHalt(f'No pose available in trajectory for query at time {query_ts}.')
+                logger.info(f'No pose available in trajectory for query at time {query_ts}.')
+                continue
 
             ref_pose = kapture_data.trajectories[mapping_ts]
             query_pose = kapture_data.trajectories[query_ts]
