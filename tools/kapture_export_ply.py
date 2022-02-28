@@ -25,7 +25,7 @@ logger = logging.getLogger('ply')
 
 try:
     import open3d as o3d
-except (ImportError, OSError):
+except (ImportError, OSError) as e:
     # postpone warning to the actual use.
     logger.debug(f'cant import {e}')
 
