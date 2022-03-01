@@ -9,8 +9,9 @@ import os.path as path
 from shutil import rmtree
 from typing import List, Optional
 from .features import FEATURES_DATA_DIRNAMES
-from .records import RECORD_DATA_DIRNAME
+from .records import get_record_fullpath
 from .csv import CSV_FILENAMES
+from kapture.core.Records import RecordsFilePath, RecordsCamera
 from kapture.utils.logging import getLogger
 from kapture.utils.paths import path_secure
 
@@ -33,20 +34,30 @@ def delete_existing_kapture_files(
     assert only is None or isinstance(only, list)
     assert skip is None or isinstance(skip, list)
 
+    to_keep_csv_list = []
+    to_keep_features_list = []
+    if skip:
+        to_keep_csv_list = [dtype for dtype in skip if dtype not in FEATURES_DATA_DIRNAMES.keys()]
+        to_keep_features_list = [dtype for dtype in skip if dtype not in CSV_FILENAMES.keys()]
+    if only:
+        to_keep_csv_list = [dtype for dtype in CSV_FILENAMES.keys() if dtype not in only]
+        to_keep_features_list = [dtype for dtype in FEATURES_DATA_DIRNAMES.keys() if dtype not in only]
+    # Compute if we must keep records whose values are stored in files
+    must_keep_records_dir = any([True for dtype in to_keep_csv_list if issubclass(dtype, RecordsFilePath)])
     dirpath = path_secure(dirpath)
     csv_filepaths = [
         path.join(dirpath, filename)
         for dtype, filename in CSV_FILENAMES.items()
-        if (not only and not skip) or (only and dtype in only) or (skip and dtype not in skip)]
+        if dtype not in to_keep_csv_list]
     features_dirpaths = [
         path.join(dirpath, dirname)
         for dtype, dirname in FEATURES_DATA_DIRNAMES.items()
-        if (not only and not skip) or (only and dtype in only) or (skip and dtype not in skip)]
-    records_dirpaths = [RECORD_DATA_DIRNAME]
-    # remove existing_files files (start with deepest/longest paths to avoid to delete files before dirs).
+        if dtype not in to_keep_features_list]
+    records_dirpaths = [] if must_keep_records_dir else [get_record_fullpath(dirpath)]
+    # remove files (start with deepest/longest paths to avoid deleting dirs before files).
     existing_paths = list(reversed(sorted({pathval
                                            for pathval in csv_filepaths + features_dirpaths + records_dirpaths
-                                           if path.isfile(pathval) or path.isdir(pathval)})))
+                                           if path.lexists(pathval)})))
     # if any
     if existing_paths:
         existing_paths_as_string = ', '.join(f'"{path.relpath(p, dirpath)}"' for p in existing_paths)
