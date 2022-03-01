@@ -12,7 +12,6 @@ import quaternion
 import os
 import os.path as path
 import re
-import sys
 from typing import Any, Dict, List, Optional, Set, Type, Union
 
 
@@ -1256,6 +1255,7 @@ def get_stored_points3d_number(kapture_path: str) -> int:
     nb = 0
     points3d_file_path = path.join(kapture_path, CSV_FILENAMES[kapture.Points3d])
     if path.isfile(points3d_file_path):
+        counting_start = datetime.datetime.now()
         # Count number of lines minus the header
         with open(points3d_file_path) as f:
             line = f.readline()
@@ -1264,6 +1264,9 @@ def get_stored_points3d_number(kapture_path: str) -> int:
                 if line.rstrip()[0] != '#':
                     nb += 1
                 line = f.readline()
+        counting_elapsed = datetime.datetime.now() - counting_start
+        logger.debug(f'counted {nb:12,d} {kapture.Points3d} in {counting_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
     return nb
 
 
