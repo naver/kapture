@@ -11,7 +11,7 @@ from typing import List, Optional
 from .features import FEATURES_DATA_DIRNAMES
 from .records import get_record_fullpath
 from .csv import CSV_FILENAMES
-from kapture.core.Records import RecordsFilePath, RecordsCamera
+from kapture.core.Records import RecordsFilePath
 from kapture.utils.logging import getLogger
 from kapture.utils.paths import path_secure
 

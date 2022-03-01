@@ -19,7 +19,6 @@ import kapture.io.csv as csv
 import kapture.io.features
 from kapture.io.records import depth_map_from_file
 from typing import Optional, Tuple
-import matplotlib.pyplot as plt
 
 logger = logging.getLogger('depth2images')
 
