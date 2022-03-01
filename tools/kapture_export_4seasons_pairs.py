@@ -92,12 +92,15 @@ def export_4seasons_pairfile(kapture_dir_path: str,
                 raise IndexError(f'No pose available in trajectory for mapping at time {mapping_ts}. '
                                  f'Have you merged mapping and query in the same kapture dataset ?')
 
+            ref_pose = kapture_data.trajectories[mapping_ts]
+
             if query_ts not in kapture_data.trajectories:
                 logger.info(f'No pose available in trajectory for query at time {query_ts}.')
-                continue
+                # put dummy pose
+                query_pose = {sensor_id: kapture.PoseTransform() for sensor_id in ref_pose.keys()}
+            else:
+                query_pose = kapture_data.trajectories[query_ts]
 
-            ref_pose = kapture_data.trajectories[mapping_ts]
-            query_pose = kapture_data.trajectories[query_ts]
             # compute relative pose
             # just use one cam of the pair as a comparison, take the first in line.
             sensor_id = next(iter(query_pose.keys()))
