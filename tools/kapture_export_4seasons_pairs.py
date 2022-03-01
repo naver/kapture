@@ -97,21 +97,21 @@ def export_4seasons_pairfile(kapture_dir_path: str,
             if query_ts not in kapture_data.trajectories:
                 logger.info(f'No pose available in trajectory for query at time {query_ts}.')
                 # put dummy pose
-                query_pose = {sensor_id: kapture.PoseTransform() for sensor_id in ref_pose.keys()}
+                query_from_refer = kapture.PoseTransform()
             else:
                 query_pose = kapture_data.trajectories[query_ts]
 
-            # compute relative pose
-            # just use one cam of the pair as a comparison, take the first in line.
-            sensor_id = next(iter(query_pose.keys()))
-            query_from_world = query_pose[sensor_id]
-            if sensor_id not in ref_pose:
-                raise NotLocalizedHalt(f'no reference pose for {sensor_id} at time {mapping_ts}')
-            refer_from_world = ref_pose[sensor_id]
-            # The relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
-            # The 6DOF poses are specified as translation (t_x, t_y, t_z), and quaternion (q_x, q_y, q_z, q_w).
-            refer_from_query = kapture.PoseTransform.compose([refer_from_world, query_from_world.inverse()])
-            query_from_refer = refer_from_query.inverse()
+                # compute relative pose
+                # just use one cam of the pair as a comparison, take the first in line.
+                sensor_id = next(iter(query_pose.keys()))
+                query_from_world = query_pose[sensor_id]
+                if sensor_id not in ref_pose:
+                    raise NotLocalizedHalt(f'no reference pose for {sensor_id} at time {mapping_ts}')
+                refer_from_world = ref_pose[sensor_id]
+                # The relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
+                # The 6DOF poses are specified as translation (t_x, t_y, t_z), and quaternion (q_x, q_y, q_z, q_w).
+                refer_from_query = kapture.PoseTransform.compose([refer_from_world, query_from_world.inverse()])
+                query_from_refer = refer_from_query.inverse()
             t_x, t_y, t_z = query_from_refer.t_raw
             q_w, q_x, q_y, q_z = query_from_refer.r_raw
             pose_entry = [mapping_ts, query_ts, t_x, t_y, t_z, q_x, q_y, q_z, q_w]  # note q_w was pushed at the end
