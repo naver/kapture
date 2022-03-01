@@ -95,7 +95,7 @@ class InstallDir:
         assert self._installed_index_cache is not None
         return self._installed_index_cache
 
-    def mark_as_installed(self, dataset_name: str, installed: bool = True):
+    def _mark_as_installed(self, dataset_name: str, installed: bool = True):
         _ = self._installed_index  # make sure its up to date
         if not self.is_installed(dataset_name) and installed:
             logger.debug(f'dataset marked installed {dataset_name} ')
@@ -204,7 +204,7 @@ class Dataset:
         self._license_url = license_url
 
     def mark_as_installed(self, installed=True):
-        self._install_dir.mark_as_installed(self._name, installed)
+        self._install_dir._mark_as_installed(self._name, installed)
 
     def is_installed(self) -> bool:
         return self._install_dir.is_installed(self._name)
