@@ -1242,8 +1242,29 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
     data = data.reshape((-1, kapture.Points3d.XYZRGB))  # make sure of the shape, even if single line file.
     loading_elapsed = datetime.datetime.now() - loading_start
-    logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds')
+    logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds'
+                 .replace(',', ' '))
     return kapture.Points3d(data)
+
+
+def get_stored_points3d_number(kapture_path: str) -> int:
+    """
+    Guess the number of 3D points stored in this kapture
+    :param kapture_path: kapture top path
+    :return: number of 3D points stored in the 3D points file
+    """
+    nb = 0
+    points3d_file_path = path.join(kapture_path, CSV_FILENAMES[kapture.Points3d])
+    if path.isfile(points3d_file_path):
+        # Count number of lines minus the header
+        with open(points3d_file_path) as f:
+            line = f.readline()
+            while line:
+                # Skip comments
+                if line.rstrip()[0] != '#':
+                    nb += 1
+                line = f.readline()
+    return nb
 
 
 ########################################################################################################################
