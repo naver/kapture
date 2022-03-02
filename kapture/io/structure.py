@@ -43,7 +43,8 @@ def delete_existing_kapture_files(
         to_keep_csv_list = [dtype for dtype in CSV_FILENAMES.keys() if dtype not in only]
         to_keep_features_list = [dtype for dtype in FEATURES_DATA_DIRNAMES.keys() if dtype not in only]
     # Compute if we must keep records whose values are stored in files
-    must_keep_records_dir = any([True for dtype in to_keep_csv_list if issubclass(dtype, RecordsFilePath)])
+    to_keep_records_with_file = (issubclass(dtype, RecordsFilePath) for dtype in to_keep_csv_list+to_keep_features_list)
+    must_keep_records_dir = any(to_keep_records_with_file)
     dirpath = path_secure(dirpath)
     csv_filepaths = [
         path.join(dirpath, filename)
@@ -53,11 +54,13 @@ def delete_existing_kapture_files(
         path.join(dirpath, dirname)
         for dtype, dirname in FEATURES_DATA_DIRNAMES.items()
         if dtype not in to_keep_features_list]
-    records_dirpaths = [] if must_keep_records_dir else [get_record_fullpath(dirpath)]
+    records_dirpath = get_record_fullpath(dirpath)
     # remove files (start with deepest/longest paths to avoid deleting dirs before files).
     existing_paths = list(reversed(sorted({pathval
-                                           for pathval in csv_filepaths + features_dirpaths + records_dirpaths
+                                           for pathval in csv_filepaths + features_dirpaths + [records_dirpath]
                                            if path.lexists(pathval)})))
+    if existing_paths and must_keep_records_dir:
+        existing_paths.remove(records_dirpath)
     # if any
     if existing_paths:
         existing_paths_as_string = ', '.join(f'"{path.relpath(p, dirpath)}"' for p in existing_paths)
