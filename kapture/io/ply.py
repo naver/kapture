@@ -177,7 +177,8 @@ def points3d_to_stream(stream, points3d: kapture.Points3d) -> None:
     :param points3d: 3d points to write
     """
     header_to_ply_stream(stream, nb_vertex=len(points3d))
-    for p3d in points3d:
+    hide = logger.getEffectiveLevel() >= logging.CRITICAL
+    for p3d in tqdm(points3d, disable=hide):
         line = ['{:20}'.format(i) for i in p3d[0:3]] + ['{:03d}'.format(int(i)) for i in p3d[3:6]]
         stream.write('  '.join(line) + kapture_linesep)
 
