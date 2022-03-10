@@ -29,12 +29,16 @@ except (ImportError, OSError) as e:
     # postpone warning to the actual use.
     logger.debug(f'cant import {e}')
 
+CHOICE_RIGS = 'rigs'
+CHOICE_TRAJECTORIES = 'trajectories'
+CHOICE_POINTS3D = 'points3d'
+CHOICE_LIDAR = 'lidar'
 
 export_choices = {
-    'rigs': 'plot the rig geometry, ie. relative pose of sensors into the rig.',
-    'trajectories': 'plot the trajectory of every sensors.',
-    'points3d': 'plot the 3-D point cloud.',
-    'lidar': 'plot depth maps as point cloud (one per depth map)'
+    CHOICE_RIGS: 'plot the rig geometry, ie. relative pose of sensors into the rig.',
+    CHOICE_TRAJECTORIES: 'plot the trajectory of every sensors.',
+    CHOICE_POINTS3D: 'plot the 3-D point cloud.',
+    CHOICE_LIDAR: 'plot depth maps as point cloud (one per depth map)'
 }
 
 
@@ -71,11 +75,18 @@ def export_ply(kapture_path: str,  # noqa: C901
         what_to_do = guess_what_to_do(choices=export_choices.keys(), only=only, skip=skip)
 
         logger.info('loading data ...')
+        data_skip_list = []
+        if CHOICE_TRAJECTORIES not in what_to_do:
+            data_skip_list.append(kapture.Trajectories)
+        if CHOICE_POINTS3D not in what_to_do:
+            data_skip_list.append(kapture.Points3d)
+        if CHOICE_LIDAR not in what_to_do:
+            data_skip_list.append(kapture.RecordsLidar)
         with csv.get_all_tar_handlers(kapture_path) as tar_handlers:
-            kapture_data = csv.kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
+            kapture_data = csv.kapture_from_dir(kapture_path, skip_list=data_skip_list, tar_handlers=tar_handlers)
 
         logger.info('exporting  ...')
-        if 'rigs' in what_to_do and kapture_data.rigs:
+        if CHOICE_RIGS in what_to_do and kapture_data.rigs:
             logger.info(f'creating {len(kapture_data.rigs)} rigs.')
             for rig_id, rig in kapture_data.rigs.items():
                 rig_ply_filepath = path.join(ply_dir_path, f'rig_{rig_id}.ply')
@@ -83,19 +94,19 @@ def export_ply(kapture_path: str,  # noqa: C901
                 logger.debug(rig_ply_filepath)
                 ply.rig_to_ply(rig_ply_filepath, rig, axis_length)
 
-        if 'trajectories' in what_to_do and kapture_data.trajectories:
+        if CHOICE_TRAJECTORIES in what_to_do and kapture_data.trajectories:
             trajectories_ply_filepath = path.join(ply_dir_path, 'trajectories.ply')
             logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
             ply.trajectories_to_ply(filepath=trajectories_ply_filepath,
                                     trajectories=kapture_data.trajectories,
                                     axis_length=axis_length)
 
-        if 'points3d' in what_to_do and kapture_data.points3d:
+        if CHOICE_POINTS3D in what_to_do and kapture_data.points3d:
             points3d_ply_filepath = path.join(ply_dir_path, 'points3d.ply')
             logger.info(f'creating 3D points file : {points3d_ply_filepath}')
             ply.points3d_to_ply(points3d_ply_filepath, kapture_data.points3d)
 
-        if 'lidar' in what_to_do and kapture_data.records_lidar:
+        if CHOICE_LIDAR in what_to_do and kapture_data.records_lidar:
             lidar_ply_dir_path = path.join(ply_dir_path, 'records_data')
             logger.info(f'creating lidar points files : {lidar_ply_dir_path}')
             if kapture_data.rigs and kapture_data.trajectories:
