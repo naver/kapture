@@ -136,7 +136,7 @@ def transfer_files_from_dir_copy(
         if delete_source:
             shutil.move(src, dst)
         else:
-            shutil.copyfile(src, dst)
+            shutil.copy2(src, dst)
 
 
 def transfer_files_from_dir(
