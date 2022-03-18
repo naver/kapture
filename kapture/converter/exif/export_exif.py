@@ -100,7 +100,7 @@ def export_gps_to_exif(
     """
     Export GPS from GNSS data in kapture, to image exifs.
     If the mapping from gnns_id to camera_id is not given,
-    gnss_id is assumed to be to be gps_<cam_id>.
+    gnss_id is assumed to be gps_<cam_id>.
     """
 
     # sanity check
@@ -112,11 +112,11 @@ def export_gps_to_exif(
     if gps_id_to_cam_id is None:
         camera_ids = {cam_id
                       for cam_id, sensor in kapture_data.sensors.items()
-                      if sensor.sensor_type == kapture.SENSOR_TYPE_CAMERA}
+                      if sensor.sensor_type == kapture.SensorType.camera.name}
 
         gps_ids = {gps_id
                    for gps_id, sensor in kapture_data.sensors.items()
-                   if sensor.sensor_type == 'gnss' and gps_id.startswith('GPS_')}
+                   if sensor.sensor_type == kapture.SensorType.gnss.name and gps_id.startswith('GPS_')}
 
         gps_id_to_cam_id = {'GPS_' + cam_id: cam_id
                             for cam_id in camera_ids
@@ -134,6 +134,6 @@ def export_gps_to_exif(
             logger.warning(f'no image found corresponding to GPS record ({timestamp}, {cam_id})')
         else:
             image_name = kapture_data.records_camera[timestamp, cam_id]
-            image_filepath = get_image_fullpath(kapture_dir_path=kapture_dirpath, image_filename=image_name)
+            image_filepath = get_image_fullpath(kapture_dirpath, image_name)
             exif_data = gps_record_to_exif_dict(gps_record)
             update_exif(image_filepath, exif_data)

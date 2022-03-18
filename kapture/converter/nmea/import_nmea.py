@@ -88,9 +88,8 @@ def extract_gnss_from_nmea(
 
     # add new gps ids to sensors
     gnss_kapture_sensors = kapture.Sensors()
-    gnss_kapture_sensors[gnss_id] = kapture.Sensor(
-        sensor_type='gnss', name=gnss_id,
-        sensor_params=['EPSG:4326'])  # aka WGS84
+    # Create sensor GNSS WGS84
+    gnss_kapture_sensors[gnss_id] = kapture.Sensor(kapture.SensorType.gnss.name, ['EPSG:4326'], gnss_id)
     #  x, y, z, utc, dop
     records_gnss = kapture.RecordsGnss()
     day = None

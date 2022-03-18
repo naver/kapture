@@ -71,7 +71,7 @@ class TestColmapImportT265(unittest.TestCase):
         # check camera parameters
         cam1 = kapture_data.sensors['cam_00001']
         self.assertIsInstance(cam1, kapture.Camera)
-        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, cam1.sensor_type)
+        self.assertEqual(kapture.SensorType.camera.name, cam1.sensor_type)
         self.assertEqual(kapture.CameraType.OPENCV_FISHEYE, cam1.camera_type)
         params_expected = [848.0, 800.0, 284.468, 285.51, 424.355, 393.742, 0.0008, 0.031, -0.03, 0.005]
         self.assertAlmostEqual(params_expected, cam1.camera_params)
@@ -131,7 +131,7 @@ class TestColmapMaupertuis(unittest.TestCase):
 
         # check camera
         camera = kapture_data.sensors['cam_00001']
-        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, camera.sensor_type)
+        self.assertEqual(kapture.SensorType.camera.name, camera.sensor_type)
         self.assertEqual(kapture.CameraType.SIMPLE_PINHOLE, camera.camera_type)
         self.assertAlmostEqual(camera.camera_params, [1919.0, 1079.0, 2302.7999999999997, 959.5, 539.5])
 
@@ -213,7 +213,7 @@ class TestColmapMaupertuis(unittest.TestCase):
 
         # check camera
         camera = kapture_data.sensors['cam_00001']
-        self.assertEqual(kapture.SENSOR_TYPE_CAMERA, camera.sensor_type)
+        self.assertEqual(kapture.SensorType.camera.name, camera.sensor_type)
         self.assertEqual(kapture.CameraType.SIMPLE_PINHOLE, camera.camera_type)
         self.assertAlmostEqual(camera.camera_params, [1919.0, 1079.0, 1847.53, 959.5, 539.5])
 

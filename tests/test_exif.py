@@ -52,15 +52,14 @@ class TestImportExif(unittest.TestCase):
         self.assertIn(piexif.GPSIFD.GPSLatitude, gps_data)
 
     def test_extract(self):
-        sensors_gnss, records_gnss = extract_gps_from_exif(kapture_data=self._kapture_data,
-                                                           kapture_dirpath=self._kapture_dirpath)
+        sensors_gnss, records_gnss = extract_gps_from_exif(self._kapture_data, self._kapture_dirpath)
         # check sensors
         gps_id = 'GPS_v2 apple iphone 4s back camera 4.28mm f/2.4 3264 2448 perspective 0.9722'
         self.assertEqual(1, len(sensors_gnss))
         self.assertTrue(all(gnss_id.startswith('GPS_') for gnss_id in sensors_gnss.keys()))
         self.assertIn(gps_id, sensors_gnss)
         sensor_gnss = sensors_gnss[gps_id]
-        self.assertEqual('gnss', sensor_gnss.sensor_type)
+        self.assertEqual(kapture.SensorType.gnss.name, sensor_gnss.sensor_type)
         self.assertEqual(['EPSG:4326'], sensor_gnss.sensor_params)
         # check gps track
         self.assertEqual(3, len(records_gnss))
@@ -114,8 +113,7 @@ class TestImportExif(unittest.TestCase):
             clear_exif(image_filepath)
 
         # insert gps to exif
-        export_gps_to_exif(kapture_data=kapture_data,
-                           kapture_dirpath=temp_kapture_dirpath)
+        export_gps_to_exif(kapture_data, temp_kapture_dirpath)
 
         rebuilt_records = kapture.RecordsGnss()
         for timestamp, cam_id, image_name in kapture.flatten(kapture_data.records_camera):

@@ -23,7 +23,6 @@ from PIL import Image
 from tqdm import tqdm
 # kapture
 import path_to_kapture  # noqa: F401
-from kapture.core.Sensors import SENSOR_TYPE_DEPTH_CAM
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
@@ -126,7 +125,7 @@ INTRINSICS = {
 }
 
 
-def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
+def _import_rio10_sequence(sequence_root: str, sequence_list: List[str],
                            kapture_dir_path: str, images_import_method: TransferAction,
                            force_overwrite_existing: bool):
     os.makedirs(kapture_dir_path, exist_ok=True)
@@ -137,39 +136,39 @@ def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
     trajectories = kapture.Trajectories()
     rigs = kapture.Rigs()
     sensors = kapture.Sensors()
-    RIO10_seq_filename_re = re.compile(r'^frame-(?P<frame_id>\d{6})\.(?P<suffix>.*)\.(?P<ext>\w*)$')
+    rio10_seq_filename_re = re.compile(r'^frame-(?P<frame_id>\d{6})\.(?P<suffix>.*)\.(?P<ext>\w*)$')
 
     current_timestamp = 0
-    for senquence_path in sequence_list:
-        rgb_sensor_id = senquence_path + '_rgb'
-        depth_sensor_id = senquence_path + '_depth'
-        rig_sensor_id = senquence_path
-        sensors[rgb_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[senquence_path])
-        sensors[depth_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[senquence_path],
-                                                  sensor_type=SENSOR_TYPE_DEPTH_CAM)
+    for sequence_path in sequence_list:
+        rgb_sensor_id = sequence_path + '_rgb'
+        depth_sensor_id = sequence_path + '_depth'
+        rig_sensor_id = sequence_path
+        sensors[rgb_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[sequence_path])
+        sensors[depth_sensor_id] = kapture.Camera(CAMERA_TYPE, [WIDTH, HEIGHT] + INTRINSICS[sequence_path],
+                                                  sensor_type=kapture.SensorType.depth.name)
         rigs[rig_sensor_id, rgb_sensor_id] = kapture.PoseTransform()
         rigs[rig_sensor_id, depth_sensor_id] = kapture.PoseTransform()
 
-        file_list = os.listdir(path.join(sequence_root, senquence_path))
-        logger.debug(f'populating {senquence_path} files ...')
-        RIO10_seq_filenames = {filename: RIO10_seq_filename_re.search(filename).groupdict()
+        file_list = os.listdir(path.join(sequence_root, sequence_path))
+        logger.debug(f'populating {sequence_path} files ...')
+        rio10_seq_filenames = {filename: rio10_seq_filename_re.search(filename).groupdict()
                                for filename in sorted(file_list)
-                               if RIO10_seq_filename_re.search(filename)}
+                               if rio10_seq_filename_re.search(filename)}
         # reorg as shot[seq, id] = {color: , depth: , pose: , ...}
         shots = {}
-        for timestamp, (filename, file_attribs) in enumerate(RIO10_seq_filenames.items()):
+        for timestamp, (filename, file_attribs) in enumerate(rio10_seq_filenames.items()):
             shot_id = int(file_attribs['frame_id'])
             shots.setdefault(shot_id, {})[file_attribs['suffix']] = filename
         for timestamp, shot_id in enumerate(shots):
             shots[shot_id]['timestamp'] = shot_id + current_timestamp
         for shot in shots.values():
-            snapshots[shot['timestamp'], rgb_sensor_id] = senquence_path + '/' + shot[RGB_SUFFIX]
+            snapshots[shot['timestamp'], rgb_sensor_id] = sequence_path + '/' + shot[RGB_SUFFIX]
             # kapture depth files are not png
-            kapture_depth_map_filename = senquence_path + '/' + shot[DEPTH_SUFFIX][:-len('.png')]
+            kapture_depth_map_filename = sequence_path + '/' + shot[DEPTH_SUFFIX][:-len('.png')]
             depth_maps[shot['timestamp'], depth_sensor_id] = kapture_depth_map_filename
 
             if POSE_SUFFIX in shot:
-                pose_filepath = path.join(sequence_root, senquence_path, shot['pose'])
+                pose_filepath = path.join(sequence_root, sequence_path, shot['pose'])
                 pose_mat = np.loadtxt(pose_filepath)  # camera-to-world, 4×4 matrix in homogeneous coordinates
                 with open(pose_filepath, 'r') as file:
                     if 'INF' in file.read():
@@ -179,8 +178,8 @@ def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
                         continue
                 rotation_mat = pose_mat[0:3, 0:3]
                 position_vec = pose_mat[0:3, 3]
-                rotation_quat = quaternion.from_rotation_matrix(rotation_mat)
-                pose_world_from_cam = kapture.PoseTransform(r=rotation_quat, t=position_vec)
+                rotation_quaternion = quaternion.from_rotation_matrix(rotation_mat)
+                pose_world_from_cam = kapture.PoseTransform(r=rotation_quaternion, t=position_vec)
                 pose_cam_from_world = pose_world_from_cam.inverse()
                 trajectories[shot['timestamp'], rig_sensor_id] = pose_cam_from_world
         current_timestamp += max(shots.keys()) + 1 + TIMESTAMP_SEQUENCE_BREAK
@@ -211,7 +210,7 @@ def _import_RIO10_sequence(sequence_root: str, sequence_list: List[str],
     kapture_to_dir(kapture_dir_path, imported_kapture)
 
 
-def import_RIO10(dRIO10_path: str,
+def import_rio10(rio10_path: str,
                  kapture_dir_path: str,
                  force_overwrite_existing: bool = False,
                  images_import_method: TransferAction = TransferAction.skip
@@ -219,7 +218,7 @@ def import_RIO10(dRIO10_path: str,
     """
     Imports RIO10 dataset and save them as kapture.
 
-    :param dRIO10_path: path to the RIO10 root path (contains folders named sceneXX)
+    :param rio10_path: path to the RIO10 root path (contains folders named sceneXX)
     :param kapture_dir_path: path to kapture output top directory
     :param force_overwrite_existing: Silently overwrite kapture files if already exists.
     :param images_import_method: choose how to import actual image files
@@ -229,7 +228,7 @@ def import_RIO10(dRIO10_path: str,
     scenes = list(range(1, 11))
     for scene_id in scenes:
         logger.info(f'import scene {scene_id}...')
-        scene_path = path.join(dRIO10_path, f'scene{scene_id:02d}')
+        scene_path = path.join(rio10_path, f'scene{scene_id:02d}')
         if not path.isdir(scene_path):
             logger.warning(f'{scene_path} does not exist')
             continue
@@ -252,24 +251,24 @@ def import_RIO10(dRIO10_path: str,
                 seq_subfolders[int(seq_subfolder_re_dict['seq_id'])] = seq_subfolder
         if MAPPING_SEQUENCE_ID in seq_subfolders:
             # 1 is always the mapping sequence
-            _import_RIO10_sequence(seq_path, [seq_subfolders[MAPPING_SEQUENCE_ID]],
+            _import_rio10_sequence(seq_path, [seq_subfolders[MAPPING_SEQUENCE_ID]],
                                    path.join(kapture_dir_path, f'scene{scene_id:02d}', 'mapping'),
                                    images_import_method, force_overwrite_existing)
         if VALIDATION_SEQUENCE_ID in seq_subfolders:
             # 2 is always the mapping sequence
-            _import_RIO10_sequence(seq_path, [seq_subfolders[VALIDATION_SEQUENCE_ID]],
+            _import_rio10_sequence(seq_path, [seq_subfolders[VALIDATION_SEQUENCE_ID]],
                                    path.join(kapture_dir_path, f'scene{scene_id:02d}', 'validation'),
                                    images_import_method, force_overwrite_existing)
         testing_sequences = [v
                              for k, v in sorted(seq_subfolders.items())
                              if k != MAPPING_SEQUENCE_ID and k != VALIDATION_SEQUENCE_ID]
         if len(testing_sequences) > 0:
-            _import_RIO10_sequence(seq_path, testing_sequences,
+            _import_rio10_sequence(seq_path, testing_sequences,
                                    path.join(kapture_dir_path, f'scene{scene_id:02d}', 'testing'),
                                    images_import_method, force_overwrite_existing)
 
 
-def import_RIO10_command_line() -> None:
+def import_rio10_command_line() -> None:
     """
     Imports RGB-D Dataset RIO10 and save them as kapture using the parameters given on the command line.
     """
@@ -298,11 +297,8 @@ def import_RIO10_command_line() -> None:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    import_RIO10(dRIO10_path=args.input,
-                 kapture_dir_path=args.output,
-                 force_overwrite_existing=args.force,
-                 images_import_method=args.image_transfer)
+    import_rio10(args.input, args.output, args.force, args.image_transfer)
 
 
 if __name__ == '__main__':
-    import_RIO10_command_line()
+    import_rio10_command_line()

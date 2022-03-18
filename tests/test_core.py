@@ -229,16 +229,16 @@ class TestSensor(unittest.TestCase):
 
         # test typical camera
         sensor_name = 'GOPRO_FUSION'
-        sensor_type = kapture.SENSOR_TYPE_CAMERA
+        sensor_type = kapture.SensorType.camera.name
         #                 SIMPLE_PINHOLE,   w,   h,   f,  cx,  cy
         sensor_params = ['SIMPLE_PINHOLE', 640, 480, 100, 320, 240]
-        sensor = kapture.Sensor(sensor_type, sensor_params, name=sensor_name)
+        sensor = kapture.Sensor(sensor_type, sensor_params, sensor_name)
         self.assertEqual(sensor.name, sensor_name)
         self.assertEqual(sensor.sensor_type, sensor_type)
         self.assertListEqual(sensor.sensor_params, [i for i in sensor_params])
         self.assertIsInstance(sensor.__repr__(), str)
 
-        sensor = kapture.Camera(sensor_params[0], sensor_params[1:], name=sensor_name)
+        sensor = kapture.Camera(sensor_params[0], sensor_params[1:], sensor_name)
         self.assertEqual(sensor.name, sensor_name)
         self.assertEqual(sensor.sensor_type, sensor_type)
         self.assertEqual(sensor.camera_type, kapture.CameraType.SIMPLE_PINHOLE)
@@ -283,7 +283,7 @@ class TestSensors(unittest.TestCase):
         invalid_sensor_id = tuple('a', )
         valid_sensor_id = 'cam0'
         invalid_sensor = int(0)
-        valid_sensor = kapture.Sensor(kapture.SENSOR_TYPE_CAMERA)
+        valid_sensor = kapture.Sensor(kapture.SensorType.camera.name)
         self.assertRaises(TypeError, sensors.__setitem__, valid_sensor_id, invalid_sensor)
         self.assertRaises(TypeError, sensors.__setitem__, invalid_sensor_id, valid_sensor)
         self.assertRaises(TypeError, sensors.__setitem__, invalid_sensor_id, invalid_sensor)
@@ -734,39 +734,39 @@ class TestPoints3d(unittest.TestCase):
         np_array = np.ones((10, 6))
         points3d = np_array.view(kapture.Points3d)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (10, 6))
+        self.assertEqual(points3d.shape, (10, kapture.Points3d.XYZRGB))
         self.assertTrue(points3d)
 
     def test_from_numpy_array(self):
         data = np.array([[0] * 6])
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (1, 6))
+        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZRGB))
         self.assertTrue(points3d)
 
         data = np.arange(12).reshape((2, 6))
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, 6))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
         self.assertTrue(points3d)
 
         data = np.arange(16).reshape((2, 8))
         points3d = kapture.Points3d(data[:, 0:6])
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, 6))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
         self.assertTrue(points3d)
 
         data = list()
         data.append(list(range(1, 7)))
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (1, 6))
+        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZRGB))
         self.assertTrue(np.all(np.isclose(points3d.as_array(), data)))
 
         data = np.vstack([data, data])
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, 6))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
         self.assertTrue(np.all(np.isclose(points3d.as_array(), data)))
 
     def test_from_numpy_array_invalid(self):
@@ -896,8 +896,8 @@ class TestMatches(unittest.TestCase):
 # KAPTURE ##############################################################################################################
 class TestKapture(unittest.TestCase):
     def test_init(self):
-        lidar0 = kapture.Sensor('lidar', [])
-        cam0 = kapture.Sensor(kapture.SENSOR_TYPE_CAMERA, [])
+        lidar0 = kapture.Sensor(kapture.SensorType.lidar.name, [])
+        cam0 = kapture.Sensor(kapture.SensorType.camera.name, [])
         sensors = kapture.Sensors()
         sensors['cam0'] = cam0
         kapture_data = kapture.Kapture(sensors=sensors)
@@ -919,7 +919,7 @@ class TestKapture(unittest.TestCase):
         self.assertTrue(all(member is None for member in members.values()))
 
         # test sensors only
-        kapture_data.sensors = kapture.Sensors({'cam0': kapture.Sensor(kapture.SENSOR_TYPE_CAMERA, [])})
+        kapture_data.sensors = kapture.Sensors({'cam0': kapture.Sensor(kapture.SensorType.camera.name, [])})
         members = kapture_data.as_dict()
         self.assertEqual(len(members), 1)
         self.assertEqual(members, {'sensors': kapture_data.sensors})

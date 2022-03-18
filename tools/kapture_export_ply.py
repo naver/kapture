@@ -112,7 +112,7 @@ def export_ply(kapture_path: str,  # noqa: C901
             if kapture_data.rigs and kapture_data.trajectories:
                 # compute trajectories for lidars only
                 lidars = [sensor_id for sensor_id, sensor in kapture_data.sensors.items()
-                          if sensor.sensor_type == "lidar"]
+                          if sensor.sensor_type == kapture.SensorType.lidar.name]
                 rigs_lidars_only = kapture.Rigs()
                 for rig_id, sensor_id, pose in kapture.flatten(kapture_data.rigs):
                     if sensor_id in lidars:

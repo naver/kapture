@@ -30,14 +30,14 @@ class TestImportNmea(unittest.TestCase):
     def test_read_nmea(self):
         nmea_file_path = path.join(self._tmu_sample_path, 'recording_2020-10-07_14-47-51', 'septentrio.nmea')
         gnss_id = 'my_gps'
-        kapture_sensors, records_gnss = extract_gnss_from_nmea(nmea_file_path, gnss_id=gnss_id)
+        kapture_sensors, records_gnss = extract_gnss_from_nmea(nmea_file_path, gnss_id)
 
         # check sensor part
         self.assertIsInstance(kapture_sensors, kapture.Sensors)
         self.assertEqual(len(kapture_sensors), 1)
         self.assertIn(gnss_id, kapture_sensors)
         gnss_sensor = kapture_sensors[gnss_id]
-        self.assertEqual(gnss_sensor.sensor_type, 'gnss')
+        self.assertEqual(gnss_sensor.sensor_type, kapture.SensorType.gnss.name)
         self.assertEqual(gnss_sensor.sensor_params[0], 'EPSG:4326')
         self.assertEqual(gnss_sensor.name, gnss_id)
 

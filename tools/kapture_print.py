@@ -70,20 +70,26 @@ def print_sensors(kapture_data, output_stream, show_detail, show_all) -> None:
         cam_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
                    if sensor.sensor_type in kapture.ALL_CAMERA_SENSOR_TYPES]
         print_key_value(' ├─ nb cameras', len(cam_ids), file=output_stream, show_none=show_all)
-        lidar_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'lidar']
+        lidar_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                     if sensor.sensor_type == kapture.SensorType.lidar.name]
         print_key_value(' ├─ nb lidar', len(lidar_ids), file=output_stream, show_none=show_all)
-        wifi_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'wifi']
+        wifi_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                    if sensor.sensor_type == kapture.SensorType.wifi.name]
         print_key_value(' ├─ nb wifi', len(wifi_ids), file=output_stream, show_none=show_all)
-        bluetooth_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'bluetooth']
+        bluetooth_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                         if sensor.sensor_type == kapture.SensorType.bluetooth.name]
         print_key_value(' ├─ nb bluetooth', len(bluetooth_ids), file=output_stream, show_none=show_all)
-        gnss_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'gnss']
+        gnss_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                    if sensor.sensor_type == kapture.SensorType.gnss.name]
         print_key_value(' ├─ nb gnss', len(gnss_ids), file=output_stream, show_none=show_all)
         accelerometer_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
-                             if sensor.sensor_type == 'accelerometer']
+                             if sensor.sensor_type == kapture.SensorType.accelerometer.name]
         print_key_value(' ├─ nb accelerometer', len(accelerometer_ids), file=output_stream, show_none=show_all)
-        gyroscope_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'gyroscope']
+        gyroscope_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                         if sensor.sensor_type == kapture.SensorType.gyroscope.name]
         print_key_value(' ├─ nb gyroscope', len(gyroscope_ids), file=output_stream, show_none=show_all)
-        magnetic_ids = [s_id for s_id, sensor in kapture_data.sensors.items() if sensor.sensor_type == 'magnetic']
+        magnetic_ids = [s_id for s_id, sensor in kapture_data.sensors.items()
+                        if sensor.sensor_type == kapture.SensorType.magnetic.name]
         print_key_value(' ├─ nb magnetic', len(magnetic_ids), file=output_stream, show_none=show_all)
         print_key_value(' └─ nb sensors total', len(kapture_data.sensors), file=output_stream, show_none=show_all)
 

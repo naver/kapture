@@ -300,7 +300,7 @@ def sensors_from_file(filepath: str) -> kapture.Sensors:
         table = table_from_file(file)
         # sensor_id, name, sensor_type, [sensor_params]+'
         for sensor_id, name, sensor_type, *sensor_params in table:
-            sensor = kapture.create_sensor(sensor_type=sensor_type, sensor_params=sensor_params, name=name)
+            sensor = kapture.create_sensor(sensor_type, sensor_params, name)
             sensors[sensor_id] = sensor
 
     return sensors
@@ -1255,6 +1255,7 @@ def get_stored_points3d_number(kapture_path: str) -> int:
     nb = 0
     points3d_file_path = path.join(kapture_path, CSV_FILENAMES[kapture.Points3d])
     if path.isfile(points3d_file_path):
+        logger.debug(f'Start counting 3d points in {points3d_file_path} ...')
         counting_start = datetime.datetime.now()
         # Count number of lines minus the header
         with open(points3d_file_path) as f:
@@ -1562,7 +1563,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_camera_file_path = csv_file_paths[kapture.RecordsCamera]
         logger.debug(f'loading images {records_camera_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type(kapture.SENSOR_TYPE_CAMERA, kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.camera.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_camera = records_camera_from_file(csv_file_paths[kapture.RecordsCamera], sensor_ids)
     # records depth
@@ -1570,7 +1571,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_depth_file_path = csv_file_paths[kapture.RecordsDepth]
         logger.debug(f'loading depth {records_depth_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type(kapture.SENSOR_TYPE_DEPTH_CAM, kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.depth.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth], sensor_ids)
     # records lidar
@@ -1578,7 +1579,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_lidar_file_path = csv_file_paths[kapture.RecordsLidar]
         logger.debug(f'loading lidar {records_lidar_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('lidar', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.lidar.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_lidar = records_lidar_from_file(records_lidar_file_path, sensor_ids)
     # records Wifi
@@ -1586,7 +1587,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_wifi_file_path = csv_file_paths[kapture.RecordsWifi]
         logger.debug(f'loading wifi {records_wifi_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('wifi', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.wifi.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_wifi = records_wifi_from_file(records_wifi_file_path, sensor_ids)
 
@@ -1595,7 +1596,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_bluetooth_file_path = csv_file_paths[kapture.RecordsBluetooth]
         logger.debug(f'loading bluetooth {records_bluetooth_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('bluetooth', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.bluetooth.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_bluetooth = records_bluetooth_from_file(records_bluetooth_file_path, sensor_ids)
 
@@ -1606,7 +1607,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         assert kapture_data.sensors is not None
         epsg_codes = {sensor_id: sensor.sensor_params[0]
                       for sensor_id, sensor in kapture_data.sensors.items()
-                      if sensor.sensor_type == 'gnss'}
+                      if sensor.sensor_type == kapture.SensorType.gnss.name}
         if len(epsg_codes) > 0:
             kapture_data.records_gnss = records_gnss_from_file(records_gnss_file_path, set(epsg_codes.keys()))
         else:
@@ -1617,7 +1618,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_accelerometer_file_path = csv_file_paths[kapture.RecordsAccelerometer]
         logger.debug(f'loading Accelerations {records_accelerometer_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('accelerometer', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.accelerometer.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_accelerometer = records_accelerometer_from_file(records_accelerometer_file_path,
                                                                              sensor_ids)
@@ -1626,7 +1627,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_gyroscope_file_path = csv_file_paths[kapture.RecordsGyroscope]
         logger.debug(f'loading Gyroscope {records_gyroscope_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('gyroscope', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.gyroscope.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_gyroscope = records_gyroscope_from_file(records_gyroscope_file_path, sensor_ids)
     # records Magnetic
@@ -1634,7 +1635,7 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         records_magnetic_file_path = csv_file_paths[kapture.RecordsMagnetic]
         logger.debug(f'loading Magnetic {records_magnetic_file_path} ...')
         assert kapture_data.sensors is not None
-        sensor_ids = get_sensor_ids_of_type('magnetic', kapture_data.sensors)
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.magnetic.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_magnetic = records_magnetic_from_file(records_magnetic_file_path, sensor_ids)
 

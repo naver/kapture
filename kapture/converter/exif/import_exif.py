@@ -3,11 +3,10 @@
 """
 Extract GPS from EXIF
 """
-from typing import Optional
 from PIL import Image
 import piexif
 import logging
-from typing import Tuple, Dict
+from typing import Dict, Optional, Tuple
 from tqdm import tqdm
 import kapture
 from kapture.io.csv import get_csv_fullpath
@@ -36,7 +35,7 @@ def replace_exif_id_by_names(exif_dict: dict,
 
 def read_exif(
         image_filepath: str
-) -> Dict:
+) -> Optional[Dict]:
     """
     Reads the EXIF metatdata from image file using piexif.
 
@@ -74,7 +73,7 @@ def convert_dms_to_float(
     if any(not isinstance(v, tuple) for v in dms):
         # Pillow 3.1 uses IFDRational, but piexif tuple[float].
         warn('Make sure you have installed piexif==1.1.3')
-        raise TypeError('Expect Tuple[Tuplep[float] for sexagesimal. Make sure you have installed piexif==1.1.3')
+        raise TypeError('Expect Tuple[Tuple[float] for sexagesimal. Make sure you have installed piexif==1.1.3')
 
     assert all(isinstance(v, tuple) for v in dms)
     decimal = convert_rational_to_float(dms[0]) + \
@@ -147,7 +146,7 @@ def extract_gps_from_exif(
     cam_to_gps_id = {  # cam_id -> gps_id
         cam_id: 'GPS_' + cam_id
         for cam_id, sensor in kapture_data.sensors.items()
-        if sensor.sensor_type == kapture.SENSOR_TYPE_CAMERA
+        if sensor.sensor_type == kapture.SensorType.camera.name
     }  # cam_id -> gps_id
 
     # set all gps to EPSG:4326
@@ -155,9 +154,9 @@ def extract_gps_from_exif(
     # add new gps ids to sensors
     gnss_kapture_sensors = kapture.Sensors()
     for gps_id, epsg in gps_epsg_codes.items():
-        gnss_kapture_sensors[gps_id] = kapture.Sensor(sensor_type='gnss', sensor_params=[epsg])
+        gnss_kapture_sensors[gps_id] = kapture.Sensor(kapture.SensorType.gnss.name, [epsg])
 
-    image_filepaths = images_to_filepaths(kapture_data.records_camera, kapture_dirpath=kapture_dirpath)
+    image_filepaths = images_to_filepaths(kapture_data.records_camera, kapture_dirpath)
     records_gnss = kapture.RecordsGnss()
 
     for timestamp, cam_id, image_name in tqdm(kapture.flatten(kapture_data.records_camera), disable=disable_tqdm):

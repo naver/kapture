@@ -440,10 +440,8 @@ def import_4seasons_imu(
         shot_id_to_timestamp: Dict[str, int]
 ) -> (kapture.Sensors, kapture.RecordsAccelerometer, kapture.RecordsGyroscope):
     sensors = kapture.Sensors()
-    sensors[ACCELEROMETER_ID] = kapture.Sensor(
-        sensor_type='accelerometer', name=ACCELEROMETER_ID)
-    sensors[GYROSCOPE_ID] = kapture.Sensor(
-        sensor_type='gyroscope', name=GYROSCOPE_ID)
+    sensors[ACCELEROMETER_ID] = kapture.Sensor(sensor_type=kapture.SensorType.accelerometer.name, name=ACCELEROMETER_ID)
+    sensors[GYROSCOPE_ID] = kapture.Sensor(sensor_type=kapture.SensorType.gyroscope.name, name=GYROSCOPE_ID)
 
     accelerometer = kapture.RecordsAccelerometer()
     gyroscope = kapture.RecordsGyroscope()
@@ -542,9 +540,7 @@ def import_4seasons_sequence(
     # imu.txt to accel and gyro
     imu_file_path = path.join(recording_dir_path, 'imu.txt')
     if path.isfile(imu_file_path):
-        imu_sensors, records_accelerometer, records_gyroscope = import_4seasons_imu(
-            imu_file_path=imu_file_path,
-            shot_id_to_timestamp=shot_id_to_timestamp)
+        imu_sensors, records_accelerometer, records_gyroscope = import_4seasons_imu(imu_file_path, shot_id_to_timestamp)
         sensors.update(imu_sensors)
         imported_kapture.records_accelerometer = records_accelerometer
         imported_kapture.records_gyroscope = records_gyroscope
@@ -555,9 +551,7 @@ def import_4seasons_sequence(
     # GNSS data
     nmea_file_path = path.join(recording_dir_path, 'septentrio.nmea')
     if path.isfile(nmea_file_path):
-        gnss_sensors, records_gnss = extract_gnss_from_nmea(
-            nmea_file_path=nmea_file_path, gnss_id='GNSS'
-        )
+        gnss_sensors, records_gnss = extract_gnss_from_nmea(nmea_file_path, 'GNSS')
         sensors.update(gnss_sensors)
         imported_kapture.records_gnss = records_gnss
         gnss_id = next(iter(gnss_sensors))

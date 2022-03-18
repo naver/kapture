@@ -120,11 +120,7 @@ def import_camera(
             # k1, k2
             opensfm_camera.get('k1', 0.0), opensfm_camera.get('k2', 0.0),
         ]
-        return kapture.Camera(
-            camera_type=kapture.CameraType.RADIAL,
-            camera_params=camera_params,
-            name=name
-        )
+        return kapture.Camera(kapture.CameraType.RADIAL, camera_params, name)
 
     else:
         raise ValueError(f'unable to convert camera of type {opensfm_camera["projection_type"]}')
@@ -146,7 +142,7 @@ def _import_gnss(opensfm_root_dir, kapture_sensors, image_sensors, image_timesta
         # add a gps sensor for each camera
         map_cam_to_gnss_sensor = {cam_id: 'GPS_' + cam_id for cam_id in camera_ids}
         for gnss_id in map_cam_to_gnss_sensor.values():
-            kapture_sensors[gnss_id] = kapture.Sensor(sensor_type='gnss', sensor_params=['EPSG:4326'])
+            kapture_sensors[gnss_id] = kapture.Sensor(kapture.SensorType.gnss.name, ['EPSG:4326'])
         # build epsg_code for all cameras
         kapture_gnss = kapture.RecordsGnss()
         opensfm_exif_filepath_list = (path.join(dir_path, filename)
@@ -223,8 +219,7 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
                 feature_type=keypoints_type,
                 kapture_dirpath=kapture_root_dir,
                 image_filename=image_filename)
-            kapture.io.features.image_keypoints_to_file(
-                filepath=keypoint_file_path, image_keypoints=opensfm_image_keypoints)
+            kapture.io.features.image_keypoints_to_file(keypoint_file_path, opensfm_image_keypoints)
             # register the file
             kapture_keypoints.add(image_filename)
 
@@ -273,14 +268,12 @@ def _import_features_and_matches(opensfm_root_dir, kapture_root_dir, disable_tqd
     return kapture_descriptors, kapture_keypoints, kapture_matches
 
 
-def import_opensfm(
-        opensfm_root_dir: str,
-        kapture_root_dir: str,
-        force_overwrite_existing: bool = False,
-        images_import_method: TransferAction = TransferAction.copy,
-        keypoints_type: str = 'HessianAffine',
-        descriptors_type: str = 'HOG'
-) -> None:
+def import_opensfm(opensfm_root_dir: str,
+                   kapture_root_dir: str,
+                   force_overwrite_existing: bool = False,
+                   images_import_method: TransferAction = TransferAction.copy,
+                   keypoints_type: str = 'HessianAffine',
+                   descriptors_type: str = 'HOG'):
     """
     Convert an openSfM structure to a kapture on disk. Also copy, move or link the images files if necessary.
 
@@ -288,6 +281,8 @@ def import_opensfm(
     :param kapture_root_dir: top directory of kapture created
     :param force_overwrite_existing: if true, will remove existing kapture data without prompting the user
     :param images_import_method: action to apply on images: link, copy, move or do nothing.
+    :param keypoints_type: keypoints type
+    :param descriptors_type: descriptors type
     :return: the constructed kapture object
     """
     disable_tqdm = logger.getEffectiveLevel() != logging.INFO
