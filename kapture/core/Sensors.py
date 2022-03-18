@@ -55,6 +55,23 @@ class Sensors(Dict[str, Sensor]):
         return representation
 
 
+class SensorType(AutoEnum):
+    """
+    All types of sensors
+    """
+    lidar = auto()
+    camera = auto()
+    depth = auto()
+    odometry = auto()
+    # Usual smart-phone sensors
+    accelerometer = auto()
+    bluetooth = auto()
+    gnss = auto()
+    gyroscope = auto()
+    magnetic = auto()
+    wifi = ()
+
+
 class CameraType(AutoEnum):
     """
     Enumeration that contains all the supported camera types
@@ -140,9 +157,7 @@ CAMERA_TYPE_PARAMS_COUNT_FROM_NAME = {
     for field, n in CAMERA_TYPE_PARAMS_COUNT.items()
 }
 
-SENSOR_TYPE_CAMERA = 'camera'
-SENSOR_TYPE_DEPTH_CAM = 'depth'
-ALL_CAMERA_SENSOR_TYPES = [SENSOR_TYPE_CAMERA, SENSOR_TYPE_DEPTH_CAM]
+ALL_CAMERA_SENSOR_TYPES = [SensorType.camera.name, SensorType.depth.name]
 
 
 class Camera(Sensor):
@@ -154,7 +169,7 @@ class Camera(Sensor):
                  camera_type: Union[CameraType, str],
                  camera_params: list = None,
                  name: Optional[str] = None,
-                 sensor_type: str = SENSOR_TYPE_CAMERA):
+                 sensor_type: str = SensorType.camera.name):
         # type checking
         assert name is None or isinstance(name, str)
         if isinstance(camera_type, str):
@@ -169,7 +184,7 @@ class Camera(Sensor):
         camera_params = [float(v) for v in camera_params]
         camera_params = [str(int(v)) if v.is_integer() else str(v) for v in camera_params]
         sensor_params = [camera_type.name] + camera_params
-        super(Camera, self).__init__(sensor_type=sensor_type, sensor_params=sensor_params, name=name)
+        super(Camera, self).__init__(sensor_type, sensor_params, name)
 
     @property
     def camera_type(self) -> CameraType:
