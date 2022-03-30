@@ -207,491 +207,491 @@ ETH-Microsoft_ICCV2021_preview_query:
   sha256sum: 4693d16b1675f34d4c2571f6327d1d2ab17dc51a8d2a921df7b5b1a437f2d7c9
   url: https://cvg-data.inf.ethz.ch/eth_ms_dataset/iccv2021/kapture/ETH-Microsoft_ICCV2021_preview_query.tar.gz
 Aachen-Day-Night-v1.1_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
   sha256sum: f33b706baaaeecc11821112c9a557971c41114e43dd6f44df62ad51d287c231c
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_mapping.tar.gz
 Aachen-Day-Night-v1.1_query_day:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
   sha256sum: 66c8bd81cfc4331ce987b7a7d001115106b94d9b455a07d6a7a83b0d961aaaf3
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_query_day.tar.gz
 Aachen-Day-Night-v1.1_query_night:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
   sha256sum: 443a9157c02ab35f17208f6d65b624533a0c8ccae38351e185f166b00fe8ac19
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Aachen-Day-Night-v1.1_query_night.tar.gz
 Extended-CMU-Seasons_slice10_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: cb313f9e44cc979f3eb0f885e31b23566926215f243de50d49dd348f468057f6
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice10_mapping.tar.gz
 Extended-CMU-Seasons_slice10_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 52accef5838272d152580234225166a4d584fa9444f530c84a191f56c42b1670
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice10_query.tar.gz
 Extended-CMU-Seasons_slice11_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 089369ed5b942470736cccb0587eef05a4a75fe809e7e610e5d8ddfadbc619de
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice11_mapping.tar.gz
 Extended-CMU-Seasons_slice11_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: d6ae352a2810a5215e1f6d851abaa3d610d8c4a4b39c383c9f689edbd045380e
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice11_query.tar.gz
 Extended-CMU-Seasons_slice12_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: a5ffab846f3ce45c910051f610b801fa91ce4b3075a648161773d57e4813800f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice12_mapping.tar.gz
 Extended-CMU-Seasons_slice12_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 8375a3a6b63710064a8438fa80483c5f1b9aec869c48428db3965db48d5070c0
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice12_query.tar.gz
 Extended-CMU-Seasons_slice13_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 6757fdde6c5d680d5b65f8ec2f517c6c209f2634bb00b1d5452fbd8ac2f6071f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice13_mapping.tar.gz
 Extended-CMU-Seasons_slice13_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: a77cc03976d1794b61622b9d3d8b862e03c4ab01e94c32e3eb6fdf849e01f3bc
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice13_query.tar.gz
 Extended-CMU-Seasons_slice14_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 87d2f84a98c811205bc85ee0c61113ca6d8a2f16557767d2a7fc2b3344d34333
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice14_mapping.tar.gz
 Extended-CMU-Seasons_slice14_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 26757f9bb28786cd3bad75e35d3537e90599c7aac9035b642e66a5b1bbe7d35d
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice14_query.tar.gz
 Extended-CMU-Seasons_slice15_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: fabbb86cea8687895f9f82ebb7959e1c2cbd4833d339185ff080fc15e1966275
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice15_mapping.tar.gz
 Extended-CMU-Seasons_slice15_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 6610eb99c6e74a1243da90a5897529b8f80412b34f110b43c78f12ba579e67c1
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice15_query.tar.gz
 Extended-CMU-Seasons_slice16_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 3d09dbd31cbdb091e2d0885b35b2ff7a9f70846cbcaa99a02a934990dd1947ee
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice16_mapping.tar.gz
 Extended-CMU-Seasons_slice16_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: e064059ca0259b2ff295300a49e7c9c75eb9bfc43adab48e111c79c5caa9995a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice16_query.tar.gz
 Extended-CMU-Seasons_slice17_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: c14f5ddc7dadbf86679cf3116f5e0d54b343ce11ac895fe8908dd7c03840683f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice17_mapping.tar.gz
 Extended-CMU-Seasons_slice17_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: ed718f69a0af27937e8835431c1142b5cdb7b68ec0c252f1bbc5790fe0041cea
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice17_query.tar.gz
 Extended-CMU-Seasons_slice18_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: aff3d1c1ac74cf224e5a5ce02e113c3f291c3619b6a10dec6c4037a21e86f984
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice18_mapping.tar.gz
 Extended-CMU-Seasons_slice18_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 09114da861d50c71b9d1e30cf3d18b20a056f7d24202d0083b3ae6133da4d7fb
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice18_query.tar.gz
 Extended-CMU-Seasons_slice19_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 836642486dbce48787ab8d6aacd032a6acdd5b55369a4b430d8068f7e57f4dd4
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice19_mapping.tar.gz
 Extended-CMU-Seasons_slice19_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 75780bf2a912a4d55ed1928e4b6e08bf9ef350ded69c2c6c6c2485da81d5d6fe
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice19_query.tar.gz
 Extended-CMU-Seasons_slice20_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 2f4c63bd0b0769bc0012a5c68fdc5941e15a72a538780d225080f5f21b54b9e8
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice20_mapping.tar.gz
 Extended-CMU-Seasons_slice20_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 3ab7721430bd069dcbafc5e06f74b66c558debb15650803ca4999e1ba381c86b
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice20_query.tar.gz
 Extended-CMU-Seasons_slice21_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: a1294b2321f5fb1f7eec5d7c6f773bb6d2dd969b8eeb2510fdc4909baf4b2959
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice21_mapping.tar.gz
 Extended-CMU-Seasons_slice21_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: cdab3f9ebc3b12a51305046e27f7686203e42a665423a2bc33a89056b913f9f6
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice21_query.tar.gz
 Extended-CMU-Seasons_slice22_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 48abbac731516f75a100377e057ddddeb6887331adf3c3723f58cd148385528c
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice22_mapping.tar.gz
 Extended-CMU-Seasons_slice22_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: c8a31a52c7e04402ba9efd66b733a7b672638b4260194a55056554f25596396d
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice22_query.tar.gz
 Extended-CMU-Seasons_slice23_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: cbe8fbfb6a5da4f899739c8b09c9c30fd6b1810950037421c2c7a6d13805afa2
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice23_mapping.tar.gz
 Extended-CMU-Seasons_slice23_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 58be28053ebf02538cedaa17e8379b12ad5a85af2bdae8c36655a1e3f2339c7a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice23_query.tar.gz
 Extended-CMU-Seasons_slice24_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: f1d879b5f59660d89ab7bb13d67ddc133a924802c64d9a75c01529a23e5ffa3c
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice24_mapping.tar.gz
 Extended-CMU-Seasons_slice24_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 7361b5f69af69a0845fb43c16321c893d268c2e4b0b19cdc8210a2b37fdac07a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice24_query.tar.gz
 Extended-CMU-Seasons_slice25_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 213057295a8b47798b88030f73432e8d63edb1e324d82edaa11bc4bf909bff98
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice25_mapping.tar.gz
 Extended-CMU-Seasons_slice25_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: a2e36cbe73753e5e616caa794dc4faa5a6df12a03c3bb4f0e480fe204798210a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice25_query.tar.gz
 Extended-CMU-Seasons_slice2_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 3ed19d344c2b03da20dbdadaa56b404de8f5f852468f72768c045636b82a0b91
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice2_mapping.tar.gz
 Extended-CMU-Seasons_slice2_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 56cd91aa2593a81018274733b06c0465e9ba5529aac9e86cd4879471d9785cbf
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice2_query.tar.gz
 Extended-CMU-Seasons_slice3_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 5ac5464b9db55911ce71541ebc89d794982b8a66cf3226826a9dbd84510d9a99
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice3_mapping.tar.gz
 Extended-CMU-Seasons_slice3_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: c33e624060250a0d9e190fbee2579977c514bfe6c532111f8bcfcf7c978d82d6
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice3_query.tar.gz
 Extended-CMU-Seasons_slice4_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: a44c10092438c463482c10b43b9ac7d4d1c1390541cdd4c505024c7208f2cf71
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice4_mapping.tar.gz
 Extended-CMU-Seasons_slice4_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: e48572230c30fc46a3007cde93f2496b5d860c2d48dca76c95acadd6ddabafeb
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice4_query.tar.gz
 Extended-CMU-Seasons_slice5_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 854d5db664db8d02ec68d63260de70926fe64130851ca49e7912f8d5008fad4a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice5_mapping.tar.gz
 Extended-CMU-Seasons_slice5_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 39ef100f57ebbe3580324d25c4314808f55f90e4e2c71c098347e1fb1140fc68
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice5_query.tar.gz
 Extended-CMU-Seasons_slice6_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 255fccbd08432719a9397c91b54b43ffc4233846bd6a0c336922d706a00cf37b
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice6_mapping.tar.gz
 Extended-CMU-Seasons_slice6_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 435dc4704d581f1737d4f6190099413c02f137cec519292ad02399b9c0668bd7
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice6_query.tar.gz
 Extended-CMU-Seasons_slice7_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 5df68206e6dd22e5faa8fc0855368921da595afac34be827927dcca450982794
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice7_mapping.tar.gz
 Extended-CMU-Seasons_slice7_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 1afc40497f7abc842573322ecd51456e4ae8c12452e5fff2615014216693646b
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice7_query.tar.gz
 Extended-CMU-Seasons_slice8_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 5b21e641fa480eef4ae6f4d55a1ef0d084ef8fcead06631928cbb2469cc8714b
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice8_mapping.tar.gz
 Extended-CMU-Seasons_slice8_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: 71ac891c8cafc23185a12a0f93db20dabf82acd54f26f47ad379ecb6ec1c19a7
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice8_query.tar.gz
 Extended-CMU-Seasons_slice9_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: e6a39d7bb612c605e15b2942410859e24f3c23d39db43bce9eff2d166cc45a0a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice9_mapping.tar.gz
 Extended-CMU-Seasons_slice9_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/Extended-CMU-Seasons_LICENSE.txt
   sha256sum: ae8451926f76cbdbe01385f92555e2b530ed9e938557a921ee4706e402c23037
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/Extended-CMU-Seasons_slice9_query.tar.gz
 RobotCar_Seasons-v2_01_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: b35d5fd8f3f117c30890233e625f7379087ce1f2bd09584bd0b2d2b9fd56dde8
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_01_mapping.tar.gz
 RobotCar_Seasons-v2_02_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 8dc96d2f391c492cea1dd69049ecb0bc4f0032d30a3ab820feb838b76852e330
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_02_mapping.tar.gz
 RobotCar_Seasons-v2_03_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 3e40fea104a3e60e7123a21003ae8d888d149094df64e1e92dc9ace4c1fb9a5d
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_03_mapping.tar.gz
 RobotCar_Seasons-v2_04_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 9253fa12eab66c939a7c8c568f9987d793336c5ecfcd747311bb33f5dfbb26b5
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_04_mapping.tar.gz
 RobotCar_Seasons-v2_04_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: f387f215c8903f945983eb15ad51db0a5f75821ea1bf8f7a1f3aecf6f724d9b2
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_04_query.tar.gz
 RobotCar_Seasons-v2_05_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 3a4e0f67803baf6ca63c8c8b3b7592fffe985bf77163d778674a4d2ee2205ea2
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_05_mapping.tar.gz
 RobotCar_Seasons-v2_05_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 77eac498ec15e3b966a2569464e631489098cf8c71dad5be0c4d3b719a38b5a4
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_05_query.tar.gz
 RobotCar_Seasons-v2_06_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ae552ae443372a9068db9281c22ef54ebe25005e37be5455b12a6645cff88d0a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_06_mapping.tar.gz
 RobotCar_Seasons-v2_06_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 044eb23bac47b5b617ab4bcb2e5e7175158f4f74f8a1558349ec8f664330e707
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_06_query.tar.gz
 RobotCar_Seasons-v2_07_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 1d94fa5bb94c6632bcf5bef4ba421dbfa4080bcc9f0e69d3d1058577e50dba4b
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_07_mapping.tar.gz
 RobotCar_Seasons-v2_08_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 5244ad89b3d0d0fd8812cef5e9f755216a0872c1e46172bda6cd7e3c1c292de7
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_08_mapping.tar.gz
 RobotCar_Seasons-v2_09_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: f24c39c7cd4d0e2dbc404cf55f0b5c58f38b1b9378a596f157efb19279ada884
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_09_mapping.tar.gz
 RobotCar_Seasons-v2_10_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: a22c04375a61c976e6450413801caec1f9d5dfe6fed2a07e5cfcf285c9305079
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_10_mapping.tar.gz
 RobotCar_Seasons-v2_11_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 2ddf47fc965f113616cd96e4619c51aa4eaada37dcde4b0e3b6d434dac39be82
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_11_mapping.tar.gz
 RobotCar_Seasons-v2_12_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ea2261c23320f1bf262eb06ebd2b09a1478304b29974328662b125cd7743300a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_12_mapping.tar.gz
 RobotCar_Seasons-v2_13_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: a5be5846dd0f495ffb05a3b486cfeccf76b3c8dd72ce4f88d93a7c2478184de3
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_13_mapping.tar.gz
 RobotCar_Seasons-v2_14_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 54d2ae63a09db2422f79ffcf3fc4fee28c3e98f51c1c31304219f0cd2b78d866
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_14_mapping.tar.gz
 RobotCar_Seasons-v2_15_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: b3ee34335d452becbb654e50807d9b6c7c173a23871a65a27b01f4ecd98610a6
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_15_mapping.tar.gz
 RobotCar_Seasons-v2_16_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 757523514ac118c3579952d676b744c35c6e25d1080c4d31c3eca1d30369544f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_16_mapping.tar.gz
 RobotCar_Seasons-v2_17_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 325ce5cdf8bd68b3ce3a1f04b44f01617461b85b5ee4e6d95437002f1c520bdb
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_17_mapping.tar.gz
 RobotCar_Seasons-v2_18_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 97c147919fff58330c70c23314333963343b08b7c5a3d05c1b780c428e010225
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_18_mapping.tar.gz
 RobotCar_Seasons-v2_19_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 25d400c60bea2e06dc1cef05d6a8524c6bc465e76406b9867cdf2be581497237
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_19_mapping.tar.gz
 RobotCar_Seasons-v2_20_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: affc622108c0b3ca0499bb8f8dda3db9e1996056ac74e806965248a64f1b7dc9
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_20_mapping.tar.gz
 RobotCar_Seasons-v2_21_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 758439d04ae42f72b5a9fff42614a61d2f5a554e8de5c0a01c0e8c91a489d10f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_21_mapping.tar.gz
 RobotCar_Seasons-v2_22_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 7d6a26ff684bfadcecfdaf15b2ffe9963dbca79b62669719aeb31511a2506c0c
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_22_mapping.tar.gz
 RobotCar_Seasons-v2_23_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 5716ecd7ff1bce087c29b8aa2dbf60de9a8c006727f5b47bd9baaab7f0c02c67
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_23_mapping.tar.gz
 RobotCar_Seasons-v2_23_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ce5b2fd765c7eaeea3f29e420844f6b7031009b7fad0af4c8574223e1e80d651
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_23_query.tar.gz
 RobotCar_Seasons-v2_24_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 06293a2e0ee5dd31e0321aa729d36a6051ca13d0c1da9adf22b42057ae89cdcf
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_24_mapping.tar.gz
 RobotCar_Seasons-v2_24_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 2de367929a986a9195d877fc714d4f394de0ce047e4456434ee84d9da9f10a13
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_24_query.tar.gz
 RobotCar_Seasons-v2_25_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 2feb5aac4d3f226d05eefb61f7f302c4c45e38251f7f10f862efadbd6e99e5b5
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_25_mapping.tar.gz
 RobotCar_Seasons-v2_25_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 30058b1fe0e9602a560b81e926a27f85729f4f8a35a2e8e82b03636798b143aa
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_25_query.tar.gz
 RobotCar_Seasons-v2_26_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 57acb8e5c3663527c4533cf9b71b6b81e1af7d0f73b3cba6d137920924fc252f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_26_mapping.tar.gz
 RobotCar_Seasons-v2_26_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ac7d0bc5d1079765c0ac6f33b33277078a41d3dc135c09f6434047aad2aa77bb
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_26_query.tar.gz
 RobotCar_Seasons-v2_27_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 8ae8108fcb5a0d83110c1e2e584617085defaffa5916dac7943d78ccdd938d13
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_27_mapping.tar.gz
 RobotCar_Seasons-v2_27_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: dbc2537756bf37a459c45335e4ee6fee99913b8a065d6aa6e9684d95b21c1294
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_27_query.tar.gz
 RobotCar_Seasons-v2_28_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 279ded2a693c6910d4ba5dd40021497095c9cc6bbed0527ebc0e36bad47e1a4d
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_28_mapping.tar.gz
 RobotCar_Seasons-v2_28_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 62f1c6687d92f797adc7d41efab1811ebe10084f9ee11e062efccf290dccc9ce
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_28_query.tar.gz
 RobotCar_Seasons-v2_29_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 72ef17fa10f7db6f11ce9923701269de3f282ba090698de2bf2ae9a4376265f8
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_29_mapping.tar.gz
 RobotCar_Seasons-v2_29_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: d07185280bd8e29e01b61c8cee1de2546fd213970e4d823b55f0241cef9d9bc2
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_29_query.tar.gz
 RobotCar_Seasons-v2_30_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: b6983175e05c5e08a740122d2f474eaaff8e5a445242fd5d3fbb8e6111d00aff
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_30_mapping.tar.gz
 RobotCar_Seasons-v2_30_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 86beb7080063ad55b2467b95cb78e8d6cf3d25675d5f318e9fa81c31c072a7d3
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_30_query.tar.gz
 RobotCar_Seasons-v2_31_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: c8fae16b5402ba820d50bd4a03d6f985b0c95622a160d18074b7a7e6961e0da1
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_31_mapping.tar.gz
 RobotCar_Seasons-v2_31_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 55ccd4064e439f0362f62b941135676ef9faf30fd7848d452dfb6255ed7aacec
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_31_query.tar.gz
 RobotCar_Seasons-v2_32_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 419eb394aacb88ea03f4c0def13b29ff1a5da0d5220f83f6efebc450499eaa84
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_32_mapping.tar.gz
 RobotCar_Seasons-v2_32_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ea35bc76f0bebcdfb0d1aae0d77bedd3df16387570a769702cf3b08b13d34c99
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_32_query.tar.gz
 RobotCar_Seasons-v2_33_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 35c71c4ce1e3e1915b21e559ac62c64acec3815ac6e5ab8acb494e3e759b4404
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_33_mapping.tar.gz
 RobotCar_Seasons-v2_33_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 55506ae1fb5f4ccaf293f73a370ed18be94682f911cf1cacfb9d20aba0ec29cd
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_33_query.tar.gz
 RobotCar_Seasons-v2_34_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 5dad53acadaf7e6f9e03b39d51d2ef014c98fe418ff837e0564db690f5b52fd2
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_34_mapping.tar.gz
 RobotCar_Seasons-v2_34_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 740f635094da4a0eceb0cdacb59dd72339bafb255b0c86f828f851f33ab83587
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_34_query.tar.gz
 RobotCar_Seasons-v2_35_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 3ee0ce748f26b67c5ca22fd55bbb2da144878eba251db1e3be4f374307a5e09e
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_35_mapping.tar.gz
 RobotCar_Seasons-v2_35_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 578e48078581544c57d02ca771c7848ed18f0bec56534aeaa6ed4f2e13a6af6f
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_35_query.tar.gz
 RobotCar_Seasons-v2_36_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 0026b1feb4ef432b83a0a0f47153ad69e624f69b6d83a86ddb3d1491b7b91e0a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_36_mapping.tar.gz
 RobotCar_Seasons-v2_36_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 3abd66fd1db8753805a9d3567e33e16661e24f5f16448fda14217699f00ed9c4
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_36_query.tar.gz
 RobotCar_Seasons-v2_37_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 9303b549c1077ea7a43e04946e0c4d7f70a86f4b1dde59b40e0ee7e206929b02
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_37_mapping.tar.gz
 RobotCar_Seasons-v2_38_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 25d67bd4a1a7294297421482c877a4eb6cc953dc08e896ad601322eefa14b529
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_38_mapping.tar.gz
 RobotCar_Seasons-v2_39_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 7ed22643f95a9e85faf9ebbc384ba14626ad7b3f485494a76f4416af530cc9d4
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_39_mapping.tar.gz
 RobotCar_Seasons-v2_40_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 1171e558fa1937d5aa1b038d55d496c4c05276c3050379caeb3d8cc1123452ce
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_40_mapping.tar.gz
 RobotCar_Seasons-v2_41_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 6b5460be09eab5361f701b443b604e3ebeee1c6ef2170cec5ca0a1775084e274
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_41_mapping.tar.gz
 RobotCar_Seasons-v2_42_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: b2e6f45cb1c5d02148834104032f73beac78ac48483ad3c8c632857fc32f43fc
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_42_mapping.tar.gz
 RobotCar_Seasons-v2_43_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: f75fc3ae1eed49cc02101f30f4c1c6552b83c7f8803954b720a22545d5fa90b9
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_43_mapping.tar.gz
 RobotCar_Seasons-v2_44_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: b9db0a5001f435f4b56e6ded578445c5f114393a300d27a210df3145698635ae
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_44_mapping.tar.gz
 RobotCar_Seasons-v2_44_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 838b1382d10985af5a63e3d9e6d265495f0c489cca79d5bbef14146a00d9bce9
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_44_query.tar.gz
 RobotCar_Seasons-v2_45_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: c6865163ae2e4753bd35e5742c7146c01b963936f0e0fc8be91c8404be09bc7a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_45_mapping.tar.gz
 RobotCar_Seasons-v2_45_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 9a6a9d934e2abcab8c3a57ca0ade81727497dd418970fd86bea510c3d11045dd
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_45_query.tar.gz
 RobotCar_Seasons-v2_46_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ace93631f49766711a6bf4a4a573628e1f67070de8e5fa0d973eb65f87d9bffb
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_46_mapping.tar.gz
 RobotCar_Seasons-v2_47_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: c1e42058d576b811dcf3fc8628283a76a9ebdd08985726e86bae5a7da249cb74
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_47_mapping.tar.gz
 RobotCar_Seasons-v2_47_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 7294ecea71fdebd40c9264c0524009f1600993ed0a630e77314f6f3591a29a11
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_47_query.tar.gz
 RobotCar_Seasons-v2_48_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 026b403bb2ccd7a6a59e27f9bd7a364464998d9b5ddb60d10c314d457c4b048a
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_48_mapping.tar.gz
 RobotCar_Seasons-v2_48_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: ca9070396c2f1cb16e2fe213425fbf880dd212bfe65f44ac97a81b0718677172
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_48_query.tar.gz
 RobotCar_Seasons-v2_49_mapping:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 3d985551aad38ab5a9b170c3e6315ee2f3b4ab37387214748645f3c0fb105947
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_49_mapping.tar.gz
 RobotCar_Seasons-v2_49_query:
-  license: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_LICENSE.txt
+  license: http://download.europe.naverlabs.com/kapture/RobotCar_Seasons-v2_LICENSE.txt
   sha256sum: 583600caae88aa2f05c238c615781bdd2d51e5dd1274a61c8cbafa17893697d5
   url: https://data.ciirc.cvut.cz/public/projects/2020VisualLocalization/kapture/RobotCar_Seasons-v2_49_query.tar.gz
 Aachen-Day-Night-v1.1_colmap-sfm_r2d2_WASF-N8_20k_frustum_thresh10_far50_colmap:
