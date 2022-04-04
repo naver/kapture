@@ -346,7 +346,7 @@ def merge_remap(kapture_list: List[kapture.Kapture],  # noqa: C901: function a b
                 kapture_path: str,
                 images_import_method: TransferAction) -> kapture.Kapture:
     """
-    Merge multiple kapture while keeping ids (sensor_id) identical in merged and inputs.
+    Merge multiple kapture while remapping sensor ids (sensor_id) in merged output.
 
     :param kapture_list: list of kapture to merge.
     :param skip_list: input optional types to not merge. sensors and rigs are unskippable
