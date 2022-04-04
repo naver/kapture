@@ -8,6 +8,7 @@ This script merges several kapture dataset to a new kapture. We might also optio
 import argparse
 import logging
 import os
+import sys
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
@@ -82,7 +83,7 @@ def merge_kaptures(kapture_path_list: List[str],  # noqa: C901: function really 
         for kapture_path in kapture_path_list:
             logger.info(f'Loading {kapture_path}')
             tar_handlers = get_all_tar_handlers(kapture_path)
-            kapture_data = kapture_from_dir(kapture_path, tar_handlers=tar_handlers)
+            kapture_data = kapture_from_dir(kapture_path, tar_handlers=tar_handlers, skip_list=skip_list)
             kapture_data_list.append(kapture_data)
             kapture_tarcollection_list.append(tar_handlers)
 
@@ -139,6 +140,9 @@ def merge_command_line() -> None:
     if args.verbose <= logging.DEBUG:
         # also let kapture express its logs
         kapture.utils.logging.getLogger().setLevel(args.verbose)
+    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
+        '--{:20} {:100}'.format(k, str(v))
+        for k, v in vars(args).items()))
     merge_kaptures(args.inputs, args.output, args.keep_sensor_ids, args.image_transfer, args.skip, args.force)
 
 
