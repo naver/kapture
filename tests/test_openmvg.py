@@ -372,7 +372,6 @@ class TestOpenMvgReconstruction(unittest.TestCase):
         """
         self.assertTrue(path.exists(self._kapture_sample_path), "Kapture directory exists")
         kapture_sample_data = kcsv.kapture_from_dir(self._kapture_sample_path)
-        kapture_sample_data.trajectories = None
         openmvg_json_file = path.join(self._tempdir.name, 'sfm_export_3d.json')
         openmvg_image_root_path = path.join(self._tempdir.name, 'images')
         regions_dir_path = path.join(self._tempdir.name, 'regions')
