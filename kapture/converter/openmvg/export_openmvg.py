@@ -97,18 +97,27 @@ def _get_intrinsic_pinhole_radial_k3(camera_params: list) -> Dict:
     return data
 
 
-def _get_intrinsic_pinhole_brown_t2(camera_params: list) -> Dict:
+def _get_intrinsic_pinhole_brown_t2(camera_params: list, use_v2_intrinsics_format: bool) -> Dict:
     # w, h, f, cx, cy, k1, k2, k3, t1, t2
     disto_t2 = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7]),
                 float(camera_params[8]), float(camera_params[9])]
-    return {JSON_KEY.VALUE0: _get_camera_common_data(camera_params), JSON_KEY.DISTO_T2: disto_t2}
+    data = _get_camera_common_data(camera_params)
+    if not use_v2_intrinsics_format:
+        return {JSON_KEY.VALUE0: data, JSON_KEY.DISTO_T2: disto_t2}
+    else:
+        data[JSON_KEY.DISTO_T2] = disto_t2
+        return data
 
 
-def _get_intrinsic_fisheye(camera_params: list) -> Dict:
+def _get_intrinsic_fisheye(camera_params: list, use_v2_intrinsics_format: bool) -> Dict:
     # w, h, f, cx, cy, k1, k2, k3, k4
     fisheye = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7]), float(camera_params[8])]
-    return {JSON_KEY.VALUE0: _get_camera_common_data(camera_params),
-            JSON_KEY.FISHEYE: fisheye}
+    data = _get_camera_common_data(camera_params)
+    if not use_v2_intrinsics_format:
+        return {JSON_KEY.VALUE0: data, JSON_KEY.FISHEYE: fisheye}
+    else:
+        data[JSON_KEY.FISHEYE] = fisheye
+        return data
 
 
 def _compute_openmvg_id(kapture_id: str, kapture_to_openmvg_ids: Dict[str, int]) -> None:
@@ -137,6 +146,7 @@ def _export_openmvg_intrinsics(
         kapture_to_openmvg_cam_ids: Dict[str, int],
         polymorphic_registry: CerealPointerRegistry,
         ptr_wrapper_registry: CerealPointerRegistry,
+        use_v2_intrinsics_format: bool
 ) -> List:
     """
     Exports the given kapture cameras to the openMVG sfm_data structure.
@@ -146,6 +156,7 @@ def _export_openmvg_intrinsics(
     :param kapture_to_openmvg_cam_ids: dict that maps kapture camera ids to openMVG camera ids.
     :param polymorphic_registry: polymorphic IDs status
     :param ptr_wrapper_registry: polymorphic IDs status
+    :param use_v2_intrinsics_format: do not use value0 for pinhole_brown_t2 and fisheye cameras.
     :return: intrinsics to be serialized
     """
     openmvg_intrinsics = []
@@ -193,7 +204,7 @@ def _export_openmvg_intrinsics(
                             kapture_camera_params[6], kapture_camera_params[7], k3,  # k1, k2, k3
                             kapture_camera_params[8], kapture_camera_params[9]  # p1, p2 (=t1, t2)
                             ]
-            data = _get_intrinsic_pinhole_brown_t2(faked_params)
+            data = _get_intrinsic_pinhole_brown_t2(faked_params, use_v2_intrinsics_format)
         elif kapture_cam_type == kapture.CameraType.OPENCV_FISHEYE:
             logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
             # w, h, f, cx, cy, k1, k2, k3, k4
@@ -204,7 +215,7 @@ def _export_openmvg_intrinsics(
                             0, 0,  # k1, k2
                             0, 0  # k3, k4
                             ]
-            data = _get_intrinsic_fisheye(faked_params)
+            data = _get_intrinsic_fisheye(faked_params, use_v2_intrinsics_format)
         elif kapture_cam_type == kapture.CameraType.RADIAL_FISHEYE or \
                 kapture_cam_type == kapture.CameraType.SIMPLE_RADIAL_FISHEYE:
             logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
@@ -216,7 +227,7 @@ def _export_openmvg_intrinsics(
                             0, 0,  # k1, k2
                             0, 0  # k3, k4
                             ]
-            data = _get_intrinsic_fisheye(faked_params)
+            data = _get_intrinsic_fisheye(faked_params, use_v2_intrinsics_format)
         elif kapture_cam_type == kapture.CameraType.UNKNOWN_CAMERA:
             logger.info(f'Camera {kapture_cam_id}: Unknown camera model, using simple radial')
             # Choose simple radial model, to allow openMVG to determine distortion param
@@ -459,6 +470,7 @@ def _export_openmvg_sfm_data(
     openmvg_image_root_path: str,
     image_action: TransferAction,
     image_path_flatten: bool,
+    use_v2_intrinsics_format: bool,
     force: bool,
     kapture_to_openmvg_view_ids: Dict
 ) -> None:
@@ -475,6 +487,7 @@ def _export_openmvg_sfm_data(
     :param openmvg_image_root_path: input path to openMVG image directory to be created.
     :param image_action: action to apply on images: link, copy, move or do nothing.
     :param image_path_flatten: flatten image path (eg. to avoid image name collision in openMVG regions).
+    :param use_v2_intrinsics_format: do not use value0 for pinhole_brown_t2 and fisheye cameras.
     :param force: if true, will remove existing openMVG data without prompting the user.
     :param kapture_to_openmvg_view_ids: input/output mapping of kapture image name to corresponding openmvg view id.
     """
@@ -541,7 +554,8 @@ def _export_openmvg_sfm_data(
         cameras,
         kapture_to_openmvg_cam_ids,
         polymorphic_registry,
-        ptr_wrapper_registry
+        ptr_wrapper_registry,
+        use_v2_intrinsics_format
     )
 
     logger.debug('exporting views ...')
@@ -753,6 +767,7 @@ def export_openmvg(
     image_path_flatten: bool = False,
     keypoints_type: Optional[str] = None,
     descriptors_type: Optional[str] = None,
+    use_v2_intrinsics_format: bool = False,
     force: bool = False
 ) -> None:
     """
@@ -806,6 +821,7 @@ def export_openmvg(
             openmvg_image_root_path,
             image_action,
             image_path_flatten,
+            use_v2_intrinsics_format,
             force,
             kapture_to_openmvg_view_ids)
 

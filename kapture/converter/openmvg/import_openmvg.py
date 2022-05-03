@@ -190,7 +190,10 @@ def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str,
                 if float(camera_data[JSON_KEY.DISTO_T2][2]) != 0:
                     # if k3 not null, use FULL_OPENCV, otherwise OPENCV
                     # w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
-                    value0 = camera_data[JSON_KEY.VALUE0]
+                    if JSON_KEY.VALUE0 in camera_data:
+                        value0 = camera_data[JSON_KEY.VALUE0]
+                    else:
+                        value0 = camera_data
                     disto_t2 = camera_data[JSON_KEY.DISTO_T2]
                     camera = kapture.Camera(kapture.CameraType.FULL_OPENCV, [
                         int(value0[JSON_KEY.WIDTH]),
@@ -204,7 +207,10 @@ def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str,
                     ])
                 else:
                     # w, h, fx, fy, cx, cy, k1, k2, p1, p2
-                    value0 = camera_data[JSON_KEY.VALUE0]
+                    if JSON_KEY.VALUE0 in camera_data:
+                        value0 = camera_data[JSON_KEY.VALUE0]
+                    else:
+                        value0 = camera_data
                     disto_t2 = camera_data[JSON_KEY.DISTO_T2]
                     camera = kapture.Camera(kapture.CameraType.OPENCV, [
                         int(value0[JSON_KEY.WIDTH]),
@@ -219,7 +225,10 @@ def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str,
                     "OpenMVG fisheye models are not compatible with OpenCV."
                     " Using SIMPLE_RADIAL_FISHEYE and forcing distortion to 0")
                 # w, h, f, cx, cy, k
-                value0 = camera_data[JSON_KEY.VALUE0]
+                if JSON_KEY.VALUE0 in camera_data:
+                    value0 = camera_data[JSON_KEY.VALUE0]
+                else:
+                    value0 = camera_data
                 camera = kapture.Camera(kapture.CameraType.SIMPLE_RADIAL_FISHEYE, [
                     int(value0[JSON_KEY.WIDTH]),
                     int(value0[JSON_KEY.HEIGHT]),

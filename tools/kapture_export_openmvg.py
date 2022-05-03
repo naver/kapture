@@ -58,6 +58,9 @@ def export_openmvg_command_line():
                         help='flatten image subpath, to make sure there is no collision in image names.')
     parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
     parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
+
+    parser.add_argument('--use_v2_intrinsics_format', action='store_true',
+                        help='do not use value0 for pinhole_brown_t2 and fisheye cameras.')
     args = parser.parse_args()
     logger.setLevel(args.verbose)
 
@@ -101,6 +104,7 @@ def export_openmvg_command_line():
                    args.image_path_flatten,
                    args.keypoints_type,
                    args.descriptors_type,
+                   args.use_v2_intrinsics_format,
                    args.force
                    )
 
