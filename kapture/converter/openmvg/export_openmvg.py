@@ -248,7 +248,7 @@ def _export_openmvg_intrinsics(
 def _export_openmvg_views(
         kapture_cameras: Dict[str, kapture.Camera],
         kapture_images_data: List[Tuple[int, str, str]],
-        kapture_trajectories: kapture.Trajectories,
+        kapture_trajectories: Optional[kapture.Trajectories],
         kapture_to_openmvg_cam_ids: Dict[str, int],
         kapture_to_openmvg_view_ids: Dict[str, int],
         polymorphic_registry: CerealPointerRegistry,
@@ -315,7 +315,7 @@ def _export_openmvg_views(
 
         view = {}
         # retrieve image pose from trajectories
-        if timestamp not in kapture_trajectories:
+        if kapture_trajectories is None or timestamp not in kapture_trajectories:
             view[JSON_KEY.POLYMORPHIC_ID] = CerealPointerRegistry.NULL_ID
         else:
             # there is a pose for that timestamp
@@ -347,7 +347,7 @@ def _export_openmvg_views(
 
 def _export_openmvg_extrinsics(
         kapture_images_data: List[Tuple[int, str, str]],
-        kapture_trajectories: kapture.Trajectories,
+        kapture_trajectories: Optional[kapture.Trajectories],
         kapture_to_openmvg_view_ids: Dict[str, int],
 ) -> List:
     """
@@ -367,7 +367,7 @@ def _export_openmvg_extrinsics(
             continue
 
         # retrieve image pose from trajectories
-        if timestamp in kapture_trajectories:
+        if kapture_trajectories is not None and timestamp in kapture_trajectories:
             # there is a pose for that timestamp
             # The poses are stored both as priors (in the 'views' table) and as known poses (in the 'extrinsics' table)
             assert kapture_cam_id in kapture_trajectories[timestamp]
@@ -499,7 +499,7 @@ def _export_openmvg_sfm_data(
         logger.warning(f'We will ignore {extra_sensor_number} sensors that are not camera')
 
     # openmvg does not support rigs
-    if kapture_data.rigs:
+    if kapture_data.rigs and kapture_data.trajectories:
         logger.info('remove rigs notation.')
         rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
         kapture_data.rigs.clear()
@@ -565,9 +565,9 @@ def _export_openmvg_sfm_data(
     # structure : correspond to kapture observations + 3D points
     logger.debug('exporting structure ...')
     kapture_keypoints = kapture_data.keypoints[keypoints_type] if (
-            kapture_data.keypoints is not None and
-            keypoints_type is not None and
-            keypoints_type in kapture_data.keypoints) else None
+        kapture_data.keypoints is not None and
+        keypoints_type is not None and
+        keypoints_type in kapture_data.keypoints) else None
     openmvg_sfm_data_structure = _export_openmvg_structure(
         kapture_data.points3d,
         kapture_to_openmvg_view_ids,
@@ -813,13 +813,13 @@ def export_openmvg(
             try:
                 logger.info(f'exporting regions to {openmvg_regions_dir_path} ...')
                 kapture_keypoints = kapture_data.keypoints[keypoints_type] if (
-                        kapture_data.keypoints is not None and
-                        keypoints_type is not None and
-                        keypoints_type in kapture_data.keypoints) else None
+                    kapture_data.keypoints is not None and
+                    keypoints_type is not None and
+                    keypoints_type in kapture_data.keypoints) else None
                 kapture_descriptors = kapture_data.descriptors[descriptors_type] if (
-                        kapture_data.descriptors is not None and
-                        descriptors_type is not None and
-                        descriptors_type in kapture_data.descriptors) else None
+                    kapture_data.descriptors is not None and
+                    descriptors_type is not None and
+                    descriptors_type in kapture_data.descriptors) else None
                 _export_openmvg_regions(
                     kapture_path,
                     kapture_keypoints,
