@@ -1212,6 +1212,9 @@ def matches_from_dir(
 
 ########################################################################################################################
 # points3d #############################################################################################################
+RGB_COLUMNS = 'R, G, B'
+
+
 def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
     """
     Writes 3d points to CSV file.
@@ -1222,7 +1225,10 @@ def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
     assert isinstance(points3d, kapture.Points3d)
     os.makedirs(path.dirname(filepath), exist_ok=True)
     saving_start = datetime.datetime.now()
-    header = KAPTURE_FORMAT_1[2:] + kapture_linesep + 'X, Y, Z, R, G, B'
+    columns = 'X, Y, Z'
+    if points3d.has_colors():
+        columns = columns + ', ' + RGB_COLUMNS
+    header = KAPTURE_FORMAT_1[2:] + kapture_linesep + columns
     np.savetxt(filepath, points3d.as_array(), delimiter=',', header=header, fmt='%.10f')
     saving_elapsed = datetime.datetime.now() - saving_start
     logger.debug(f'wrote {len(points3d):12,d} {type(points3d)} in {saving_elapsed.total_seconds():.3f} seconds'
@@ -1238,8 +1244,16 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
     """
 
     loading_start = datetime.datetime.now()
+    # Read format
+    expected_nb_columns = kapture.Points3d.XYZ_ONLY
+    with open(filepath) as f:
+        f.readline()
+        format_line = f.readline()
+        if RGB_COLUMNS in format_line:
+            expected_nb_columns = kapture.Points3d.XYZ_RGB
+    # Load
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
-    data = data.reshape((-1, kapture.Points3d.XYZRGB))  # make sure of the shape, even if single line file.
+    data = data.reshape((-1, expected_nb_columns))  # make sure of the shape, even if single line file.
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds'
                  .replace(',', ' '))

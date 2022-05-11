@@ -4,7 +4,7 @@
 """
 Tests of the kapture core module.
 """
-
+import numpy
 import unittest
 import numpy as np
 import quaternion
@@ -724,49 +724,61 @@ class TestGlobalFeatures(unittest.TestCase):
 # Points3d #############################################################################################################
 class TestPoints3d(unittest.TestCase):
     def test_empty(self):
-        points = kapture.Points3d()
-        self.assertIsInstance(points, kapture.Points3d)
-        self.assertEqual(points.shape, (0, kapture.Points3d.XYZRGB))
-        self.assertRaises(IndexError, points.__getitem__, (0, 0))
-        self.assertFalse(points)
+        points3d = kapture.Points3d()
+        self.assertIsInstance(points3d, kapture.Points3d)
+        self.assertEqual(points3d.shape, (0, kapture.Points3d.XYZ_RGB))
+        self.assertRaises(IndexError, points3d.__getitem__, (0, 0))
+        self.assertFalse(points3d)
 
     def test_from_numpy_view(self):
         np_array = np.ones((10, 6))
         points3d = np_array.view(kapture.Points3d)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (10, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (10, kapture.Points3d.XYZ_RGB))
         self.assertTrue(points3d)
 
     def test_from_numpy_array(self):
         data = np.array([[0] * 6])
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZ_RGB))
+        self.assertTrue(points3d)
+
+        data = np.array([[0] * 3])
+        points3d = kapture.Points3d(data)
+        self.assertIsInstance(points3d, kapture.Points3d)
+        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZ_ONLY))
         self.assertTrue(points3d)
 
         data = np.arange(12).reshape((2, 6))
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZ_RGB))
+        self.assertTrue(points3d)
+
+        data = np.arange(15).reshape((5, 3))
+        points3d = kapture.Points3d(data)
+        self.assertIsInstance(points3d, kapture.Points3d)
+        self.assertEqual(points3d.shape, (5, kapture.Points3d.XYZ_ONLY))
         self.assertTrue(points3d)
 
         data = np.arange(16).reshape((2, 8))
         points3d = kapture.Points3d(data[:, 0:6])
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZ_RGB))
         self.assertTrue(points3d)
 
         data = list()
         data.append(list(range(1, 7)))
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (1, kapture.Points3d.XYZ_RGB))
         self.assertTrue(np.all(np.isclose(points3d.as_array(), data)))
 
         data = np.vstack([data, data])
         points3d = kapture.Points3d(data)
         self.assertIsInstance(points3d, kapture.Points3d)
-        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZRGB))
+        self.assertEqual(points3d.shape, (2, kapture.Points3d.XYZ_RGB))
         self.assertTrue(np.all(np.isclose(points3d.as_array(), data)))
 
     def test_from_numpy_array_invalid(self):
@@ -780,49 +792,49 @@ class TestPoints3d(unittest.TestCase):
 
     def test_slices(self):
         rows = 18
-        np_points = np.array(range(0, rows * kapture.Points3d.XYZRGB))
-        np_points = np.reshape(np_points, (rows * 2, 3))
+        float_array_values = np.array(range(0, rows * kapture.Points3d.XYZ_RGB), dtype=np.float64)
+        np_points = np.reshape(float_array_values, (rows * 3, 2))
         self.assertRaises(ValueError, kapture.Points3d, np_points)
 
-        np_points = np.reshape(np_points, (rows, kapture.Points3d.XYZRGB))
+        np_points2 = np.reshape(np_points, (rows, kapture.Points3d.XYZ_RGB))
         # construct from numpy array
-        points = kapture.Points3d(np_points)
+        points = kapture.Points3d(np_points2)
         # construct from a points3d
-        points = kapture.Points3d(points)
+        points3d = kapture.Points3d(points)
+        self.assertEqual(points, points3d)
+        self.assertEqual(points3d[0, 0], 0.0)
+        self.assertEqual(points3d[17, 5], 107.0)
 
-        self.assertEqual(points[0, 0], 0.0)
-        self.assertEqual(points[17, 5], 107.0)
-
-        np.testing.assert_array_equal(points.as_array(), np_points)
-        np.testing.assert_array_equal(points[0, 0:3], np.array([0.0, 1.0, 2.0]))
-        np.testing.assert_array_equal(points[0, 3:], np.array([3.0, 4.0, 5.0]))
-        np.testing.assert_array_equal(points[0, :].as_array(), np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]))
+        np.testing.assert_array_equal(points3d.as_array(), np_points2)
+        np.testing.assert_array_equal(points3d[0, 0:4], float_array_values[0:4])
+        np.testing.assert_array_equal(points3d[0, 4:], float_array_values[4:kapture.Points3d.XYZ_RGB])
+        np.testing.assert_array_equal(points3d[0, :].as_array(), float_array_values[:kapture.Points3d.XYZ_RGB])
 
     def test_type_checking(self):
         self.assertRaises(TypeError, kapture.Points3d, (2, 3, 4))
 
-        points = kapture.Points3d()
-        self.assertEqual(points.dtype.name, 'float64')
+        points3d = kapture.Points3d()
+        self.assertEqual(points3d.dtype.name, 'float64')
 
         data = list()
         data.append(list(range(1, 7)))
-        points = kapture.Points3d(data)
-        self.assertEqual(points.dtype.name, 'float64')
+        points3d = kapture.Points3d(data)
+        self.assertEqual(points3d.dtype.name, 'float64')
 
         rows = 18
-        points = np.array(range(0, rows * kapture.Points3d.XYZRGB))
-        points = np.reshape(points, (rows, kapture.Points3d.XYZRGB))
-        points = kapture.Points3d(points)
-        self.assertEqual(points.dtype.name, 'float64')
+        float_list = np.array(range(0, rows * kapture.Points3d.XYZ_RGB))
+        float_array = np.reshape(float_list, (rows, kapture.Points3d.XYZ_RGB))
+        points3d = kapture.Points3d(float_array)
+        self.assertEqual(points3d.dtype.name, 'float64')
 
         # test slicing
-        val1 = points[:, 0:3]
-        val2 = points[:]
-        val3 = points[:, 0]
-        val4 = points[0, :]
-        val5 = points[0]
-        val6 = points[0:2, :]
-        val7 = points[0, 0]
+        val1 = points3d[:, 0:4]
+        val2 = points3d[:]
+        val3 = points3d[:, 0]
+        val4 = points3d[0, :]
+        val5 = points3d[0]
+        val6 = points3d[0:2, :]
+        val7 = points3d[0, 0]
 
         self.assertNotIsInstance(val1, kapture.Points3d)
         self.assertIsInstance(val2, kapture.Points3d)
