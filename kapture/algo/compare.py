@@ -610,8 +610,10 @@ def equal_points3d(
     assert points3d_a is not None
     assert points3d_b is not None
 
-    if len(points3d_a) != len(points3d_b):
-        getLogger().debug('equal_points3d: a and b do not have the same number of elements')
+    if points3d_a.shape != points3d_b.shape:
+        getLogger().debug('equal_points3d: a and b do not have the same shape:'
+                          f' {points3d_a.shape} != {points3d_b.shape}')
+        return False
 
     # internally converted to array of bool which cannot be a point3d
     bool_array = np.isclose(points3d_a.as_array(), points3d_b.as_array())
