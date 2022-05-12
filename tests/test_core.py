@@ -4,7 +4,7 @@
 """
 Tests of the kapture core module.
 """
-import numpy
+
 import unittest
 import numpy as np
 import quaternion
