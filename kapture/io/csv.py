@@ -1212,6 +1212,7 @@ def matches_from_dir(
 
 ########################################################################################################################
 # points3d #############################################################################################################
+XYZ_COLUMNS = 'X, Y, Z'
 RGB_COLUMNS = 'R, G, B'
 
 
@@ -1225,7 +1226,7 @@ def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
     assert isinstance(points3d, kapture.Points3d)
     os.makedirs(path.dirname(filepath), exist_ok=True)
     saving_start = datetime.datetime.now()
-    columns = 'X, Y, Z'
+    columns = XYZ_COLUMNS
     if points3d.has_colors():
         columns = columns + ', ' + RGB_COLUMNS
     header = KAPTURE_FORMAT_1[2:] + kapture_linesep + columns
@@ -1247,10 +1248,15 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
     # Read format
     expected_nb_columns = kapture.Points3d.XYZ_ONLY
     with open(filepath) as f:
-        f.readline()
-        format_line = f.readline()
-        if RGB_COLUMNS in format_line:
-            expected_nb_columns = kapture.Points3d.XYZ_RGB
+        header_line = f.readline()
+        if XYZ_COLUMNS in header_line:
+            # We are dealing with old files without kapture version header line
+            if RGB_COLUMNS in header_line:
+                expected_nb_columns = kapture.Points3d.XYZ_RGB
+        else:
+            format_line = f.readline()
+            if RGB_COLUMNS in format_line:
+                expected_nb_columns = kapture.Points3d.XYZ_RGB
     # Load
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
     data = data.reshape((-1, expected_nb_columns))  # make sure of the shape, even if single line file.
