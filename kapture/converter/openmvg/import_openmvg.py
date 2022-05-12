@@ -28,7 +28,7 @@ from .openmvg_commons import JSON_KEY, OPENMVG_DEFAULT_JSON_FILE_NAME, OPENMVG_D
 from .openmvg_commons import OPENMVG_DESC_HEADER_DTYPE, OPENMVG_DESC_HEADER_BYTES_NUMBER
 from .openmvg_commons import CameraModel
 
-EMPTY_POINT3D = [0.0]*kapture.Points3d.XYZRGB
+EMPTY_COORDINATES = [0.0] * kapture.Points3d.XYZ_ONLY
 
 logger = logging.getLogger('openmvg')  # Using global openmvg logger
 
@@ -376,8 +376,7 @@ def _import_openmvg_structure(structure_data_json: List[Dict[str, Union[int, str
             point_idx: int = point3d[JSON_KEY.KEY]
             max_point_idx = max(max_point_idx, point_idx)
             point3d_value: Dict[str, Union[List[float], List[Dict]]] = point3d[JSON_KEY.VALUE]
-            coords: List[float] = point3d_value[JSON_KEY.X]
-            points_3d[point_idx] = coords + [0.0, 0.0, 0.0]  # No RGB value in JSON file
+            points_3d[point_idx] = point3d_value[JSON_KEY.X]  # No RGB value in JSON file
             observations = point3d_value.get(JSON_KEY.OBSERVATIONS)
             if observations:
                 if keypoints_type is None:
@@ -392,12 +391,12 @@ def _import_openmvg_structure(structure_data_json: List[Dict[str, Union[int, str
                     feature_point_id: int = observation_value[JSON_KEY.ID_FEAT]
                     kapture_observations.add(point_idx, keypoints_type, kapture_image_name, feature_point_id)
 
-        # Put the 3d points read in a list of array of 6 floats ordered by their index
+        # Put the 3d points read in a list of array of 3 floats ordered by their index
         points_3d_list: List[List[float]] = []
         # We should fill an array from 0 to the max index defined and thought fill in the holes
         for point_idx in range(0, max_point_idx+1):
-            coords = points_3d.get(point_idx)
-            points_3d_list.append(coords if coords else EMPTY_POINT3D)
+            coordinates = points_3d.get(point_idx)
+            points_3d_list.append(coordinates if coordinates else EMPTY_COORDINATES)
         kapture_data.points3d = kapture.Points3d(points_3d_list)
         kapture_data.observations = kapture_observations
 
