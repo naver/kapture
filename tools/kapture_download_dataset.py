@@ -475,7 +475,7 @@ def check_licenses(
         if r.status_code != requests.codes.ok:
             logger.error(f'unable to grab {license_url} (code:{r.status_code})')
             print(f'license content is not accessible ({license_url}),')
-            print(f'but you will find the license at the root path of the dataset.')
+            print('but you will find the license at the root path of the dataset.')
             agree = ask_confirmation('Please make sure you agree on terms:')
         else:
             logger.info(f'here after the license terms for : {", ".join(dataset_names)}')
