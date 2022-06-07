@@ -139,6 +139,8 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
     assert isinstance(observations, kapture.Observations) or observations is None
 
     assert isinstance(colmap_image_ids, dict)
+    # Export to the format described here:
+    # https://colmap.github.io/format.html#points3d-txt
     points3d_colmap_header = '# 3D point list with one line of data per point:\n' \
                              '#   POINT3D_ID, X, Y, Z, R, G, B, ERROR, TRACK[] as (IMAGE_ID, POINT2D_IDX)\n'
     with open(colmap_points3d_filepath, 'w') as fid:
@@ -146,9 +148,16 @@ def export_to_colmap_points3d_txt(colmap_points3d_filepath: str,
         if points3d:
             for i in range(points3d.shape[0]):
                 point3d = points3d[i]
+                if len(point3d) == kapture.Points3d.XYZ_RGB:
+                    r = int(point3d[3])
+                    g = int(point3d[4])
+                    b = int(point3d[5])
+                else:
+                    # put a black point
+                    r = g = b = 0
                 line = '{} {} {} {} {} {} {} 0'.format(i,
                                                        point3d[0], point3d[1], point3d[2],
-                                                       int(point3d[3]), int(point3d[4]), int(point3d[5]))
+                                                       r, g, b)
                 if observations is not None and i in observations:
                     if len(observations[i]) == 0:
                         continue
