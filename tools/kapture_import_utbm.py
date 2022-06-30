@@ -85,6 +85,10 @@ def import_utbm_rosbag_command_line() -> None:
                              ' and corresponding to the image topics in the same order;'
                              f' defaults to BB2 values {BB2_CAMERA_IDENTIFIERS}',
                         required=False)
+    parser.add_argument('--force_same_time', action='store_true', default=True,
+                        help='Force that images are taken at the same time', required=False)
+    parser.add_argument('--no-force_same_time', action='store_false', dest='force_same_time',
+                        help='Do not force that images are taken at the same time', required=False)
     parser.add_argument('--bb2', action='store_true', default=False,
                         help='Set BB2 image topics and camera identifiers')
     parser.add_argument('--xb3', action='store_true', default=False,

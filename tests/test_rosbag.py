@@ -171,7 +171,7 @@ class TestImportUtbmRosbag(unittest.TestCase):
         sensors = import_utbm_sensors([path.join(self._samples_utbm_folder, 'bb2_left.yaml'),
                                        path.join(self._samples_utbm_folder, 'bb2_right.yaml')])
         importer = RosBagImporter(rosbag_path, None, sensors, self.kapture_path, force_overwrite_existing=True)
-        importer.import_multi_camera(None, TOPICS_BB2, BB2_CAMERA_IDENTIFIERS, False, False)
+        importer.import_multi_camera(None, TOPICS_BB2, BB2_CAMERA_IDENTIFIERS, True, False, False)
         importer.save_to_kapture()
         ros_sample_kapture_path = path.join(self._samples_utbm_folder, '2018-07-13-15-17-20_1_first10_bb2_kapture')
         rosbag_kapture_data = kcsv.kapture_from_dir(ros_sample_kapture_path)

@@ -64,7 +64,7 @@ def import_rosbag(args) -> None:
     image_topics = args.image_topics
     if not image_topics:
         image_topics = DEFAULT_IMAGE_TOPICS
-    importer.import_multi_camera(args.odometry_topic, image_topics, args.camera_identifiers,
+    importer.import_multi_camera(args.odometry_topic, image_topics, args.camera_identifiers, True,
                                  args.all_pose, args.match_pose, args.percent)
     importer.save_to_kapture(rig_id)
 

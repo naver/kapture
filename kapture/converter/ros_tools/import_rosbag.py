@@ -5,7 +5,7 @@ Import a rosbag with images from several camera and position associated to the i
 Works by default with the RealSense T265 camera.
 Must have ROS installed, as well as rosbag module.
 """
-
+import copy
 from collections import OrderedDict
 import logging
 import os
@@ -95,15 +95,6 @@ def _extract_img_buf(msg) -> np.ndarray:
     else:
         img_buf = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, msg.width)
     return img_buf
-
-
-def _check_timestamp_delta(images_stamp: Dict[Any, rospy.rostime.Time]) -> None:
-    # The images are taken every 0.033 second
-    # Check all images have the same time stamp modulo epsilon
-    for topic1, stamp1 in images_stamp.items():
-        for topic2, stamp2 in images_stamp.items():
-            delta = (stamp1 - stamp2).to_sec()
-            assert (abs(delta) < 0.001), "{topic1} and {topic2} images must have the same timestamp"
 
 
 class RosBagImporter:
@@ -222,9 +213,28 @@ class RosBagImporter:
                 chosen_stamp = stamp
         return self._last_poses[chosen_stamp]
 
+    def _check_timestamp_delta(self, images_stamp: Dict[Any, rospy.rostime.Time], enforce_same_time: bool,
+                               image_number: int) -> None:
+        # The images are taken every 0.033 second
+        # Check all images have the same time stamp modulo epsilon
+        images_stamp2: Dict[Any, rospy.rostime.Time] = copy.deepcopy(images_stamp)
+        for topic1, stamp1 in images_stamp.items():
+            for topic2, stamp2 in images_stamp2.items():
+                delta = (stamp1 - stamp2).to_sec()
+                if abs(delta) > 0.001:
+                    if enforce_same_time:
+                        raise ValueError(
+                            f"images {image_number} in {topic1} and {topic2} must have the same timestamp:"
+                            f" {stamp1} {stamp2} delta = {delta}")
+                    else:
+                        self.logger.warning(f"images {image_number} in {topic1} and {topic2} have different timestamps:"
+                                            f" {stamp1} {stamp2} delta = {delta}")
+            del images_stamp2[topic1]
+
     def import_multi_camera(self, odometry_topic: Optional[str],  # noqa: C901
                             image_topics: Union[str, List[str]],
                             camera_identifiers: Union[str, List[str]],
+                            force_same_time: bool = True,
                             save_all_positions: bool = True,
                             find_image_position: bool = True,
                             percent: int = 100):
@@ -235,6 +245,7 @@ class RosBagImporter:
         :param odometry_topic: the odometry topic to use to compute the trajectory.
         :param image_topics: image topic(s) to import
         :param camera_identifiers: camera identifier(s) corresponding to the image topic(s)
+        :param force_same_time: force all images to have the same timestamp
         :param save_all_positions: save all positions from the odometry topic in the trajectory
         :param find_image_position: find the closest position for the image and add it in the trajectory
         :param percent: percentage of images to keep.
@@ -320,7 +331,7 @@ class RosBagImporter:
                     self.logger.debug(f"{num_msgs:5d} Ignoring message of topic '{topic}'")
                 # If we have all images, save them on disk
                 if len(images_stamp) == nb_image_topics:
-                    _check_timestamp_delta(images_stamp)
+                    self._check_timestamp_delta(images_stamp, force_same_time, image_number)
                     pose6d = self._find_pose(stamp) if find_image_position else None
                     if pose6d or not find_image_position:
                         # Save only some images
