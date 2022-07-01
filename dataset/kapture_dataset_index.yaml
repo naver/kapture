@@ -714,6 +714,18 @@ Aachen-Day-Night-v1.1_global_features_netvlad_vd16pitts_global_features:
   license: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_LICENSE.txt
   sha256sum: 079a17ac648a5af274efdb563d11d9bc1df51fbea68a0b17a7b2ea048ee33f80
   url: http://download.europe.naverlabs.com/kapture/Aachen-Day-Night-v1.1_global_features_netvlad_vd16pitts_global_features.tar.gz
+GangnamStation_B2_release_global_features_AP-GeM-LM18:
+  sha256sum: ca0ea3041e09ac347b07975ae0466d22f981cad5a867d6f4a024d19c2ffe986c
+  url: http://download.europe.naverlabs.com/kapture/GangnamStation_B2_release_global_features_AP-GeM-LM18.tar.gz
+GangnamStation_B2_release_global_features_densevlad_multi:
+  sha256sum: 641ca1d51e40d8f8fbfb2d5b07075b1feab69c47ce2611ebd51e038c008d8a1a
+  url: http://download.europe.naverlabs.com/kapture/GangnamStation_B2_release_global_features_densevlad_multi.tar.gz
+GangnamStation_B2_release_global_features_openibl_vgg16_netvlad:
+  sha256sum: 0960cad00d475ff5859cadc873a6fe2e0530e6caf24191320f07f54dba2d7942
+  url: http://download.europe.naverlabs.com/kapture/GangnamStation_B2_release_global_features_openibl_vgg16_netvlad.tar.gz
+GangnamStation_B2_release_global_features_r101delg_gldv2clean:
+  sha256sum: cc05187ec866f03386682f66dcf58a1f2d8beb6c9ca6695b67746fd0be53101f
+  url: http://download.europe.naverlabs.com/kapture/GangnamStation_B2_release_global_features_r101delg_gldv2clean.tar.gz
 InLoc_wo_images_mapping:
   license: http://download.europe.naverlabs.com/kapture/InLoc_wo_images_LICENSE.txt
   sha256sum: 02788042d9e75bb9f22dac2f7e59029329b900b812707ec0e20dca0cb5623418
