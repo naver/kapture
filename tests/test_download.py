@@ -44,25 +44,25 @@ class TestDownloaderPermissions(unittest.TestCase):
         self._tempdir = tempfile.TemporaryDirectory()
         # make up a read only file
         os.chdir(self._tempdir.name)
-        self.tocompress_filename = 'toto.txt'
-        with open(self.tocompress_filename, 'wt') as f:
-            f.write('toto')
-        os.chmod(self.tocompress_filename, stat.S_IRUSR)
+        self.test_filename = 'permission_check.txt'
+        with open(self.test_filename, 'wt') as f:
+            f.write('permission')
+        os.chmod(self.test_filename, stat.S_IRUSR)
         # tar it
         self.tar_filepath = path.join(self._tempdir.name, 'archive.tar')
         with tarfile.open(self.tar_filepath, 'w:gz') as tar:
-            tar.add(self.tocompress_filename)
-        # self._debug = tocompress_filepath
-        os.remove(self.tocompress_filename)
+            tar.add(self.test_filename)
+        os.remove(self.test_filename)
 
     def tearDown(self) -> None:
         self._tempdir.cleanup()
 
     def test_extract_permissions(self):
-        print(self.tar_filepath)
-        print(self.tocompress_filename)
-        archives.untar_file(archive_filepath=self.tar_filepath, install_dirpath=self._tempdir)
-        a = self._debug
+        os.chdir(self._tempdir.name)
+        archives.untar_file(archive_filepath=self.tar_filepath, install_dirpath=self._tempdir.name)
+        st = os.stat(self.test_filename)
+        self.assertTrue(st.st_mode & stat.S_IRUSR)
+        self.assertTrue(st.st_mode & stat.S_IWUSR)
 
 
 if __name__ == '__main__':
