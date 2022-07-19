@@ -40,6 +40,7 @@ SLOW_TESTS = os.environ.get('SLOW_TESTS', False)
 
 
 class TestDownloaderPermissions(unittest.TestCase):
+    @unittest.skipIf(sys.platform.startswith("win"), "not handling permissions on Windows")
     def setUp(self):
         self._tempdir = tempfile.TemporaryDirectory()
         # make up a read only file
