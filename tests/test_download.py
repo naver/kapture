@@ -44,7 +44,9 @@ class TestDownloaderPermissions(unittest.TestCase):
         self._tempdir = tempfile.TemporaryDirectory()
         # make up a read only file
         os.chdir(self._tempdir.name)
-        self.test_filename = 'permission_check.txt'
+        self.test_dirname = 'permission_dir'
+        self.test_filename = path.join(self.test_dirname, 'permission_file.txt')
+        os.makedirs(self.test_dirname)
         with open(self.test_filename, 'wt') as f:
             f.write('permission')
         os.chmod(self.test_filename, stat.S_IRUSR)
@@ -52,7 +54,9 @@ class TestDownloaderPermissions(unittest.TestCase):
         self.tar_filepath = path.join(self._tempdir.name, 'archive.tar')
         with tarfile.open(self.tar_filepath, 'w:gz') as tar:
             tar.add(self.test_filename)
+        # clean
         os.remove(self.test_filename)
+        os.rmdir(self.test_dirname)
 
     def tearDown(self) -> None:
         self._tempdir.cleanup()
