@@ -44,28 +44,28 @@ class TestDownloaderPermissions(unittest.TestCase):
     def setUp(self):
         self._tempdir = tempfile.TemporaryDirectory()
         # make up a read only file
-        os.chdir(self._tempdir.name)
-        self.test_dirname = 'permission_dir'
-        self.test_filename = path.join(self.test_dirname, 'permission_file.txt')
-        os.makedirs(self.test_dirname)
-        with open(self.test_filename, 'wt') as f:
+        test_dirname = 'permission_dir'
+        test_filename = path.join(test_dirname, 'permission_file.txt')
+        self.test_filepath = path.join(self._tempdir.name, test_filename)
+        self.test_dirpath = path.join(self._tempdir.name, test_dirname)
+        os.makedirs(self.test_dirpath)
+        with open(self.test_filepath, 'wt') as f:
             f.write('permission')
-        os.chmod(self.test_filename, stat.S_IRUSR)
+        os.chmod(self.test_filepath, stat.S_IRUSR)
         # tar it
         self.tar_filepath = path.join(self._tempdir.name, 'archive.tar')
         with tarfile.open(self.tar_filepath, 'w:gz') as tar:
-            tar.add(self.test_filename)
+            tar.add(self.test_filepath, arcname=test_filename)
         # clean
-        os.remove(self.test_filename)
-        os.rmdir(self.test_dirname)
+        os.remove(self.test_filepath)
+        os.rmdir(self.test_dirpath)
 
     def tearDown(self) -> None:
         self._tempdir.cleanup()
 
     def test_extract_permissions(self):
-        os.chdir(self._tempdir.name)
         archives.untar_file(archive_filepath=self.tar_filepath, install_dirpath=self._tempdir.name)
-        st = os.stat(self.test_filename)
+        st = os.stat(self.test_filepath)
         self.assertTrue(st.st_mode & stat.S_IRUSR)
         self.assertTrue(st.st_mode & stat.S_IWUSR)
 
