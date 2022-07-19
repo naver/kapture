@@ -20,7 +20,8 @@ def untar_file(archive_filepath: str,
     # make sure directory exists
     os.makedirs(install_dirpath, exist_ok=True)
     with tarfile.open(archive_filepath, 'r:*') as archive:
-        archive.extractall(install_dirpath)
+        for tarinfo in archive:
+            archive.extract(tarinfo, path=install_dirpath, set_attrs=False)
 
 
 def compute_sha256sum(archive_filepath: str):
