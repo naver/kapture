@@ -40,7 +40,6 @@ SLOW_TESTS = os.environ.get('SLOW_TESTS', False)
 
 
 class TestDownloaderPermissions(unittest.TestCase):
-    @unittest.skipIf(sys.platform.startswith("win"), "not handling permissions on Windows")
     def setUp(self):
         self._tempdir = tempfile.TemporaryDirectory()
         # make up a read only file
@@ -57,6 +56,7 @@ class TestDownloaderPermissions(unittest.TestCase):
         with tarfile.open(self.tar_filepath, 'w:gz') as tar:
             tar.add(self.test_filepath, arcname=test_filename)
         # clean
+        os.chmod(self.test_filepath, stat.S_IWUSR)
         os.remove(self.test_filepath)
         os.rmdir(self.test_dirpath)
 
