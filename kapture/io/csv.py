@@ -1259,6 +1259,11 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
                 expected_nb_columns = kapture.Points3d.XYZ_RGB
     # Load
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
+    if len(data) > 0:
+        if len(data.shape) == 1:
+            assert data.shape[0] == expected_nb_columns
+        else:
+            assert data.shape[1] == expected_nb_columns
     data = data.reshape((-1, expected_nb_columns))  # make sure of the shape, even if single line file.
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds'

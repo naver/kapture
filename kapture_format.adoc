@@ -127,9 +127,10 @@ It can be:
 Text files must comply the following:
 
  - utf-8 files,
+ - starts with # kapture format: 1.1 (in fact the version is read from sensors.txt only, but it's added to all files)
  - comma separated values (CSV), spaces around comma are ignored,
  - as a consequence, values (eg. path) **must not contains `,` (comma)**,
- - each line starting with `#` (comments), as well as lines containing only blank characters are ignored.
+ - each line excect for the first (version) starting with `#` (comments), as well as lines containing only blank characters are ignored.
 
 === Binary files
 
@@ -290,6 +291,7 @@ Currently, there is no specific parameters for the other sensors supported.
 .sensors/sensors.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # sensor_device_id, name, sensor_type, [sensor_params]+
 cam01, Hero7, camera, FULL_OPENCV, 800, 600, 600, 600, 300, 300, 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.
 depth01, kinect, camera, SIMPLE_PINHOLE, 800, 600, 600, 400, 300
@@ -331,6 +333,7 @@ with:
 .sensors/rigs.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # rig_device_id, sensor_device_id, qw, qx, qy, qz, tx, ty, tz
 rig, cam01, 1, 0, 0, 0, 0, 0, 0
 rig, cam02, 1, 0, 0, 0, 10, 0, 0
@@ -370,6 +373,7 @@ with:
 .sensors/trajectories.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # timestamp, device_id, qw, qx, qy, qz, tx, ty, tz
 0000, cam01, 1, 0, 0, 0, 0, 0, 0
 0000, cam02, 1, 0, 0, 0, 0, 0, 0
@@ -405,6 +409,7 @@ with:
 .sensors/records_camera.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # timestamp, device_id, image_path
 0000, cam01, mapping/cam_01/00001.jpg
 0000, cam02, mapping/cam_02/00001.jpg
@@ -440,6 +445,7 @@ with:
 .sensors/records_depth.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # timestamp, device_id, depth_map_path
 0000, depth01, mapping/cam_01/00001.depth
 0000, depth02, mapping/cam_02/00001.depth
@@ -457,6 +463,7 @@ For example:
 .sensors/rigs.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # rig_device_id, sensor_device_id, qw, qx, qy, qz, tx, ty, tz
 RGBD_01, cam01, 1, 0, 0, 0, 0, 0, 0
 RGBD_01, depth01, 1, 0, 0, 0, 0, 0, 0
@@ -546,6 +553,7 @@ with:
 .sensors/records_wifi.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # timestamp, device_id, BSSID, frequency, RSSI, SSID, scan_time_start, scan_time_end
 0, phone01wifi, BA:98:76:54:32:10, 2400, 120.0, , 0, 10
 0, phone01wifi, 01:23:45:67:89:AB, 2400,  33.0, , 0, 10
@@ -677,6 +685,7 @@ timestamp, device_id, data
 .records_SENSOR_TYPE.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # timestamp, device_id, data_or_filepath
 0, 0, my_custom_sensor/0000.dat
 1, 0, my_custom_sensor/0001.dat
@@ -804,6 +813,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 .reconstruction/keypoints/r2d2_WASF-N8_20k/keypoints.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # name, dtype, dsize
 r2d2, float32, 3
 ----
@@ -811,6 +821,7 @@ r2d2, float32, 3
 .reconstruction/keypoints/SIFT/keypoints.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # name, dtype, dsize
 SIFT, float32, 4
 ----
@@ -916,6 +927,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 `reconstruction/descriptors/r2d2_WASF-N8_20k/descriptors.txt`:
 [source,txt]
 ----
+# kapture format: 1.1
 # name, dtype, dsize, keypoints_type, metric_type
 r2d2, float32, 128, r2d2_WASF-N8_20k, L2
 ----
@@ -923,6 +935,7 @@ r2d2, float32, 128, r2d2_WASF-N8_20k, L2
 `reconstruction/descriptors/SIFT/descriptors.txt`:
 [source,txt]
 ----
+# kapture format: 1.1
 # name, dtype, dsize, keypoints_type, metric_type
 SIFT, uint8, 128, SIFT, L2
 ----
@@ -1015,6 +1028,7 @@ It may also optionally contains some comments (lines starting with `#`) or blank
 .reconstruction/global_features/AP-GeM-LM18/global_features.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # Deep Image Retrieval - See: https://github.com/naver/deep-image-retrieval
 # name, dtype, dsize, metric_type
 dirtorch, float32, 2048, L2
@@ -1062,6 +1076,7 @@ Where:
 .reconstruction/points3d.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # X, Y, Z, [R, G, B]
 2.13521, 4.23587, 1.8745, 0, 0, 0
 2.14789, 6.21458, 1.4578, 133, 42, 255
@@ -1093,6 +1108,7 @@ point3d_id, keypoints_type, [image_path, feature_id]*
 .reconstruction/observations.txt
 [source,txt]
 ----
+# kapture format: 1.1
 # point3d_id, keypoints_type, [image_path, feature_id]*
 0, r2d2_WASF-N8_20k, cam_01/00002.jpg, 152, cam_01/00005.jpg, 1564
 0, d2_tf, cam_01/00002.jpg, 445, cam_01/00005.jpg, 2543
