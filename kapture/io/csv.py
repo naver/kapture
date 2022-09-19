@@ -1246,25 +1246,38 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
 
     loading_start = datetime.datetime.now()
     # Read format
-    expected_nb_columns = kapture.Points3d.XYZ_ONLY
+    expected_nb_columns = None
     with open(filepath) as f:
         header_line = f.readline()
         if XYZ_COLUMNS in header_line:
             # We are dealing with old files without kapture version header line
             if RGB_COLUMNS in header_line:
                 expected_nb_columns = kapture.Points3d.XYZ_RGB
+            else:
+                expected_nb_columns = kapture.Points3d.XYZ_ONLY
         else:
             format_line = f.readline()
-            if RGB_COLUMNS in format_line:
-                expected_nb_columns = kapture.Points3d.XYZ_RGB
+            if XYZ_COLUMNS in header_line:
+                if RGB_COLUMNS in format_line:
+                    expected_nb_columns = kapture.Points3d.XYZ_RGB
+                else:
+                    expected_nb_columns = kapture.Points3d.XYZ_ONLY
     # Load
     data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
     if len(data) > 0:
         if len(data.shape) == 1:
-            assert data.shape[0] == expected_nb_columns
+            found_nb_columns = data.shape[0]
         else:
-            assert data.shape[1] == expected_nb_columns
-    data = data.reshape((-1, expected_nb_columns))  # make sure of the shape, even if single line file.
+            found_nb_columns = data.shape[1]
+
+        if expected_nb_columns is not None:
+            assert found_nb_columns == expected_nb_columns
+    else:
+        if expected_nb_columns is None:
+            expected_nb_columns = 6
+        found_nb_columns = expected_nb_columns
+
+    data = data.reshape((-1, found_nb_columns))  # make sure of the shape, even if single line file.
     loading_elapsed = datetime.datetime.now() - loading_start
     logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds'
                  .replace(',', ' '))

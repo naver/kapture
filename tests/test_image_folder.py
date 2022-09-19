@@ -5,6 +5,7 @@ import os.path as path
 from distutils import dir_util
 import tempfile
 import unittest
+import sys
 # kapture
 import path_to_kapture  # enables import kapture  # noqa: F401
 import kapture
@@ -18,6 +19,7 @@ class TestImageFolder(unittest.TestCase):
         samples_folder = path.abspath(path.join(path.dirname(__file__),  '../samples/Aachen-Day-Night'))
         self.images_folder = path.join(samples_folder, 'images_upright', 'query', 'day')
 
+    @unittest.skipIf(sys.platform.startswith("win"), "Do not work on Windows without admin rights")
     def test_import_image_folder(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_image_folder(
@@ -41,6 +43,7 @@ class TestImageFolder(unittest.TestCase):
         first_image = images[0]
         self.assertEqual((0, 'sensor0', 'milestone/2011-12-17_14-28-15_257.jpg'), first_image)
 
+    @unittest.skipIf(sys.platform.startswith("win"), "Do not work on Windows without admin rights")
     def test_import_image_folder_with_single_sensor(self):
         # creates a folder with both images and sensors.txt
         with tempfile.TemporaryDirectory() as tmpdirname_in, tempfile.TemporaryDirectory() as tmpdirname_out:
@@ -73,6 +76,7 @@ class TestImageFolder(unittest.TestCase):
         first_image = images[0]
         self.assertEqual((0, 'cam0', 'milestone/2011-12-17_14-28-15_257.jpg'), first_image)
 
+    @unittest.skipIf(sys.platform.startswith("win"), "Do not work on Windows without admin rights")
     def test_import_image_folder_with_multiple_sensors(self):
         # creates a folder with both images and sensors.txt
         with tempfile.TemporaryDirectory() as tmpdirname_in, tempfile.TemporaryDirectory() as tmpdirname_out:
