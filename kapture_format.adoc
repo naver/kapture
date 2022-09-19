@@ -1055,6 +1055,8 @@ The length of the array is specified by `dsize` in `global_features.txt`.
 === `│ ├─ points3d.txt`
 
 This text file contains 3D points, using one line per point.
+Note: The parser for points3d.txt expects the second line to be either `# X, Y, Z` or `# X, Y, Z, R, G, B`. It uses this line to determine the shape of the ndarray (3 or 6 columns). If it cannot use the second line for this, it will fallback to 6 columns or whatever it can infer from np.loadtxt.
+
 
 ==== syntax
 
