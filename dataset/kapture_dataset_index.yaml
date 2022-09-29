@@ -809,6 +809,12 @@ baidu-mall_global_features_densevlad_multi_global_features:
 baidu-mall_global_features_netvlad_vd16pitts_global_features:
   sha256sum: b1ab894d06441332583390b00d37aaf133a4e09f0ed0e6a72050e0f465641539
   url: http://download.europe.naverlabs.com/kapture/baidu-mall_global_features_netvlad_vd16pitts_global_features.tar.gz
+baidu-mall_local_features_feather2d2_dim32_20k_NN_colmap_gv:
+  sha256sum: 80643323fec299e5d4c4939dc6c24d5bb6fd281cc9653999afdb9bb42110766f
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_local_features_feather2d2_dim32_20k_NN_colmap_gv.tar.gz
+baidu-mall_local_features_feather2d2_dim32_20k_NN_no_gv:
+  sha256sum: c7ef62a284a4e6c1ed09de6f8418af8f856b89d5dc902924cdaa52d201fc2139
+  url: http://download.europe.naverlabs.com/kapture/baidu-mall_local_features_feather2d2_dim32_20k_NN_no_gv.tar.gz
 baidu-mall_local_features_feather2d2_dim32_20k_descriptors:
   sha256sum: 3a80fa33211eb3cb15fa99bc33c94c339ad20f28dbda373b5e1859f9bbf08334
   url: http://download.europe.naverlabs.com/kapture/baidu-mall_local_features_feather2d2_dim32_20k_descriptors.tar.gz
