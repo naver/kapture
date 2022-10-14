@@ -44,6 +44,10 @@ class ImportError(Exception):
 STEREOLABS_CAM_IDS = ['Camera1', 'Camera2']
 STEREOLABS_RIG_ID = 'zed_cam'
 STEREOLABS_DEPTH_ID = 'Depth'
+STEREOLABS_ACCELEROMETER_ID = 'Accelerometer'
+STEREOLABS_GYROSCOPE_ID = 'Gyroscope'
+STEREOLABS_BAROMETER_ID = 'Barometer'
+STEREOLABS_MAGNETOMETER_ID = 'Magnetometer'
 
 
 def kapture_import_stereolabs(
@@ -122,13 +126,15 @@ def kapture_import_stereolabs(
             accelerometer_params = [configuration_sensors.accelerometer_parameters.noise_density,
                                     configuration_sensors.accelerometer_parameters.random_walk,
                                     configuration_sensors.accelerometer_parameters.resolution]
-            kapture_data.sensors['Accelerometer'] = kapture.Sensor(sensor_type='accelerometer', name='Accelerometer',
-                                                                   sensor_params=accelerometer_params)
+            kapture_data.sensors[STEREOLABS_ACCELEROMETER_ID] = kapture.Sensor(sensor_type='accelerometer',
+                                                                               name=STEREOLABS_ACCELEROMETER_ID,
+                                                                               sensor_params=accelerometer_params)
             gyroscope_params = [configuration_sensors.gyroscope_parameters.noise_density,
                                 configuration_sensors.gyroscope_parameters.random_walk,
                                 configuration_sensors.gyroscope_parameters.resolution]
-            kapture_data.sensors['Gyroscope'] = kapture.Sensor(sensor_type='gyroscope', name='Gyroscope',
-                                                               sensor_params=gyroscope_params)
+            kapture_data.sensors[STEREOLABS_GYROSCOPE_ID] = kapture.Sensor(sensor_type='gyroscope',
+                                                                           name=STEREOLABS_GYROSCOPE_ID,
+                                                                           sensor_params=gyroscope_params)
 
         logger.info('write extrinsic to rigs')
         # rigs[rig_id, sensor_id] = <PoseTransform>
@@ -144,8 +150,8 @@ def kapture_import_stereolabs(
             imu_from_cam_trans = imu_from_cam_mat[0:3, 3]
             imu_from_cam_pose = kapture.PoseTransform(r=imu_from_cam_rot, t=imu_from_cam_trans)
             # the imu_from_cam_pose is incomplete, because not expressed in sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
-            kapture_data.rigs[STEREOLABS_RIG_ID, 'Accelerometer'] = imu_from_cam_pose
-            kapture_data.rigs[STEREOLABS_RIG_ID, 'Gyroscope'] = imu_from_cam_pose
+            kapture_data.rigs[STEREOLABS_RIG_ID, STEREOLABS_ACCELEROMETER_ID] = imu_from_cam_pose
+            kapture_data.rigs[STEREOLABS_RIG_ID, STEREOLABS_GYROSCOPE_ID] = imu_from_cam_pose
         tracking_parameters = sl.PositionalTrackingParameters(_init_pos=sl.Transform())
         status = zed.enable_positional_tracking(tracking_parameters)
         if status != sl.ERROR_CODE.SUCCESS:
@@ -238,9 +244,10 @@ def kapture_import_stereolabs(
                     imu_timestamp_ns = int(float(sensor_record[1]) * 1e9)
                     accelerometer_ms2 = [float(v) for v in sensor_record[4:7]]
                     gyroscope_rads = [np.deg2rad(float(v)) for v in sensor_record[7:10]]
-                    kapture_data.records_accelerometer[imu_timestamp_ns, 'Accelerometer'] = kapture.RecordAccelerometer(
+                    kapture_data.records_accelerometer[
+                        imu_timestamp_ns, STEREOLABS_ACCELEROMETER_ID] = kapture.RecordAccelerometer(
                         *accelerometer_ms2)
-                    kapture_data.records_gyroscope[imu_timestamp_ns, 'Gyroscope'] = kapture.RecordGyroscope(
+                    kapture_data.records_gyroscope[imu_timestamp_ns, STEREOLABS_GYROSCOPE_ID] = kapture.RecordGyroscope(
                         *gyroscope_rads)
                     # TODO: read magneto, baro and co
                     # read until the end or until timestamp is ahead of images
