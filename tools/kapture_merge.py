@@ -50,6 +50,8 @@ def merge_kaptures(kapture_path_list: List[str],  # noqa: C901: function really 
         skip_list.append(kapture.Trajectories)
     if 'records_camera' in skip:
         skip_list.append(kapture.RecordsCamera)
+    if 'records_depth' in skip:
+        skip_list.append(kapture.RecordsDepth)
     if 'records_lidar' in skip:
         skip_list.append(kapture.RecordsLidar)
     if 'records_wifi' in skip:
@@ -130,7 +132,7 @@ def merge_command_line() -> None:
     parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
                         help='Force delete output directory if already exists.')
     parser.add_argument('-s', '--skip',
-                        choices=['trajectories', 'records_camera', 'records_lidar', 'records_wifi',
+                        choices=['trajectories', 'records_camera', 'records_depth', 'records_lidar', 'records_wifi',
                                  'keypoints', 'descriptors', 'global_features',
                                  'matches', 'points3d', 'observations'],
                         nargs='+', default=[], help='data to skip')

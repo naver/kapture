@@ -8,7 +8,7 @@ from kapture.io.tar import TarCollection
 from typing import List, Optional, Type
 
 import kapture
-from kapture.io.records import TransferAction, get_image_fullpath
+from kapture.io.records import TransferAction, get_image_fullpath, get_depth_map_fullpath
 from kapture.utils.Collections import get_new_if_not_empty
 
 from .merge_reconstruction import merge_keypoints_collections, merge_descriptors_collections
@@ -156,6 +156,22 @@ def merge_records_camera(
     return merge_table_key2(
         table_list=records_camera_list,
         table_constructor=kapture.RecordsCamera
+    )
+
+
+def merge_records_depth(
+        records_depth_list: List[Optional[kapture.RecordsDepth]]
+) -> kapture.RecordsDepth:
+    """
+    Merge several depth records lists. For depth record with the same timestamp and sensor identifier,
+     keep only the first one.
+
+    :param records_depth_list: list of depth records
+    :return: merged depth records
+    """
+    return merge_table_key2(
+        table_list=records_depth_list,
+        table_constructor=kapture.RecordsDepth
     )
 
 
@@ -324,7 +340,17 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function 
                            [get_image_fullpath(data_path, image_filename=None) for data_path in data_paths],
                            kapture_path,
                            images_import_method)
+    if kapture.RecordsDepth not in skip_list:
+        new_records_depth = merge_records_depth([every_kapture.records_depth for every_kapture in kapture_list])
+        merged_kapture.records_depth = get_new_if_not_empty(new_records_depth, merged_kapture.records_depth)
 
+        merge_records_data([[depth_name
+                             for _, _, depth_name in kapture.flatten(every_kapture.records_depth)]
+                            if every_kapture.records_depth is not None else []
+                            for every_kapture in kapture_list],
+                           [get_depth_map_fullpath(data_path, depth_map_filename=None) for data_path in data_paths],
+                           kapture_path,
+                           images_import_method)
     if kapture.RecordsLidar not in skip_list:
         new_records_lidar = merge_records_lidar([every_kapture.records_lidar
                                                  for every_kapture in kapture_list])
