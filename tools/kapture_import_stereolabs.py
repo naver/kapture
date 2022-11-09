@@ -13,6 +13,7 @@ import numpy as np
 import quaternion
 from typing import Optional
 from tqdm import tqdm
+import csv
 # kapture
 import path_to_kapture  # noqa: F401
 import kapture
@@ -177,7 +178,7 @@ def kapture_import_stereolabs(
         runtime_parameters = sl.RuntimeParameters()
 
         imu_file = open(sensors_file_path, 'rt') if sensors_file_path else None
-        imu_lines = (l.split(',') for l in imu_file.readlines() if not l.startswith('#'))
+        imu_lines = (l.split(',') for l in imu_file.readlines() if not l.startswith('#')) if sensors_file_path else None
         try:  # slam loop
             for i in tqdm(range(nb_frames)):
                 status = zed.grab(runtime_parameters)
@@ -268,6 +269,8 @@ def kapture_import_stereolabs(
         finally:
             zed.disable_positional_tracking()
             zed.close()
+            if imu_file:
+                imu_file.close()
 
         logger.info(f'imported kapture: {repr(kapture_data)}')
         kapture_to_dir(kapture_dirpath=destination_kapture_dir_path, kapture_data=kapture_data)
