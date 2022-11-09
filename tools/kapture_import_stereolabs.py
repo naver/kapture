@@ -47,13 +47,11 @@ STEREOLABS_BAROMETER_ID = 'Barometer'
 STEREOLABS_MAGNETOMETER_ID = 'Magnetometer'
 
 
-
-
 def kapture_import_stereolabs(
         destination_kapture_dir_path: str,
         svo_file_path: str,
         sensors_file_path: Optional[str],
-        calib_file_path: Optional[str],
+        calib_dir_path: Optional[str],
         export_depth: bool = True,
 ) -> None:
     """
@@ -62,7 +60,7 @@ def kapture_import_stereolabs(
     :param destination_kapture_dir_path: path to the output kapture directory
     :param svo_file_path: input path to svo file
     :param sensors_file_path: input path to imu file
-    :param calib_file_path: input path to calib file (yaml)
+    :param calib_dir_path: input path to calib directory (contains SN*.conf)
     :param export_depth: create depth maps
     """
 
@@ -80,10 +78,7 @@ def kapture_import_stereolabs(
         kapture_data.records_depth = kapture.RecordsDepth()
 
     # Specify SVO path parameter
-    if calib_file_path and path.basename(calib_file_path) != 'calib.yaml':
-        raise ValueError(f'expect calib file to be named "calib.yaml" (not "{path.basename(calib_file_path)}")')
-    calib_dir_path = path.dirname(calib_file_path) if calib_file_path else ''
-    init_params = sl.InitParameters(optional_settings_path=calib_dir_path)
+    init_params = sl.InitParameters(optional_settings_path=calib_dir_path or '')
     init_params.set_from_svo_file(svo_file_path)
     init_params.svo_real_time_mode = False  # Don't convert in realtime
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.IMAGE  # same as kapture
@@ -299,7 +294,7 @@ def kapture_import_zed_command_line() -> None:
     parser.add_argument('-u', '--imu',
                         help='input imu file')
     parser.add_argument('-c', '--calib',
-                        help='calib file path (if not conventional)')
+                        help='calib dir path (if not conventional)')
     parser.add_argument('-o', '--output', required=True, help='output directory.')
     ####################################################################################################################
     args = parser.parse_args()
@@ -313,7 +308,7 @@ def kapture_import_zed_command_line() -> None:
         destination_kapture_dir_path=args.output,
         svo_file_path=args.svo,
         sensors_file_path=args.imu,
-        calib_file_path=args.calib
+        calib_dir_path=args.calib
     )
 
 
