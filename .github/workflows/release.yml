@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy_pip:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -30,7 +30,7 @@ jobs:
         python setup.py sdist bdist_wheel
         twine upload --verbose --skip-existing dist/*
   deploy_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: docker build and push
