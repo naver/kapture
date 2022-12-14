@@ -168,8 +168,9 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 | IDL_dataset_cvpr17        | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  —
 | ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
-| SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
-| virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
+| virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
+| stereolabs zed2           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
 |===
 
 :Notes:
