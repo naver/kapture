@@ -71,6 +71,7 @@ from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir, float_array_or_none
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.algo.merge_keep_ids import merge_keep_ids
+from kapture.io.tar import TarCollection
 
 logger = logging.getLogger('Extended_CMU_Seasons')
 ECMU_IMAGE_PATTERN = r'img_(?P<image_number>\d+)_(?P<camera_id>\w+)_(?P<timestamp>\d+)us\.jpg'
@@ -254,8 +255,10 @@ def import_extended_cmu_seasons(cmu_path: str,
                                                     records_camera=query_gt_records_camera,
                                                     trajectories=query_gt_trajectories))
         data_to_merge = [query_kapture] + query_gt_kapture
+        fake_tar_collection_list = [TarCollection() for _ in range(len(data_to_merge))]
         query_kapture = merge_keep_ids(data_to_merge, skip_list=[], data_paths=["" for _ in range(len(data_to_merge))],
-                                       kapture_path="", images_import_method=TransferAction.skip)
+                                       kapture_path="", images_import_method=TransferAction.skip,
+                                       tarcollection_list=fake_tar_collection_list)
         if import_all_files:
             _add_images_from_folder(query_images_path, query_kapture)
         kapture_to_dir(kapture_query_path, query_kapture)
