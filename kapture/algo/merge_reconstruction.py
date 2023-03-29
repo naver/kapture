@@ -318,15 +318,14 @@ def merge_points3d_and_observations(pts3d_obs: List[Tuple[Optional[kapture.Point
     assert len(pts3d_obs) > 0
     merged_points3d = kapture.Points3d()
     merged_observations = kapture.Observations()
-    point3d_offset = 0
     for points3d, observations in pts3d_obs:
         if points3d is None:
             continue
+        point3d_offset = merged_points3d.shape[0]  # number of points before merge
         merged_points3d = kapture.Points3d(np.vstack([merged_points3d, points3d]))
         if observations is not None:
             for point3d_idx, keypoints_type, (image_path, keypoint_idx) in kapture.flatten(observations):
                 merged_observations.add(point3d_idx + point3d_offset, keypoints_type, image_path, keypoint_idx)
-        point3d_offset += merged_points3d.shape[0]
     return merged_points3d, merged_observations
 
 
