@@ -265,6 +265,6 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
                                          kapture_data.matches[keypoints_type])
 
     # points3D.txt
-    logging.info('creating colmap points3D.txt')
+    logger.info('creating colmap points3D.txt')
     export_to_colmap_points3d_txt(path.join(colmap_reconstruction_dirpath, 'points3D.txt'), colmap_image_ids,
                                   kapture_data.points3d, kapture_data.observations, keypoints_type)
