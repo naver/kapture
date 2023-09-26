@@ -186,6 +186,8 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
  - `obs`: handle observations, ie. 3D-points / 2D keypoints correspondences.
  - `mch`: handle keypoints matches.
 
+link:https://gist.github.com/jo-chemla/258e6e40d3d6c2220b29518ff3c17c40[Here], you can also find an utility tool for
+cropping input images of a kapture dataset. Thanks Jonathan Chemla for the contribution.
 
 == kapture support in other packages
 
