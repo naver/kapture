@@ -23,6 +23,8 @@ from kapture.io.tar import get_feature_tar_fullpath, retrieve_tar_handler_from_c
 
 logger = kapture.logger
 
+np.float = float  # monkey patch
+
 # file names conventions
 CSV_FILENAMES = {
     kapture.Sensors: path.join('sensors', 'sensors.txt'),
@@ -938,7 +940,7 @@ def keypoints_config_from_file(config_filepath: str) -> KeypointsConfig:
         name, dtype, dsize = line[0], line[1], int(line[2])
 
     # try to list all possible type from numpy that can be used in eval(dtype)
-    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    from numpy import float32, float64, int32, uint8  # noqa: F401
     if isinstance(type(eval(dtype)), type):
         dtype = eval(dtype)
     else:
@@ -1015,7 +1017,7 @@ def descriptors_config_from_file(config_filepath: str) -> DescriptorsConfig:
         name, dtype, dsize, keypoints_type, metric_type = line[0], line[1], int(line[2]), line[3], line[4]
 
     # try to list all possible type from numpy that can be used in eval(dtype)
-    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    from numpy import float32, float64, int32, uint8  # noqa: F401
     if isinstance(type(eval(dtype)), type):
         dtype = eval(dtype)
     else:
@@ -1099,7 +1101,7 @@ def global_features_config_from_file(config_filepath: str) -> GlobalFeaturesConf
         name, dtype, dsize, metric_type = line[0], line[1], int(line[2]), line[3]
 
     # try to list all possible type from numpy that can be used in eval(dtype)
-    from numpy import float, float32, float64, int32, uint8  # noqa: F401
+    from numpy import float32, float64, int32, uint8  # noqa: F401
     if isinstance(type(eval(dtype)), type):
         dtype = eval(dtype)
     else:
