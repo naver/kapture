@@ -52,6 +52,9 @@ class TestImportT265Rosbag(unittest.TestCase):
         self.camera_ids = sorted(list(kapture_data.cameras.keys()))
         self.first_cam_id = self.camera_ids[0]
 
+    def tearDown(self) -> None:
+        self._tempdir.cleanup()
+
     def testMissingTopic(self):
         with self.assertRaisesRegex(ValueError, 'Missing image topic',
                                     msg="Missing image topic detected"):
@@ -131,6 +134,12 @@ class TestImportUtbmRosbag(unittest.TestCase):
         self._samples_utbm_folder = path.abspath(path.join(path.dirname(__file__), '../samples/utbm'))
         self.tempdir = tempfile.TemporaryDirectory()
         self.kapture_path = path.join(self.tempdir.name, 'from_ros')
+
+    def tearDown(self) -> None:
+        """
+        Clean up after every test
+        """
+        self.tempdir.cleanup()
 
     def test_read_bb2_camera_info(self) -> None:
         """
