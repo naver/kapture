@@ -24,6 +24,9 @@ class TestImageList(unittest.TestCase):
         self._kapture_path = path.join(self._tempdir.name, 'kapture_local')
         os.makedirs(self._kapture_path, exist_ok=True)
 
+    def tearDown(self) -> None:
+        self._tempdir.cleanup()
+
     def test_import_images_missing_file(self):
         self.assertRaises(FileNotFoundError, import_image_list_with_poses,
                           '', self._images_folder, self._camera_model_path,
