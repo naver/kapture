@@ -36,7 +36,7 @@ import sqlite3
 import numpy as np
 
 
-IS_PYTHON3 = sys.version_info[0] >= 3
+PYTHON_VERSION = sys.version_info
 
 MAX_IMAGE_ID = 2**31 - 1
 
@@ -123,8 +123,11 @@ def pair_id_to_image_ids(pair_id):
 
 
 def array_to_blob(array):
-    if IS_PYTHON3:
-        return array.tostring()
+    if PYTHON_VERSION[0] >= 3:
+        if PYTHON_VERSION[1] > 6:
+            return array.tobytes()
+        else:
+            return array.tostring()
     else:
         return np.getbuffer(array)
 
