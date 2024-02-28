@@ -2,7 +2,7 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 import os.path as path
-from distutils import dir_util
+import shutil
 import tempfile
 import unittest
 import sys
@@ -48,7 +48,7 @@ class TestImageFolder(unittest.TestCase):
         # creates a folder with both images and sensors.txt
         with tempfile.TemporaryDirectory() as tmpdirname_in, tempfile.TemporaryDirectory() as tmpdirname_out:
             # copy images
-            dir_util.copy_tree(self.images_folder, tmpdirname_in)
+            shutil.copytree(self.images_folder, tmpdirname_in, dirs_exist_ok=True)
             # copy sensors.txt
             sensors_file_path = path.join(tmpdirname_in, 'sensors.txt')
             with open(sensors_file_path, 'wt') as f:
@@ -81,7 +81,7 @@ class TestImageFolder(unittest.TestCase):
         # creates a folder with both images and sensors.txt
         with tempfile.TemporaryDirectory() as tmpdirname_in, tempfile.TemporaryDirectory() as tmpdirname_out:
             # copy images
-            dir_util.copy_tree(self.images_folder, tmpdirname_in)
+            shutil.copytree(self.images_folder, tmpdirname_in, dirs_exist_ok=True)
             # make up sensors.txt
             sensors_file_path = path.join(tmpdirname_in, 'sensors.txt')
             with open(sensors_file_path, 'wt') as f:
