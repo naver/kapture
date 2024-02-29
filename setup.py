@@ -37,7 +37,6 @@ def read_doc(filepath):
 
     return content
 
-
 readme_filepath = path.join(HERE, 'README.adoc')
 long_description = read_doc(readme_filepath)
 
@@ -45,7 +44,7 @@ long_description = read_doc(readme_filepath)
 setuptools.setup(
     # description
     name='kapture',
-    version="1.1.8",
+    version="1.1.9",
     author="naverlabs",
     author_email="kapture@naverlabs.com",
     description="kapture: file format for SfM",
@@ -59,14 +58,14 @@ setuptools.setup(
     ],
 
     # dependencies
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=[
         'dataclasses>=0.3;python_version<\'3.7\'',
         'numpy>=1.16',
         'numpy-quaternion>=2019.3.18.14.33.20',
         'numba>=0.42',
         'matplotlib>=3.0',
-        'scipy>=1.4',
+        'scipy>=1.12',
         'tqdm>=4.30',
         'Pillow>=8.1.1',
         'piexif==1.1.3',
@@ -74,12 +73,14 @@ setuptools.setup(
         'pyyaml>=5.1',
         'wcmatch>=5.0',
         'tabulate>=0.8.7',
-        'pytz>=2021.1'
+        'pytz>=2021.1',
+        'build>=1.0.3'
     ],
     extras_require={
         'dev': ['pytest'],
     },
     # sources
     packages=setuptools.find_packages(),
+    data_files=[(".", ["README.adoc"])],
     scripts=[f for f in glob(os.path.join(HERE, 'tools', '*.py'))],
 )

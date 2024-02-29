@@ -8,27 +8,42 @@ on:
     types: [created]
 
 jobs:
-  deploy_pip:
+  release-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y pandoc asciidoctor
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: pypi Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload --verbose --skip-existing dist/*
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: build release distributions
+        run: |
+          # NOTE: put your own distribution build steps here.
+          python -m pip install build
+          python -m build
+
+      - name: upload windows dists
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+  pypi-publish:
+    runs-on: ubuntu-latest
+    needs:
+      - release-build
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
   deploy_docker:
     runs-on: ubuntu-latest
     steps:
