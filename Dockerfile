@@ -1,5 +1,5 @@
-#FROM ubuntu:18.04
-FROM nvidia/cudagl:10.0-devel-ubuntu18.04
+#FROM nvcr.io/nvidia/cuda:12.3.1-devel-ubuntu22.04
+FROM ubuntu:22.04
 MAINTAINER naverlabs "kapture@naverlabs.com"
 
 # set local (see more on https://leimao.github.io/blog/Docker-Locale/)
@@ -12,12 +12,11 @@ ARG MAKE_OPTIONS="-j8"
 ARG SOURCE_PREFIX="/opt/src"
 
 # Get dependencies
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    git wget curl \
-    python3.6 python3-pip python3.6-dev \
-    pandoc asciidoctor \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git wget curl pandoc asciidoctor \
+    python3 python3-pip python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # make sure pip 3 is >= 20.0 to enable use-feature=2020-resolver
 RUN python3 -m pip install --upgrade pip
