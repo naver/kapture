@@ -37,8 +37,10 @@ def read_doc(filepath):
 
     return content
 
+
 readme_filepath = path.join(HERE, 'README.adoc')
 long_description = read_doc(readme_filepath)
+
 
 ########################################################################################################################
 setuptools.setup(
@@ -65,7 +67,7 @@ setuptools.setup(
         'numpy-quaternion>=2019.3.18.14.33.20',
         'numba>=0.42',
         'matplotlib>=3.0',
-        'scipy>=1.12',
+        'scipy>=1.10.1',
         'tqdm>=4.30',
         'Pillow>=8.1.1',
         'piexif==1.1.3',
