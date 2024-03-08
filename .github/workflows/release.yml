@@ -19,7 +19,7 @@ jobs:
         run: |
           # NOTE: put your own distribution build steps here.
           python -m pip install build
-          python -m build
+          python -m build --wheel
 
       - name: upload windows dists
         uses: actions/upload-artifact@v4

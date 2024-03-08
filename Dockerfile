@@ -1,5 +1,4 @@
-#FROM nvcr.io/nvidia/cuda:12.3.1-devel-ubuntu22.04
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 MAINTAINER naverlabs "kapture@naverlabs.com"
 
 # set local (see more on https://leimao.github.io/blog/Docker-Locale/)
@@ -28,7 +27,7 @@ ADD . ${SOURCE_PREFIX}/kapture
 WORKDIR ${SOURCE_PREFIX}/kapture
 RUN git submodule update --init --recursive
 RUN python3 -m pip install -r requirements.txt
-RUN python3 setup.py install
+RUN python3 -m pip install .
 
 ### FINALIZE ###################################################################
 # save space: purge apt-get
