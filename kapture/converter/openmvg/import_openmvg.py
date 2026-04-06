@@ -525,7 +525,7 @@ def _import_openmvg_matches(
             swap_order = image_2 < image_1
             line = fid.readline()
             num_matches = int(line.rstrip('\r\n'))
-            matches_array = np.empty((num_matches, 3), dtype=np.float)
+            matches_array = np.empty((num_matches, 3), dtype=float)
             for i in range(num_matches):
                 line = fid.readline()
                 splits_kpts_idx = line.rstrip('\r\n').split()

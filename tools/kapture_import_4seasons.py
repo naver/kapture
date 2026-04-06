@@ -448,7 +448,7 @@ def import_4seasons_imu(
     # Each line is specified as frame_id, (angular velocity (w_x, w_y, w_z), and linear acceleration (a_x, a_y, a_z)).
     # 1602074877342319360 -0.009163 0.018326 -0.070250 0.189211 0.860048 9.657110
     data = np.loadtxt(imu_file_path)
-    shot_ids = data[:, 0].astype(np.int).astype(str)
+    shot_ids = data[:, 0].astype(int).astype(str)
     rotation_speeds = data[:, 1:4]
     translation_accels = data[:, 4:7]
     for shot_id, (rx, ry, rz), (ax, ay, az) in zip(shot_ids, rotation_speeds, translation_accels):

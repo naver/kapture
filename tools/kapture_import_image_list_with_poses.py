@@ -120,7 +120,7 @@ def import_image_list_with_poses(images_list_file_path: str,
             if qw != '' and qx != '' and qy != '' and qz != '':
                 rotation = quaternion.from_float_array([float(qw), float(qx), float(qy), float(qz)])
             if tx != '' and ty != '' and tz != '':
-                translation = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=np.float)
+                translation = np.array([[float(tx)], [float(ty)], [float(tz)]], dtype=float)
             pose = kapture.PoseTransform(rotation, translation)
             trajectories[(int(timestamp), camera_id)] = pose
 

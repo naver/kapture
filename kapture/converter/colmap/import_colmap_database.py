@@ -295,7 +295,7 @@ def get_matches_from_database(database: COLMAPDatabase,
 
         # actually write the file
         # convert colmap image matches into kapture (cast to float and add a score column)
-        image_matches = image_matches.astype(np.float)
+        image_matches = image_matches.astype(float)
         image_matches = np.hstack([image_matches, np.zeros((image_matches.shape[0], 1))])
         image_matches_filepath = kapture.io.features.get_matches_fullpath((filename1, filename2),
                                                                           keypoints_type,
