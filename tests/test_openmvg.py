@@ -15,7 +15,7 @@ import tempfile
 from typing import Dict, List
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_poses, equal_kapture
 import kapture.io.csv as kcsv

@@ -8,7 +8,7 @@ Convert kapture data in version 1.0 to version 1.1 (only orphan features)
 import logging
 import argparse
 
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture.utils.logging
 from kapture.utils.upgrade import upgrade_1_0_to_1_1_orphan_features
 

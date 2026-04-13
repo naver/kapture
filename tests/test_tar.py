@@ -4,7 +4,7 @@
 import os.path as path
 import unittest
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.features import FEATURE_FILE_EXTENSION, get_keypoints_fullpath, image_keypoints_from_file
 from kapture.algo.compare import equal_kapture, equal_sensors, equal_records_gnss

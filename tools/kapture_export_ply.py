@@ -13,7 +13,7 @@ import sys
 
 from tqdm import tqdm
 import numpy as np
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv as csv

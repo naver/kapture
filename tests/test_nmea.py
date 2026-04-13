@@ -6,7 +6,7 @@ import tempfile
 import unittest
 import numpy as np
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture
 from kapture.converter.nmea.import_nmea import extract_gnss_from_nmea
 

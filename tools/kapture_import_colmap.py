@@ -13,7 +13,7 @@ import logging
 import os
 import sys
 
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv

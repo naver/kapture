@@ -22,9 +22,9 @@ In a terminal (e.g. __bash__), run:
 [source,bash]
 ----
 # install requirements
-sudo apt-get install -y python3.6 python3-pip colmap
+$> sudo apt-get install -y python3.6 python3-pip colmap
 # install kapture
-pip3 install kapture
+$> pip3 install kapture
 ----
 
 === Windows and MacOS
@@ -41,7 +41,7 @@ Get the latest __colmap__ binaries from https://github.com/colmap/colmap/release
 Finally, in a terminal (e.g. __powershell__), run:
 [source,bash]
 ----
-pip3 install kapture
+$> pip3 install kapture
 ----
 
 NOTE: **For windows user**: __kapture__ uses symlinks to optimize transfer operations. But symbolic links are not fully
@@ -66,16 +66,16 @@ In a terminal, do:
 [source,bash]
 ----
 # install requirements
-sudo apt-get install -y git python3.6 python3-pip colmap
-# install optionnal requirements
-sudo apt-get install -y pandoc asciidoctor
+$> sudo apt-get install -y git python3.6 python3-pip colmap
+# install optional requirements
+$> sudo apt-get install -y pandoc asciidoctor
 # clone source repository
-git clone https://github.com/naver/kapture.git
-cd kapture
+$> git clone https://github.com/naver/kapture.git
+$> cd kapture
+# install kapture
+$> python3 -m pip install ".[dev]"
 # check everything is fine
-python3 -m unittest discover -s tests
-# install
-python3 setup.py build install
+$> python3 -m unittest discover -s tests
 ----
 
 
@@ -95,12 +95,12 @@ Then, in a command prompt (cmd or powershell) run:
 [source,bash]
 ----
 # clone source repository
-git clone https://github.com/naver/kapture.git
-cd kapture
+$> git clone https://github.com/naver/kapture.git
+$> cd kapture
+# install kapture
+$> python3 -m pip install ".[dev]"
 # check everything is fine
-python -m unittest discover -s tests
-# install
-python setup.py build install
+$> python3 -m unittest discover -s tests
 ----
 
 == using docker
@@ -111,30 +111,30 @@ Build the docker image:
 [source,bash]
 ----
 # clone source repository
-git clone https://github.com/naver/kapture.git
-cd kapture
+$> git clone https://github.com/naver/kapture.git
+$> cd kapture
 # build the docker image
-docker build . -t kapture/kapture
+$> docker build -f docker/Dockerfile . -t kapture/kapture
 ----
 
-OR build the docker image directly from github
+OR build the docker image directly from github:
 
 [source,bash]
 ----
-docker build git://github.com/naver/kapture -t kapture/kapture
+$> docker build -t kapture/kapture -f docker/Dockerfile https://github.com/naver/kapture.git
 ----
 
 Finally, run unit tests:
 [source,bash]
 ----
-docker run --runtime=nvidia -it --rm kapture/kapture python3 -m unittest discover -s /opt/src/kapture/tests
+$> docker run --runtime=nvidia -it --rm kapture/kapture python3 -m unittest discover -s /opt/src/kapture/tests
 ----
 
 === Run
 
 [source,bash]
 ----
-docker run --runtime=nvidia -it \
+$> docker run --runtime=nvidia -it \
     --rm \ # Automatically remove the container when it exits \
     --volume /path/to/dataset/:/dataset:ro \ #read only
     kapture/kapture
@@ -148,19 +148,9 @@ in order to access to any files and directories on a host machine from the conta
 
 [source,bash]
 ----
-cd kapture # use path of your cloned repository
-cd tools
-# On linux
-python3 ./kapture_print.py -i ../samples/Aachen-Day-Night/kapture/training
-# On Windows and MacOS
-python ./kapture_print.py -i ../samples/Aachen-Day-Night/kapture/training
-# add -v 10 for more output
-----
-
-You should get something like this:
-
-[source,bash]
-----
+$> cd kapture # use path of your cloned repository
+$> cd sample
+$> kapture_print -i Aachen-Day-Night/kapture/training
 nb sensors               : 3
 nb trajectories          : 3
 nb records_camera        : 3

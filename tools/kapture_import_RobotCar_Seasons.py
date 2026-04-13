@@ -47,7 +47,7 @@ import quaternion
 import re
 from typing import Dict
 # kapture
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
