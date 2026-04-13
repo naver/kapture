@@ -23,7 +23,6 @@ from kapture.io.tar import get_feature_tar_fullpath, retrieve_tar_handler_from_c
 
 logger = kapture.logger
 
-np.float = float  # monkey patch
 
 # file names conventions
 CSV_FILENAMES = {
@@ -1265,7 +1264,7 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
                 else:
                     expected_nb_columns = kapture.Points3d.XYZ_ONLY
     # Load
-    data = np.loadtxt(filepath, dtype=np.float, delimiter=',', comments='#')
+    data = np.loadtxt(filepath, dtype=float, delimiter=',', comments='#')
     if len(data) > 0:
         if len(data.shape) == 1:
             found_nb_columns = data.shape[0]

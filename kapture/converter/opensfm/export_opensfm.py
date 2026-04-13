@@ -276,7 +276,7 @@ def _export_opensfm_features_and_matches(image_filenames,
                     kapture_dirpath=kapture_root_dir,
                     tar_handler=tar_handlers)
                 kapture_matches = image_matches_from_file(kapture_matches_filepath)
-                opensfm_matches[image_filename2] = kapture_matches[:, 0:2].astype(np.int)
+                opensfm_matches[image_filename2] = kapture_matches[:, 0:2].astype(int)
 
             os.makedirs(path.dirname(opensfm_matches_filepath), exist_ok=True)
             with gzip.open(opensfm_matches_filepath, 'wb') as f:

@@ -163,7 +163,7 @@ def import_extended_cmu_seasons_images(image_list_file_path: str) -> Tuple[kaptu
             rotation = quaternion.from_float_array(quaternion_array)
             # C = -R^T * t -> t = -R * C
             translation = np.matmul(quaternion.as_rotation_matrix(rotation),
-                                    -1 * np.array(center_array, dtype=np.float))
+                                    -1 * np.array(center_array, dtype=float))
             pose = kapture.PoseTransform(r=rotation, t=translation)
             trajectories[(timestamp, camera_id)] = pose
 

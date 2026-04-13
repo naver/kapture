@@ -89,7 +89,7 @@ def _import_trajectories(silda_dir_path, image_name_to_ids, hide_progress_bars) 
         lines = file.readlines()
         lines = (line.rstrip().split() for line in lines)
         extrinsics = {
-            line[0]: np.array(line[1:8], dtype=np.float) for line in lines
+            line[0]: np.array(line[1:8], dtype=float) for line in lines
         }
     for silda_image_name, pose_params in tqdm(extrinsics.items(), disable=hide_progress_bars):
         # Silda poses are 7-dim vectors with the rotation quaternion,
