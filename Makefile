@@ -1,10 +1,13 @@
-.PHONY: install docker clean check-docker check-asciidoctor check-pandoc unittests
+.PHONY: install install_dev docker clean check-docker check-asciidoctor check-pandoc unittests
 
 build: README.md
 	python3 -m build
 
 install: README.md
 	pip install .
+
+install_dev: README.md
+	pip install -e .
 
 docker: check-docker
 	docker build -f docker/Dockerfile . -t kapture/kapture
