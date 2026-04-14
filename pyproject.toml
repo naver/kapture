@@ -5,6 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kapture"
 version="1.2.1"
+description = "Kapture is a pivot file format and Python toolkit for SfM and sensor-acquired data."
+readme = "README.md"
 dependencies = [
         'dataclasses>=0.3',
         'numpy>=1.16',
@@ -20,12 +22,13 @@ dependencies = [
         'wcmatch>=5.0',
         'tabulate>=0.8.7',
         'pytz>=2021.1',
-        'build>=1.0.3'
+        'build>=1.0.3',
+        'pytest'
 ]     # If project has dependencies
 
 
 [project.optional-dependencies]
-dev = ['pytest']
+zed = ['pyzed']
 
 [tool.setuptools]
 packages = ['kapture', 'tools']

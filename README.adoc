@@ -118,9 +118,10 @@ Build the docker image:
 
 [source,bash]
 ----
+$> cd kapture
 # build the docker image : if you have already cloned the repository
-$> docker build -f docker/Dockerfile . -t kapture/kapture
-# OR build the docker image directly from github
+$> make docker
+# OR build the docker image directly from github (no need to clone).
 $> docker build git://github.com/naver/kapture -t kapture/kapture
 # run unit tests
 $> docker run -it --rm kapture/kapture python3 -m unittest discover -s /opt/src/kapture/tests

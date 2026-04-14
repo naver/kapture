@@ -32,8 +32,8 @@ If you download one scene, you can convert every sequence into a kapture model u
 
 [source,bash]
 ----
-cd /<mydatasets>/7-scenes
-curl http://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/heads.zip -o heads.zip
+$> cd /<mydatasets>/7-scenes
+$> curl http://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/heads.zip -o heads.zip
 ----
 
 2) unzip it all
@@ -42,11 +42,11 @@ On ubuntu, use the following commands:
 
 [source,bash]
 ----
-unzip heads.zip
-cd heads
+$> unzip heads.zip
+$> cd heads
 # unzip all inner zip files
-find . -iname "*.zip" -print0 | xargs -n1 -0 -I {} unzip {}
-rm *.zip ../heads.zip # optionally cleans all zip files
+$> find . -iname "*.zip" -print0 | xargs -n1 -0 -I {} unzip {}
+$> rm *.zip ../heads.zip # optionally cleans all zip files
 ----
 
 A scene has the following tree structure:
@@ -76,15 +76,17 @@ For every scene (`stairs` in this example), import mapping and query like:
 
 [source,bash]
 ----
-kapture_import_7scenes.py -i /<mydatasets>/7-scenes/stairs -o /<mykaptures>/7-scenes/stairs/mapping -p mapping
+$> kapture_import_7scenes -i /<mydatasets>/7-scenes/stairs -o /<mykaptures>/7-scenes/stairs/mapping -p mapping
 ----
 
 NOTE: You can also import without splitting mapping and query. In that case all data are merged into a single dataset.
 You can also import a single sequence passing directly the full path to it (e.g. `/<mydatasets>/7-scenes/stairs/seq-01`).
 
 You can easily process all scenes/split at once, using https://www.gnu.org/software/parallel/[gnu parallel]:
+
+[source,bash]
 ----
-parallel \
+$> parallel \
 kapture_import_7scenes.py -v info -i /<mydatasets>/7-scenes/{1} /<mykaptures>/7-scenes/{1}/{2} -p {2} \
 ::: chess fire heads office pumpkin redkitchen stairs ::: query mapping
 ----
@@ -143,33 +145,35 @@ Call this from aachenv11:
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_image_list.py -v debug -i day_time_queries_with_intrinsics.txt -o kapture/query_day -im images
-kapture_import_image_list.py -v debug -i night_time_queries_with_intrinsics.txt -o kapture/query_night -im images
+$> kapture_import_image_list -v debug -i day_time_queries_with_intrinsics.txt -o kapture/query_day -im images
+$> kapture_import_image_list -v debug -i night_time_queries_with_intrinsics.txt -o kapture/query_night -im images
 
 # if you can't use symlinks, add this to the two commands: --image_transfer copy
 ----
 
 Now you have separate kapture folders for day-time and night-time queries. If you would like to have one single kapture, run from aachenv11:
+
 [source,bash]
 ----
-kapture_merge.py -v debug -i kapture/query_day kapture/query_night -o kapture/query
+$> kapture_merge -v debug -i kapture/query_day kapture/query_night -o kapture/query
 ----
 
 4) Create the kapture for the mapping images
 
 - Convert the COLMAP reconstructions from .bin to .txt. Call this from aachenv11:
+
 [source,bash]
 ----
-colmap model_converter --input_path 3D-models/aachen_v_1_1 --output_path 3D-models/aachen_v_1_1 --output_type TXT
+$> colmap model_converter --input_path 3D-models/aachen_v_1_1 --output_path 3D-models/aachen_v_1_1 --output_type TXT
 ----
 
 - Convert COLMAP model to kapture. Call this from aachenv11:
+
 [source,bash]
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_colmap.py -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kapture/mapping --skip_reconstruction
-
+$> kapture_import_colmap -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kapture/mapping --skip_reconstruction
 # if you can't use symlinks, add this to the command: --image_transfer copy
 ----
 
@@ -212,8 +216,8 @@ Run
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/training_images_undistort -gt ./IDL_dataset_cvpr17_3852/training_gt -o ./kapture/IDL_dataset_cvpr17_3852/mapping
-kapture_import_IDL_dataset_cvpr17.py -v info -i ./IDL_dataset_cvpr17_3852/query_images_undistort -gt ./IDL_dataset_cvpr17_3852/query_gt -o ./kapture/IDL_dataset_cvpr17_3852/query
+$> kapture_import_IDL_dataset_cvpr17 -v info -i ./IDL_dataset_cvpr17_3852/training_images_undistort -gt ./IDL_dataset_cvpr17_3852/training_gt -o ./kapture/IDL_dataset_cvpr17_3852/mapping
+$> kapture_import_IDL_dataset_cvpr17 -v info -i ./IDL_dataset_cvpr17_3852/query_images_undistort -gt ./IDL_dataset_cvpr17_3852/query_gt -o ./kapture/IDL_dataset_cvpr17_3852/query
 
 # if you can't use symlinks, add this to the commands: --image_transfer copy
 ----
@@ -248,11 +252,11 @@ To import it to kapture, you have to replace all `.jpg` to `.png` inside reconst
 In bash:
 [source,bash]
 ----
-sed 's/.jpg/.png/g' ./ShopFacade/reconstruction.nvm > ./ShopFacade/reconstruction_png.nvm
-tail -n +4 ./ShopFacade/dataset_train.txt > ./ShopFacade/dataset_train_cut.txt
-cut -d\  -f1 ./ShopFacade/dataset_train_cut.txt > ./ShopFacade/dataset_train_list.txt
-tail -n +4 ./ShopFacade/dataset_test.txt > ./ShopFacade/dataset_test_cut.txt
-cut -d\  -f1 ./ShopFacade/dataset_test_cut.txt > ./ShopFacade/dataset_test_list.txt
+$> sed 's/.jpg/.png/g' ./ShopFacade/reconstruction.nvm > ./ShopFacade/reconstruction_png.nvm
+$> tail -n +4 ./ShopFacade/dataset_train.txt > ./ShopFacade/dataset_train_cut.txt
+$> cut -d\  -f1 ./ShopFacade/dataset_train_cut.txt > ./ShopFacade/dataset_train_list.txt
+$> tail -n +4 ./ShopFacade/dataset_test.txt > ./ShopFacade/dataset_test_cut.txt
+$> cut -d\  -f1 ./ShopFacade/dataset_test_cut.txt > ./ShopFacade/dataset_test_list.txt
 ----
 
 In powershell
@@ -270,8 +274,8 @@ Then run:
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_nvm.py -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/mapping --filter-list ./ShopFacade/dataset_train_list.txt
-kapture_import_nvm.py -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/query --filter-list ./ShopFacade/dataset_test_list.txt
+$> kapture_import_nvm -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/mapping --filter-list ./ShopFacade/dataset_train_list.txt
+$> kapture_import_nvm -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/query --filter-list ./ShopFacade/dataset_test_list.txt
 
 # if you can't use symlinks, add this to the two kapture_import_nvm.py commands: --image_transfer copy
 ----
@@ -323,10 +327,10 @@ To import Extended-CMU-Seasons to kapture, run:
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
+$> kapture_import_Extended_CMU_Seasons -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer link_absolute --all-files
 
 # if you can't use symlinks, run
-kapture_import_Extended_CMU_Seasons.py -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
+$> kapture_import_Extended_CMU_Seasons -v info -i ./Extended-CMU-Seasons/ -o ./kapture/Extended-CMU-Seasons/ --image_transfer copy --all-files
 ----
 
 
@@ -437,7 +441,7 @@ To import RobotCar-Seasons-v2 to kapture, run:
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_RobotCar_Seasons.py -v debug -i ./RobotCar-Seasons -o ./kapture/RobotCar-Seasons-v2 --skip_reconstruction
+$> kapture_import_RobotCar_Seasons -v debug -i ./RobotCar-Seasons -o ./kapture/RobotCar-Seasons-v2 --skip_reconstruction
 
 # if you can't use symlinks, add this to the command: --image_transfer copy
 ----
@@ -476,39 +480,39 @@ See the https://github.com/abmmusa/silda for more details.
 
 [source,bash]
 ----
-cd /your/working/dataset/directory  # replace the path
-curl -L https://github.com/abmmusa/silda/raw/master/download.sh -o download.sh
-chmod +x download.sh
-./download.sh  # <  total of around 60GB data will be downloaded
+$> cd /your/working/dataset/directory  # replace the path
+$> curl -L https://github.com/abmmusa/silda/raw/master/download.sh -o download.sh
+$> chmod +x download.sh
+$> ./download.sh  # <  total of around 60GB data will be downloaded
 ----
 
 or you can download only data relevant to kapture, applying the following command in bash terminal:
 
 [source,bash]
 ----
-mkdir -p ./data/SILDa
+$> mkdir -p ./data/SILDa
 # Downloading full spherical images
-wget -O im1 -L https://imperialcollegelondon.box.com/shared/static/ce2kkt0j4uir9tpzcxx55lhfr05bbjx9
-wget -O im2 -L https://imperialcollegelondon.box.com/shared/static/j4rx03ymwajz98wsfgbocrurwjq4l68h
-cat im* > silda-images.tgz
-tar xvzf silda-images.tgz
-mv silda-images ./data/SILDa/
-rm im1 im2 silda-images.tgz
+$> wget -O im1 -L https://imperialcollegelondon.box.com/shared/static/ce2kkt0j4uir9tpzcxx55lhfr05bbjx9
+$> wget -O im2 -L https://imperialcollegelondon.box.com/shared/static/j4rx03ymwajz98wsfgbocrurwjq4l68h
+$> cat im* > silda-images.tgz
+$> tar xvzf silda-images.tgz
+$> mv silda-images ./data/SILDa/
+$> rm im1 im2 silda-images.tgz
 
 # Downloading camera intrinsics
-wget -O camera-intrinsics.tar.xz -L https://imperialcollegelondon.box.com/shared/static/pug92l2sw2n375eqrqo92j63p5qm5dqo.xz
-tar xvf camera-intrinsics.tar.xz
-mv camera-intrinsics ./data/SILDa/
-rm camera-intrinsics.tar.xz
+$> wget -O camera-intrinsics.tar.xz -L https://imperialcollegelondon.box.com/shared/static/pug92l2sw2n375eqrqo92j63p5qm5dqo.xz
+$> tar xvf camera-intrinsics.tar.xz
+$> mv camera-intrinsics ./data/SILDa/
+$> rm camera-intrinsics.tar.xz
 
 # Download camera poses for the train images
-wget -O silda-train-poses.txt -L https://imperialcollegelondon.box.com/shared/static/jr67j3uw8sz97j4vw8la3j3vbhzfwpnz.txt
-mv silda-train-poses.txt ./data/SILDa/
+$> wget -O silda-train-poses.txt -L https://imperialcollegelondon.box.com/shared/static/jr67j3uw8sz97j4vw8la3j3vbhzfwpnz.txt
+$> mv silda-train-poses.txt ./data/SILDa/
 
 # Download train and test images split
-wget -O train_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/m71jx5h09heygzttn85v96z6ouz03dbv.txt
-wget -O query_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/hfa2l5lw86asskjv6efp8lvoipc8elc8.txt
-mv train_imgs.txt query_imgs.txt ./data/SILDa/
+$> wget -O train_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/m71jx5h09heygzttn85v96z6ouz03dbv.txt
+$> wget -O query_imgs.txt -L https://imperialcollegelondon.box.com/shared/static/hfa2l5lw86asskjv6efp8lvoipc8elc8.txt
+$> mv train_imgs.txt query_imgs.txt ./data/SILDa/
 ----
 
 You should have:
@@ -527,12 +531,12 @@ You should have:
 [source,bash]
 ----
 # mapping query
-kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
-kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
+$> kapture_import_silda -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
+$> kapture_import_silda -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
 # uncomment the following, if you want the both mapping and query in the same dataset
 # kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
 # then [optionally] clean original
-rm -rf ./data/SILDa
+$> rm -rf ./data/SILDa
 ----
 
 You should end up with:
@@ -599,8 +603,8 @@ To import Virtual Gallery to kapture, run:
 ----
 # note: on windows, this requires admin rights for symlinks
 # see https://docs.python.org/3.6/library/os.html#os.symlink
-kapture_import_virtual_gallery.py -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/mapping -c training --as-rig --image_transfer link_absolute
-kapture_import_virtual_gallery.py -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/query -c testing --image_transfer link_absolute
+$> kapture_import_virtual_gallery -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/mapping -c training --as-rig --image_transfer link_absolute
+$> kapture_import_virtual_gallery -v debug -i ./virtual_gallery -o ./kapture/virtual_gallery/query -c testing --image_transfer link_absolute
 
 # if you can't use symlinks, resplace --image_transfer link_absolute with --image_transfer copy in both commands
 ----

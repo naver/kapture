@@ -98,9 +98,9 @@ Then, in a command prompt (cmd or powershell) run:
 $> git clone https://github.com/naver/kapture.git
 $> cd kapture
 # install kapture
-$> python3 -m pip install ".[dev]"
+$> make install
 # check everything is fine
-$> python3 -m unittest discover -s tests
+$> make unittests
 ----
 
 == using docker
@@ -114,7 +114,7 @@ Build the docker image:
 $> git clone https://github.com/naver/kapture.git
 $> cd kapture
 # build the docker image
-$> docker build -f docker/Dockerfile . -t kapture/kapture
+$> make docker
 ----
 
 OR build the docker image directly from github:
@@ -127,7 +127,8 @@ $> docker build -t kapture/kapture -f docker/Dockerfile https://github.com/naver
 Finally, run unit tests:
 [source,bash]
 ----
-$> docker run --runtime=nvidia -it --rm kapture/kapture python3 -m unittest discover -s /opt/src/kapture/tests
+$> docker run --runtime=nvidia -it --rm kapture/kapture \
+    python3 -m unittest discover -s /opt/src/kapture/tests
 ----
 
 === Run

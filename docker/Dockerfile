@@ -27,7 +27,7 @@ RUN pip install --upgrade pip setuptools wheel
 COPY . ${SOURCE_PREFIX}/kapture
 WORKDIR ${SOURCE_PREFIX}/kapture
 RUN git submodule update --init --recursive
-RUN python3 -m pip install ".[dev]"
+RUN python3 -m pip install .
 
 #### FINALIZE ###################################################################
 ## save space: purge apt-get
