@@ -65,11 +65,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: docker build and push
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v4
       with:
         name: kapture/kapture
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+        dockerfile: docker/Dockerfile
+        context: .
         tag_names: true
 
     - name: docker tag latest
