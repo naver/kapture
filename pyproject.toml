@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kapture"
-version="1.2.1"
 description = "Kapture is a pivot file format and Python toolkit for SfM and sensor-acquired data."
 readme = "README.md"
+version="1.2.1.dev5"
 dependencies = [
         'dataclasses>=0.3',
         'numpy>=1.16',
