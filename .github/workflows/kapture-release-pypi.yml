@@ -1,4 +1,6 @@
-name: kapture-release
+# This workflow will build and push the release distributions to PyPI (or test PyPI if it is not a release).
+
+name: kapture-release-pypi
 
 on:
   release:
@@ -26,7 +28,7 @@ jobs:
       - name: generate README
         run: make README.md
 
-      - name: upload windows dists
+      - name: upload release dists
         uses: actions/upload-artifact@v4
         with:
           name: release-dists
@@ -66,27 +68,3 @@ jobs:
         with:
           password: ${{ secrets.PYPI_TOKEN }}
           attestations: false
-
-  deploy_docker:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: docker build and push
-      uses: elgohr/Publish-Docker-Github-Action@v4
-      with:
-        name: kapture/kapture
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        dockerfile: docker/Dockerfile
-        context: .
-        tag_names: true
-
-    - name: docker tag latest
-      uses: elgohr/Publish-Docker-Github-Action@v4
-      with:
-        name: kapture/kapture
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        dockerfile: docker/Dockerfile
-        context: .
-        tags: "debug"
