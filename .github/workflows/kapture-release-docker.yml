@@ -1,0 +1,38 @@
+# This workflow will build and push docker images to Docker Hub when a release is created.
+# for debugging purpose, the docker image is tagged with debug when it is not an actual release.
+
+name: kapture-release-docker
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  deploy_docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: docker build and push
+        uses: elgohr/Publish-Docker-Github-Action@v4
+        if: github.event_name == 'release'
+        with:
+          name: kapture/kapture
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          dockerfile: docker/Dockerfile
+          context: .
+          tag_names: true
+          tags: "latest"
+
+      - name: docker tag debug
+        uses: elgohr/Publish-Docker-Github-Action@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: kapture/kapture
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          dockerfile: docker/Dockerfile
+          context: .
+          tags: "debug"

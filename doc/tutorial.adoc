@@ -7,7 +7,9 @@
 
 == Install
 [source,bash]
-pip install kapture
+----
+$> pip install kapture
+----
 
 NOTE: For this tutorial, you also must have __colmap__ version >=3.6.
 On ubuntu 18.04, __apt__ will install __colmap__ 3.4.
@@ -16,8 +18,10 @@ In this case, you will have to compile __colmap__ from source instead.
 Or you can use the ready-to-use docker image:
 [source,bash]
 ----
-docker build . -t kapture/kapture
-docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture/kapture     # <1>
+$> make build
+# or on non gnu platform:
+$> docker build . -t kapture/kapture
+$> docker run --runtime=nvidia -it --rm  --volume /path/to/dataset/:/dataset kapture/kapture     # <1>
 ----
 (1) replace `/path/to/dataset/` with the path where you (will) store datasets on the host.
 
@@ -27,13 +31,13 @@ See link:installation.adoc[installation] for detailed instructions.
 
 [source,bash]
 ----
-cd /path/to/dataset
+$> cd /path/to/dataset
 # update the list from repositories
-kapture_download_dataset.py update
+$> kapture_download_dataset update
 # display the list dataset
-kapture_download_dataset.py list
+$> kapture_download_dataset list
 # install mapping and query of Extended-CMU-Seasons_slice22
-kapture_download_dataset.py install "RobotCar_Seasons-v2_49_*"      # <1>
+$> kapture_download_dataset install "RobotCar_Seasons-v2_49_*"      # <1>
 ----
 
 <1> uses double quotes (`"`) to make sure the wildcard (`*`) is not interpreted by bash.

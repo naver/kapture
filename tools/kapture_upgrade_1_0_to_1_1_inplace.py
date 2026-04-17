@@ -11,7 +11,7 @@ import logging
 # so that types written as "np.float32" are understood by read_old_image_features_csv
 import numpy as np  # noqa: F401
 
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.features

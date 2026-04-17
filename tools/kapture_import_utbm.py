@@ -14,7 +14,7 @@ import argparse
 import logging
 import sys
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture.core.Sensors
 import kapture.utils.logging
 

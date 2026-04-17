@@ -11,7 +11,7 @@ import sys
 import os.path as path
 
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture.utils.logging
 from kapture.io.records import TransferAction
 # openmvg

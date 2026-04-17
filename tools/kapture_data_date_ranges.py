@@ -12,7 +12,7 @@ import os.path as path
 import re
 from datetime import datetime
 
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture
 import kapture.utils.computation as computation
 import kapture.utils.logging

@@ -1,0 +1,70 @@
+# This workflow will build and push the release distributions to PyPI (or test PyPI if it is not a release).
+
+name: kapture-release-pypi
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  release-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: build release distributions
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: install doc tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc asciidoctor
+
+      - name: generate README
+        run: make README.md
+
+      - name: upload release dists
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+  testpypi-publish:
+    runs-on: ubuntu-latest
+    needs: release-build
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_TEST_TOKEN }}
+          attestations: false
+
+  pypi-publish:
+    runs-on: ubuntu-latest
+    needs: release-build
+    if: github.event_name == 'release'
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+          attestations: false

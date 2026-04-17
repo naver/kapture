@@ -17,7 +17,7 @@ import pathlib
 import argparse
 from tqdm import tqdm
 
-import path_to_kapture  # noqa: F401
+  # noqa: F401
 import kapture
 from kapture.core.Trajectories import rigs_recover
 import kapture.utils.logging

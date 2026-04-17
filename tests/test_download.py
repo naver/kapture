@@ -9,7 +9,7 @@ import os.path as path
 import sys
 import stat
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture.converter.downloader.archives as archives
 # import tools.kapture_download_dataset as download
 # from unittest.mock import patch

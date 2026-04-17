@@ -8,7 +8,7 @@ import os.path as path
 import tempfile
 import warnings
 # kapture
-import path_to_kapture  # enables import kapture  # noqa: F401
+  # enables import kapture  # noqa: F401
 import kapture
 import kapture.io.csv as csv
 from kapture.io.csv import kapture_linesep
