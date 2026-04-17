@@ -1,5 +1,5 @@
 FROM ubuntu:24.04
-MAINTAINER naverlabs "kapture@naverlabs.com"
+LABEL org.opencontainers.image.authors="naverlabs <kapture@naverlabs.com>"
 
 # set local (see more on https://leimao.github.io/blog/Docker-Locale/)
 ENV     LANG=C.UTF-8

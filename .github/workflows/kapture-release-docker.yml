@@ -24,7 +24,7 @@ jobs:
           dockerfile: docker/Dockerfile
           context: .
           tag_names: true
-          tags: "latest"
+          tags: "latest,${{ github.event.release.tag_name }}"
 
       - name: docker tag debug
         uses: elgohr/Publish-Docker-Github-Action@v4
