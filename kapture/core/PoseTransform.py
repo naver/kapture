@@ -32,7 +32,7 @@ class PoseTransform:
             # already a quaternion : copy aziz (lumière)
             self._r = r
         elif isinstance(r, (list, np.ndarray, np.generic)):
-            # its a list or numpy => convert to quaternion if valid
+            # it's a list or numpy => convert to quaternion if valid
             self._r = quaternion.from_float_array(r)
         else:  # unknown entry
             self._r = None
@@ -47,7 +47,7 @@ class PoseTransform:
             #  numpy : copy aziz lumière
             self._t = t
         elif isinstance(t, list):
-            # its a list: convert to numpy if valid
+            # it's a list: convert to numpy if valid
             self._t = np.array(t, dtype=float)
         else:
             self._t = None
@@ -59,7 +59,7 @@ class PoseTransform:
                 # sum trick from https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
                 self._t = None
             else:
-                # make sure af the shape of t
+                # make sure of the shape of t
                 self._t = self._t.reshape((3, 1))
 
     @property

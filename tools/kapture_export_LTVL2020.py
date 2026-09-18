@@ -45,7 +45,7 @@ def export_ltvl(kapture_dirpath: str,
     :param prepend_camera_name: 2nd operation, if True, it will prepend the camera name to the image file names
     :param truncate_extensions: 3rd operation, if True, name is image_name before the first dot
     """
-    # only load (1) image records + (2) trajectories (that all that matters).
+    # only load (1) image records + (2) trajectories (that's all that matters).
     # 1: load records
     records_camera_filepath = kapture.io.csv.get_csv_fullpath(kapture.RecordsCamera, kapture_dirpath)
     logger.debug(f'loading {records_camera_filepath}')
@@ -125,7 +125,7 @@ def export_ltvl2020_command_line() -> None:
     parser.add_argument('-p', '--prepend_cam', action='store_true', default=False,
                         help=('2nd operation applied: '
                               'when False (default), nothing is changed.'
-                              'wen True, prepend camera names to filename (required for some dataset)'))
+                              'when True, prepend camera names to filename (required for some dataset)'))
     parser.add_argument('--truncate-extensions', action='store_true', default=False,
                         help=('2nd operation applied: '
                               'when False (default), nothing is changed.'

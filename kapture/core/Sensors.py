@@ -208,7 +208,7 @@ class Camera(Sensor):
 
 def create_sensor(sensor_type: str, sensor_params: Optional[list] = None, name: Optional[str] = None):
     """
-    Creates a instance of a sensor
+    Creates an instance of a sensor
 
     :param sensor_type: type of sensor ('camera', ...)
     :param sensor_params: sensor specific parameters
