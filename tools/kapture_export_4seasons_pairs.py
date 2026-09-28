@@ -88,7 +88,7 @@ def export_4seasons_pairfile(kapture_dir_path: str,
     for mapping_ts, query_ts in tqdm(pairs, disable=hide_progress):
         try:
             if mapping_ts not in kapture_data.trajectories:
-                # mapping, means its probab
+                # mapping, means its probable
                 raise IndexError(f'No pose available in trajectory for mapping at time {mapping_ts}. '
                                  f'Have you merged mapping and query in the same kapture dataset ?')
 

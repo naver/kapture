@@ -1,7 +1,7 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
 """
-This files contains IO operations on binary file.
+This file contains IO operations on binary file.
 """
 import os
 import os.path as path
