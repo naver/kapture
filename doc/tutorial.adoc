@@ -37,7 +37,7 @@ $> kapture_download_dataset update
 # display the list dataset
 $> kapture_download_dataset list
 # install mapping and query of Extended-CMU-Seasons_slice22
-$> kapture_download_dataset install "RobotCar_Seasons-v2_49_*"      # <1>
+$> kapture_download_dataset install -d "RobotCar_Seasons-v2_49_*"   # <1>
 ----
 
 <1> uses double quotes (`"`) to make sure the wildcard (`*`) is not interpreted by bash.
@@ -47,6 +47,23 @@ $> kapture_download_dataset install "RobotCar_Seasons-v2_49_*"      # <1>
 While we provide many datasets in __kapture__ format, you may want to convert datasets you already downloaded.
 
 See https://github.com/naver/kapture/blob/main/doc/datasets.adoc for more details.
+
+== Command line conventions
+
+All `kapture_*` tools share the same conventions:
+
+[source,bash]
+----
+$> kapture_import_colmap --help                   # every option, with its aliases, type and default
+$> kapture_import_colmap -v -db colmap.db -o k    # -v alone means info; -v debug, -v 10 also work; -q silences
+$> kapture_import_colmap -y ...                   # -y / -f / --force: overwrite existing output
+$> kapture_import_colmap --print_config -o k > colmap.yaml   # dump the effective configuration
+$> kapture_import_colmap --config colmap.yaml -db other.db   # reuse it; the command line overrides the file
+----
+
+Long options are `snake_case` but the dashed form is accepted too (`--image_transfer` or `--image-transfer`).
+Booleans are flags with a negated form (`--force` / `--no_force`), and lists take space separated values
+(`kapture_merge -i a/kapture b/kapture -o merged`).
 
 == Using kapture in your code
 

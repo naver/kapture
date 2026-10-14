@@ -31,7 +31,7 @@ To develop kapture on your machine, here are some installation tips:
 git clone https://github.com/naver/kapture.git
 ----
 
-* Please note that kapture requires python version 3.6 or higher
+* Please note that kapture requires python version 3.10 or higher
 
 * install kapture in editable mode, with the development dependencies (tests, lint, build)
 
@@ -84,6 +84,38 @@ All kapture source code files should start with this line:
 
 .Loggers
 The library and the clients should use different loggers.
+
+.Command line tools
+Tools in `kapture/tools/` do not build an argument parser by hand. A tool is a type-hinted function with a
+reST docstring; `kapture.utils.cli.run_cli` derives the command line from it (via
+link:https://jsonargparse.readthedocs.io[jsonargparse]):
+
+[source,python]
+----
+def import_something(input: str, output: str, force: bool = False,
+                     verbose: Verbosity = DEFAULT_VERBOSITY, quiet: bool = False) -> None:
+    """
+    One line description, shown at the top of the help.
+
+    :param input: path to the something to import
+    :param output: path to the output kapture
+    :param force: delete output if already exists
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
+    """
+    setup_logging(logger, verbose, quiet)
+    ...
+
+def main():
+    run_cli(import_something, aliases={'--output': ['-k', '--kapture']})
+----
+
+* parameter names are the long flags and the keys of `--config` files: snake_case, short, and the same across tools
+  (`input`/`output`/`inputs`, `force`, `image_transfer`, `verbose`, `quiet`),
+* `-i`, `-o`, `-v`, `-q`, `-f`/`-y` are provided for `input`/`inputs`, `output`, `verbose`, `quiet`, `force`;
+  other short flags and legacy long flags go in `aliases`,
+* booleans are flags (`--force` / `--no_force`), lists take space separated values, choices are `Literal[...]`,
+* the entry point in `pyproject.toml` is `kapture.tools.<tool>:main`.
 
 .Documentation
 

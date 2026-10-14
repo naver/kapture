@@ -1,0 +1,117 @@
+= kapture 2.0: command line changes
+:toc:
+
+Since version 2.0, the `kapture_*` tools derive their command line from a type-hinted function
+(link:https://jsonargparse.readthedocs.io[jsonargparse]), see `doc/tutorial.adoc` "Command line conventions".
+Every tool now accepts `--config file.yaml` and `--print_config`.
+
+== Conventions
+
+* One canonical `snake_case` name per option, used as long flag, as `--config` key and as python parameter:
+  `input` / `output` (`inputs` for a list), `force`, `image_transfer`, `verbose`, `quiet`, then tool specific
+  names (`keypoints_type`, ...).
+* All former long flags that differ from the canonical name are kept as *deprecated aliases*, and the dashed
+  form of every flag is accepted (`--keypoints-type` and `--keypoints_type`). They may be removed in a later
+  major version.
+* Short flags are unchanged (`-i`, `-o`, `-v`, `-q`, `-f`/`-y`, `-k`, `-im`, `-db`, ...).
+* `-v` alone still means `info`; `-v debug`, `-v 10` still work; `-q` / `--silent` / `--quiet` is now an
+  independent flag instead of being mutually exclusive with `-v`.
+* Booleans are flags with a negated form: `--force` / `--no_force`. Former `--no_xxx` flags still exist, as the
+  negated form of a `xxx` option enabled by default (`--no_geometric_filtering`, `--no_cleaning`).
+* Abbreviated long options (`--skip_rec` for `--skip_reconstruction`) are no longer accepted.
+* Python 3.10 or newer is required.
+
+== Behaviour changes
+
+[cols="1,3"]
+|===
+| tool | change
+
+| kapture_download_dataset
+| the dataset names are no longer positional: `kapture_download_dataset install -d "RobotCar*"`
+  (`--dataset`, `-d`, several names accepted). Global options (`--install_path`, `-v`) come before the
+  subcommand, as before.
+
+| kapture_rename_features
+| `-f`/`-y`/`--force` removed: it was declared but had no effect.
+
+| kapture_merge
+| `--keep_sensor_ids` has a default (false) like on the command line; the python function
+  `merge_kaptures` no longer requires it.
+
+| kapture_import_utbm
+| `--no-force_same_time` (mixed dash/underscore) is now `--no_force_same_time` / `--no-force-same-time`.
+
+| kapture_export_depth_images
+| `-r` must be given two values (`-r 0.1 10.0`); a wrong count is a clear error instead of a crash.
+
+| kapture_export_openmvg, kapture_export_opensfm, kapture_import_rosbag, kapture_import_utbm,
+  kapture_export_image_list
+| `-f`, `-y` and `--force` are all accepted everywhere (`force` is unused by export_4seasons_pairs,
+  export_ETH_MS_LTVL, export_LTVL2020, import_stereolabs, as before).
+|===
+
+== Renamed long flags (old → canonical, old kept as alias)
+
+[cols="1,2,2"]
+|===
+| tool | old | canonical
+
+| kapture_print | `--kapture` (`-k`) | `--input`
+| kapture_print | `--all` (`-a`), `--detail` (`-d`) | `--show_all`, `--show_detail`
+| kapture_import_colmap | `--kapture` (`-k`) | `--output`
+| kapture_import_colmap | `--no_geometric_filtering` | `--geometric_filtering` (default true)
+| kapture_data_date_ranges | `--kapture` (`-k`) | `--input`
+| kapture_extract_exif | `--kapture` | `--input`
+| kapture_download_dataset | positional `dataset` | `--dataset` (`-d`)
+| kapture_download_dataset | `--no_cleaning` | `--cleaning` (default true)
+| kapture_import_openmvg | `--openmvg` (`-i`) | `--input`
+| kapture_import_openmvg | `--kapture` (`-k`) | `--output`
+| kapture_import_openmvg | `--image_action` | `--image_transfer`
+| kapture_import_opensfm | `--opensfm` | `--input`
+| kapture_import_opensfm | `--kapture` (`-k`) | `--output`
+| kapture_import_opensfm | `--transfer` | `--image_transfer`
+| kapture_import_rosbag, kapture_import_utbm | `--kapture_output` (`-k`) | `--output`
+| kapture_import_utbm | `--no-force_same_time` | `--force_same_time` (default true)
+| kapture_export_colmap | `--kapture` (`-k`) | `--input`
+| kapture_export_openmvg | `--kapture` (`-k`) | `--input`
+| kapture_export_openmvg | `--openmvg` | `--output`
+| kapture_export_openmvg | `--image_action` | `--image_transfer`
+| kapture_export_opensfm | `--kapture` (`-k`) | `--input`
+| kapture_export_opensfm | `--opensfm` | `--output`
+| kapture_export_opensfm | `--transfer` | `--image_transfer`
+| kapture_export_depth_images | `--range` (`-r`) | `--depth_range`
+| kapture_export_4seasons_pairs | `--no_heal` | `--heal` (default true)
+| kapture_import_bundler | `--image-list` (`-l`) | `--image_list`
+| kapture_import_bundler, kapture_import_nvm, kapture_import_image_list | `--image-path` / `--image_path` (`-im`) | `--images`
+| kapture_import_nvm | `--filter-list` | `--filter_list`
+| kapture_import_image_list_with_poses | `--images_list_file` (`-l`) | `--input`
+| kapture_import_image_list_with_poses | `--kapture` (`-k`) | `--output`
+| kapture_import_image_list_with_poses | `--top_dir_images` | `--images`
+| kapture_import_image_list_with_poses | `--camera_model_file` (`-c`) | `--calibration`
+| kapture_import_image_list_with_poses | `--image_action` | `--image_transfer`
+| kapture_import_image_list_with_poses | `--do_not_import_images` | `--no_import_images` (old spelling removed)
+| kapture_import_IDL_dataset_cvpr17 | `--gt_path` (`-gt`) | unchanged, kept
+|===
+
+Dashed flags only renamed to their underscore form (dashed form still accepted): `kapture_merge --keep-sensor-ids`,
+`kapture_import_colmap --keypoints-type --descriptors-type`, `kapture_rename_features --feature-type --current-name
+--new-name`, `kapture_upgrade_1_0_to_1_1*` (all dashed options), `kapture_upgrade_1_0_to_1_1_orphan_features
+--local-features (-lfeat) --global-features (-gfeat)`.
+
+== Python API changes
+
+Tool functions in `kapture.tools.*` take the canonical parameter names and two new keyword parameters
+`verbose` and `quiet`. Library converters in `kapture.converter.*` are unchanged. Notable signature changes:
+
+* `import_image_list(inputs, output, images='', ...)` and `import_image_list_with_poses(input, output, images,
+  calibration, ...)`: positional order changed, call them with keywords.
+* `import_7scenes` / `import_12scenes`: default `image_transfer` is now `link_absolute` (the command line default),
+  it was `skip` when called from python.
+* `import_bundler` / `import_nvm`: `ignore_trajectories` and `add_reconstruction` default to `False`.
+* `merge_kaptures`: `keep_sensor_ids` defaults to `False`.
+
+Known downstream use: `kapture_localization` imports `import_idl_dataset_cvpr17` from
+`kapture.tools.kapture_import_IDL_dataset_cvpr17`; its signature is now
+`import_idl_dataset_cvpr17(input, output, gt_path=None, force=False, image_transfer=TransferAction.link_absolute,
+verbose='warning', quiet=False)`.

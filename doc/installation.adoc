@@ -12,7 +12,7 @@ We also provide a docker file.
 
 Requirements:
 
- - python 3.6 + python3-pip
+ - python 3.10 + python3-pip
  - colmap (optional)
 
 === linux (Ubuntu 18.04 LTS)
@@ -22,7 +22,7 @@ In a terminal (e.g. __bash__), run:
 [source,bash]
 ----
 # install requirements
-$> sudo apt-get install -y python3.6 python3-pip colmap
+$> sudo apt-get install -y python3 python3-pip colmap
 # install kapture
 $> pip3 install kapture
 ----
@@ -31,9 +31,9 @@ $> pip3 install kapture
 
 .Requirements
 
-Download and install the latest 3.6 release from https://www.python.org/downloads/ for your machine.
+Download and install the latest release (3.10 or newer) from https://www.python.org/downloads/ for your machine.
 
-NOTE: **For windows user**: when running the installer, tick `Add Python 3.6 to PATH`,
+NOTE: **For windows user**: when running the installer, tick `Add Python 3.10 to PATH`,
 then `customize`, make sure __pip__, __Python test suite__ and __py launcher__ are installed.
 
 Get the latest __colmap__ binaries from https://github.com/colmap/colmap/releases.
@@ -66,7 +66,7 @@ In a terminal, do:
 [source,bash]
 ----
 # install requirements
-$> sudo apt-get install -y git python3.6 python3-pip colmap
+$> sudo apt-get install -y git python3 python3-pip colmap
 # install optional requirements
 $> sudo apt-get install -y pandoc asciidoctor
 # clone source repository
