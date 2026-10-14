@@ -22,13 +22,12 @@ dependencies = [
         'wcmatch>=5.0',
         'tabulate>=0.8.7',
         'pytz>=2021.1',
-        'build>=1.0.3',
-        'pytest'
-]     # If project has dependencies
+]
 
 
 [project.optional-dependencies]
 zed = ['pyzed']
+dev = ['pytest', 'build', 'flake8']
 
 [tool.setuptools.packages.find]
 include = ["kapture*"]

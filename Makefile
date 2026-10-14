@@ -7,7 +7,7 @@ install: README.md
 	pip install .
 
 install_dev: README.md
-	pip install -e .
+	pip install -e ".[dev]"
 
 docker: check-docker
 	docker build -f docker/Dockerfile . -t kapture/kapture
