@@ -31,47 +31,51 @@ This script imports an IDL dataset cvpr17 to the kapture format.
 import os
 import os.path as path
 import logging
-import argparse
 from PIL import Image
 import quaternion
-from typing import Union
+from typing import Optional
 
 # kapture
 import kapture
-import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.utils.paths import path_secure
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 
 logger = logging.getLogger('IDL_dataset_cvpr17')
 
 
-def import_idl_dataset_cvpr17(idl_dataset_path: str,
-                              gt_path: Union[str, None],
-                              kapture_path: str,
-                              force_overwrite_existing: bool = False,
-                              images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_idl_dataset_cvpr17(input: str,
+                              output: str,
+                              gt_path: Optional[str] = None,
+                              force: bool = False,
+                              image_transfer: TransferAction = TransferAction.link_absolute,
+                              verbose: Verbosity = DEFAULT_VERBOSITY,
+                              quiet: bool = False) -> None:
     """
-    Reads the IDL dataset and copy it to a kapture.
+    Imports IDL_dataset_cvpr17 to the kapture format.
 
-    :param idl_dataset_path: path to the IDL dataset
-    :param gt_path: ground truth data path
-    :param kapture_path: path to the kapture top directory to create
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
+    :param input: path to the IDL dataset images folder
+    :param output: path to the kapture top directory to create
+    :param gt_path: path to ground truth data
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: how to import actual image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
 
-    os.makedirs(kapture_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
+    os.makedirs(output, exist_ok=True)
+    delete_existing_kapture_files(output, force_erase=force)
 
     cameras = kapture.Sensors()
     images = kapture.RecordsCamera()
     trajectories = kapture.Trajectories()
 
-    file_list = [os.path.relpath(os.path.join(dirpath, filename), idl_dataset_path)
-                 for dirpath, dirs, filenames in os.walk(idl_dataset_path)
+    file_list = [os.path.relpath(os.path.join(dirpath, filename), input)
+                 for dirpath, dirs, filenames in os.walk(input)
                  for filename in filenames]
     file_list = sorted(file_list)
 
@@ -80,7 +84,7 @@ def import_idl_dataset_cvpr17(idl_dataset_path: str,
         # test if file is a valid image
         try:
             # lazy load
-            with Image.open(path.join(idl_dataset_path, filename)) as im:
+            with Image.open(path.join(input, filename)) as im:
                 width, height = im.size
                 model_params = [width, height]
         except Exception:
@@ -123,51 +127,17 @@ def import_idl_dataset_cvpr17(idl_dataset_path: str,
     # import (copy) image files.
     logger.info('import image files ...')
     filename_list = [f for _, _, f in kapture.flatten(images)]
-    import_record_data_from_dir_auto(idl_dataset_path, kapture_path, filename_list, images_import_method)
+    import_record_data_from_dir_auto(input, output, filename_list, image_transfer)
 
     # pack into kapture format
     imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories)
     logger.info('writing imported data...')
-    kapture_to_dir(kapture_path, imported_kapture)
+    kapture_to_dir(output, imported_kapture)
 
 
-def import_idl_dataset_cvpr17_command_line() -> None:
-    """
-    Do the IDL dataset import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(
-        description='import IDL_dataset_cvpr17 to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to images folder')
-    parser.add_argument('-gt', '--gt_path', default=None, help='path to gt data')
-    parser.add_argument('-o', '--output', required=True, help='output directory')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_idl_dataset_cvpr17(
-        idl_dataset_path=args.input,
-        gt_path=args.gt_path,
-        kapture_path=args.output,
-        force_overwrite_existing=args.force,
-        images_import_method=args.image_transfer)
+def main():
+    run_cli(import_idl_dataset_cvpr17, aliases={'--gt_path': ['-gt']})
 
 
 if __name__ == '__main__':
-    import_idl_dataset_cvpr17_command_line()
+    main()

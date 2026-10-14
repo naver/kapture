@@ -5,18 +5,17 @@
 Script to print statistics about kapture data.
 """
 
-import argparse
 import logging
 import sys
 import contextlib
 import os.path as path
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 from datetime import datetime
 import time
 
 import kapture
-import kapture.utils.logging
 import kapture.io.csv
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('kapture_print')
 
@@ -305,46 +304,34 @@ def print_points(kapture_data, output_stream, show_detail, show_all) -> None:
         print_key_value(' └─ nb observations 2-D', nb_observations_2d, file=output_stream, show_none=show_all)
 
 
-def print_command_line() -> None:
+def print_kapture(
+        input: str,
+        output: str = '-',
+        show_all: bool = False,
+        show_detail: bool = False,
+        timestamp_unit: Literal['auto', 'index', 'second', 'millisecond', 'microsecond'] = 'auto',
+        timestamp_formatting: Optional[str] = None,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False,
+) -> None:
     """
-    Do the print using the parameters given on the command line.
+    Print on stdout (or given file) statistics about kapture dataset.
+
+    :param input: path to kapture data root directory.
+    :param output: output file, '-' means stdout.
+    :param show_all: display all, even None
+    :param show_detail: display detailed
+    :param timestamp_unit: force what timestamps really are (eg. millisecond) to display them nicely.
+                           auto means the program tries to guess.
+    :param timestamp_formatting: tells how to format timestamps, helps human display.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-
-    parser = argparse.ArgumentParser(description='Print on stdout (or given file) statistics about kapture dataset.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-i', '--input', '-k', '--kapture', required=True,
-                        help='path to kapture data root directory.')
-    parser.add_argument('-o', '--output', required=False, default='-',
-                        help='output file [stdout]')
-    parser.add_argument('-a', '--all', action='store_true', default=False,
-                        help='display all, even None')
-    parser.add_argument('-d', '--detail', action='store_true', default=False,
-                        help='display detailed')
-    parser.add_argument('-t', '--timestamp_unit', choices=['auto', 'index', 'second', 'millisecond', 'microsecond'],
-                        default='auto',
-                        help='Force what timestamp really are (eg. millisecond) to display them nicely.'
-                             'Auto means the program tries to guess. [auto]')
-    parser.add_argument('-f', '--timestamp_formatting',
-                        help='Tells what timestamp are, helps human display.')
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    args.input = path.abspath(args.input)
-    # load
-    with kapture.io.csv.get_all_tar_handlers(args.input) as tar_handlers:
-        kapture_data = kapture.io.csv.kapture_from_dir(args.input, tar_handlers=tar_handlers)
-        do_print(kapture_data, args.input, args.output, args.detail, args.all,
-                 args.timestamp_unit, args.timestamp_formatting)
+    setup_logging(logger, verbose, quiet)
+    input = path.abspath(input)
+    with kapture.io.csv.get_all_tar_handlers(input) as tar_handlers:
+        kapture_data = kapture.io.csv.kapture_from_dir(input, tar_handlers=tar_handlers)
+        do_print(kapture_data, input, output, show_detail, show_all, timestamp_unit, timestamp_formatting)
 
 
 def do_print(
@@ -383,5 +370,15 @@ def do_print(
         print_points(kapture_data, output_stream, show_detail, show_all)
 
 
+def main():
+    run_cli(print_kapture, aliases={
+        '--input': ['-k', '--kapture'],
+        '--show_all': ['-a', '--all'],
+        '--show_detail': ['-d', '--detail'],
+        '--timestamp_unit': ['-t'],
+        '--timestamp_formatting': ['-f'],
+    })
+
+
 if __name__ == '__main__':
-    print_command_line()
+    main()

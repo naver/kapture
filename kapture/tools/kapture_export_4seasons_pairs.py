@@ -8,7 +8,6 @@ see more details at:
 https://github.com/pmwenzel/mlad-iccv2021#task
 """
 
-import argparse
 import logging
 import os.path as path
 import numpy as np
@@ -17,10 +16,10 @@ from tqdm import tqdm
 
 # kapture
 import kapture
-import kapture.utils.logging
 import kapture.io.csv as csv
 import kapture.io.features
 from kapture.utils.logging import getLogger
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = getLogger()
 
@@ -56,28 +55,38 @@ class NotLocalizedHalt(IndexError):
     pass
 
 
-def export_4seasons_pairfile(kapture_dir_path: str,
-                             pairs_file_path: str,
-                             poses_file_path: str,
-                             heal_timestamps: bool = True):
+def export_4seasons_pairfile(input: str,
+                             pairs: str,
+                             output: str,
+                             heal: bool = True,
+                             force: bool = False,
+                             verbose: Verbosity = DEFAULT_VERBOSITY,
+                             quiet: bool = False):
     """
-    :param kapture_dir_path: input path to kapture directory that contains both localized and mapping.
-    :param pairs_file_path:  input path to timestamp pair file.
-    :param poses_file_path: output path to relative pose file.
-    :param heal_timestamps: overwrite timestamps from filenames.
-    :return:
-    """
-    logger.info('loading kapture data ...')
-    with csv.get_all_tar_handlers(kapture_dir_path) as tar_handlers:
-        kapture_data = csv.kapture_from_dir(kapture_dir_path, tar_handlers=tar_handlers)
+    Exports 4seasons relative pose between the source and the query frame.
+    Note that the relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
 
-    if heal_timestamps:
+    :param input: input path to kapture directory that contains both localized and mapping.
+    :param pairs:  input path to timestamp pair file.
+    :param output: output path to relative pose file.
+    :param heal: overwrite timestamps from filenames.
+    :param force: accepted for compatibility, unused (output is always overwritten).
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
+    """
+    setup_logging(logger, verbose, quiet)
+    input, pairs, output = path.abspath(input), path.abspath(pairs), path.abspath(output)
+    logger.info('loading kapture data ...')
+    with csv.get_all_tar_handlers(input) as tar_handlers:
+        kapture_data = csv.kapture_from_dir(input, tar_handlers=tar_handlers)
+
+    if heal:
         logger.debug('recovering timestamps from filenames.')
         heal_timestamps_inplace(
             kapture_data.records_camera,
             kapture_data.trajectories)
 
-    pairs = load_timestamp_pairs(pairs_file_path)
+    pairs = load_timestamp_pairs(pairs)
     logger.info('removing rigs')
     kapture.rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)
 
@@ -122,55 +131,15 @@ def export_4seasons_pairfile(kapture_dir_path: str,
         except Exception as e:
             logger.critical(e)
     logger.info(f'localized {len(poses)} ({len(poses) / len(pairs) * 100}%) poses.')
-    logger.info(f'writing result to "{poses_file_path}"')
-    with open(poses_file_path, 'wt') as f:
+    logger.info(f'writing result to "{output}"')
+    with open(output, 'wt') as f:
         for p in poses:
             f.write(' '.join(str(e) for e in p) + '\n')
 
 
-def export_4seasons_pairs_command_line() -> None:
-    """
-    Exports 4seasons relative pose between the source and the query frame.
-    Note that the relative pose is from cam0 of the reference sequence to cam0 of the query sequence, respectively.
-    """
-    parser = argparse.ArgumentParser(
-        description='Exports 4seasons pair file.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True,
-                        help='input path to kapture directory that contains both localized and mapping.')
-    parser.add_argument('-p', '--pairs', required=True,
-                        help='input path to timestamp pair file.')
-    parser.add_argument('--no_heal', default=False, action='store_true',
-                        help='do not overwrite timestamps from filenames.')
-    parser.add_argument('-o', '--output', required=True,
-                        help='output path to relative pose file.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    kapture_dir_path = path.abspath(args.input)
-    pairs_file_path = path.abspath(args.pairs)
-    poses_file_path = path.abspath(args.output)
-
-    export_4seasons_pairfile(
-        kapture_dir_path=kapture_dir_path,
-        pairs_file_path=pairs_file_path,
-        poses_file_path=poses_file_path,
-        heal_timestamps=not args.no_heal)
+def main():
+    run_cli(export_4seasons_pairfile, aliases={'--pairs': ['-p']})
 
 
 if __name__ == '__main__':
-    export_4seasons_pairs_command_line()
+    main()

@@ -58,17 +58,16 @@ import logging
 import os
 import os.path as path
 import quaternion
-import argparse
 import re
 import numpy as np
 from typing import List, Optional, Tuple
 
 # kapture
 import kapture
-import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir, float_array_or_none
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.algo.merge_keep_ids import merge_keep_ids
 from kapture.io.tar import TarCollection
 
@@ -189,30 +188,36 @@ def _add_images_from_folder(images_folder_path: str, kapture_data: kapture.Kaptu
             kapture_data.records_camera[(timestamp, camera_id)] = image_name
 
 
-def import_extended_cmu_seasons(cmu_path: str,
-                                top_kaptures_path: str,
-                                slice_range: List[int],
-                                import_all_files: bool = False,
-                                force_overwrite_existing: bool = False,
-                                images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_extended_cmu_seasons(input: str,
+                                output: str,
+                                slice_range: List[int] = list(range(2, 26)),
+                                all_files: bool = False,
+                                force: bool = False,
+                                image_transfer: TransferAction = TransferAction.skip,
+                                verbose: Verbosity = DEFAULT_VERBOSITY,
+                                quiet: bool = False) -> None:
     """
-    Import extended CMU data to kapture. Will make training and query kaptures for every CMU slice.
+    Imports Extended CMU Seasons dataset to the kapture format.
+    This creates one kapture dataset (mapping and query) for each of the 24 slices, based on the txt files.
 
-    :param cmu_path: path to the top directory of the CMU dataset files
-    :param top_kaptures_path: top directory for the kaptures to create
-    :param slice_range: range of CMU slices to import
-    :param import_all_files: if Tre, will import all files
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
+    :param input: path to the top directory of the CMU dataset files
+    :param output: top directory for the kaptures to create
+    :param slice_range: list of CMU slices to import
+    :param all_files: add images present in the folder yet not listed in the txt files.
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: how to import actual image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
 
-    os.makedirs(top_kaptures_path, exist_ok=True)
+    os.makedirs(output, exist_ok=True)
 
-    cameras = import_extended_cmu_seasons_intrinsics(path.join(cmu_path, 'intrinsics.txt'))
+    cameras = import_extended_cmu_seasons_intrinsics(path.join(input, 'intrinsics.txt'))
 
     for slice_n in slice_range:
         # prepare paths
-        slice_path = os.path.join(cmu_path, f'slice{slice_n}')
+        slice_path = os.path.join(input, f'slice{slice_n}')
         training_images_path = os.path.join(slice_path, 'database')
         query_images_path = os.path.join(slice_path, 'query')
         gt_trajectories_path = os.path.join(slice_path, f'ground-truth-database-images-slice{slice_n}.txt')
@@ -221,26 +226,26 @@ def import_extended_cmu_seasons(cmu_path: str,
         query_gt_list = [os.path.join(query_gt_path, f) for f in os.listdir(query_gt_path)]
 
         # Import training images
-        kapture_training_path = path.join(top_kaptures_path, f'slice{slice_n}', "mapping")
-        delete_existing_kapture_files(kapture_training_path, force_overwrite_existing)
+        kapture_training_path = path.join(output, f'slice{slice_n}', "mapping")
+        delete_existing_kapture_files(kapture_training_path, force)
         training_records_camera, training_trajectories = import_extended_cmu_seasons_images(gt_trajectories_path)
         training_kapture = kapture.Kapture(sensors=cameras,
                                            records_camera=training_records_camera,
                                            trajectories=training_trajectories)
-        if import_all_files:
+        if all_files:
             _add_images_from_folder(training_images_path, training_kapture)
         kapture_to_dir(kapture_training_path, training_kapture)
         # finally import images
-        if images_import_method != TransferAction.skip:
+        if image_transfer != TransferAction.skip:
             filename_list = [f for _, _, f in kapture.flatten(training_kapture.records_camera)]
             logger.info(f'importing {len(filename_list)} image files ...')
             import_record_data_from_dir_auto(training_images_path,
                                              kapture_training_path,
                                              filename_list,
-                                             images_import_method)
+                                             image_transfer)
         # Import query images
-        kapture_query_path = path.join(top_kaptures_path, f'slice{slice_n}', "query")
-        delete_existing_kapture_files(kapture_query_path, force_erase=force_overwrite_existing)
+        kapture_query_path = path.join(output, f'slice{slice_n}', "query")
+        delete_existing_kapture_files(kapture_query_path, force_erase=force)
         query_records_camera, query_trajectories = import_extended_cmu_seasons_images(query_image_list)
         query_kapture = kapture.Kapture(sensors=cameras,
                                         records_camera=query_records_camera,
@@ -258,55 +263,19 @@ def import_extended_cmu_seasons(cmu_path: str,
         query_kapture = merge_keep_ids(data_to_merge, skip_list=[], data_paths=["" for _ in range(len(data_to_merge))],
                                        kapture_path="", images_import_method=TransferAction.skip,
                                        tarcollection_list=fake_tar_collection_list)
-        if import_all_files:
+        if all_files:
             _add_images_from_folder(query_images_path, query_kapture)
         kapture_to_dir(kapture_query_path, query_kapture)
         # finally import images
-        if images_import_method != TransferAction.skip:
+        if image_transfer != TransferAction.skip:
             filename_list = [f for _, _, f in kapture.flatten(query_kapture.records_camera)]
             logger.info(f'importing {len(filename_list)} image files ...')
-            import_record_data_from_dir_auto(query_images_path, kapture_query_path, filename_list, images_import_method)
+            import_record_data_from_dir_auto(query_images_path, kapture_query_path, filename_list, image_transfer)
 
 
-def import_extended_cmu_seasons_command_line() -> None:
-    """
-    Do the CMU dataset import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(
-        description='imports Extended CMU Seasons dataset to the kapture format.'
-                    'This script will create one kapture dataset'
-                    ' for each of the 24 slices, based on the txt files')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to Extended CMU root folder')
-    parser.add_argument('-o', '--output', required=True, help='output directory')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.skip,
-                        help=f'How to import images [skip], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('--slice-range', nargs='+', default=list(range(2, 26)), type=int,
-                        help='list of slices to import')
-    parser.add_argument('--all-files', action='store_true', default=False,
-                        help='Add images present in the folder yet not listed in the txt files.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_extended_cmu_seasons(args.input, args.output,
-                                args.slice_range, args.all_files,
-                                args.force, args.image_transfer)
+def main():
+    run_cli(import_extended_cmu_seasons)
 
 
 if __name__ == '__main__':
-    import_extended_cmu_seasons_command_line()
+    main()

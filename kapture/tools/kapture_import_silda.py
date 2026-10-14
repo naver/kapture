@@ -8,17 +8,16 @@ See research page at https://research.scape.io/silda/
 and dataset description there: https://github.com/abmmusa/silda.
 """
 
-import argparse
 import logging
 import re
 import os
 import os.path as path
 import numpy as np
 import quaternion
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 from tqdm import tqdm
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 import kapture.io.csv
 import kapture.io.structure
 from kapture.io.binary import TransferAction, transfer_files_from_dir
@@ -120,37 +119,42 @@ def _make_rigs(replace_pose_rig, trajectories) -> kapture.Rigs:
     return rigs
 
 
-def import_silda(silda_dir_path: str,
-                 destination_kapture_dir_path: str,
-                 fallback_cam_model: str = 'FOV',
-                 do_split_cams: bool = False,
-                 corpus: Optional[str] = None,
-                 replace_pose_rig: bool = False,
-                 force_overwrite_existing: bool = False,
-                 images_import_strategy: TransferAction = TransferAction.link_absolute) -> None:
+def import_silda(input: str,
+                 output: str,
+                 cam_model: Literal['OPENCV_FISHEYE', 'FOV'] = 'FOV',
+                 split_cams: bool = False,
+                 corpus: Optional[Literal['mapping', 'query']] = None,
+                 rig_collapse: bool = False,
+                 force: bool = False,
+                 image_transfer: TransferAction = TransferAction.link_absolute,
+                 verbose: Verbosity = DEFAULT_VERBOSITY,
+                 quiet: bool = False) -> None:
     """
-    Imports data from silda dataset.
+    Imports SILDa dataset to kapture format.
 
-    :param silda_dir_path: path to the silda top directory
-    :param destination_kapture_dir_path: input path to kapture directory.
-    :param fallback_cam_model: camera model to fallback when necessary
-    :param do_split_cams: If true, re-organises and renames the image files to split apart cameras.
-    :param corpus: the list of corpus to be imported, among 'mapping', 'query'.
-    :param replace_pose_rig: if True, replaces poses of individual cameras with poses of the rig.
-    :param force_overwrite_existing: if true, Silently overwrite kapture files if already exists.
-    :param images_import_strategy: how to copy image files.
+    :param input: path to the silda top directory
+    :param output: path to the output kapture directory.
+    :param cam_model: camera model to fallback when necessary
+    :param split_cams: re-organises and renames the image files to split apart cameras.
+    :param corpus: restrain to mapping or query images only.
+    :param rig_collapse: replace camera poses with rig poses.
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: how to copy image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
 
     # sanity check
-    silda_dir_path = path_secure(path.abspath(silda_dir_path))
-    destination_kapture_dir_path = path_secure(path.abspath(destination_kapture_dir_path))
-    if TransferAction.root_link == images_import_strategy and do_split_cams:
+    input = path_secure(path.abspath(input))
+    output = path_secure(path.abspath(output))
+    if TransferAction.root_link == image_transfer and split_cams:
         raise ValueError('impossible to only link images directory and applying split cam.')
     hide_progress_bars = logger.getEffectiveLevel() >= logging.INFO
 
     # prepare output directory
-    kapture.io.structure.delete_existing_kapture_files(destination_kapture_dir_path, force_overwrite_existing)
-    os.makedirs(destination_kapture_dir_path, exist_ok=True)
+    kapture.io.structure.delete_existing_kapture_files(output, force)
+    os.makedirs(output, exist_ok=True)
 
     # images ###########################################################################################################
     logger.info('Processing images ...')
@@ -159,13 +163,13 @@ def import_silda(silda_dir_path: str,
     #   ├── 1445_0.png
     #   ├── 1445_1.png
     #   ...
-    silda_images_root_path = path.join(silda_dir_path, 'silda-images')
+    silda_images_root_path = path.join(input, 'silda-images')
     # list all png files (its PNG in silda) using a generator.
     if corpus is not None:
         assert corpus in SILDA_CORPUS_SPLIT_FILENAMES
         # if corpus specified, filter by those which directory name match corpus.
         logger.debug(f'only importing {corpus} part.')
-        corpus_file_path = path.join(silda_dir_path, SILDA_CORPUS_SPLIT_FILENAMES[corpus])
+        corpus_file_path = path.join(input, SILDA_CORPUS_SPLIT_FILENAMES[corpus])
         with open(corpus_file_path, 'rt') as corpus_file:
             corpus_filenames = corpus_file.readlines()
             image_filenames_original = sorted(
@@ -191,7 +195,7 @@ def import_silda(silda_dir_path: str,
         shot_info['timestamp'] = int(shot_info['timestamp'])  # To avoid warnings about type of the value
         # eg. file_info = {'filename': '1445_0.png', 'timestamp': 1445, 'cam_id': '0'}
         # create a path of the image into NLE dir
-        if do_split_cams:
+        if split_cams:
             # re-organise images with subfolders per corpus/camera/timestamp.png
             kapture_image_filename = path.join(shot_info['cam_id'],
                                                '{:04d}.png'.format(shot_info['timestamp']))
@@ -205,13 +209,13 @@ def import_silda(silda_dir_path: str,
 
     assert len(image_filenames_kapture) == len(image_filenames_original)
     # intrinsics #######################################################################################################
-    cameras = _import_cameras(silda_dir_path, snapshots, fallback_cam_model)
+    cameras = _import_cameras(input, snapshots, cam_model)
 
     # extrinsics #######################################################################################################
-    trajectories = _import_trajectories(silda_dir_path, image_name_to_ids, hide_progress_bars)
+    trajectories = _import_trajectories(input, image_name_to_ids, hide_progress_bars)
 
     # rigs
-    rigs = _make_rigs(replace_pose_rig, trajectories)
+    rigs = _make_rigs(rig_collapse, trajectories)
 
     # pack it all together
     kapture_data = kapture.Kapture(
@@ -222,10 +226,10 @@ def import_silda(silda_dir_path: str,
     )
 
     logger.info('saving to Kapture  ...')
-    kapture.io.csv.kapture_to_dir(destination_kapture_dir_path, kapture_data)
+    kapture.io.csv.kapture_to_dir(output, kapture_data)
 
     # finally import images
-    if images_import_strategy != TransferAction.skip:
+    if image_transfer != TransferAction.skip:
         # importing image files
         logger.info(f'importing {len(image_filenames_original)} images ...')
         assert len(image_filenames_original) == len(image_filenames_kapture)
@@ -233,60 +237,15 @@ def import_silda(silda_dir_path: str,
             path.join(silda_images_root_path, image_filename_kapture)
             for image_filename_kapture in image_filenames_original]
         image_file_paths_kapture = [
-            get_image_fullpath(destination_kapture_dir_path, image_filename_kapture)
+            get_image_fullpath(output, image_filename_kapture)
             for image_filename_kapture in image_filenames_kapture]
-        transfer_files_from_dir(image_file_paths_original, image_file_paths_kapture, images_import_strategy)
+        transfer_files_from_dir(image_file_paths_original, image_file_paths_kapture, image_transfer)
     logger.info('done.')
 
 
-def import_silda_command_line():
-    """
-    Do the SILDa to kapture import using the command line parameters provided by the user.
-    """
-    parser = argparse.ArgumentParser(description='imports SILDa dataset to kapture format.')
-    ####################################################################################################################
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete kapture if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input',
-                        help='path to silda root directory.')
-    parser.add_argument('-o', '--output', required=True,
-                        help='output directory where to save NLE files.')
-    parser.add_argument('-s', '--split_cams', action='store_true', default=False,
-                        help='reorganises the image file per camera folders.')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('--corpus', choices=['mapping', 'query'],
-                        help='restrain (or not) do only mapping or query images.')
-    parser.add_argument('--cam_model', choices=['OPENCV_FISHEYE', 'FOV'], default='FOV',
-                        help='camera model to be used.')
-    parser.add_argument('--rig_collapse', action='store_true', default=False,
-                        help='Replace camera poses with rig poses.')
-    ####################################################################################################################
-    args = parser.parse_args()
-    logger.setLevel(args.verbose)
-
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_silda(args.input,
-                 args.output,
-                 fallback_cam_model=args.cam_model,
-                 do_split_cams=args.split_cams,
-                 corpus=args.corpus,
-                 replace_pose_rig=args.rig_collapse,
-                 force_overwrite_existing=args.force,
-                 images_import_strategy=args.image_transfer)
+def main():
+    run_cli(import_silda, aliases={'--split_cams': ['-s']})
 
 
 if __name__ == '__main__':
-    import_silda_command_line()
+    main()

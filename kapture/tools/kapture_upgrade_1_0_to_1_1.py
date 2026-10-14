@@ -8,7 +8,6 @@ Convert kapture data in version 1.0 to version 1.1
 import logging
 import os
 import os.path as path
-import argparse
 from typing import Optional
 import shutil
 # import numpy as np like in kapture.io.csv
@@ -16,7 +15,6 @@ import shutil
 import numpy as np  # noqa: F401
 
 import kapture
-import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 import kapture.io.features
 import kapture.io.csv
@@ -24,24 +22,41 @@ from kapture.io.records import import_record_data_from_dir_auto
 from kapture.utils.paths import populate_files_in_dirpath
 from kapture.io.binary import TransferAction
 from kapture.utils.upgrade import CSV_FILENAMES_1_0, read_old_image_features_csv
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('upgrade_1_0_to_1_1')
 
 
-def upgrade_1_0_to_1_1(kapture_dirpath: str,  # noqa: C901: function a bit long but well documented
-                       output_path: str,
-                       keypoints_type: Optional[str],
-                       descriptors_type: Optional[str],
-                       global_features_type: Optional[str],
-                       descriptors_metric_type: str,
-                       global_features_metric_type: str,
-                       images_import_strategy: TransferAction,
-                       force_overwrite_existing: bool) -> None:
+def upgrade_1_0_to_1_1(input: str,  # noqa: C901: function a bit long but well documented
+                       output: str,
+                       keypoints_type: Optional[str] = None,
+                       descriptors_type: Optional[str] = None,
+                       global_features_type: Optional[str] = None,
+                       descriptors_metric_type: str = 'L2',
+                       global_features_metric_type: str = 'L2',
+                       image_transfer: TransferAction = TransferAction.skip,
+                       force: bool = False,
+                       verbose: Verbosity = DEFAULT_VERBOSITY,
+                       quiet: bool = False) -> None:
     """
     Convert kapture data in version 1.0 to version 1.1
+
+    :param input: path to kapture 1.0 directory
+    :param output: output directory
+    :param keypoints_type: type of keypoints (read from input if not given)
+    :param descriptors_type: type of descriptors (read from input if not given)
+    :param global_features_type: type of global features (read from input if not given)
+    :param descriptors_metric_type: metric type of descriptors
+    :param global_features_metric_type: metric type of global features
+    :param image_transfer: how to import images
+    :param force: delete output if already exists
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
+    kapture_dirpath, output_path, images_import_strategy = input, output, image_transfer
     os.makedirs(output_path, exist_ok=True)
-    delete_existing_kapture_files(output_path, force_erase=force_overwrite_existing)
+    delete_existing_kapture_files(output_path, force_erase=force)
     # some text files didn't change, just change their header
     os.makedirs(path.join(output_path, 'sensors'), exist_ok=True)
     os.makedirs(path.join(output_path, 'reconstruction'), exist_ok=True)
@@ -181,48 +196,9 @@ def upgrade_1_0_to_1_1(kapture_dirpath: str,  # noqa: C901: function a bit long 
     logger.debug('all done!')
 
 
-def upgrade_1_0_to_1_1_command_line() -> None:
-    """
-    Convert kapture data in version 1.0 to version 1.1.
-    """
-    parser = argparse.ArgumentParser(
-        description='convert kapture data in version 1.0 to version 1.1')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # export ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to kapture directory')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
-    parser.add_argument('--keypoints-type', default=None,
-                        help='types of keypoints.')
-    parser.add_argument('--descriptors-type', default=None, help='types of descriptors.')
-    parser.add_argument('--descriptors-metric-type', default='L2', help='types of descriptors.')
-    parser.add_argument('--global-features-type', default=None,
-                        help='types of global features.')
-    parser.add_argument('--global-features-metric-type', default='L2', help='types of descriptors.')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.skip,
-                        help=f'How to import images [skip], '
-                        f'choose among: {", ".join(a.name for a in TransferAction)}')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    upgrade_1_0_to_1_1(args.input, args.output,
-                       args.keypoints_type, args.descriptors_type, args.global_features_type,
-                       args.descriptors_metric_type, args.global_features_metric_type,
-                       args.image_transfer,
-                       args.force)
+def main():
+    run_cli(upgrade_1_0_to_1_1)
 
 
 if __name__ == '__main__':
-    upgrade_1_0_to_1_1_command_line()
+    main()

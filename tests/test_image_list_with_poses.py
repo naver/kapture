@@ -28,17 +28,17 @@ class TestImageList(unittest.TestCase):
 
     def test_import_images_missing_file(self):
         self.assertRaises(FileNotFoundError, import_image_list_with_poses,
-                          '', self._images_folder, self._camera_model_path,
-                          self._kapture_path, True, TransferAction.copy)
+                          '', self._kapture_path, self._images_folder,
+                          self._camera_model_path, True, TransferAction.copy)
 
     def test_import_images_missing_dir(self):
         self.assertRaises(ValueError, import_image_list_with_poses,
-                          self._images_list_with_poses_file, '', self._camera_model_path,
-                          self._kapture_path, True, TransferAction.copy)
+                          self._images_list_with_poses_file, self._kapture_path, '',
+                          self._camera_model_path, True, TransferAction.copy)
 
     def test_import_with_images(self):
-        import_image_list_with_poses(self._images_list_with_poses_file, self._images_folder, self._camera_model_path,
-                                     self._kapture_path, True, TransferAction.copy)
+        import_image_list_with_poses(self._images_list_with_poses_file, self._kapture_path, self._images_folder,
+                                     self._camera_model_path, True, TransferAction.copy)
 
         ref_kapture_path = path.join(self._samples_folder, 'kapture_images')
         expected_kapture = kapture_from_dir(ref_kapture_path)
@@ -46,8 +46,8 @@ class TestImageList(unittest.TestCase):
         self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
 
     def test_import_images_no_camera(self):
-        import_image_list_with_poses(self._images_list_with_poses_file, self._images_folder, '',
-                                     self._kapture_path, True, TransferAction.copy)
+        import_image_list_with_poses(self._images_list_with_poses_file, self._kapture_path, self._images_folder,
+                                     '', True, TransferAction.copy)
 
         ref_kapture_path = path.join(self._samples_folder, 'kapture_images_no_camera')
         expected_kapture = kapture_from_dir(ref_kapture_path)
@@ -55,8 +55,8 @@ class TestImageList(unittest.TestCase):
         self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
 
     def test_import_no_images(self):
-        import_image_list_with_poses(self._images_list_with_poses_file, '', self._camera_model_path,
-                                     self._kapture_path, True, TransferAction.copy, True)
+        import_image_list_with_poses(self._images_list_with_poses_file, self._kapture_path, '',
+                                     self._camera_model_path, True, TransferAction.copy, import_images=False)
 
         ref_kapture_path = path.join(self._samples_folder, 'kapture_no_images')
         expected_kapture = kapture_from_dir(ref_kapture_path)
@@ -64,8 +64,8 @@ class TestImageList(unittest.TestCase):
         self.assertTrue(equal_kapture(imported_kapture, expected_kapture))
 
     def test_import_no_images_nor_camera(self):
-        import_image_list_with_poses(self._images_list_with_poses_file, '', '',
-                                     self._kapture_path, True, TransferAction.copy, True)
+        import_image_list_with_poses(self._images_list_with_poses_file, self._kapture_path, '',
+                                     '', True, TransferAction.copy, import_images=False)
 
         ref_kapture_path = path.join(self._samples_folder, 'kapture_no_images_nor_camera')
         expected_kapture = kapture_from_dir(ref_kapture_path)

@@ -1,58 +1,51 @@
 #!/usr/bin/env python3
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
 
-import argparse
 import logging
 import os.path as path
-import kapture
 from kapture.io.records import TransferAction
-from kapture.converter.opensfm.import_opensfm import import_opensfm
+import kapture.converter.opensfm.import_opensfm as opensfm_import
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 
 logger = logging.getLogger('opensfm')
 
 
-def import_opensfm_command_line():
+def import_opensfm(
+        input: str,
+        output: str,
+        image_transfer: TransferAction = TransferAction.link_absolute,
+        force: bool = False,
+        keypoints_type: str = 'HessianAffine',
+        descriptors_type: str = 'HOG',
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False
+) -> None:
     """
     Imports openSfM to kapture.
+
+    :param input: path to OpenSfM root directory.
+    :param output: output directory where to save kapture files.
+    :param image_transfer: how to import images
+    :param force: delete kapture if already exists.
+    :param keypoints_type: kapture keypoints type.
+    :param descriptors_type: kapture descriptors type.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(description='Imports openSfM to kapture')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    ####################################################################################################################
-    parser.add_argument('-i', '--input', '--opensfm', required=True,
-                        help='path to OpenSfM root directory.')
-    parser.add_argument('-o', '-k', '--output', '--kapture', required=True,
-                        help='output directory where to save kapture files.')
-    parser.add_argument('--transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], choose among: '
-                             f'{", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete kapture if already exists.')
-    parser.add_argument('--keypoints-type', default='HessianAffine', help='kapture keypoints type.')
-    parser.add_argument('--descriptors-type', default='HOG', help='kapture descriptors type.')
-    args = parser.parse_args()
-    ####################################################################################################################
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
+    setup_logging(logger, verbose, quiet)
+    input = path.normpath(path.abspath(input))
+    output = path.normpath(path.abspath(output))
+    opensfm_import.import_opensfm(input, output, force, image_transfer, keypoints_type, descriptors_type)
 
-    logger.debug('\\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()
-        if k != 'command'))
 
-    args.input = path.normpath(path.abspath(args.input))
-    args.output = path.normpath(path.abspath(args.output))
-
-    import_opensfm(args.input, args.output, args.force, args.transfer, args.keypoints_type, args.descriptors_type)
+def main():
+    run_cli(import_opensfm, aliases={
+        '--input': ['--opensfm'],
+        '--output': ['-k', '--kapture'],
+        '--image_transfer': ['--transfer'],
+    })
 
 
 if __name__ == '__main__':
-    import_opensfm_command_line()
+    main()

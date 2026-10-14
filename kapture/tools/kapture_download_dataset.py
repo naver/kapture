@@ -5,7 +5,7 @@
 script to easily  download kapture datasets.
 """
 
-import argparse
+import functools
 import logging
 import sys
 import os
@@ -16,8 +16,7 @@ import fnmatch
 from typing import Dict, Optional, List, Set
 from tqdm import tqdm
 import textwrap
-# import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity
 from kapture.converter.downloader.download import download_file, get_remote_file_size
 from kapture.converter.downloader.archives import untar_file, compute_sha256sum
 from kapture.io.csv import get_version_from_csv_file
@@ -497,147 +496,141 @@ def check_licenses(
     install_dir.update_licenses(license_datasets)
 
 
-def kapture_download_dataset(args, index_filepath: str):
+def _exit_code(method):
+    """ Decorator for the sub-commands: log any exception as critical and return -1 (re-raise when debugging). """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        try:
+            status = method(self, *args, **kwargs)
+            return status if isinstance(status, int) else 0
+        except Exception as e:
+            logger.critical(e)
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                raise e
+            return -1
+    return wrapper
+
+
+class DownloadDataset:
     """
-    Do the dataset download command
+    Download kapture datasets: update the dataset index, list, download, install or upgrade datasets.
     """
-    global_status = 0
-    install_dir = InstallDir(index_filepath=index_filepath, install_dir_path=args.install_path)
-    if args.cmd == 'update':
-        logger.info(f'updating dataset list from {args.repo} ...')
-        index_remote_url = args.repo + '/' + INDEX_FILENAME
+
+    def __init__(self,
+                 install_path: str = DEFAULT_DATASET_PATH,
+                 verbose: Verbosity = 'info',
+                 quiet: bool = False):
+        """
+        :param install_path: path to the directory where datasets are installed (and the index file lives).
+        :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+        :param quiet: silence all logs
+        """
+        setup_logging(logger, verbose, quiet)
+        self._install_path = path.normpath(path.abspath(install_path))
+        self._index_filepath = path.join(self._install_path, INDEX_FILENAME)
+        self._install_dir = InstallDir(index_filepath=self._index_filepath, install_dir_path=self._install_path)
+
+    def _load_datasets(self, dataset: List[str]) -> Dict[str, Dataset]:
+        datasets = self._install_dir.load_datasets_from_file(filter_patterns=dataset)
+        if len(datasets) == 0:
+            raise ValueError('There is no matching dataset.'
+                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+        return datasets
+
+    @_exit_code
+    def update(self, repo: str = DEFAULT_REPOSITORY_URL) -> int:
+        """
+        Update the dataset index from the repository.
+
+        :param repo: url of the repository.
+        """
+        logger.info(f'updating dataset list from {repo} ...')
+        index_remote_url = repo + '/' + INDEX_FILENAME
         logger.debug(f'retrieving index at {index_remote_url}')
         r = requests.get(index_remote_url, allow_redirects=True)
         if r.status_code != requests.codes.ok:
             raise ConnectionError(f'unable to grab {index_remote_url} (code:{r.status_code})')
-        with open(index_filepath, 'wt') as f:
+        with open(self._index_filepath, 'wt') as f:
             f.write(r.text)
-        datasets = install_dir.load_datasets_from_file()
+        datasets = self._install_dir.load_datasets_from_file()
         logger.info(f'dataset index retrieved successfully: {len(datasets)} datasets')
+        return 0
 
-    elif args.cmd == 'list':
-        logger.info(f'listing dataset {index_filepath} ...')
-        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
-        for name, dataset in datasets.items():
-            status = dataset.prob_status(check_online=args.full)
+    @_exit_code
+    def list(self, dataset: List[str] = [], full: bool = False) -> int:
+        """
+        Display the dataset index.
+
+        :param dataset: names of the datasets to list. Can use unix-like wildcard. All if not given.
+        :param full: display status and size of remote dataset.
+        """
+        global_status = 0
+        logger.info(f'listing dataset {self._index_filepath} ...')
+        datasets = self._install_dir.load_datasets_from_file(filter_patterns=dataset)
+        for name, a_dataset in datasets.items():
+            status = a_dataset.prob_status(check_online=full)
             if status == "not reachable" or status == "incomplete" or status == "corrupted":
                 global_status = 1
-            print(f'{status:^16}| {name:40} | {dataset.url}')
+            print(f'{status:^16}| {name:40} | {a_dataset.url}')
+        return global_status
 
-    elif args.cmd == 'install':
-        logger.debug(f'will install dataset: {args.dataset} ...')
-        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
-        if len(datasets) == 0:
-            raise ValueError('There is no matching dataset.'
-                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+    @_exit_code
+    def install(self, dataset: List[str] = [], force: bool = False, cleaning: bool = True) -> int:
+        """
+        Download and install datasets.
 
+        :param dataset: names of the datasets to install. Can use unix-like wildcard.
+        :param force: force installation even if dataset has already been installed.
+        :param cleaning: delete downloaded tar.gz file once installed.
+        """
+        logger.debug(f'will install dataset: {dataset} ...')
+        datasets = self._load_datasets(dataset)
         # ask for license agreement
-        check_licenses(install_dir=install_dir, datasets=datasets)
-
+        check_licenses(install_dir=self._install_dir, datasets=datasets)
         logger.info(f'{len(datasets)} dataset will be installed.')
-        for name, dataset in datasets.items():
+        for name, a_dataset in datasets.items():
             logger.info(f'{name}: starting installation  ...')
-            status = dataset.install(force_overwrite=args.force, no_cleaning=args.no_cleaning)
+            status = a_dataset.install(force_overwrite=force, no_cleaning=not cleaning)
             logger.info(f'{name} install: ' + 'successful' if status == 'installed' else 'failed')
+        return 0
 
-    elif args.cmd == 'upgrade':
-        logger.debug(f'will install dataset: {args.dataset} ...')
-        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
-        if len(datasets) == 0:
-            raise ValueError('There is no matching dataset.'
-                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+    @_exit_code
+    def download(self, dataset: List[str] = [], force: bool = False) -> int:
+        """
+        Download datasets, without installing them.
 
-        logger.info(f'{len(datasets)} dataset will be installed.')
-        for name, dataset in datasets.items():
-            logger.info(f'{name}: starting installation  ...')
-            dataset.upgrade()
-
-    elif args.cmd == 'download':
-        logger.debug(f'will download dataset: {args.dataset} ...')
-        datasets = install_dir.load_datasets_from_file(filter_patterns=args.dataset)
-        if len(datasets) == 0:
-            raise ValueError('There is no matching dataset.'
-                             ' Make sure you used quotes (") to prevent shell interpreting * wildcard.')
+        :param dataset: names of the datasets to download. Can use unix-like wildcard.
+        :param force: force download even if dataset has already been downloaded.
+        """
+        logger.debug(f'will download dataset: {dataset} ...')
+        datasets = self._load_datasets(dataset)
         logger.info(f'{len(datasets)} dataset will be downloaded.')
-        for name, dataset in datasets.items():
+        for name, a_dataset in datasets.items():
             logger.info(f'downloading {name} ...')
-            dataset.download(force_overwrite=args.force)
+            a_dataset.download(force_overwrite=force)
+        return 0
 
-    return global_status
+    @_exit_code
+    def upgrade(self, dataset: List[str] = []) -> int:
+        """
+        Upgrade installed datasets to kapture 1.1.
+
+        :param dataset: names of the datasets to upgrade. Can use unix-like wildcard.
+        """
+        logger.debug(f'will upgrade dataset: {dataset} ...')
+        datasets = self._load_datasets(dataset)
+        logger.info(f'{len(datasets)} dataset will be upgraded.')
+        for name, a_dataset in datasets.items():
+            logger.info(f'{name}: starting upgrade  ...')
+            a_dataset.upgrade()
+        return 0
 
 
-def kapture_download_dataset_cli():
-    """
-    Parse the kapture_download_dataset command line .
-    """
-    parser = argparse.ArgumentParser(description='download kapture datasets.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.INFO, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('--install_path', default=path.normpath(path.join(DEFAULT_DATASET_PATH)),
-                        help=f'path to index files listing all datasets'
-                             f' [{path.normpath(path.join(DEFAULT_DATASET_PATH))}]')
-    subparsers = parser.add_subparsers(help='sub-command help', dest='cmd')
-    ####################################################################################################################
-    # create the parser for the "update" command
-    parser_update = subparsers.add_parser('update', help='update dataset index')
-    parser_update.set_defaults(cmd='update')
-    parser_update.add_argument('--repo', default=DEFAULT_REPOSITORY_URL,
-                               help='url of the repository.')
-    ####################################################################################################################
-    parser_list = subparsers.add_parser('list', help='display dataset index')
-    parser_list.set_defaults(cmd='list')
-    parser_list.add_argument('dataset', nargs='*', default=[])
-    parser_list.add_argument('--full', action='store_true', default=False,
-                             help='Display status and size of remote dataset.')
-    ####################################################################################################################
-    parser_install = subparsers.add_parser('install', help='install dataset')
-    parser_install.set_defaults(cmd='install')
-    parser_install.add_argument('-f', '--force', action='store_true', default=False,
-                                help='Force installation even if dataset has already been installed.')
-    parser_install.add_argument('--no_cleaning', action='store_true', default=False,
-                                help='Do not delete downloaded tar.gz file.')
-    parser_install.add_argument('dataset', nargs='*', default=[],
-                                help='name of the dataset to download. Can use unix-like wildcard.')
-    ####################################################################################################################
-    parser_download = subparsers.add_parser('download', help='download dataset, without installing it')
-    parser_download.set_defaults(cmd='download')
-    parser_download.add_argument('-f', '--force', action='store_true', default=False,
-                                 help='Force installation even if dataset has already been installed.')
-    parser_download.add_argument('dataset', nargs='*', default=[],
-                                 help='name of the dataset to download. Can use unix-like wildcard.')
-    ####################################################################################################################
-    parser_install = subparsers.add_parser('upgrade', help='upgrade dataset to 1.1')
-    parser_install.set_defaults(cmd='upgrade')
-    parser_install.add_argument('dataset', nargs='*', default=[],
-                                help='name of the dataset to download. Can use unix-like wildcard.')
-    ####################################################################################################################
-
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose or logging.INFO)
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
-    try:
-        index_filepath = path.join(args.install_path, INDEX_FILENAME)
-        if not args.cmd:
-            parser.print_help()
-            logger.critical(f'Choose command among [ {" | ".join(subparsers.choices)} ]')
-            exit(-1)
-        return kapture_download_dataset(args, index_filepath)
-
-    except Exception as e:
-        logger.critical(e)
-        if logger.getEffectiveLevel() >= logging.DEBUG:
-            raise e
-        return -1
+def main() -> int:
+    """ runs the command line, returns the exit code. """
+    status = run_cli(DownloadDataset, aliases={'--dataset': ['-d']})
+    return status if isinstance(status, int) else 0
 
 
 if __name__ == '__main__':
-    sys.exit(kapture_download_dataset_cli())
+    sys.exit(main())

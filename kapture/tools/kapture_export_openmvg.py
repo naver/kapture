@@ -5,111 +5,106 @@
 Script to export a kapture into an openmvg file.
 """
 
-import argparse
 import logging
-import sys
 import os.path as path
+from typing import Optional
 # kapture
-import kapture.utils.logging
 from kapture.io.records import TransferAction
-from kapture.converter.openmvg.export_openmvg import export_openmvg
+import kapture.converter.openmvg.export_openmvg as openmvg_export
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('openmvg')
 
 
-def export_openmvg_command_line():
+def export_openmvg(
+        input: str,
+        output: Optional[str] = None,
+        sfm_data: Optional[str] = None,
+        images: Optional[str] = None,
+        regions: Optional[str] = None,
+        matches: Optional[str] = None,
+        image_transfer: TransferAction = TransferAction.skip,
+        image_path_flatten: bool = False,
+        keypoints_type: Optional[str] = None,
+        descriptors_type: Optional[str] = None,
+        use_v2_intrinsics_format: bool = False,
+        force: bool = False,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False,
+) -> None:
     """
-    Do the kapture to openmvg export using the parameters given on the command line.
+    Exports from kapture format to openMVG JSON file.
+
+    :param input: path to input kapture data root directory
+    :param output: root path to openmvg data structure (sfm_data, images, regions and matches sub paths are guessed).
+    :param sfm_data: path to output openMVG sfm_data JSON file.
+    :param images: path to output openMVG image directory.
+    :param regions: path to output openMVG regions directory (for features and descriptors).
+    :param matches: path to output openMVG matches file.
+    :param image_transfer: what to do with images: root_link: link to the root of the images directory;
+                           link_absolute: absolute individual file link; link_relative: relative individual file link;
+                           copy: copy file instead of creating link; move: move file instead of creating link;
+                           skip: do not create links.
+    :param image_path_flatten: flatten image subpath, to make sure there is no collision in image names.
+    :param keypoints_type: kapture keypoints type.
+    :param descriptors_type: kapture descriptors type.
+    :param use_v2_intrinsics_format: do not use value0 for pinhole_brown_t2 and fisheye cameras.
+    :param force: delete output file if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(description='Exports from kapture format to openMVG JSON file.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output file if already exists.')
-    # create the parser for the export command #########################################################################
-    parser.add_argument('-i', '-k', '--kapture', required=True,
-                        help='path to input kapture data root directory')
-    parser.add_argument('-o', '--openmvg',
-                        help='root path to openmvg data structure (subpath are guessed).')
-    parser.add_argument('-s', '--sfm_data',
-                        help='path to output openMVG sfm_data JSON file.')
-    parser.add_argument('-im', '--images',
-                        help='path to output openMVG image directory.')
-    parser.add_argument('-r', '--regions',
-                        help='path to output openMVG regions directory (for features and descriptors).')
-    parser.add_argument('-m', '--matches',
-                        help='path to output openMVG matches file.')
-    parser.add_argument('--image_action', default='skip', type=TransferAction,
-                        help=f'''what to do with images:
-        {TransferAction.root_link.name}: link to the root of the images directory (default) ;
-        {TransferAction.link_absolute.name}: absolute individual file link ;
-        {TransferAction.link_relative.name}: relative individual file link ;
-        {TransferAction.copy.name}: copy file instead of creating link ;
-        {TransferAction.move.name}: move file instead of creating link ;
-        {TransferAction.skip.name}: do not create links
-                                      ''')
-    parser.add_argument('--image_path_flatten', action='store_true',
-                        help='flatten image subpath, to make sure there is no collision in image names.')
-    parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
-    parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
-
-    parser.add_argument('--use_v2_intrinsics_format', action='store_true',
-                        help='do not use value0 for pinhole_brown_t2 and fisheye cameras.')
-    args = parser.parse_args()
-    logger.setLevel(args.verbose)
-
-    if args.openmvg is None and args.sfm_data is None:
+    setup_logging(logger, verbose, quiet)
+    if output is None and sfm_data is None:
         raise ValueError('at least one output path should be given.')
 
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
-    # auto complete using args.openmvg
-    if args.openmvg and args.sfm_data is None:
-        args.sfm_data = path.join(args.openmvg, 'sfm_data.json')
-        logger.debug(f'guessing output sfm_data is {args.sfm_data}')
-    if args.openmvg and args.images is None:
-        args.images = path.join(args.openmvg, 'images')
-        logger.debug(f'guessing output images is {args.images}')
-    if args.openmvg and args.regions is None:
-        args.regions = path.join(args.openmvg, 'matches')
-        logger.debug(f'guessing output regions is {args.regions}')
-    if args.openmvg and args.matches is None:
-        args.matches = path.join(args.openmvg, 'matches', 'matches.txt')
-        logger.debug(f'guessing output matches is {args.matches}')
+    # auto complete using output
+    if output and sfm_data is None:
+        sfm_data = path.join(output, 'sfm_data.json')
+        logger.debug(f'guessing output sfm_data is {sfm_data}')
+    if output and images is None:
+        images = path.join(output, 'images')
+        logger.debug(f'guessing output images is {images}')
+    if output and regions is None:
+        regions = path.join(output, 'matches')
+        logger.debug(f'guessing output regions is {regions}')
+    if output and matches is None:
+        matches = path.join(output, 'matches', 'matches.txt')
+        logger.debug(f'guessing output matches is {matches}')
 
     # no image dir == skip transfer
-    if args.images is None:
+    if images is None:
         logger.info('No images directory provided, skipping image files transfer')
-        args.image_action = TransferAction.skip
-    if args.image_action == TransferAction.skip:
-        args.images = None
+        image_transfer = TransferAction.skip
+    if image_transfer == TransferAction.skip:
+        images = None
 
-    export_openmvg(args.kapture,
-                   args.sfm_data,
-                   args.images,
-                   args.regions,
-                   args.matches,
-                   args.image_action,
-                   args.image_path_flatten,
-                   args.keypoints_type,
-                   args.descriptors_type,
-                   args.use_v2_intrinsics_format,
-                   args.force
-                   )
+    openmvg_export.export_openmvg(input,
+                                  sfm_data,
+                                  images,
+                                  regions,
+                                  matches,
+                                  image_transfer,
+                                  image_path_flatten,
+                                  keypoints_type,
+                                  descriptors_type,
+                                  use_v2_intrinsics_format,
+                                  force
+                                  )
+
+
+def main():
+    run_cli(export_openmvg, aliases={
+        '--input': ['-k', '--kapture'],
+        '--output': ['--openmvg'],
+        '--sfm_data': ['-s'],
+        '--images': ['-im'],
+        '--regions': ['-r'],
+        '--matches': ['-m'],
+        '--image_transfer': ['--image_action'],
+        '--keypoints_type': ['-kpt'],
+        '--descriptors_type': ['-desc'],
+    })
 
 
 if __name__ == '__main__':
-    try:
-        export_openmvg_command_line()
-    except Exception:
-        logger.error('Fatal error', exc_info=True)
+    main()

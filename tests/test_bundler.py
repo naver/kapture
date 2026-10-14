@@ -36,7 +36,7 @@ class TestImportBundler(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_bundler(bundler_file_path, bundler_imagelist_path, self.images_folder, tmpdirname,
                            ignore_trajectories=False, add_reconstruction=True,
-                           force_overwrite_existing=True)
+                           force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata.sensors = self.bundler_sensors
@@ -47,7 +47,7 @@ class TestImportBundler(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_bundler(bundler_file_path, bundler_imagelist_path, self.images_folder, tmpdirname,
                            ignore_trajectories=True, add_reconstruction=True,
-                           force_overwrite_existing=True)
+                           force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata.sensors = self.bundler_sensors
@@ -59,7 +59,7 @@ class TestImportBundler(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_bundler(bundler_file_path, bundler_imagelist_path, self.images_folder, tmpdirname,
                            ignore_trajectories=False, add_reconstruction=False,
-                           force_overwrite_existing=True)
+                           force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata.sensors = self.bundler_sensors

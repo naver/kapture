@@ -25,8 +25,8 @@ class TestImportNVM(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=False, add_reconstruction=True,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=False, add_reconstruction=True,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             imported_aachen_data = kapture_from_dir(tmpdirname)
@@ -35,8 +35,8 @@ class TestImportNVM(unittest.TestCase):
         # test without trajectories
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=True, add_reconstruction=True,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=True, add_reconstruction=True,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata._trajectories = None
@@ -46,8 +46,8 @@ class TestImportNVM(unittest.TestCase):
         # test without points3d
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=False, add_reconstruction=False,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=False, add_reconstruction=False,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata._points3d = None
@@ -59,8 +59,8 @@ class TestImportNVM(unittest.TestCase):
         # test with filter list
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path=self.filter, ignore_trajectories=True, add_reconstruction=False,
-                       force_overwrite_existing=True)
+                       filter_list=self.filter, ignore_trajectories=True, add_reconstruction=False,
+                       force=True)
 
             imported_aachen_data = kapture_from_dir(tmpdirname)
             self.assertTrue(len(imported_aachen_data.records_camera.key_pairs()) == 2)
@@ -76,8 +76,8 @@ class TestImportNVM(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=False, add_reconstruction=True,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=False, add_reconstruction=True,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             imported_aachen_data = kapture_from_dir(tmpdirname)
@@ -86,8 +86,8 @@ class TestImportNVM(unittest.TestCase):
         # test without trajectories
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=True, add_reconstruction=True,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=True, add_reconstruction=True,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata._trajectories = None
@@ -97,8 +97,8 @@ class TestImportNVM(unittest.TestCase):
         # test without points3d
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path="", ignore_trajectories=False, add_reconstruction=False,
-                       force_overwrite_existing=True)
+                       filter_list="", ignore_trajectories=False, add_reconstruction=False,
+                       force=True)
 
             expected_kdata = kapture_from_dir(path.join(self.aachen_folder, 'kapture/training'))
             expected_kdata._points3d = None
@@ -110,8 +110,8 @@ class TestImportNVM(unittest.TestCase):
         # test with filter list
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_nvm(nvm_path, self.images_folder, tmpdirname,
-                       filter_list_path=self.filter, ignore_trajectories=True, add_reconstruction=False,
-                       force_overwrite_existing=True)
+                       filter_list=self.filter, ignore_trajectories=True, add_reconstruction=False,
+                       force=True)
 
             imported_aachen_data = kapture_from_dir(tmpdirname)
             self.assertTrue(len(imported_aachen_data.records_camera.key_pairs()) == 2)

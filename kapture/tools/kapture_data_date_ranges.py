@@ -5,7 +5,6 @@
 Script to print statistics about kapture data.
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -14,8 +13,8 @@ from datetime import datetime
 
 import kapture
 import kapture.utils.computation as computation
-import kapture.utils.logging
 import kapture.io.csv
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('kapture_data_date')
 
@@ -107,12 +106,18 @@ def print_info(kapture_path: str, kapture_filename: str) -> None:
                   f' : {(nb_lines-2):12,d} records'.replace(',', ' '))
 
 
-def do_print(kapture_path: str) -> None:
+def print_date_ranges(input: str,
+                      verbose: Verbosity = DEFAULT_VERBOSITY,
+                      quiet: bool = False) -> None:
     """
-    Print out kapture data:
+    Print statistics about kapture records files with timestamps.
 
-    :param kapture_path: full path to kapture directory.
+    :param input: path to kapture data root directory.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
+    kapture_path = path.abspath(input)
     dirs_to_examine = set()
     for k_path in kapture.io.csv.CSV_FILENAMES.values():
         dirs_to_examine.add(path.dirname(k_path))
@@ -137,30 +142,9 @@ def do_print(kapture_path: str) -> None:
             logger.debug(f'{kapture_dir} does not exist')
 
 
-def print_command_line() -> None:
-    """
-    Do the print using the parameters given on the command line.
-    """
-
-    parser = argparse.ArgumentParser(description='Print statistics about kapture records files with timestamps.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-k', '--kapture', required=True,
-                        help='path to kapture data root directory.')
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    do_print(path.abspath(args.kapture))
+def main():
+    run_cli(print_date_ranges, aliases={'--input': ['-k', '--kapture']})
 
 
 if __name__ == '__main__':
-    print_command_line()
+    main()

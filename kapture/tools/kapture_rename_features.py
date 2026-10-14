@@ -8,24 +8,35 @@ Rename features inside kapture data
 import logging
 import os
 import os.path as path
-import argparse
 import shutil
+from typing import Literal
 
 import kapture
-import kapture.utils.logging
 import kapture.io.features
 import kapture.io.csv
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('rename_features')
 
 
-def rename_features(kapture_dirpath: str,
-                    feature_type: str,
+def rename_features(input: str,
+                    feature_type: Literal['keypoints', 'descriptors', 'global_features'],
                     current_name: str,
-                    new_name: str) -> None:
+                    new_name: str,
+                    verbose: Verbosity = DEFAULT_VERBOSITY,
+                    quiet: bool = False) -> None:
     """
     Rename features inside kapture data.
+
+    :param input: path to kapture directory
+    :param feature_type: type of features to rename.
+    :param current_name: keypoints_type, descriptors_type or global_features_type depending on selected features.
+    :param new_name: new keypoints_type, descriptors_type or global_features_type.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
+    kapture_dirpath = input
     with kapture.io.csv.get_all_tar_handlers(kapture_dirpath) as tar_handlers:
         kapture_data = kapture.io.csv.kapture_from_dir(kapture_dirpath, tar_handlers=tar_handlers)
     if feature_type == 'global_features':
@@ -110,39 +121,9 @@ def rename_features(kapture_dirpath: str,
     logger.debug('all done!')
 
 
-def rename_features_command_line() -> None:
-    """
-    Rename features inside kapture data.
-    """
-    parser = argparse.ArgumentParser(
-        description='rename features inside kapture data')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # export ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to kapture directory')
-    parser.add_argument('--feature-type', required=True, choices=['keypoints', 'descriptors', 'global_features'],
-                        help='types of features to rename.')
-    parser.add_argument('--current-name', required=True,
-                        help='keypoints_type, descriptors_type, global_features_type depending on selected features.')
-    parser.add_argument('--new-name', required=True,
-                        help='keypoints_type, descriptors_type, global_features_type depending on selected features.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    rename_features(args.input, args.feature_type, args.current_name, args.new_name)
+def main():
+    run_cli(rename_features)
 
 
 if __name__ == '__main__':
-    rename_features_command_line()
+    main()

@@ -5,63 +5,60 @@
 This script exports kapture data to a COLMAP database and/or reconstruction files
 """
 
-import argparse
 import logging
-import sys
-import kapture
-import kapture.utils.logging
-from kapture.converter.colmap.export_colmap import export_colmap
+from typing import Optional
+import kapture.converter.colmap.export_colmap as colmap_export
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 
 logger = logging.getLogger('colmap')
 
 
-def colmap_command_line():
+def export_colmap(
+        input: str,
+        database: str,
+        reconstruction: Optional[str] = None,
+        rig: Optional[str] = None,
+        keypoints_type: Optional[str] = None,
+        descriptors_type: Optional[str] = None,
+        pairsfile_path: Optional[str] = None,
+        force: bool = False,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False,
+) -> None:
     """
-    Do the export of kapture data using the parameters given on the command line.
+    Exports kapture data to Colmap database and/or text files.
+
+    :param input: input path to kapture data root directory
+    :param database: database output path.
+    :param reconstruction: text reconstruction output path.
+    :param rig: json rig output path.
+    :param keypoints_type: kapture keypoints type.
+    :param descriptors_type: kapture descriptors type.
+    :param pairsfile_path: text file in the csv format; where each line is image_name1, image_name2, score
+                           which contains the matches to export
+    :param force: delete colmap if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(description='exports kapture data to Colmap database and/or text files.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete colmap if already exists.')
-    # create the parser for the export command #########################################################################
-    parser.add_argument('-i', '-k', '--kapture', required=True,
-                        help='input path to kapture data root directory')
-    parser.add_argument('--pairsfile-path', default=None, type=str,
-                        help=('text file in the csv format; where each line is image_name1, image_name2, score '
-                              'which contains the matches to export'))
-    parser.add_argument('-kpt', '--keypoints-type', default=None, help='kapture keypoints type.')
-    parser.add_argument('-desc', '--descriptors-type', default=None, help='kapture descriptors type.')
-    parser.add_argument('-db', '--database', required=True,
-                        help='database output path.')
-    parser.add_argument('-txt', '--reconstruction',
-                        help='text reconstruction output path.')
-    parser.add_argument('-rig', '--rig',
-                        help='json rig output path.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
+    setup_logging(logger, verbose, quiet)
     logger.info('exporting colmap ...')
-    export_colmap(args.kapture, args.database, args.reconstruction,
-                  args.keypoints_type, args.descriptors_type,
-                  args.rig, args.force, args.pairsfile_path)
+    colmap_export.export_colmap(input, database, reconstruction,
+                                keypoints_type, descriptors_type,
+                                rig, force, pairsfile_path)
     logger.info('done.')
 
 
+def main():
+    run_cli(export_colmap, aliases={
+        '--input': ['-k', '--kapture'],
+        '--database': ['-db'],
+        '--reconstruction': ['-txt'],
+        '--rig': ['-rig'],
+        '--keypoints_type': ['-kpt'],
+        '--descriptors_type': ['-desc'],
+    })
+
+
 if __name__ == '__main__':
-    colmap_command_line()
+    main()

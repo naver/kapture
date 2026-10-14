@@ -5,7 +5,6 @@
 Script to plot a kapture to a PLY file.
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -14,11 +13,11 @@ import sys
 from tqdm import tqdm
 import numpy as np
 import kapture
-import kapture.utils.logging
 import kapture.io.csv as csv
 import kapture.io.ply as ply
 import kapture.io.features
-from typing import Optional, List
+from typing import List, Literal
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('ply')
 
@@ -39,12 +38,13 @@ export_choices = {
     CHOICE_POINTS3D: 'plot the 3-D point cloud.',
     CHOICE_LIDAR: 'plot depth maps as point cloud (one per depth map)'
 }
+ExportChoice = Literal['rigs', 'trajectories', 'points3d', 'lidar']
 
 
 def guess_what_to_do(
         choices: List[str],
-        only: Optional[list] = None,
-        skip: Optional[list] = None
+        only: List[str] = [],
+        skip: List[str] = []
 ) -> List[str]:
     if only:
         choices = [c for c in choices if c in only]
@@ -53,23 +53,32 @@ def guess_what_to_do(
     return choices
 
 
-def export_ply(kapture_path: str,  # noqa: C901
-               ply_dir_path: str,
-               axis_length: float,
-               only: Optional[list] = None,
-               skip: Optional[list] = None
+def export_ply(input: str,  # noqa: C901
+               output: str = '',
+               axis_length: float = 0.1,
+               only: List[ExportChoice] = [],
+               skip: List[ExportChoice] = [],
+               verbose: Verbosity = DEFAULT_VERBOSITY,
+               quiet: bool = False
                ) -> None:
     """
-    Export the kapture 3D data in a PLY file.
+    Export 3D points data (rigs: plot the rig geometry, ie. relative pose of sensors into the rig;
+    trajectories: plot the trajectory of every sensors; points3d: plot the 3-D point cloud;
+    lidar: plot depth maps as point cloud, one per depth map) to PLY files.
 
-    :param kapture_path: top directory of the kapture
-    :param ply_dir_path: path to the ply file to create
+    :param input: input path to kapture data root directory
+    :param output: output directory (PLY file format). If not given, same as input.
     :param axis_length: length of axis representation (in world unit)
-    :param only: list of the only kapture objects to plot (optional)
-    :param skip: list of the kapture objects to skip
+    :param only: things to plot
+    :param skip: things to not plot
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
+    input = path.abspath(input)
+    output = path.abspath(output) if output else input
     try:
-        os.makedirs(ply_dir_path, exist_ok=True)
+        os.makedirs(output, exist_ok=True)
 
         what_to_do = guess_what_to_do(choices=export_choices.keys(), only=only, skip=skip)
 
@@ -81,33 +90,33 @@ def export_ply(kapture_path: str,  # noqa: C901
             data_skip_list.append(kapture.Points3d)
         if CHOICE_LIDAR not in what_to_do:
             data_skip_list.append(kapture.RecordsLidar)
-        with csv.get_all_tar_handlers(kapture_path) as tar_handlers:
-            kapture_data = csv.kapture_from_dir(kapture_path, skip_list=data_skip_list, tar_handlers=tar_handlers)
+        with csv.get_all_tar_handlers(input) as tar_handlers:
+            kapture_data = csv.kapture_from_dir(input, skip_list=data_skip_list, tar_handlers=tar_handlers)
 
         logger.info('exporting  ...')
         if CHOICE_RIGS in what_to_do and kapture_data.rigs:
             logger.info(f'creating {len(kapture_data.rigs)} rigs.')
             for rig_id, rig in kapture_data.rigs.items():
-                rig_ply_filepath = path.join(ply_dir_path, f'rig_{rig_id}.ply')
+                rig_ply_filepath = path.join(output, f'rig_{rig_id}.ply')
                 logger.info(f'creating rig file : {rig_ply_filepath}.')
                 logger.debug(rig_ply_filepath)
                 ply.rig_to_ply(rig_ply_filepath, rig, axis_length)
 
         if CHOICE_TRAJECTORIES in what_to_do and kapture_data.trajectories:
-            trajectories_ply_filepath = path.join(ply_dir_path, 'trajectories.ply')
+            trajectories_ply_filepath = path.join(output, 'trajectories.ply')
             logger.info(f'creating trajectories file : {trajectories_ply_filepath}')
             ply.trajectories_to_ply(filepath=trajectories_ply_filepath,
                                     trajectories=kapture_data.trajectories,
                                     axis_length=axis_length)
 
         if CHOICE_POINTS3D in what_to_do and kapture_data.points3d:
-            points3d_ply_filepath = path.join(ply_dir_path, 'points3d.ply')
+            points3d_ply_filepath = path.join(output, 'points3d.ply')
             logger.info(f'creating 3D points file : {points3d_ply_filepath}')
             ply.points3d_to_ply(points3d_ply_filepath, kapture_data.points3d)
 
         if CHOICE_LIDAR in what_to_do and kapture_data.records_lidar:
-            lidar_ply_dir_path = path.join(ply_dir_path, 'records_data')
-            logger.info(f'creating lidar points files : {lidar_ply_dir_path}')
+            lidar_output = path.join(output, 'records_data')
+            logger.info(f'creating lidar points files : {lidar_output}')
             if kapture_data.rigs and kapture_data.trajectories:
                 # compute trajectories for lidars only
                 lidars = [sensor_id for sensor_id, sensor in kapture_data.sensors.items()
@@ -132,8 +141,8 @@ def export_ply(kapture_path: str,  # noqa: C901
             hide_progress = logger.getEffectiveLevel() > logging.INFO
             for timestamp, lidar_id, lidar_src_file_name in tqdm(lidars, disable=hide_progress):
                 # source lidar file may be ply or pcd
-                lidar_src_file_path = kapture.io.records.get_record_fullpath(kapture_path, lidar_src_file_name)
-                lidar_dst_file_path = path.join(lidar_ply_dir_path, lidar_id, f'{timestamp}.ply')
+                lidar_src_file_path = kapture.io.records.get_record_fullpath(input, lidar_src_file_name)
+                lidar_dst_file_path = path.join(lidar_output, lidar_id, f'{timestamp}.ply')
                 os.makedirs(path.dirname(lidar_dst_file_path), exist_ok=True)
 
                 points3d_o3d = o3d.io.read_point_cloud(lidar_src_file_path)
@@ -157,49 +166,9 @@ def export_ply(kapture_path: str,  # noqa: C901
         raise
 
 
-def export_ply_command_line() -> None:
-    """
-    Do the plot to ply file using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(description=f'Export 3D points data ({", ".join(export_choices.keys())})'
-                                                 f' to ply files: ' +
-                                                 ' // '.join(f'{k}: {v}' for k, v in export_choices.items()))
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-i', '--input', required=True,
-                        help='input path to kapture data root directory')
-    parser.add_argument('-o', '--output', required=False,
-                        help='output directory (PLY file format).')
-    parser.add_argument('--only', nargs='+', choices=export_choices.keys(), default=[],
-                        help='things to plot : ' + ', '.join('{}: {}'.format(k, v)
-                                                             for k, v in export_choices.items()))
-    parser.add_argument('--skip', nargs='+', choices=export_choices.keys(), default=[],
-                        help='things to not plot : ' + ', '.join(export_choices.keys()))
-    parser.add_argument('--axis_length', type=float, default=0.1,
-                        help='length of axis representation (in world unit).')
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-    if not args.output:
-        args.output = args.input
-
-    args.input = path.abspath(args.input)
-    args.output = path.abspath(args.output)
-
-    logger.debug(''.join(['\n\t{:13} = {}'.format(k, v) for k, v in vars(args).items()]))
-    export_ply(kapture_path=args.input,
-               ply_dir_path=args.output,
-               axis_length=args.axis_length,
-               only=args.only, skip=args.skip)
+def main():
+    run_cli(export_ply)
 
 
 if __name__ == '__main__':
-    export_ply_command_line()
+    main()

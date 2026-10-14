@@ -12,7 +12,6 @@ Please note that we do not provide the ground truth (including semantics) for ou
 all seqXX_02+ are hidden sequences (only *.color.jpg and *.rendered.depth.png)
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -23,11 +22,11 @@ from PIL import Image
 from tqdm import tqdm
 # kapture
 import kapture
-import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from typing import List
 
 logger = logging.getLogger('RIO10')
@@ -209,25 +208,30 @@ def _import_rio10_sequence(sequence_root: str, sequence_list: List[str],
     kapture_to_dir(kapture_dir_path, imported_kapture)
 
 
-def import_rio10(rio10_path: str,
-                 kapture_dir_path: str,
-                 force_overwrite_existing: bool = False,
-                 images_import_method: TransferAction = TransferAction.skip
+def import_rio10(input: str,
+                 output: str,
+                 force: bool = False,
+                 image_transfer: TransferAction = TransferAction.link_absolute,
+                 verbose: Verbosity = DEFAULT_VERBOSITY,
+                 quiet: bool = False
                  ) -> None:
     """
-    Imports RIO10 dataset and save them as kapture.
+    Imports RGB-D Dataset RIO10 files to the kapture format.
 
-    :param rio10_path: path to the RIO10 root path (contains folders named sceneXX)
-    :param kapture_dir_path: path to kapture output top directory
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files
+    :param input: path to the RIO10 root path (contains folders named sceneXX)
+    :param output: path to kapture output top directory
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: how to import actual image files
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    os.makedirs(kapture_dir_path, exist_ok=True)
+    setup_logging(logger, verbose, quiet)
+    os.makedirs(output, exist_ok=True)
 
     scenes = list(range(1, 11))
     for scene_id in scenes:
         logger.info(f'import scene {scene_id}...')
-        scene_path = path.join(rio10_path, f'scene{scene_id:02d}')
+        scene_path = path.join(input, f'scene{scene_id:02d}')
         if not path.isdir(scene_path):
             logger.warning(f'{scene_path} does not exist')
             continue
@@ -251,53 +255,25 @@ def import_rio10(rio10_path: str,
         if MAPPING_SEQUENCE_ID in seq_subfolders:
             # 1 is always the mapping sequence
             _import_rio10_sequence(seq_path, [seq_subfolders[MAPPING_SEQUENCE_ID]],
-                                   path.join(kapture_dir_path, f'scene{scene_id:02d}', 'mapping'),
-                                   images_import_method, force_overwrite_existing)
+                                   path.join(output, f'scene{scene_id:02d}', 'mapping'),
+                                   image_transfer, force)
         if VALIDATION_SEQUENCE_ID in seq_subfolders:
             # 2 is always the mapping sequence
             _import_rio10_sequence(seq_path, [seq_subfolders[VALIDATION_SEQUENCE_ID]],
-                                   path.join(kapture_dir_path, f'scene{scene_id:02d}', 'validation'),
-                                   images_import_method, force_overwrite_existing)
+                                   path.join(output, f'scene{scene_id:02d}', 'validation'),
+                                   image_transfer, force)
         testing_sequences = [v
                              for k, v in sorted(seq_subfolders.items())
                              if k != MAPPING_SEQUENCE_ID and k != VALIDATION_SEQUENCE_ID]
         if len(testing_sequences) > 0:
             _import_rio10_sequence(seq_path, testing_sequences,
-                                   path.join(kapture_dir_path, f'scene{scene_id:02d}', 'testing'),
-                                   images_import_method, force_overwrite_existing)
+                                   path.join(output, f'scene{scene_id:02d}', 'testing'),
+                                   image_transfer, force)
 
 
-def import_rio10_command_line() -> None:
-    """
-    Imports RGB-D Dataset RIO10 and save them as kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(
-        description='Imports RGB-D Dataset RIO10 files to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to RIO10 root path')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_rio10(args.input, args.output, args.force, args.image_transfer)
+def main():
+    run_cli(import_rio10)
 
 
 if __name__ == '__main__':
-    import_rio10_command_line()
+    main()

@@ -34,12 +34,11 @@ import PIL
 from PIL import Image
 import numpy as np
 import quaternion
-import argparse
 from typing import List, Optional, Set
 
 # kapture
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
@@ -51,37 +50,43 @@ MODEL = kapture.CameraType.SIMPLE_RADIAL
 LOCAL_FEATURE_TYPE = 'sift'
 
 
-def import_nvm(nvm_file_path: str,
-               nvm_images_path: str,
-               kapture_path: str,
-               filter_list_path: Optional[str],
-               ignore_trajectories: bool,
-               add_reconstruction: bool,
-               force_overwrite_existing: bool = False,
-               images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_nvm(input: str,
+               images: str,
+               output: str,
+               filter_list: Optional[str] = None,
+               ignore_trajectories: bool = False,
+               add_reconstruction: bool = False,
+               force: bool = False,
+               image_transfer: TransferAction = TransferAction.link_absolute,
+               verbose: Verbosity = DEFAULT_VERBOSITY,
+               quiet: bool = False) -> None:
     """
     Imports nvm data to kapture format.
 
-    :param nvm_file_path: path to nvm file
-    :param nvm_images_path: path to NVM images directory.
-    :param kapture_path: path to kapture root directory.
-    :param filter_list_path: path to the optional file containing a list of images to process
-    :param ignore_trajectories: if True, will not create trajectories
-    :param add_reconstruction: if True, will add observations, keypoints and 3D points.
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
+    :param input: path to nvm file
+    :param images: path to NVM images directory.
+    :param output: path to kapture root directory.
+    :param filter_list: path to the optional file containing a list of images to keep (one per line),
+                        images not in the list will be skipped
+    :param ignore_trajectories: do not import extrinsics.
+    :param add_reconstruction: add the 3d points/keypoints/observations to the output
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: choose how to import actual image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
 
     # TODO implement [optional calibration]
     # doc : http://ccwu.me/vsfm/doc.html#nvm
-    os.makedirs(kapture_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
+    os.makedirs(output, exist_ok=True)
+    delete_existing_kapture_files(output, force_erase=force)
 
     logger.info('loading all content...')
     # if there is a filter list, parse it
     # keep it as Set[str] to easily find images
-    if filter_list_path:
-        with open(filter_list_path) as file:
+    if filter_list:
+        with open(filter_list) as file:
             file_content = file.readlines()
         # remove end line char and empty lines
         filter_list = {line.rstrip() for line in file_content if line != '\n'}
@@ -89,7 +94,7 @@ def import_nvm(nvm_file_path: str,
         filter_list = None
 
     # now do the nvm
-    with open(nvm_file_path) as file:
+    with open(input) as file:
         nvm_content = file.readlines()
     # remove end line char and empty lines
     nvm_content = [line.rstrip() for line in nvm_content if line != '\n']
@@ -103,7 +108,7 @@ def import_nvm(nvm_file_path: str,
     point_id_offset = 0
 
     cameras = kapture.Sensors()
-    images = kapture.RecordsCamera()
+    records_camera = kapture.RecordsCamera()
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
     if add_reconstruction:
         observations = kapture.Observations()
@@ -137,9 +142,9 @@ def import_nvm(nvm_file_path: str,
                                                 offset,
                                                 camera_id_offset,
                                                 filter_list,
-                                                nvm_images_path,
-                                                cameras,
                                                 images,
+                                                cameras,
+                                                records_camera,
                                                 trajectories)
         offset += number_of_cameras
         camera_id_offset += number_of_cameras
@@ -151,7 +156,7 @@ def import_nvm(nvm_file_path: str,
             assert keypoints is not None
             assert observations is not None
             logger.debug('importing model points...')
-            parse_points3d(kapture_path,
+            parse_points3d(output,
                            number_of_points,
                            nvm_content,
                            offset,
@@ -174,14 +179,14 @@ def import_nvm(nvm_file_path: str,
 
     # import (copy) image files.
     logger.info('import image files ...')
-    images_filenames = [f for _, _, f in kapture.flatten(images)]
-    import_record_data_from_dir_auto(nvm_images_path, kapture_path, images_filenames, images_import_method)
+    images_filenames = [f for _, _, f in kapture.flatten(records_camera)]
+    import_record_data_from_dir_auto(images, output, images_filenames, image_transfer)
 
     # pack into kapture format
-    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories,
+    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=records_camera, trajectories=trajectories,
                                        points3d=points3d, keypoints=keypoints, observations=observations)
     logger.info('writing imported data...')
-    kapture_to_dir(kapture_path, imported_kapture)
+    kapture_to_dir(output, imported_kapture)
 
 
 def parse_cameras(number_of_cameras: int,
@@ -317,49 +322,9 @@ def parse_points3d(kapture_path: str,
         keypoints.add(image_filename)
 
 
-def import_nvm_command_line() -> None:
-    """
-    Do the NVM import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(
-        description='import nvm file to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to nvm file')
-    parser.add_argument('-im', '--images', default=None,
-                        help='path to images directory.')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
-    parser.add_argument('--filter-list', default="",
-                        help=('path to the filter list (optional), '
-                              'this file contains a list a images, '
-                              'one per line that will be kept in the output. '
-                              'images not in the list will be skipped'))
-    parser.add_argument('--ignore-trajectories', action='store_true', default=False,
-                        help='Do not export extrinsics.')
-    parser.add_argument('--add-reconstruction', action='store_true', default=False,
-                        help='add the 3d points/keypoints/observations to the output')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_nvm(args.input, args.images, args.output, args.filter_list,
-               args.ignore_trajectories, args.add_reconstruction, args.force, args.image_transfer)
+def main():
+    run_cli(import_nvm, aliases={'--images': ['-im']})
 
 
 if __name__ == '__main__':
-    import_nvm_command_line()
+    main()

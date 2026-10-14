@@ -7,7 +7,6 @@ The trajectory file contains the following info on every line: timestamp, camera
 
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -19,7 +18,7 @@ from typing import List
 
 # kapture
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.io.csv import table_from_file, kapture_to_dir
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 from kapture.io.structure import delete_existing_kapture_files
@@ -46,54 +45,59 @@ def find_images_files_top_directory(images_list_file_path, images_dir_path, do_n
     return common_images_path
 
 
-def import_image_list_with_poses(images_list_file_path: str,
-                                 images_dir_path: str,
-                                 camera_calibration_file_path: str,
-                                 kapture_path: str,
-                                 force_overwrite_existing: bool = False,
-                                 images_import_method: TransferAction = TransferAction.skip,
-                                 do_not_import_images: bool = False) -> None:
+def import_image_list_with_poses(input: str,
+                                 output: str,
+                                 images: str = '',
+                                 calibration: str = '',
+                                 force: bool = False,
+                                 image_transfer: TransferAction = TransferAction.copy,
+                                 import_images: bool = True,
+                                 verbose: Verbosity = DEFAULT_VERBOSITY,
+                                 quiet: bool = False) -> None:
     """
-    Imports the list of images with their poses to a kapture. This creates only images and cameras.
+    Imports a list of images with their poses (trajectory+images) to a kapture.
 
-    :param images_list_file_path: file containing the list of images with their poses
-    :param images_dir_path: top directory of the images path. If not defined, the images path in the list file
-        must be full path.
-    :param camera_calibration_file_path: path to the calibration camera file in opencv format.
-    If missing, will compute a simple camera model based on the images
-    :param kapture_path: path to kapture root directory.
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
-    :param do_not_import_images: when true, do not import the image files.
+    :param input: path to the file containing the list of images with their poses
+    :param output: path to kapture root directory.
+    :param images: path to top directory of images. Necessary only if the images path are relative in the list file.
+    :param calibration: path to opencv camera calibration YAML file (YAML 1.1).
+                        If missing, will compute a simple camera model based on the images.
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: choose how to import actual image files.
+    :param import_images: import the image files. If false, imports their poses (the trajectory) only.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    if not path.exists(images_list_file_path):
-        raise FileNotFoundError(images_list_file_path)
-    os.makedirs(kapture_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
+    setup_logging(logger, verbose, quiet)
+
+    if not path.exists(input):
+        raise FileNotFoundError(input)
+    os.makedirs(output, exist_ok=True)
+    delete_existing_kapture_files(output, force_erase=force)
 
     cameras = kapture.Sensors()
     camera_model_provided = False
-    if camera_calibration_file_path:
-        if not path.exists(camera_calibration_file_path):
-            raise FileNotFoundError(camera_calibration_file_path)
-        camera = import_opencv_camera_calibration(camera_calibration_file_path)
+    if calibration:
+        if not path.exists(calibration):
+            raise FileNotFoundError(calibration)
+        camera = import_opencv_camera_calibration(calibration)
         cameras[camera.name] = camera
         camera_model_provided = True
-    images = kapture.RecordsCamera()
+    records_camera = kapture.RecordsCamera()
     trajectories = kapture.Trajectories()
     image_name_list: List[str] = []
 
-    logger.info(f'Loading data from {images_list_file_path}')
-    common_images_path = find_images_files_top_directory(images_list_file_path, images_dir_path, do_not_import_images)
+    logger.info(f'Loading data from {input}')
+    common_images_path = find_images_files_top_directory(input, images, not import_images)
 
     # Parse image list data file
-    with open(images_list_file_path, 'rt') as file:
+    with open(input, 'rt') as file:
         images_list_data = table_from_file(file)
         for image_line in images_list_data:
             timestamp, camera_id, image_path, qw, qx, qy, qz, tx, ty, tz = image_line
             # Add top directory if necessary
-            if not path.isabs(image_path) and images_dir_path:
-                image_path = path.join(images_dir_path, image_path)
+            if not path.isabs(image_path) and images:
+                image_path = path.join(images, image_path)
             if path.exists(image_path):
                 if not camera_model_provided:
                     # Create corresponding camera model
@@ -107,10 +111,10 @@ def import_image_list_with_poses(images_list_file_path: str,
                     except (OSError, PIL.UnidentifiedImageError):
                         # It is not a valid image: skip it
                         logger.info(f'Skipping invalid image file {image_path}')
-                if not do_not_import_images:
+                if import_images:
                     image_name = path.relpath(image_path, common_images_path)
                     image_name_list.append(image_name)
-                    images[(int(timestamp), camera_id)] = image_name
+                    records_camera[(int(timestamp), camera_id)] = image_name
             else:
                 logger.debug(f'Missing image file {image_path}')
             # Create pose
@@ -124,58 +128,25 @@ def import_image_list_with_poses(images_list_file_path: str,
             trajectories[(int(timestamp), camera_id)] = pose
 
     # pack into kapture format
-    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories)
+    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=records_camera, trajectories=trajectories)
     logger.info('writing imported data...')
-    kapture_to_dir(kapture_path, imported_kapture)
+    kapture_to_dir(output, imported_kapture)
 
     # import (copy) image files.
-    if not do_not_import_images:
+    if import_images:
         logger.info('import image files ...')
-        import_record_data_from_dir_auto(common_images_path, kapture_path, image_name_list, images_import_method)
+        import_record_data_from_dir_auto(common_images_path, output, image_name_list, image_transfer)
 
 
-def import_image_list_with_poses_command_line() -> None:
-    """
-    Do the images list import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(description='import images with their poses (trajectory+images)'
-                                                 ' to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '--force', action='store_true', default=False,
-                        help='force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-l', '--images_list_file', required=True,
-                        help='path to images (with their poses) list file')
-    parser.add_argument('--top_dir_images', default='',
-                        help='path to top directory of images.'
-                             ' Necessary only if the images path are relative in the list file')
-    parser.add_argument('-c', '--camera_model_file',
-                        help='path to opencv camera calibration YAML file. Must be in YAML 1.1.'
-                             'If missing, will make a model based on images')
-    parser.add_argument('-k', '--kapture', required=True, help='kapture directory')
-    parser.add_argument('--image_action', type=TransferAction, default=TransferAction.copy,
-                        help=f'How to import images [copy], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('--do_not_import_images', action='store_true', default=False,
-                        help='Do not import the images files, but their poses (the trajectory) only.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_image_list_with_poses(args.images_list_file, args.top_dir_images, args.camera_model_file,
-                                 args.kapture, args.force,
-                                 args.image_action, args.do_not_import_images)
+def main():
+    run_cli(import_image_list_with_poses, aliases={
+        '--input': ['-l', '--images_list_file'],
+        '--output': ['-k', '--kapture'],
+        '--images': ['--top_dir_images'],
+        '--calibration': ['-c', '--camera_model_file'],
+        '--image_transfer': ['--image_action'],
+    })
 
 
 if __name__ == '__main__':
-    import_image_list_with_poses_command_line()
+    main()

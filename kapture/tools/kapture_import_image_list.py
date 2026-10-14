@@ -5,7 +5,6 @@
 This script imports a list of images in the kapture format
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -15,7 +14,7 @@ from typing import List
 
 # kapture
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 from kapture.io.records import TransferAction, import_record_data_from_dir_auto
@@ -23,30 +22,37 @@ from kapture.io.records import TransferAction, import_record_data_from_dir_auto
 logger = logging.getLogger('import_image_list')
 
 
-def import_image_list(images_list_filenames: List[str],
-                      images_dirpath: str,
-                      kapture_path: str,
-                      force_overwrite_existing: bool = False,
-                      images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_image_list(inputs: List[str],
+                      output: str,
+                      images: str = '',
+                      force: bool = False,
+                      image_transfer: TransferAction = TransferAction.link_absolute,
+                      verbose: Verbosity = DEFAULT_VERBOSITY,
+                      quiet: bool = False) -> None:
     """
     Imports the list of images to a kapture. This creates only images and cameras.
+    Each line of an image list file is either "image_name camera_type camera_params" or just "image_name".
 
-    :param images_list_filenames: list of text files containing image file names
-    :param images_dirpath: path to images directory.
-    :param kapture_path: path to kapture root directory.
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
+    :param inputs: paths to the image list text files
+    :param output: path to kapture root directory.
+    :param images: path to images directory. Only needed when inputs do not have camera parameters.
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: choose how to import actual image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    assert isinstance(images_list_filenames, list)
-    os.makedirs(kapture_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_path, force_erase=force_overwrite_existing)
+    setup_logging(logger, verbose, quiet)
+
+    assert isinstance(inputs, list)
+    os.makedirs(output, exist_ok=True)
+    delete_existing_kapture_files(output, force_erase=force)
 
     cameras = kapture.Sensors()
-    images = kapture.RecordsCamera()
+    records_camera = kapture.RecordsCamera()
 
     offset = 0
     logger.info('starting conversion...')
-    for images_list_filename in images_list_filenames:
+    for images_list_filename in inputs:
         logger.info(f'loading {images_list_filename}')
         with open(images_list_filename) as file:
             images_list = file.readlines()
@@ -63,7 +69,7 @@ def import_image_list(images_list_filenames: List[str],
                     model = kapture.CameraType.UNKNOWN_CAMERA.value
                     try:
                         # lazy open
-                        with Image.open(path.join(images_dirpath, image_file_name)) as im:
+                        with Image.open(path.join(images, image_file_name)) as im:
                             width, height = im.size
                             model_params = [width, height]
                     except (OSError, PIL.UnidentifiedImageError):
@@ -73,67 +79,23 @@ def import_image_list(images_list_filenames: List[str],
 
                 camera_id = f'sensor{i + offset}'
                 cameras[camera_id] = kapture.Camera(model, model_params)
-                images[(i + offset, camera_id)] = image_file_name
+                records_camera[(i + offset, camera_id)] = image_file_name
             offset += len(images_list)
 
     # import (copy) image files.
     logger.info('import image files ...')
-    filename_list = [f for _, _, f in kapture.flatten(images)]
-    import_record_data_from_dir_auto(images_dirpath, kapture_path, filename_list, images_import_method)
+    filename_list = [f for _, _, f in kapture.flatten(records_camera)]
+    import_record_data_from_dir_auto(images, output, filename_list, image_transfer)
 
     # pack into kapture format
-    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images)
+    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=records_camera)
     logger.info('writing imported data...')
-    kapture_to_dir(kapture_path, imported_kapture)
+    kapture_to_dir(output, imported_kapture)
 
 
-def import_image_list_command_line() -> None:
-    """
-    Do the image list import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(description='import image list text files to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '--force', action='store_true', default=False,
-                        help='force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--inputs', nargs='+', required=True,
-                        help=('input path to image list files:\n'
-                              'image_name camera_type camera_params\n or\n image_name'))
-    parser.add_argument('-o', '--output', required=True, help='output directory')
-    parser.add_argument('-im', '--image_path', default="",
-                        help='path to images. Only needed when inputs do not have camera parameters')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    """
-    image_name camera_type camera_params
-    example: image_name SIMPLE_RADIAL w h f cx cy r
-    or
-    image_name
-    """
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_image_list(
-        images_list_filenames=args.inputs,
-        images_dirpath=args.image_path,
-        kapture_path=args.output,
-        force_overwrite_existing=args.force,
-        images_import_method=args.image_transfer
-    )
+def main():
+    run_cli(import_image_list, aliases={'--images': ['-im', '--image_path']})
 
 
 if __name__ == '__main__':
-    import_image_list_command_line()
+    main()

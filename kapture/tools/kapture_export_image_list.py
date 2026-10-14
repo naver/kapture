@@ -7,10 +7,9 @@ Export the list of images of a kapture into a file listing the image files, and 
 
 import logging
 import os
-import argparse
 # kapture
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.io.csv import kapture_from_dir
 from kapture.utils.paths import safe_remove_file
 
@@ -18,17 +17,26 @@ from kapture.utils.paths import safe_remove_file
 logger = logging.getLogger('export_image_list')
 
 
-def export_image_list(kapture_path: str, output_path: str, export_camera_params: bool, force: bool) -> None:
+def export_image_list(input: str,
+                      output: str,
+                      camera_params: bool = False,
+                      force: bool = False,
+                      verbose: Verbosity = DEFAULT_VERBOSITY,
+                      quiet: bool = False) -> None:
     """
-    Export image list in a text file.
+    Export kapture data image list to a text file: one image name per line, optionally followed
+    by the camera type and parameters (eg. image_name SIMPLE_RADIAL w h f cx cy r).
 
-    :param kapture_path: top directory of the kapture
-    :param output_path: path of the image list file
-    :param export_camera_params: if True, add camera parameters after every file name
-    :param force: Silently overwrite image list file if already exists.
+    :param input: top directory of the kapture
+    :param output: path of the image list file
+    :param camera_params: if True, add camera parameters after every file name
+    :param force: silently overwrite image list file if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    safe_remove_file(output_path, force)
+    setup_logging(logger, verbose, quiet)
+    os.makedirs(os.path.dirname(os.path.abspath(output)), exist_ok=True)
+    safe_remove_file(output, force)
     skip_heavy_useless = [kapture.Trajectories,
                           kapture.RecordsLidar, kapture.RecordsWifi,
                           kapture.RecordsAccelerometer, kapture.RecordBluetooth,
@@ -36,58 +44,25 @@ def export_image_list(kapture_path: str, output_path: str, export_camera_params:
                           kapture.RecordsDepth, kapture.RecordsMagnetic,
                           kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,
                           kapture.Matches, kapture.Points3d, kapture.Observations]
-    kapture_to_export = kapture_from_dir(kapture_path, skip_list=skip_heavy_useless)
+    kapture_to_export = kapture_from_dir(input, skip_list=skip_heavy_useless)
     output_content = []
     logger.info('starting conversion...')
     for _, sensor_id, filename in kapture.flatten(kapture_to_export.records_camera, is_sorted=True):
         line = filename
-        if export_camera_params:
+        if camera_params:
             camera = kapture_to_export.sensors[sensor_id]
             assert isinstance(camera, kapture.Camera)
             line += ' ' + ' '.join(camera.sensor_params)
         output_content.append(line)
 
     logger.info('writing exported data...')
-    with open(output_path, 'w') as fid:
+    with open(output, 'w') as fid:
         fid.write('\n'.join(output_content))
 
 
-def export_image_list_command_line() -> None:
-    """
-    Do the image list export using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(description='export kapture data image list to text file.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '--force', action='store_true', default=False,
-                        help='force delete output if already exists.')
-    # export ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True, help='input path to kapture root folder')
-    parser.add_argument('-o', '--output', required=True, help='output path to text file')
-    parser.add_argument('-c', '--camera-params', action='store_true', default=False,
-                        help='also export camera params in the text file')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    """
-    image_name camera_type camera_params
-    example: image_name SIMPLE_RADIAL w h f cx cy r
-    or
-    image_name
-    """
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    export_image_list(args.input, args.output, args.camera_params, args.force)
+def main():
+    run_cli(export_image_list, aliases={'--camera_params': ['-c']})
 
 
 if __name__ == '__main__':
-    export_image_list_command_line()
+    main()

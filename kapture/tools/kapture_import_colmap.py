@@ -8,93 +8,91 @@ It will assume that if all rotation parameters are null, there is no prior rotat
 are null, there is no prior translation (using null values instead of zeros)
 """
 
-import argparse
 import logging
 import os
-import sys
+from typing import Optional
 
 import kapture
-import kapture.utils.logging
 import kapture.io.csv
+import kapture.io.structure
 from kapture.io.records import TransferAction
-from kapture.converter.colmap.import_colmap import import_colmap
+import kapture.converter.colmap.import_colmap as colmap_import
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('colmap')
 
 
-def colmap_command_line() -> None:
+def import_colmap(
+        output: str,
+        database: Optional[str] = None,
+        reconstruction: Optional[str] = None,
+        images: Optional[str] = None,
+        image_transfer: TransferAction = TransferAction.link_absolute,
+        rig: Optional[str] = None,
+        keypoints_type: str = 'SIFT',
+        descriptors_type: str = 'SIFT',
+        skip_reconstruction: bool = False,
+        geometric_filtering: bool = True,
+        force: bool = False,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False,
+) -> None:
     """
-    Do the colmap import to kapture using the parameters given on the command line.
+    Imports data from colmap database and/or text files.
+
+    :param output: output directory where to save kapture files.
+    :param database: path to COLMAP database file.
+    :param reconstruction: path to COLMAP reconstruction triplet text file.
+    :param images: path to images directory.
+    :param image_transfer: how to import images
+    :param rig: path to COLMAP rig json file.
+    :param keypoints_type: kapture keypoints type.
+    :param descriptors_type: kapture descriptors type.
+    :param skip_reconstruction: skip the import of the kapture/reconstruction,
+                                ie. keypoints, descriptors, matches, points3d, observations.
+    :param geometric_filtering: remove matches failing geometric verification.
+    :param force: delete kapture if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(description='imports data from colmap database and/or text files.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete kapture if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-db', '--database',
-                        help='path to COLMAP database file.')
-    parser.add_argument('-txt', '--reconstruction',
-                        help='path to COLMAP reconstruction triplet text file.')
-    # images
-    parser.add_argument('-im', '--images', default=None,
-                        help='path to images directory.')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute],'
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('-rig', '--rig',
-                        help='path to COLMAP rig json file.')
-    parser.add_argument('-o', '-k', '--kapture', required=True,
-                        help='output directory where to save kapture files.')
-    parser.add_argument('-kpt', '--keypoints-type', default='SIFT', help='kapture keypoints type.')
-    parser.add_argument('-desc', '--descriptors-type', default='SIFT', help='kapture descriptors type.')
-    parser.add_argument('--skip_reconstruction', action='store_true', default=False,
-                        help='skip the import of the kapture/reconstruction,'
-                             'ie. Keypoints, Descriptors, Matches, Points3d, Observations.')
-    parser.add_argument('--no_geometric_filtering', action='store_true', default=False,
-                        help='don\'t remove matches failing geometric verification.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
-    if args.image_transfer == TransferAction.root_link:
+    setup_logging(logger, verbose, quiet)
+    if image_transfer == TransferAction.root_link:
         logger.fatal('Root linking the images is not supported yet.')
         return
     logger.debug('cleaning output directory')
-    os.makedirs(args.kapture, exist_ok=True)
-    kapture.io.structure.delete_existing_kapture_files(args.kapture, force_erase=args.force)
+    os.makedirs(output, exist_ok=True)
+    kapture.io.structure.delete_existing_kapture_files(output, force_erase=force)
 
     logger.info('importing colmap ...')
-    kapture_data = import_colmap(args.kapture,
-                                 args.database,
-                                 args.reconstruction,
-                                 args.images,
-                                 args.rig,
-                                 args.keypoints_type,
-                                 args.descriptors_type,
-                                 args.no_geometric_filtering,
-                                 args.skip_reconstruction,
-                                 args.force,
-                                 args.image_transfer if args.images is not None else TransferAction.skip
-                                 )
+    kapture_data = colmap_import.import_colmap(output,
+                                               database,
+                                               reconstruction,
+                                               images,
+                                               rig,
+                                               keypoints_type,
+                                               descriptors_type,
+                                               not geometric_filtering,
+                                               skip_reconstruction,
+                                               force,
+                                               image_transfer if images is not None else TransferAction.skip
+                                               )
 
     logger.info('saving to kapture  ...')
-    logger.debug(f'\t"{args.kapture}"')
-    kapture.io.csv.kapture_to_dir(args.kapture, kapture_data)
+    logger.debug(f'\t"{output}"')
+    kapture.io.csv.kapture_to_dir(output, kapture_data)
+
+
+def main():
+    run_cli(import_colmap, aliases={
+        '--output': ['-k', '--kapture'],
+        '--database': ['-db'],
+        '--reconstruction': ['-txt'],
+        '--images': ['-im'],
+        '--rig': ['-rig'],
+        '--keypoints_type': ['-kpt'],
+        '--descriptors_type': ['-desc'],
+    })
 
 
 if __name__ == '__main__':
-    colmap_command_line()
+    main()

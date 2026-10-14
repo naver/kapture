@@ -37,7 +37,6 @@ A bundler model file is defined here:
 
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -46,7 +45,7 @@ import quaternion
 from PIL import Image
 # kapture
 import kapture
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
@@ -57,37 +56,43 @@ MODEL = kapture.CameraType.RADIAL
 LOCAL_FEATURE_TYPE = 'sift'
 
 
-def import_bundler(bundler_path: str,
-                   image_list_path: str,
-                   image_dir_path: str,
-                   kapture_dir_path: str,
-                   ignore_trajectories: bool,
-                   add_reconstruction: bool,
-                   force_overwrite_existing: bool = False,
-                   images_import_method: TransferAction = TransferAction.skip) -> None:
+def import_bundler(input: str,
+                   image_list: str,
+                   images: str,
+                   output: str,
+                   ignore_trajectories: bool = False,
+                   add_reconstruction: bool = False,
+                   force: bool = False,
+                   image_transfer: TransferAction = TransferAction.link_absolute,
+                   verbose: Verbosity = DEFAULT_VERBOSITY,
+                   quiet: bool = False) -> None:
     """
     Imports bundler data and save them as kapture.
 
-    :param bundler_path: path to the bundler model file
-    :param image_list_path: path to the file containing the list of image names
-    :param image_dir_path: input path to bundler image directory.
-    :param kapture_dir_path: path to kapture top directory
-    :param ignore_trajectories: if True, will not import the trajectories
-    :param add_reconstruction: if True, will create 3D points and observations
-    :param force_overwrite_existing: Silently overwrite kapture files if already exists.
-    :param images_import_method: choose how to import actual image files.
+    :param input: path to the .out bundler model file
+    :param image_list: path to the list of images in the bundler order (.list.txt)
+    :param images: path to the bundler images directory.
+    :param output: path to kapture top directory
+    :param ignore_trajectories: do not import extrinsics.
+    :param add_reconstruction: add the 3d points/keypoints/observations to the output
+    :param force: silently overwrite kapture files if already exists.
+    :param image_transfer: choose how to import actual image files.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    os.makedirs(kapture_dir_path, exist_ok=True)
-    delete_existing_kapture_files(kapture_dir_path, force_erase=force_overwrite_existing)
+    setup_logging(logger, verbose, quiet)
+
+    os.makedirs(output, exist_ok=True)
+    delete_existing_kapture_files(output, force_erase=force)
 
     logger.info('loading all content...')
     # if there is a filter list, parse it
-    with open(image_list_path) as file:
+    with open(image_list) as file:
         file_content = file.readlines()
     # remove end line char and empty lines
     image_list = [line.rstrip() for line in file_content if line != '\n']
 
-    with open(bundler_path) as file:
+    with open(input) as file:
         bundler_content = file.readlines()
     # remove end line char and empty lines
     bundler_content = [line.rstrip() for line in bundler_content if line != '\n']
@@ -100,7 +105,7 @@ def import_bundler(bundler_path: str,
     number_of_lines_per_camera = 5  # 1 camera + 3 rotation + 1 translation
 
     cameras = kapture.Sensors()
-    images = kapture.RecordsCamera()
+    records_camera = kapture.RecordsCamera()
     trajectories = kapture.Trajectories() if not ignore_trajectories else None
     points3d = [] if add_reconstruction else None
     keypoints = None
@@ -117,7 +122,7 @@ def import_bundler(bundler_path: str,
         k2 = float(line_camera[2])
 
         # lazy open
-        with Image.open(path.join(image_dir_path, file_name)) as im:
+        with Image.open(path.join(images, file_name)) as im:
             width, height = im.size
 
         image_mapping.append((file_name, width, height))
@@ -142,7 +147,7 @@ def import_bundler(bundler_path: str,
         rotation_around_x = quaternion.quaternion(0.0, 1.0, 0.0, 0.0)
         transformation = kapture.PoseTransform(rotation_around_x, np.array([0, 0, 0]))
 
-        images[(i, camera_id)] = file_name
+        records_camera[(i, camera_id)] = file_name
         if trajectories is not None:
             # transformation.inverse() is equal to transformation (rotation around -Pi or Pi around X is the same)
             trajectories[(i, camera_id)] = kapture.PoseTransform.compose([transformation, pose, transformation])
@@ -197,7 +202,7 @@ def import_bundler(bundler_path: str,
         for image_filename, keypoints_array in local_keypoints.items():
             keypoints_np_array = np.array(keypoints_array, dtype=np.float32)
             keypoints_out_path = kapture.io.features.get_keypoints_fullpath(LOCAL_FEATURE_TYPE,
-                                                                            kapture_dir_path,
+                                                                            output,
                                                                             image_filename)
             kapture.io.features.image_keypoints_to_file(keypoints_out_path, keypoints_np_array)
             sift_keypoints.add(image_filename)
@@ -207,62 +212,22 @@ def import_bundler(bundler_path: str,
 
     # import (copy) image files.
     logger.info('import image files ...')
-    filename_list = [f for _, _, f in kapture.flatten(images)]
-    import_record_data_from_dir_auto(image_dir_path, kapture_dir_path, filename_list, images_import_method)
+    filename_list = [f for _, _, f in kapture.flatten(records_camera)]
+    import_record_data_from_dir_auto(images, output, filename_list, image_transfer)
 
     # pack into kapture format
-    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=images, trajectories=trajectories,
+    imported_kapture = kapture.Kapture(sensors=cameras, records_camera=records_camera, trajectories=trajectories,
                                        points3d=points3d, keypoints=keypoints, observations=observations)
     logger.info('writing imported data...')
-    kapture_to_dir(kapture_dir_path, imported_kapture)
+    kapture_to_dir(output, imported_kapture)
 
 
-def bundler_command_line() -> None:
-    """
-    Do the bundler import to kapture using the parameters given on the command line.
-    """
-    parser = argparse.ArgumentParser(
-        description='import bundler file to the kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-i', '--input', required=True,
-                        help='input path to .out bundler file')
-    parser.add_argument('-l', '--image-list', required=True,
-                        help='path to the list of images in the bundler order (.list.txt)')
-    parser.add_argument('-im', '--image-path', required=True, help='path to images')
-    parser.add_argument('--image_transfer', type=TransferAction, default=TransferAction.link_absolute,
-                        help=f'How to import images [link_absolute], '
-                             f'choose among: {", ".join(a.name for a in TransferAction)}')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
-    parser.add_argument('--ignore-trajectories', action='store_true', default=False,
-                        help='Do not export extrinsics.')
-    parser.add_argument('--add-reconstruction', action='store_true', default=False,
-                        help='add the 3d points/keypoints/observations to the output')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    import_bundler(bundler_path=args.input,
-                   image_list_path=args.image_list,
-                   image_dir_path=args.image_path,
-                   kapture_dir_path=args.output,
-                   ignore_trajectories=args.ignore_trajectories,
-                   add_reconstruction=args.add_reconstruction,
-                   force_overwrite_existing=args.force,
-                   images_import_method=args.image_transfer)
+def main():
+    run_cli(import_bundler, aliases={
+        '--image_list': ['-l'],
+        '--images': ['-im', '--image-path', '--image_path'],
+    })
 
 
 if __name__ == '__main__':
-    bundler_command_line()
+    main()

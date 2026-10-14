@@ -6,45 +6,37 @@ Convert kapture data in version 1.0 to version 1.1 (only orphan features)
 """
 
 import logging
-import argparse
+from typing import List
 
-import kapture.utils.logging
 from kapture.utils.upgrade import upgrade_1_0_to_1_1_orphan_features
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('upgrade_1_0_to_1_1_orphan_features')
 
 
-def upgrade_1_0_to_1_1_orphan_features_command_line() -> None:
+def upgrade_orphan_features(local_features: List[str] = [],
+                            global_features: List[str] = [],
+                            verbose: Verbosity = DEFAULT_VERBOSITY,
+                            quiet: bool = False) -> None:
     """
-    upgrade orphan features to kapture 1.1. Orphan features are features stored outside the kapture folder
+    Upgrade orphan features to kapture 1.1. Orphan features are features stored outside the kapture folder,
     they must follow the kapture-localization recommendation
     https://github.com/naver/kapture-localization/blob/main/doc/tutorial.adoc#recommended-dataset-structure
+
+    :param local_features: paths to the local features folders,
+                           examples dataset/local_features/r2d2 dataset/local_features/d2_tf
+    :param global_features: paths to the global features folders,
+                            examples dataset/global_features/apgem dataset/global_features/delg
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(
-        description='convert kapture data in version 1.0 to version 1.1 (only orphan features)')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    # export ###########################################################################################################
-    parser.add_argument('-gfeat', '--global-features', nargs='+', default=[],
-                        help=('paths to the global features folders '
-                              'examples dataset/global_features/apgem dataset/global_features/delg'))
-    parser.add_argument('-lfeat', '--local-features', nargs='+', default=[],
-                        help=('paths to the local features folders '
-                              'examples dataset/local_features/r2d2 dataset/local_features/d2_tf'))
-    args = parser.parse_args()
+    setup_logging(logger, verbose, quiet)
+    upgrade_1_0_to_1_1_orphan_features(local_features, global_features)
 
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
 
-    upgrade_1_0_to_1_1_orphan_features(args.local_features, args.global_features)
+def main():
+    run_cli(upgrade_orphan_features, aliases={'--local_features': ['-lfeat'], '--global_features': ['-gfeat']})
 
 
 if __name__ == '__main__':
-    upgrade_1_0_to_1_1_orphan_features_command_line()
+    main()

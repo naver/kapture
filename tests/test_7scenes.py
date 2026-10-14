@@ -24,10 +24,10 @@ class TestImport7scenes(unittest.TestCase):
 
     def test_import_both(self):
         kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'both')
-        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
-                       kapture_dir_path=self._tempdir.name,
-                       force_overwrite_existing=True,
-                       images_import_method=TransferAction.copy)
+        import_7scenes(input=self.d7scenes_rootpath,
+                       output=self._tempdir.name,
+                       force=True,
+                       image_transfer=TransferAction.copy)
 
         imported_kdata = kapture_from_dir(self._tempdir.name)
         expected_kdata = kapture_from_dir(kapture_gt_dirpath)
@@ -35,9 +35,9 @@ class TestImport7scenes(unittest.TestCase):
 
     def test_import_mapping(self):
         kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'mapping')
-        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
-                       kapture_dir_path=self._tempdir.name,
-                       force_overwrite_existing=True,
+        import_7scenes(input=self.d7scenes_rootpath,
+                       output=self._tempdir.name,
+                       force=True,
                        partition='mapping')
 
         imported_kdata = kapture_from_dir(self._tempdir.name)
@@ -46,9 +46,9 @@ class TestImport7scenes(unittest.TestCase):
 
     def test_import_query(self):
         kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'query')
-        import_7scenes(d7scenes_path=self.d7scenes_rootpath,
-                       kapture_dir_path=self._tempdir.name,
-                       force_overwrite_existing=True,
+        import_7scenes(input=self.d7scenes_rootpath,
+                       output=self._tempdir.name,
+                       force=True,
                        partition='query')
 
         imported_kdata = kapture_from_dir(self._tempdir.name)
@@ -57,9 +57,9 @@ class TestImport7scenes(unittest.TestCase):
 
     def test_import_sequence(self):
         kapture_gt_dirpath = path.join(self.kapture_gt_rootpath, 'seq-01')
-        import_7scenes(d7scenes_path=self.d7scenes_rootpath + '/seq-01',
-                       kapture_dir_path=self._tempdir.name,
-                       force_overwrite_existing=True)
+        import_7scenes(input=self.d7scenes_rootpath + '/seq-01',
+                       output=self._tempdir.name,
+                       force=True)
 
         imported_kdata = kapture_from_dir(self._tempdir.name)
         expected_kdata = kapture_from_dir(kapture_gt_dirpath)

@@ -5,100 +5,90 @@
 This script imports an openmvg file in the kapture format.
 """
 
-import argparse
 import logging
-import sys
 import os.path as path
+from typing import Optional
 
 # kapture
-import kapture.utils.logging
 from kapture.io.records import TransferAction
 # openmvg
-from kapture.converter.openmvg.import_openmvg import import_openmvg
+import kapture.converter.openmvg.import_openmvg as openmvg_import
 from kapture.converter.openmvg.openmvg_commons import OPENMVG_DEFAULT_JSON_FILE_NAME
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 logger = logging.getLogger('openmvg')
 
 
-def import_openmvg_command_line() -> None:
+def import_openmvg(
+        output: str,
+        input: Optional[str] = None,
+        sfm_data: Optional[str] = None,
+        regions: Optional[str] = None,
+        matches: Optional[str] = None,
+        image_transfer: TransferAction = TransferAction.root_link,
+        force: bool = False,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False
+) -> None:
     """
-    Do the openmvg to kapture import using the parameters given on the command line.
+    Imports from openMVG JSON file to Kapture format.
+
+    :param output: top directory where to save kapture files.
+    :param input: path to openMVG directory, will automatically look for sfm_data, regions and pair files.
+    :param sfm_data: path to openMVG sfm_data data file.
+    :param regions: path to openMVG directory containing region files (feat, desc).
+    :param matches: path to openMVG matches file (eg. matches.f.txt)
+    :param image_transfer: what to do with images (root_link: link to the root of the images directory)
+    :param force: silently delete kapture data if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    parser = argparse.ArgumentParser(description='Imports from openMVG JSON file to Kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument(
-        '-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-        action=kapture.utils.logging.VerbosityParser,
-        help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-y', '--force', action='store_true', default=False,
-                        help='silently delete kapture data if already exists.')
-    # create the parser for the import command #########################################################################
-    parser.add_argument('-i', '--openmvg',
-                        help='path to openMVG directory, will automatically look for sfm_data, regions and pair files.')
-    parser.add_argument('-s', '--sfm_data',
-                        help='path to openMVG sfm_data data file.')
-    parser.add_argument('-r', '--regions',
-                        help='path to openMVG directory containing region files (feat, desc).')
-    parser.add_argument('-m', '--matches',
-                        help='path to openMVG matches file (eg. matches.f.txt')
-    parser.add_argument('-o', '-k', '--kapture', required=True,
-                        help='top directory where to save Kapture files.')
-    parser.add_argument('--image_action', default='root_link', type=TransferAction,
-                        help=f'''what to do with images:
-        {TransferAction.root_link.name}: link to the root of the images directory (default) ;
-        {TransferAction.link_absolute.name}: absolute individual file link ;
-        {TransferAction.link_relative.name}: relative individual file link ;
-        {TransferAction.copy.name}: copy file instead of creating link ;
-        {TransferAction.move.name}: move file instead of creating link ;
-        {TransferAction.skip.name}: do not create links
-                                      ''')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
+    setup_logging(logger, verbose, quiet)
     # argument logic.
-    if args.openmvg:
-        args.openmvg = path.abspath(args.openmvg)
+    if input:
+        input = path.abspath(input)
         # automatically look for sfm_data, regions and pair files if not specified
-        if args.sfm_data is None:
-            args.sfm_data = path.join(args.openmvg, OPENMVG_DEFAULT_JSON_FILE_NAME)
-        if args.regions is None:
-            args.regions = args.openmvg
-        if args.matches is None:
-            args.matches = path.join(args.openmvg, 'matches.f.txt')
+        if sfm_data is None:
+            sfm_data = path.join(input, OPENMVG_DEFAULT_JSON_FILE_NAME)
+        if regions is None:
+            regions = input
+        if matches is None:
+            matches = path.join(input, 'matches.f.txt')
 
     # normalizes paths
-    if args.sfm_data is not None:
-        args.sfm_data = path.normpath(path.abspath(args.sfm_data))
-    if args.regions is not None:
-        args.regions = path.normpath(path.abspath(args.regions))
-    if args.matches is not None:
-        args.matches = path.normpath(path.abspath(args.matches))
-        assert args.matches.endswith('.txt')
+    if sfm_data is not None:
+        sfm_data = path.normpath(path.abspath(sfm_data))
+    if regions is not None:
+        regions = path.normpath(path.abspath(regions))
+    if matches is not None:
+        matches = path.normpath(path.abspath(matches))
+        assert matches.endswith('.txt')
 
     # sanity check
-    if all(i is None for i in [args.sfm_data, args.regions, args.matches]):
+    if all(i is None for i in [sfm_data, regions, matches]):
         raise ValueError('Need openMVG files as input.')
 
-    import_openmvg(args.sfm_data,
-                   args.regions,
-                   args.matches,
-                   args.kapture,
-                   args.image_action,
-                   args.force)
+    openmvg_import.import_openmvg(sfm_data,
+                                  regions,
+                                  matches,
+                                  output,
+                                  image_transfer,
+                                  force)
+
+
+def main():
+    try:
+        run_cli(import_openmvg, aliases={
+            '--input': ['--openmvg'],
+            '--sfm_data': ['-s'],
+            '--regions': ['-r'],
+            '--matches': ['-m'],
+            '--output': ['-k', '--kapture'],
+            '--image_transfer': ['--image_action'],
+        })
+    except (AssertionError, LookupError, OSError):
+        logger.error('Fatal error', exc_info=True)
 
 
 if __name__ == '__main__':
-    try:
-        import_openmvg_command_line()
-    except (AssertionError, LookupError, OSError):
-        logger.error('Fatal error', exc_info=True)
+    main()

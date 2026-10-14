@@ -17,8 +17,8 @@ class TestPlot(unittest.TestCase):
     def test_plot(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             export_ply(
-                kapture_path=self.toplot_folder,
-                ply_dir_path=tmpdirname,
+                input=self.toplot_folder,
+                output=tmpdirname,
                 axis_length=2.0,
                 only=[], skip=[])
             self.assertTrue(path.isfile(path.join(tmpdirname, "points3d.ply")))

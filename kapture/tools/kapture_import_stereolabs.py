@@ -5,7 +5,6 @@
 import zed (stereolabs) camera recording from svo file and imu.csv.
 """
 
-import argparse
 import logging
 import os
 import os.path as path
@@ -16,21 +15,19 @@ from tqdm import tqdm
 import csv
 # kapture
 import kapture
-import kapture.utils.logging
 from kapture.io.csv import kapture_to_dir
 import kapture.io.features
 from kapture.io.records import get_image_fullpath, get_depth_map_fullpath
 from kapture.io.binary import array_to_file
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 
 logger = logging.getLogger('kapture_import_zed')
 
 try:
     import pyzed.sl as sl
-except ImportError as e:
-    logger.critical('***** pyzed API MUST be installed ******\n'
-                    'see: https://www.stereolabs.com/docs/installation/')
-    raise
+except ImportError:  # reported when the tool actually runs, so that --help still works
+    sl = None
 
 
 class ImportError(Exception):
@@ -47,21 +44,32 @@ STEREOLABS_MAGNETOMETER_ID = 'Magnetometer'
 
 
 def kapture_import_stereolabs(
-        destination_kapture_dir_path: str,
-        svo_file_path: str,
-        sensors_file_path: Optional[str],
-        calib_dir_path: Optional[str],
+        output: str,
+        svo: Optional[str] = None,
+        imu: Optional[str] = None,
+        calib: Optional[str] = None,
         export_depth: bool = True,
+        force: bool = False,
+        verbose: Verbosity = DEFAULT_VERBOSITY,
+        quiet: bool = False,
 ) -> None:
     """
-    Imports data from silda dataset.
+    Imports zed recording from stereolabs (svo file and or imu.csv).
 
-    :param destination_kapture_dir_path: path to the output kapture directory
-    :param svo_file_path: input path to svo file
-    :param sensors_file_path: input path to imu file
-    :param calib_dir_path: input path to calib directory (contains SN*.conf)
+    :param output: path to the output kapture directory
+    :param svo: input path to svo file
+    :param imu: input path to imu file
+    :param calib: input path to calib directory (contains SN*.conf), if not conventional
     :param export_depth: create depth maps
+    :param force: delete output if already exists (currently unused)
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
+    setup_logging(logger, verbose, quiet)
+    if sl is None:
+        logger.critical('***** pyzed API MUST be installed ******\n'
+                        'see: https://www.stereolabs.com/docs/installation/')
+        raise ImportError('pyzed is not installed')
 
     # make sure all kapture container exists
     kapture_data = kapture.Kapture()
@@ -69,16 +77,16 @@ def kapture_import_stereolabs(
     kapture_data.records_camera = kapture.RecordsCamera()
     kapture_data.trajectories = kapture.Trajectories()
     kapture_data.rigs = kapture.Rigs()
-    if sensors_file_path:
+    if imu:
         kapture_data.records_accelerometer = kapture.RecordsAccelerometer()
-    if sensors_file_path:
+    if imu:
         kapture_data.records_gyroscope = kapture.RecordsGyroscope()
     if export_depth:
         kapture_data.records_depth = kapture.RecordsDepth()
 
     # Specify SVO path parameter
-    init_params = sl.InitParameters(optional_settings_path=calib_dir_path or '')
-    init_params.set_from_svo_file(svo_file_path)
+    init_params = sl.InitParameters(optional_settings_path=calib or '')
+    init_params.set_from_svo_file(svo)
     init_params.svo_real_time_mode = False  # Don't convert in realtime
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.IMAGE  # same as kapture
     init_params.coordinate_units = sl.UNIT.METER  # Use milliliter units (for depth measurements)
@@ -93,7 +101,7 @@ def kapture_import_stereolabs(
         # Open the SVO file specified as a parameter
         status = zed.open(init_params)
         if status != sl.ERROR_CODE.SUCCESS:
-            raise ImportError(f'unable to open svo file {svo_file_path} ({status})')
+            raise ImportError(f'unable to open svo file {svo} ({status})')
 
         # calib
         configuration_sensors = zed.get_camera_information().sensors_configuration
@@ -119,7 +127,7 @@ def kapture_import_stereolabs(
                     camera_params=camera_params,
                     name=STEREOLABS_DEPTH_ID,
                     sensor_type='depth')
-        if sensors_file_path:
+        if imu:
             # add the sensors to sensor
             accelerometer_params = [configuration_sensors.accelerometer_parameters.noise_density,
                                     configuration_sensors.accelerometer_parameters.random_walk,
@@ -142,7 +150,7 @@ def kapture_import_stereolabs(
         if export_depth:
             kapture_data.rigs[STEREOLABS_RIG_ID, STEREOLABS_DEPTH_ID] = kapture.PoseTransform()
 
-        if sensors_file_path:
+        if imu:
             # add the imu to rig config
             logger.info('write imu')
             imu_from_cam_mat = configuration_sensors.camera_imu_transform.m
@@ -164,15 +172,15 @@ def kapture_import_stereolabs(
         depth_map = sl.Mat()
 
         for cam_id in STEREOLABS_CAM_IDS:
-            image_dir = path.dirname(get_image_fullpath(kapture_dir_path=destination_kapture_dir_path,
+            image_dir = path.dirname(get_image_fullpath(kapture_dir_path=output,
                                                         image_filename=f'{cam_id}/0.png'))
             os.makedirs(image_dir, exist_ok=True)
 
         logger.info('write images and trajectories')
         runtime_parameters = sl.RuntimeParameters()
 
-        imu_file = open(sensors_file_path, 'rt') if sensors_file_path else None
-        imu_lines = (l.split(',') for l in imu_file.readlines() if not l.startswith('#')) if sensors_file_path else None
+        imu_file = open(imu, 'rt') if imu else None
+        imu_lines = (l.split(',') for l in imu_file.readlines() if not l.startswith('#')) if imu else None
         try:  # slam loop
             for i in tqdm(range(nb_frames)):
                 status = zed.grab(runtime_parameters)
@@ -200,7 +208,7 @@ def kapture_import_stereolabs(
                     # records_camera[timestamp, sensor_id] = image_name
                     kapture_data.records_camera[timestamp_ns, cam_id] = image_name
 
-                    image_file_path = get_image_fullpath(kapture_dir_path=destination_kapture_dir_path,
+                    image_file_path = get_image_fullpath(kapture_dir_path=output,
                                                          image_filename=image_name)
                     image.write(image_file_path)
 
@@ -211,7 +219,7 @@ def kapture_import_stereolabs(
 
                     depth_name = path.join('Depth', f'{timestamp_ns}.depth')
                     kapture_data.records_depth[timestamp_ns, 'Depth'] = depth_name
-                    depth_file_path = get_depth_map_fullpath(kapture_dir_path=destination_kapture_dir_path,
+                    depth_file_path = get_depth_map_fullpath(kapture_dir_path=output,
                                                              depth_map_filename=depth_name)
                     # A .depth file is an array of float formatted as binary. The data type of the array is signed
                     # float on 32 bits. Each float value represent a distance in meters from the sensor origin plane.
@@ -267,49 +275,19 @@ def kapture_import_stereolabs(
                 imu_file.close()
 
         logger.info(f'imported kapture: {repr(kapture_data)}')
-        kapture_to_dir(kapture_dirpath=destination_kapture_dir_path, kapture_data=kapture_data)
+        kapture_to_dir(kapture_dirpath=output, kapture_data=kapture_data)
 
     except Exception as e:
         logger.critical(e)
 
 
-def kapture_import_zed_command_line() -> None:
-    """
-    Imports zed recording from stereolabs (svo file and or imu.csv).
-    """
-    parser = argparse.ArgumentParser(
-        description='Imports zed recording from stereolabs (svo file and or imu.csv).')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument('-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-                                  action=kapture.utils.logging.VerbosityParser,
-                                  help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument(
-        '-q', '--silent', '--quiet', action='store_const', dest='verbose', const=logging.CRITICAL)
-    parser.add_argument('-f', '-y', '--force', action='store_true', default=False,
-                        help='Force delete output if already exists.')
-    # import ###########################################################################################################
-    parser.add_argument('-s', '--svo',
-                        help='input path svo file')
-    parser.add_argument('-u', '--imu',
-                        help='input imu file')
-    parser.add_argument('-c', '--calib',
-                        help='calib dir path (if not conventional)')
-    parser.add_argument('-o', '--output', required=True, help='output directory.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # also let kapture express its logs
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-
-    kapture_import_stereolabs(
-        destination_kapture_dir_path=args.output,
-        svo_file_path=args.svo,
-        sensors_file_path=args.imu,
-        calib_dir_path=args.calib
-    )
+def main():
+    run_cli(kapture_import_stereolabs, aliases={
+        '--svo': ['-s'],
+        '--imu': ['-u'],
+        '--calib': ['-c'],
+    })
 
 
 if __name__ == '__main__':
-    kapture_import_zed_command_line()
+    main()

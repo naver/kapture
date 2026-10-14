@@ -22,10 +22,10 @@ class TestImageFolder(unittest.TestCase):
     def test_import_image_folder(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             import_image_folder(
-                images_path=self.images_folder,
-                kapture_path=tmpdirname,
-                force_overwrite_existing=True,
-                images_import_method=TransferAction.link_absolute)
+                input=self.images_folder,
+                output=tmpdirname,
+                force=True,
+                image_transfer=TransferAction.link_absolute)
 
             kapture_result = kapture_from_dir(tmpdirname)
 

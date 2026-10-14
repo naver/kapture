@@ -10,12 +10,11 @@ More info at:
 https://epan-utbm.github.io/utbm_robocar_dataset/
 """
 
-import argparse
 import logging
 import sys
+from typing import List
 # kapture
-import kapture.core.Sensors
-import kapture.utils.logging
+from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
 
 # rosbag
 try:
@@ -32,95 +31,75 @@ from kapture.converter.ros_tools.import_utbm_sensor import import_utbm_sensors
 logger = logging.getLogger('rosbag')  # Using global logger
 
 
-def import_utbm_rosbag(args) -> None:
+def import_utbm_rosbag(camera_info: List[str],
+                       kapture_output: str,
+                       bag_file: str = 'input.bag',
+                       image_topics: List[str] = TOPICS_BB2,
+                       camera_identifiers: List[str] = BB2_CAMERA_IDENTIFIERS,
+                       force_same_time: bool = True,
+                       bb2: bool = False,
+                       xb3: bool = False,
+                       percent: int = 100,
+                       force: bool = False,
+                       verbose: Verbosity = DEFAULT_VERBOSITY,
+                       quiet: bool = False) -> None:
     """
-    Import the UTBM rosbag with the parameters.
+    Imports UTBM rosbags to kapture format.
 
-    :param args: arguments to use
+    :param camera_info: list of cameras calibration yaml files as published on UTBM github
+    :param kapture_output: directory where to save kapture files.
+    :param bag_file: bag file path
+    :param image_topics: list of image topics to import, defaults to BB2 values
+    :param camera_identifiers: list of camera identifiers as defined in the sensors file of the kapture rig
+                               and corresponding to the image topics in the same order; defaults to BB2 values
+    :param force_same_time: force that images are taken at the same time
+    :param bb2: set BB2 image topics and camera identifiers
+    :param xb3: set XB3 image topics and camera identifiers
+    :param percent: percentage of images to keep
+    :param force: silently delete kapture data if already exists.
+    :param verbose: verbosity level (debug, info, warning, critical, ... or int value)
+    :param quiet: silence all logs
     """
-    # Read camera calibration files to make a sensors object
-    sensors = import_utbm_sensors(args.camera_info)
-    importer = RosBagImporter(args.bag_file, None, sensors, args.kapture_output, args.force)
-    if args.bb2:
-        image_topics = TOPICS_BB2
-        camera_identifiers = BB2_CAMERA_IDENTIFIERS
-    elif args.xb3:
-        image_topics = TOPICS_XB3
-        camera_identifiers = XB3_CAMERA_IDENTIFIERS
-    else:
-        image_topics = args.image_topics
-        if not image_topics:
-            image_topics = TOPICS_BB2
-        camera_identifiers = args.camera_identifiers
-        if not camera_identifiers:
-            camera_identifiers = BB2_CAMERA_IDENTIFIERS
-    importer.import_multi_camera(None, image_topics, camera_identifiers, False, False, args.percent)
-    importer.save_to_kapture()
-
-
-def import_utbm_rosbag_command_line() -> None:
-    """
-    Do the UTBM to kapture import using the command line parameters provided by the user.
-    """
-    parser = argparse.ArgumentParser(description='Imports UTBM rosbags to kapture format.')
-    parser_verbosity = parser.add_mutually_exclusive_group()
-    parser_verbosity.add_argument('-v', '--verbose', nargs='?', default=logging.WARNING, const=logging.INFO,
-                                  action=kapture.utils.logging.VerbosityParser,
-                                  help='verbosity level (debug, info, warning, critical, ... or int value) [warning]')
-    parser_verbosity.add_argument('-q', '--silent', '--quiet', action='store_const', dest='verbose',
-                                  const=logging.CRITICAL)
-    parser.add_argument('-y', '--force', action='store_true', default=False,
-                        help='silently delete kapture data if already exists.')
-    # create the parser for the import command #########################################################################
-    parser.add_argument('-b', '--bag_file', default='input.bag',
-                        help='bag file path', required=False)
-    parser.add_argument('--camera_info', nargs="*",
-                        help='list of cameras calibration yaml files as published on UTBM github', required=True)
-    parser.add_argument('-i', '--image_topics', nargs="*",
-                        help=f'list of image topics to import, defaults to BB2 values {TOPICS_BB2}',
-                        required=False)
-    parser.add_argument('-c', '--camera_identifiers', nargs="*",
-                        help=f'list of camera identifiers as defined in the sensors file of the kapture rig'
-                             ' and corresponding to the image topics in the same order;'
-                             f' defaults to BB2 values {BB2_CAMERA_IDENTIFIERS}',
-                        required=False)
-    parser.add_argument('--force_same_time', action='store_true', default=True,
-                        help='Force that images are taken at the same time', required=False)
-    parser.add_argument('--no-force_same_time', action='store_false', dest='force_same_time',
-                        help='Do not force that images are taken at the same time', required=False)
-    parser.add_argument('--bb2', action='store_true', default=False,
-                        help='Set BB2 image topics and camera identifiers')
-    parser.add_argument('--xb3', action='store_true', default=False,
-                        help='Set XB3 image topics and camera identifiers')
-    parser.add_argument('-p', '--percent', type=int, default=100,
-                        help='percentage of images to keep', required=False)
-    parser.add_argument('-k', '--kapture_output', required=True,
-                        help='directory where to save Kapture files.')
-    ####################################################################################################################
-    args = parser.parse_args()
-
     # Change the default logging
     root_logger = logging.getLogger()
     root_logger.handlers = []
     ch = logging.StreamHandler()
     ch.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s::%(name)s: %(message)s'))
     logger.addHandler(ch)
-    logger.setLevel(args.verbose)
-    if args.verbose <= logging.DEBUG:
-        # for debug, let kapture express itself.
-        kapture.utils.logging.getLogger().setLevel(args.verbose)
-    logger.debug(f'{sys.argv[0]} \\\n' + '  \\\n'.join(
-        '--{:20} {:100}'.format(k, str(v))
-        for k, v in vars(args).items()))
-
-    import_utbm_rosbag(args)
-
-
-if __name__ == '__main__':
+    setup_logging(logger, verbose, quiet)
     if not has_rosbag:
         logger.fatal("You don't have ROS or import_rosbag installed")
         sys.exit(-1)
+    # Read camera calibration files to make a sensors object
+    sensors = import_utbm_sensors(camera_info)
+    importer = RosBagImporter(bag_file, None, sensors, kapture_output, force)
+    if bb2:
+        image_topics = TOPICS_BB2
+        camera_identifiers = BB2_CAMERA_IDENTIFIERS
+    elif xb3:
+        image_topics = TOPICS_XB3
+        camera_identifiers = XB3_CAMERA_IDENTIFIERS
+    else:
+        if not image_topics:
+            image_topics = TOPICS_BB2
+        if not camera_identifiers:
+            camera_identifiers = BB2_CAMERA_IDENTIFIERS
+    importer.import_multi_camera(None, image_topics, camera_identifiers, False, False, percent)
+    importer.save_to_kapture()
+
+
+def main():
     try:
-        import_utbm_rosbag_command_line()
+        run_cli(import_utbm_rosbag, aliases={
+            '--bag_file': ['-b'],
+            '--image_topics': ['-i'],
+            '--camera_identifiers': ['-c'],
+            '--percent': ['-p'],
+            '--kapture_output': ['-k'],
+        })
     except (AssertionError, OSError, ValueError) as any_ex:
         logger.fatal(f'Fatal error: {any_ex}')
+
+
+if __name__ == '__main__':
+    main()

@@ -26,8 +26,8 @@ class TestImageListAachen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             queries_with_intrinsics_path = path.join(self.query_folder, 'day_time_queries_with_intrinsics.txt')
 
-            import_image_list([queries_with_intrinsics_path], self.images_folder, tmpdirname,
-                              force_overwrite_existing=True)
+            import_image_list([queries_with_intrinsics_path], tmpdirname, self.images_folder,
+                              force=True)
 
             expected_kdata = kapture_from_dir(self.kapture_query_path)
             imported_aachen_data = kapture_from_dir(tmpdirname)
@@ -37,8 +37,8 @@ class TestImageListAachen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             queries_without_intrinsics_path = path.join(self.query_folder, 'day_time_queries_without_intrinsics.txt')
 
-            import_image_list([queries_without_intrinsics_path], self.images_folder, tmpdirname,
-                              force_overwrite_existing=True)
+            import_image_list([queries_without_intrinsics_path], tmpdirname, self.images_folder,
+                              force=True)
 
             expected_kdata = kapture_from_dir(self.kapture_query_path)
             # set all sensors to unknown
@@ -53,7 +53,7 @@ class TestImageListAachen(unittest.TestCase):
     def test_export_with_intrinsics(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_filename = path.join(tmpdirname, 'image_list.txt')
-            export_image_list(self.kapture_query_path, output_filename, export_camera_params=True, force=True)
+            export_image_list(self.kapture_query_path, output_filename, camera_params=True, force=True)
 
             with open(output_filename) as file:
                 exported_content = file.readlines()
@@ -67,7 +67,7 @@ class TestImageListAachen(unittest.TestCase):
     def test_export_without_intrinsics(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_filename = path.join(tmpdirname, 'image_list.txt')
-            export_image_list(self.kapture_query_path, output_filename, export_camera_params=False, force=True)
+            export_image_list(self.kapture_query_path, output_filename, camera_params=False, force=True)
 
             with open(output_filename) as file:
                 exported_content = file.readlines()
