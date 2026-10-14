@@ -11,7 +11,6 @@ import quaternion
 from copy import deepcopy
 from datetime import datetime
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_trajectories, equal_rigs, equal_poses
 

@@ -8,7 +8,6 @@ import unittest
 import piexif
 
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.records import images_to_filepaths, get_image_fullpath
 from kapture.converter.exif.import_exif import convert_gps_to_kapture_record, extract_gps_from_exif, \

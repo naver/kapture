@@ -12,7 +12,6 @@ import os.path as path
 from tqdm import tqdm
 import numpy as np
 from PIL import Image
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv as csv

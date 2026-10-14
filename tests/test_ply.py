@@ -5,7 +5,6 @@ import unittest
 import os.path as path
 import tempfile
 # kapture
-  # enables import kapture  # noqa: F401
 from tools.kapture_export_ply import export_ply
 
 

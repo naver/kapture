@@ -8,7 +8,6 @@ This script exports kapture data to a COLMAP database and/or reconstruction file
 import argparse
 import logging
 import sys
-  # enables import kapture  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.converter.colmap.export_colmap import export_colmap

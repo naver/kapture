@@ -11,7 +11,6 @@ import logging
 from os import path
 import sys
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture.io.csv as kcsv
 import kapture.utils.logging
 

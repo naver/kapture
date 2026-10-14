@@ -14,7 +14,6 @@ from typing import Optional, Tuple
 from datetime import datetime
 import time
 
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv

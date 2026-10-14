@@ -11,7 +11,6 @@ import os.path as path
 import argparse
 import shutil
 
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.features

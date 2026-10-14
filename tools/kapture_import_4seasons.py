@@ -44,7 +44,6 @@ from tqdm import tqdm
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Union
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files

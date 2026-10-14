@@ -7,7 +7,6 @@ import tempfile
 import unittest
 import sys
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.io.records import TransferAction

@@ -6,7 +6,6 @@
 import argparse
 import logging
 import os.path as path
-  # noqa: F401
 import kapture
 from kapture.converter.exif.import_exif import import_gps_from_exif
 

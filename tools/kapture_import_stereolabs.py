@@ -15,7 +15,6 @@ from typing import Optional
 from tqdm import tqdm
 import csv
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.csv import kapture_to_dir

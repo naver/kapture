@@ -10,7 +10,6 @@ import logging
 import sys
 import os.path as path
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture.utils.logging
 from kapture.io.records import TransferAction
 from kapture.converter.openmvg.export_openmvg import export_openmvg

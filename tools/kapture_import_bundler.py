@@ -45,7 +45,6 @@ import numpy as np
 import quaternion
 from PIL import Image
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files

@@ -16,7 +16,6 @@ import quaternion
 from tqdm import tqdm
 
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.csv as csv

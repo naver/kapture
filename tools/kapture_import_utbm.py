@@ -14,7 +14,6 @@ import argparse
 import logging
 import sys
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture.core.Sensors
 import kapture.utils.logging
 

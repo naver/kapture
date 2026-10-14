@@ -8,7 +8,6 @@ import os.path as path
 import quaternion
 from typing import Optional
 
-  # noqa: F401
 import kapture
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.csv import kapture_to_dir

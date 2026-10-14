@@ -10,7 +10,6 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture
 from kapture.algo.compare import equal_kapture
 from kapture.core.Sensors import Camera, CameraType

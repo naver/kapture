@@ -3,4 +3,3 @@
 """
 Virtual gallery to kapture import and export
 """
-# TODO:  if needed

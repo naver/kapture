@@ -18,7 +18,6 @@ import pathlib
 import argparse
 from tqdm import tqdm
 
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 import kapture.io.features

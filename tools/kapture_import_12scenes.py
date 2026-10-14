@@ -26,7 +26,6 @@ from PIL import Image
 from tqdm import tqdm
 from scipy import ndimage
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.structure import delete_existing_kapture_files

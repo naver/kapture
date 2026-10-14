@@ -9,7 +9,6 @@ import logging
 import os
 import argparse
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from kapture.io.csv import kapture_from_dir

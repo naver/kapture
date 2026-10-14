@@ -10,7 +10,6 @@ import os.path as path
 import tempfile
 import unittest
 # kapture
-  # enables import kapture  # noqa: F401
 import kapture
 import kapture.utils.computation as computation
 import kapture.utils.paths

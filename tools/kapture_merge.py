@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 # kapture
-  # noqa: F401
 import kapture
 import kapture.utils.logging
 from typing import List
