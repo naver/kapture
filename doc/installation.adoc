@@ -73,7 +73,7 @@ $> sudo apt-get install -y pandoc asciidoctor
 $> git clone https://github.com/naver/kapture.git
 $> cd kapture
 # install kapture
-$> python3 -m pip install ".[dev]"
+$> python3 -m pip install -e ".[dev]"
 # check everything is fine
 $> python3 -m unittest discover -s tests
 ----

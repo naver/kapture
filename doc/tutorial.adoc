@@ -54,16 +54,12 @@ __kapture__ is also a python library, that you can use in your code.
 
 === Import package
 
-To be able to `import kapture`, you should either :
-
- - install the kapture package (see <<install>>) or
- - add __kapture__  to the python path (eg. see below).
+To be able to `import kapture`, the kapture package must be installed (see <<install>>):
+either from pypi (`pip install kapture`), or from a clone of the repository
+(`python -m pip install -e .` from the repository root).
 
 [source,python]
 ----
-import sys
-REPO_ROOT_PATH = '../..'  # change with the path to path to root directory
-sys.path.insert(0, REPO_ROOT_PATH)
 import kapture
 ----
 

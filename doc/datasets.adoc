@@ -26,7 +26,7 @@ The complete dataset information is available at:
 https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/
 
 === Convert from original dataset
-If you download one scene, you can convert every sequence into a kapture model using the kapture_import_7scenes.py script.
+If you download one scene, you can convert every sequence into a kapture model using the kapture_import_7scenes script.
 
 1) Download the 7 scenes from the https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/[microsoft] website,
 
@@ -87,7 +87,7 @@ You can easily process all scenes/split at once, using https://www.gnu.org/softw
 [source,bash]
 ----
 $> parallel \
-kapture_import_7scenes.py -v info -i /<mydatasets>/7-scenes/{1} /<mykaptures>/7-scenes/{1}/{2} -p {2} \
+kapture_import_7scenes -v info -i /<mydatasets>/7-scenes/{1} /<mykaptures>/7-scenes/{1}/{2} -p {2} \
 ::: chess fire heads office pumpkin redkitchen stairs ::: query mapping
 ----
 
@@ -182,7 +182,7 @@ $> kapture_import_colmap -v debug -txt 3D-models/aachen_v_1_1/ -im images -o kap
 
 The Baidu image-based localization dataset, "A Dataset for Benchmarking Image based Localization" by Xun Sun, Yuanfan Xie, Pei Luo and Liang Wang: https://sites.google.com/site/xunsunhomepage/
 
-For this dataset, kapture_import_IDL_dataset_cvpr17.py creates one sensor per image
+For this dataset, kapture_import_IDL_dataset_cvpr17 creates one sensor per image
 
 === Convert from original dataset
 
@@ -277,14 +277,14 @@ Then run:
 $> kapture_import_nvm -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/mapping --filter-list ./ShopFacade/dataset_train_list.txt
 $> kapture_import_nvm -v info -i ./ShopFacade/reconstruction_png.nvm -im ./ShopFacade/ -o ./kapture/ShopFacade/query --filter-list ./ShopFacade/dataset_test_list.txt
 
-# if you can't use symlinks, add this to the two kapture_import_nvm.py commands: --image_transfer copy
+# if you can't use symlinks, add this to the two kapture_import_nvm commands: --image_transfer copy
 ----
 
 == Extended-CMU-Seasons
 
 We imported the poses from the text files. The same sliced structure is replicated.
 In the precomputed kapture data, we decided to import all images, even if they are not listed in the text files (they do not have a pose).
-In kapture_import_Extended_CMU_Seasons.py, it corresponds to the option --all-files.
+In kapture_import_Extended_CMU_Seasons, it corresponds to the option --all-files.
 
 === Convert from original dataset
 
@@ -534,7 +534,7 @@ You should have:
 $> kapture_import_silda -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping --corpus mapping
 $> kapture_import_silda -v info --image_transfer copy -i ./data/SILDa -o ./kapture/query --corpus query
 # uncomment the following, if you want the both mapping and query in the same dataset
-# kapture_import_silda.py -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
+# kapture_import_silda -v info --image_transfer copy -i ./data/SILDa -o ./kapture/mapping_query
 # then [optionally] clean original
 $> rm -rf ./data/SILDa
 ----

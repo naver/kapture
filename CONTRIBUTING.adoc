@@ -33,11 +33,13 @@ git clone https://github.com/naver/kapture.git
 
 * Please note that kapture requires python version 3.6 or higher
 
-* install dependencies
+* install kapture in editable mode, with the development dependencies (tests, lint, build)
 
 [source,txt]
 ----
-pip install -r requirements.txt
+python -m pip install -e ".[dev]"
+# or equivalently
+make install_dev
 ----
 
 == Codebase structure

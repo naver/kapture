@@ -10,7 +10,7 @@ import sys
 import stat
 # kapture
 import kapture.converter.downloader.archives as archives
-# import tools.kapture_download_dataset as download
+# import kapture.tools.kapture_download_dataset as download
 # from unittest.mock import patch
 
 """
