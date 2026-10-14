@@ -8,7 +8,7 @@ import unittest
 import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture
-from tools.kapture_import_nvm import import_nvm
+from kapture.tools.kapture_import_nvm import import_nvm
 
 
 class TestImportNVM(unittest.TestCase):

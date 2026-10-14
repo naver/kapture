@@ -8,7 +8,7 @@ import unittest
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture
 from kapture.io.records import TransferAction
-from tools.kapture_import_7scenes import import_7scenes
+from kapture.tools.kapture_import_7scenes import import_7scenes
 
 
 class TestImport7scenes(unittest.TestCase):

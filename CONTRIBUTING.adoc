@@ -50,10 +50,10 @@ kapture                  # Repository root path
 │  ├─ converters/        # Converters libraries
 │  ├─ core/              # Core kapture objects
 │  ├─ io/                # I/O related files
-│  └─ utils/             # Various generic utilities
+│  ├─ utils/             # Various generic utilities
+│  └─ tools/             # kapture tools scripts (importers, exporters, utilities)
 ├─ samples/              # data samples (kapture and other formats). Used by tests.
-├─ tests/                # Unit and functional tests
-└─ tools/                # kapture tools scripts (importers, exporters, utilities)
+└─ tests/                # Unit and functional tests
 ----
 
 == Coding guidelines

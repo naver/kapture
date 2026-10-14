@@ -5,7 +5,7 @@ import unittest
 import os.path as path
 import tempfile
 # kapture
-from tools.kapture_export_ply import export_ply
+from kapture.tools.kapture_export_ply import export_ply
 
 
 class TestPlot(unittest.TestCase):

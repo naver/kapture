@@ -8,8 +8,8 @@ import unittest
 import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture
-from tools.kapture_import_image_list import import_image_list
-from tools.kapture_export_image_list import export_image_list
+from kapture.tools.kapture_import_image_list import import_image_list
+from kapture.tools.kapture_export_image_list import export_image_list
 
 
 class TestImageListAachen(unittest.TestCase):

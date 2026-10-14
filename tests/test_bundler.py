@@ -8,7 +8,7 @@ import unittest
 import kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.algo.compare import equal_kapture
-from tools.kapture_import_bundler import import_bundler
+from kapture.tools.kapture_import_bundler import import_bundler
 
 
 class TestImportBundler(unittest.TestCase):

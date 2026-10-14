@@ -9,7 +9,7 @@ import unittest
 from kapture.algo.compare import equal_kapture
 from kapture.io.csv import kapture_from_dir
 from kapture.io.records import TransferAction
-from tools.kapture_import_image_list_with_poses import import_image_list_with_poses
+from kapture.tools.kapture_import_image_list_with_poses import import_image_list_with_poses
 
 
 class TestImageList(unittest.TestCase):
