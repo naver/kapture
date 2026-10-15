@@ -76,7 +76,7 @@ def export_colmap(kapture_dir_path: str,
             descriptors_type = try_get_only_key_from_collection(kapture_data.descriptors)
 
         # COLMAP does not fully support rigs.
-        if kapture_data.rigs is not None:
+        if kapture_data.rigs is not None and kapture_data.trajectories is not None:
             # make sure, rigs are not used in trajectories.
             logger.info('remove rigs notation.')
             rigs_remove_inplace(kapture_data.trajectories, kapture_data.rigs)

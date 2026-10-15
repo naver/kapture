@@ -198,7 +198,7 @@ def export_to_colmap_txt(colmap_reconstruction_dirpath: str,
     assert kapture_data.records_camera is not None
     assert kapture_data.sensors is not None
 
-    if kapture_data.rigs:
+    if kapture_data.rigs and kapture_data.trajectories is not None:
         # check the rigs are not used in trajectories
         used_sensors = set(sensor_id
                            for shot in kapture_data.trajectories.values()

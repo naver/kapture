@@ -619,7 +619,7 @@ def kapture_to_colmap(kapture_data: kapture.Kapture,
         raise ValueError('the existing colmap database is not empty : {}'.format(database))
 
     # compute actual camera trajectories from rigs trajectories
-    if kapture_data.rigs:
+    if kapture_data.rigs and kapture_data.trajectories is not None:
         # check the rigs are not used in trajectories
         used_sensors = set(sensor_id
                            for shot in kapture_data.trajectories.values()
