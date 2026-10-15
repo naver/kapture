@@ -12,7 +12,7 @@ import tomllib
 import unittest
 from os import path
 
-from jsonargparse import capture_parser
+from jsonargparse import ArgumentError, capture_parser
 
 import kapture.tools
 from kapture.io.records import TransferAction
@@ -29,7 +29,9 @@ def _entry_points() -> dict:
 
 def _parser(tool_module_name: str):
     module = importlib.import_module(f'kapture.tools.{tool_module_name}')
-    return capture_parser(module.main)
+    parser = capture_parser(module.main)
+    parser.exit_on_error = False  # raise ArgumentError instead of printing usage and exiting
+    return parser
 
 
 class TestEntryPoints(unittest.TestCase):
@@ -88,7 +90,7 @@ class TestLegacyFlags(unittest.TestCase):
         self.assertEqual(args.image_transfer, TransferAction.copy)
         args = parser.parse_args(['-i', 'a', '-o', 'out'])
         self.assertEqual((args.force, args.keep_sensor_ids, args.skip), (False, False, []))
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ArgumentError):
             parser.parse_args(['-i', 'a', '-o', 'out', '-s', 'bogus'])
 
     def test_colmap_import_legacy_aliases(self):
