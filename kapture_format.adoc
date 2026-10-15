@@ -243,7 +243,7 @@ In the case of `sensor_type` is `camera` (or `depth`), `[sensor_params]` contain
 |===
 |            field | type   | description
 |            model | string |  the name of the camera model, see table below. The names and the parameters are the ones of
-                                https://github.com/colmap/colmap/tree/main/src/colmap/sensor/models[colmap] (`OPENCV_OMNI` excepted).
+                                https://github.com/colmap/colmap/tree/main/src/colmap/sensor/models[colmap] (`OPENCV_OMNI` excepted, see below).
 |     model_params | list of floats | parameters of the projection model: image size (`w`, `h`) first, then the parameters of the model
                                       as listed in `kapture.CAMERA_TYPE_PARAMS_NAMES` (see table below).
 |===
@@ -289,7 +289,8 @@ the others raise an error.
 [cols="1,3",options="header"]
 |===
 | converter | camera models
-| COLMAP | all but `OPENCV_OMNI`. `UNKNOWN_CAMERA` is exported as `SIMPLE_RADIAL` with a guessed focal.
+| COLMAP | all. `OPENCV_OMNI` is approximated by `EUCM` (alpha = xi / (1 + xi), beta = 1, focals scaled by 1 / (1 + xi);
+           skew and distortion dropped). `UNKNOWN_CAMERA` is exported as `SIMPLE_RADIAL` with a guessed focal.
 | OpenMVG | `SIMPLE_PINHOLE`, `PINHOLE`, `SKEWED_PINHOLE` (skew dropped), `SIMPLE_RADIAL`, `RADIAL`, `OPENCV`,
            `FULL_OPENCV` (k4-k6 dropped), fisheye models (distortion dropped), `EQUIRECTANGULAR` (`spherical`), `UNKNOWN_CAMERA`.
 | OpenSfM | `SIMPLE_PINHOLE`, `SIMPLE_RADIAL`, `RADIAL` (`perspective`), `EQUIRECTANGULAR` (`spherical`).

@@ -367,10 +367,14 @@ class TestColmapCameras(unittest.TestCase):
         pano = kapture.Camera(kapture.CameraType.EQUIRECTANGULAR, [4096, 2048])
         model_id, width, height, params, _ = get_colmap_camera(pano)
         self.assertEqual((model_id, params), (17, []))
-        omni = kapture.Camera(kapture.CameraType.OPENCV_OMNI, [1920, 1080, 500, 500, 960, 540, 0, 1.2, 0, 0, 0, 0])
-        with self.assertRaises(ValueError) as context:
-            get_colmap_camera(omni)
-        self.assertIn('OPENCV_OMNI', str(context.exception))
+        # OPENCV_OMNI -> EUCM: f' = f / (1 + xi), alpha = xi / (1 + xi), beta = 1
+        omni = kapture.Camera(kapture.CameraType.OPENCV_OMNI, [1920, 1080, 500, 400, 960, 540, 0, 1.5, 0.1, 0.2, 0, 0])
+        model_id, width, height, params, prior_focal_length = get_colmap_camera(omni)
+        self.assertEqual(model_id, 16)
+        self.assertEqual((width, height), (1920, 1080))
+        for actual, expected in zip(params, [200, 160, 960, 540, 0.6, 1.0]):
+            self.assertAlmostEqual(actual, expected)
+        self.assertTrue(prior_focal_length)
 
     def test_import_camera_models(self):
         camera = get_kapture_camera(15, 800, 600, [300, 310, 400, 300])
