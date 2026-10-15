@@ -13,10 +13,12 @@ from kapture.core.Sensors import CameraType, Camera
 
 def import_opencv_camera_calibration(camera_info_file_path: str) -> Camera:
     """
-    Parse an OpenCV camera calibration file to insert in the sensor list.
+    Parse an OpenCV camera calibration file (cv::FileStorage yaml, as written by ROS camera_calibration or
+    cv::omnidir::calibrate) to insert in the sensor list.
+    The camera is OPENCV or FULL_OPENCV (depending on k3), or OPENCV_OMNI when the file has a "xi" entry.
 
     :param camera_info_file_path: path to the camera info file
-    :return: the camera name and its parameters
+    :return: the camera and its parameters
     """
     camera_info_file_path = path.abspath(camera_info_file_path)
     with open(camera_info_file_path) as file:
@@ -40,11 +42,18 @@ def import_opencv_camera_calibration(camera_info_file_path: str) -> Camera:
             camera_name = pathlib.Path(path.basename(camera_info_file_path)).stem
         w, h = camera_info['image_width'], camera_info['image_height']
         camera_matrix = camera_info['camera_matrix']['data']
-        fx, cx, fy, cy = camera_matrix[0], camera_matrix[2], camera_matrix[4], camera_matrix[5]
-        # Will use opencv model with parameters: w, h, fx, fy, cx, cy, k1, k2, p1, p2
+        fx, skew, cx, fy, cy = camera_matrix[0], camera_matrix[1], camera_matrix[2], camera_matrix[4], camera_matrix[5]
         distortion_coefficients = camera_info['distortion_coefficients']['data']
+        if 'xi' in camera_info:
+            # omnidirectional (Mei) camera from cv::omnidir::calibrate: K, xi, D = k1, k2, p1, p2
+            xi = camera_info['xi']
+            if isinstance(xi, dict):
+                xi = xi['data'][0]
+            k1, k2, p1, p2 = (list(distortion_coefficients) + [0.0] * 4)[:4]
+            return Camera(CameraType.OPENCV_OMNI, [w, h, fx, fy, cx, cy, skew, xi, k1, k2, p1, p2], camera_name)
+        # Will use opencv model with parameters: w, h, fx, fy, cx, cy, k1, k2, p1, p2
         camera_type = CameraType.OPENCV
-        if distortion_coefficients[4] == float(0.0):
+        if len(distortion_coefficients) < 5 or distortion_coefficients[4] == float(0.0):
             # No k3: opencv model with k1 k2 p1 p2
             camera_parameters = [w, h, fx, fy, cx, cy] + distortion_coefficients[0:4]
         else:

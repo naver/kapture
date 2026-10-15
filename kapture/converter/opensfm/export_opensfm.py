@@ -154,6 +154,13 @@ def export_opensfm_camera(
     :param kapture_camera: camera kapture definition
     :return: camera definition as dictionary to save (as json, db record, ...)
     """
+    if kapture_camera.camera_type == kapture.CameraType.EQUIRECTANGULAR:
+        return {
+            'projection_type': 'spherical',
+            'width': int(kapture_camera.camera_params[0]),
+            'height': int(kapture_camera.camera_params[1]),
+        }
+
     corresponding_opensfm_perspective = [
         kapture.CameraType.SIMPLE_PINHOLE,
         kapture.CameraType.RADIAL,
@@ -161,7 +168,9 @@ def export_opensfm_camera(
     ]
 
     if kapture_camera.camera_type not in corresponding_opensfm_perspective:
-        raise ValueError(f'Unable to export camera of type "{kapture_camera.camera_type}" to OpenSfM')
+        supported = [t.name for t in corresponding_opensfm_perspective] + [kapture.CameraType.EQUIRECTANGULAR.name]
+        raise ValueError(f'camera model {kapture_camera.camera_type.name} cannot be exported to OpenSfM '
+                         f'(supported: {", ".join(supported)})')
 
     # SIMPLE_PINHOLE = w, h, fx, fy, cx, cy
     # SIMPLE_RADIAL  = w, h, f, cx, cy, k1

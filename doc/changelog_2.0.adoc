@@ -1,5 +1,7 @@
-= kapture 2.0: command line changes
+= kapture 2.0: changes
 :toc:
+
+== Command line
 
 Since version 2.0, the `kapture_*` tools derive their command line from a type-hinted function
 (link:https://jsonargparse.readthedocs.io[jsonargparse]), see `doc/tutorial.adoc` "Command line conventions".
@@ -98,6 +100,28 @@ Dashed flags only renamed to their underscore form (dashed form still accepted):
 `kapture_import_colmap --keypoints-type --descriptors-type`, `kapture_rename_features --feature-type --current-name
 --new-name`, `kapture_upgrade_1_0_to_1_1*` (all dashed options), `kapture_upgrade_1_0_to_1_1_orphan_features
 --local-features (-lfeat) --global-features (-gfeat)`.
+
+== New camera models
+
+`sensors.txt` accepts nine more camera models (see `kapture_format.adoc`): `OPENCV_OMNI` (unified / Mei model of the
+OpenCV `omnidir` module: `w, h, fx, fy, cx, cy, s, xi, k1, k2, p1, p2`) and the models of COLMAP 3.12:
+`RAD_TAN_THIN_PRISM_FISHEYE`, `SIMPLE_DIVISION`, `DIVISION`, `SIMPLE_FISHEYE`, `FISHEYE`, `EUCM`, `EQUIRECTANGULAR`,
+`SKEWED_PINHOLE`. The format version stays 1.1, but a `sensors.txt` using one of them is rejected by kapture < 2.0.
+
+* `kapture.CAMERA_TYPE_PARAMS_NAMES` gives the parameter names of every model; `Camera.camera_param('fx')` reads a
+  parameter by name. Code indexing `camera_params[2]` as the focal must first check `camera_type`, since
+  `EQUIRECTANGULAR` and `UNKNOWN_CAMERA` only have `w, h`. Known places in kapture-localization / kapture-internal:
+  `tools/kapture_create_3D_model_from_depth.py`, `tools/register_floorplan.py`, `tools/kapture_export_debug_images.py`,
+  `tools/kapture_import_caminfo.py`, `localization_lib/bundle_adjustment/bundle_adjustment.py`,
+  `localization_lib/matching/geometric_verification.py`.
+* `kapture.Camera` raises `ValueError` / `TypeError` with an explicit message (model, expected parameters) instead of
+  `AssertionError` on an invalid model or parameter list.
+* COLMAP import no longer crashes on camera models unknown to kapture: they become `UNKNOWN_CAMERA` with a warning.
+  COLMAP export of the 3.12 models logs a warning (older COLMAP cannot read them); `OPENCV_OMNI` raises `ValueError`.
+* OpenMVG: `EQUIRECTANGULAR` ↔ `spherical`, `FISHEYE`/`SIMPLE_FISHEYE` → `fisheye`, `SKEWED_PINHOLE` → `pinhole`;
+  OpenSfM: `EQUIRECTANGULAR` ↔ `spherical`. Everything else unsupported raises `ValueError` naming the camera.
+* `kapture.utils.open_cv.import_opencv_camera_calibration` (used by `kapture_import_utbm --camera_info`) returns an
+  `OPENCV_OMNI` camera when the yaml has a `xi` entry.
 
 == Python API changes
 

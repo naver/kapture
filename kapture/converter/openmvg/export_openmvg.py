@@ -109,6 +109,11 @@ def _get_intrinsic_pinhole_brown_t2(camera_params: list, use_v2_intrinsics_forma
         return data
 
 
+def _get_intrinsic_spherical(camera_params: list) -> Dict:
+    # w, h
+    return {JSON_KEY.WIDTH: int(camera_params[0]), JSON_KEY.HEIGHT: int(camera_params[1])}
+
+
 def _get_intrinsic_fisheye(camera_params: list, use_v2_intrinsics_format: bool) -> Dict:
     # w, h, f, cx, cy, k1, k2, k3, k4
     fisheye = [float(camera_params[5]), float(camera_params[6]), float(camera_params[7]), float(camera_params[8])]
@@ -174,8 +179,10 @@ def _export_openmvg_intrinsics(
             # w, h, f, cx, cy
             openmvg_cam_type = CameraModel.pinhole
             data = _get_intrinsic_pinhole(kapture_camera_params)
-        elif kapture_cam_type == kapture.CameraType.PINHOLE:
+        elif kapture_cam_type in [kapture.CameraType.PINHOLE, kapture.CameraType.SKEWED_PINHOLE]:
             # w, h, f, cx, cy
+            if kapture_cam_type == kapture.CameraType.SKEWED_PINHOLE and kapture_camera_params[6] != 0:
+                logger.warning(f'Camera {kapture_cam_id}: skew is not supported by OpenMVG, ignored')
             openmvg_cam_type = CameraModel.pinhole
             faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
                             (kapture_camera_params[2] + kapture_camera_params[3]) / 2,  # fx+fy/2 as f
@@ -205,8 +212,9 @@ def _export_openmvg_intrinsics(
                             kapture_camera_params[8], kapture_camera_params[9]  # p1, p2 (=t1, t2)
                             ]
             data = _get_intrinsic_pinhole_brown_t2(faked_params, use_v2_intrinsics_format)
-        elif kapture_cam_type == kapture.CameraType.OPENCV_FISHEYE:
-            logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
+        elif kapture_cam_type in [kapture.CameraType.OPENCV_FISHEYE, kapture.CameraType.FISHEYE]:
+            if kapture_cam_type == kapture.CameraType.OPENCV_FISHEYE:
+                logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
             # w, h, f, cx, cy, k1, k2, k3, k4
             openmvg_cam_type = CameraModel.fisheye
             faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
@@ -216,9 +224,10 @@ def _export_openmvg_intrinsics(
                             0, 0  # k3, k4
                             ]
             data = _get_intrinsic_fisheye(faked_params, use_v2_intrinsics_format)
-        elif kapture_cam_type == kapture.CameraType.RADIAL_FISHEYE or \
-                kapture_cam_type == kapture.CameraType.SIMPLE_RADIAL_FISHEYE:
-            logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
+        elif kapture_cam_type in [kapture.CameraType.RADIAL_FISHEYE, kapture.CameraType.SIMPLE_RADIAL_FISHEYE,
+                                  kapture.CameraType.SIMPLE_FISHEYE]:
+            if kapture_cam_type != kapture.CameraType.SIMPLE_FISHEYE:
+                logger.warning('OpenCV fisheye model is not compatible with OpenMVG. Forcing distortion to 0')
             # w, h, f, cx, cy, k1, k2, k3, k4
             openmvg_cam_type = CameraModel.fisheye
             faked_params = [kapture_camera_params[0], kapture_camera_params[1],  # width height
@@ -228,6 +237,10 @@ def _export_openmvg_intrinsics(
                             0, 0  # k3, k4
                             ]
             data = _get_intrinsic_fisheye(faked_params, use_v2_intrinsics_format)
+        elif kapture_cam_type == kapture.CameraType.EQUIRECTANGULAR:
+            # w, h
+            openmvg_cam_type = CameraModel.spherical
+            data = _get_intrinsic_spherical(kapture_camera_params)
         elif kapture_cam_type == kapture.CameraType.UNKNOWN_CAMERA:
             logger.info(f'Camera {kapture_cam_id}: Unknown camera model, using simple radial')
             # Choose simple radial model, to allow openMVG to determine distortion param
@@ -240,7 +253,7 @@ def _export_openmvg_intrinsics(
                             0.0]  # k1
             data = _get_intrinsic_pinhole_radial_k1(faked_params)
         else:
-            raise ValueError(f'Camera model {kapture_cam_type.value} not supported')
+            raise ValueError(f'Camera {kapture_cam_id}: model {kapture_cam_type.value} cannot be exported to OpenMVG')
 
         intrinsic = {}
         cam_type_poly_id = polymorphic_registry.get_ids_dict(openmvg_cam_type.name)

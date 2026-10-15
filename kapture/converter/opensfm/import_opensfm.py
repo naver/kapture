@@ -122,6 +122,10 @@ def import_camera(
         ]
         return kapture.Camera(kapture.CameraType.RADIAL, camera_params, name)
 
+    elif opensfm_camera['projection_type'] in ['spherical', 'equirectangular']:
+        return kapture.Camera(kapture.CameraType.EQUIRECTANGULAR,
+                              [opensfm_camera['width'], opensfm_camera['height']], name)
+
     else:
         raise ValueError(f'unable to convert camera of type {opensfm_camera["projection_type"]}')
 

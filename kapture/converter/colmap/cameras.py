@@ -4,9 +4,12 @@
 Colmap camera management
 """
 
+import logging
 import kapture
 
+logger = logging.getLogger('colmap')
 
+# see https://github.com/colmap/colmap/blob/main/src/colmap/sensor/models/base.h
 CAMERA_MODEL_NAME_ID = [
     ('SIMPLE_PINHOLE', 0),
     ('PINHOLE', 1),
@@ -19,10 +22,22 @@ CAMERA_MODEL_NAME_ID = [
     ('SIMPLE_RADIAL_FISHEYE', 8),
     ('RADIAL_FISHEYE', 9),
     ('THIN_PRISM_FISHEYE', 10),
+    # the following need COLMAP >= 3.12
+    ('RAD_TAN_THIN_PRISM_FISHEYE', 11),
+    ('SIMPLE_DIVISION', 12),
+    ('DIVISION', 13),
+    ('SIMPLE_FISHEYE', 14),
+    ('FISHEYE', 15),
+    ('EUCM', 16),
+    ('EQUIRECTANGULAR', 17),
+    ('SKEWED_PINHOLE', 18),
 ]
+FIRST_COLMAP_3_12_MODEL_ID = 11
 
 CAMERA_MODEL_NAMES = {i: name for name, i in CAMERA_MODEL_NAME_ID}
 CAMERA_MODEL_IDS = {name: i for name, i in CAMERA_MODEL_NAME_ID}
+# kapture camera models that have no COLMAP equivalent
+COLMAP_UNSUPPORTED_CAMERA_TYPES = [kapture.CameraType.OPENCV_OMNI]
 
 DEFAULT_FOCAL_LENGTH_FACTOR = 1.2
 
@@ -62,7 +77,31 @@ def get_colmap_camera(camera: kapture.Camera):
         prior_focal_length = True
         camera_id = CAMERA_MODEL_IDS[camera.camera_type.value]
         params = camera.camera_params[2:]
+        if camera_id >= FIRST_COLMAP_3_12_MODEL_ID:
+            logger.warning(f'camera model {camera.camera_type.value} requires COLMAP >= 3.12')
     else:
-        raise ValueError(
-            'This sensor model: {} is not supported by colmap'.format(camera.camera_type.value))
+        raise ValueError(f'camera model {camera.camera_type.value} cannot be exported to COLMAP')
     return camera_id, width, height, params, prior_focal_length
+
+
+def get_kapture_camera(model_name_or_id, width, height, params, colmap_camera_id=None) -> kapture.Camera:
+    """
+    Compute the kapture camera from a colmap camera definition.
+    A camera model unknown to kapture is converted to UNKNOWN_CAMERA (with a warning).
+
+    :param model_name_or_id: colmap camera model, by name (cameras.txt) or by id (database)
+    :param width: image width
+    :param height: image height
+    :param params: colmap camera parameters (without image size)
+    :param colmap_camera_id: colmap camera identifier, for the warning
+    :return: kapture camera
+    """
+    if isinstance(model_name_or_id, int):
+        model_name = CAMERA_MODEL_NAMES.get(model_name_or_id, str(model_name_or_id))
+    else:
+        model_name = str(model_name_or_id)
+    if model_name not in kapture.CAMERA_TYPE_PARAMS_COUNT_FROM_NAME:
+        logger.warning(f'unknown colmap camera model ({model_name}) for camera {colmap_camera_id}: '
+                       f'using {kapture.CameraType.UNKNOWN_CAMERA.name}')
+        return kapture.Camera(kapture.CameraType.UNKNOWN_CAMERA, [width, height])
+    return kapture.Camera(model_name, [width, height] + list(params))

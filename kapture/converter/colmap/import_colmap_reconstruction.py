@@ -13,7 +13,7 @@ from typing import Dict, Tuple, Optional
 import kapture
 import kapture.io.features
 # local
-from .cameras import get_camera_kapture_id_from_colmap_id
+from .cameras import get_camera_kapture_id_from_colmap_id, get_kapture_camera
 
 logger = logging.getLogger('colmap')
 
@@ -38,10 +38,7 @@ def import_from_colmap_cameras_txt(colmap_cameras_filepath: str) -> kapture.Sens
                  for line in lines)  # split fields
         for fields in lines:
             camera_id = get_camera_kapture_id_from_colmap_id(int(fields[0]))
-            camera_type = str(fields[1])
-            image_size = [str(s) for s in fields[2:4]]
-            projection_params = [str(f) for f in fields[4:]]
-            camera = kapture.Camera(camera_type, image_size + projection_params)
+            camera = get_kapture_camera(str(fields[1]), fields[2], fields[3], fields[4:], int(fields[0]))
             sensors[camera_id] = camera
     return sensors
 

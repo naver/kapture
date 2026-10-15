@@ -242,27 +242,58 @@ In the case of `sensor_type` is `camera` (or `depth`), `[sensor_params]` contain
 [cols=">1m,^1e,4",options="header"]
 |===
 |            field | type   | description
-|            model | string |  the name of the sensors model used, usually a camera projection (same as in https://github.com/colmap/colmap/blob/dev/scripts/python/read_write_model.py#L56[colmap]):
-                                SIMPLE_PINHOLE, PINHOLE, SIMPLE_RADIAL, RADIAL, OPENCV, OPENCV_FISHEYE, FULL_OPENCV, FOV, SIMPLE_RADIAL_FISHEYE, RADIAL_FISHEYE, THIN_PRISM_FISHEYE, UNKNOWN_CAMERA
-|     model_params | list of floats | parameters of the projection model, usually starts with image size, but depends of the model. (see https://github.com/colmap/colmap/blob/dev/src/base/camera_models.h#L275[colmap] and examples below).
+|            model | string |  the name of the camera model, see table below. The names and the parameters are the ones of
+                                https://github.com/colmap/colmap/tree/main/src/colmap/sensor/models[colmap] (`OPENCV_OMNI` excepted).
+|     model_params | list of floats | parameters of the projection model: image size (`w`, `h`) first, then the parameters of the model
+                                      as listed in `kapture.CAMERA_TYPE_PARAMS_NAMES` (see table below).
 |===
-
 
 [cols=">1m,4m",options="header"]
 |===
 | model          | parameters
-| UNKNOWN_CAMERA | w, h
-| SIMPLE_PINHOLE | w, h, f, cx, cy
-| SIMPLE_RADIAL  | w, h, f, cx, cy, k
-| RADIAL         | w, h, f, cx, cy, k1, k2
-| PINHOLE        | w, h, fx, fy, cx, cy
-| OPENCV         | w, h, fx, fy, cx, cy, k1, k2, p1, p2
-| FULL_OPENCV    | w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
+| SIMPLE_PINHOLE             | w, h, f, cx, cy
+| PINHOLE                    | w, h, fx, fy, cx, cy
+| SIMPLE_RADIAL              | w, h, f, cx, cy, k
+| RADIAL                     | w, h, f, cx, cy, k1, k2
+| OPENCV                     | w, h, fx, fy, cx, cy, k1, k2, p1, p2
+| OPENCV_FISHEYE             | w, h, fx, fy, cx, cy, k1, k2, k3, k4
+| FULL_OPENCV                | w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
+| FOV                        | w, h, fx, fy, cx, cy, omega
+| SIMPLE_RADIAL_FISHEYE      | w, h, f, cx, cy, k
+| RADIAL_FISHEYE             | w, h, f, cx, cy, k1, k2
+| THIN_PRISM_FISHEYE         | w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, sx1, sy1
+| RAD_TAN_THIN_PRISM_FISHEYE | w, h, fx, fy, cx, cy, k0, k1, k2, k3, k4, k5, p0, p1, s0, s1, s2, s3
+| SIMPLE_DIVISION            | w, h, f, cx, cy, k
+| DIVISION                   | w, h, fx, fy, cx, cy, k
+| SIMPLE_FISHEYE             | w, h, f, cx, cy
+| FISHEYE                    | w, h, fx, fy, cx, cy
+| EUCM                       | w, h, fx, fy, cx, cy, alpha, beta
+| EQUIRECTANGULAR            | w, h
+| SKEWED_PINHOLE             | w, h, fx, fy, cx, cy, s
+| OPENCV_OMNI                | w, h, fx, fy, cx, cy, s, xi, k1, k2, p1, p2
+| UNKNOWN_CAMERA             | w, h
 |===
 
-with `w` and `h` standing for image with and height. See source conde for other parameters.
+with `w` and `h` standing for image width and height in pixels, `f`/`fx`/`fy` the focal length(s), `cx`, `cy` the principal
+point, `s` the skew, `k*`, `p*`, `sx*`/`sy*`/`s*` the radial, tangential and thin prism distortion coefficients,
+`omega` the FOV distortion, `xi` the sphere shift of the unified (Mei) model and `alpha`, `beta` the EUCM parameters.
+`OPENCV_OMNI` follows the convention of the OpenCV `omnidir` module
+(https://docs.opencv.org/master/dd/d12/tutorial_omnidir_calib_main.html[K, xi, D]).
+`UNKNOWN_CAMERA` is for a non calibrated camera: only the image size is known.
 
-WARNING: point to our code instead when available
+NOTE: `RAD_TAN_THIN_PRISM_FISHEYE`, `SIMPLE_DIVISION`, `DIVISION`, `SIMPLE_FISHEYE`, `FISHEYE`, `EUCM`, `EQUIRECTANGULAR`,
+`SKEWED_PINHOLE` and `OPENCV_OMNI` were added in kapture 2.0: files using them cannot be read by older versions.
+The first eight need COLMAP 3.12 or newer. The table below tells which models each converter can handle;
+the others raise an error.
+
+[cols="1,3",options="header"]
+|===
+| converter | camera models
+| COLMAP | all but `OPENCV_OMNI`. `UNKNOWN_CAMERA` is exported as `SIMPLE_RADIAL` with a guessed focal.
+| OpenMVG | `SIMPLE_PINHOLE`, `PINHOLE`, `SKEWED_PINHOLE` (skew dropped), `SIMPLE_RADIAL`, `RADIAL`, `OPENCV`,
+           `FULL_OPENCV` (k4-k6 dropped), fisheye models (distortion dropped), `EQUIRECTANGULAR` (`spherical`), `UNKNOWN_CAMERA`.
+| OpenSfM | `SIMPLE_PINHOLE`, `SIMPLE_RADIAL`, `RADIAL` (`perspective`), `EQUIRECTANGULAR` (`spherical`).
+|===
 
 ==== gnss (a.k.a GPS)
 

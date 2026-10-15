@@ -19,6 +19,8 @@ from kapture.converter.colmap.export_colmap import export_colmap
 from kapture.converter.colmap.export_colmap_rigs import export_colmap_rig_json
 from kapture.converter.colmap.import_colmap_rigs import import_colmap_rig_json
 from kapture.converter.colmap.cameras import get_camera_kapture_id_from_colmap_id
+from kapture.converter.colmap.cameras import get_colmap_camera, get_kapture_camera
+from kapture.converter.colmap.import_colmap_database import get_cameras_from_database
 from kapture.converter.colmap.database import COLMAPDatabase
 from kapture.converter.colmap.database_extra import exists_table
 
@@ -352,6 +354,55 @@ class TestColmapMaupertuis(unittest.TestCase):
         # compare
         equivalence = kapture.algo.compare.equal_kapture(kapture_data, kapture_data_golden)
         self.assertTrue(equivalence)
+
+
+class TestColmapCameras(unittest.TestCase):
+    def test_export_camera_models(self):
+        fisheye = kapture.Camera(kapture.CameraType.FISHEYE, [800, 600, 300, 310, 400, 300])
+        model_id, width, height, params, prior_focal_length = get_colmap_camera(fisheye)
+        self.assertEqual(model_id, 15)
+        self.assertEqual((width, height), (800, 600))
+        self.assertEqual(params, [300, 310, 400, 300])
+        self.assertTrue(prior_focal_length)
+        pano = kapture.Camera(kapture.CameraType.EQUIRECTANGULAR, [4096, 2048])
+        model_id, width, height, params, _ = get_colmap_camera(pano)
+        self.assertEqual((model_id, params), (17, []))
+        omni = kapture.Camera(kapture.CameraType.OPENCV_OMNI, [1920, 1080, 500, 500, 960, 540, 0, 1.2, 0, 0, 0, 0])
+        with self.assertRaises(ValueError) as context:
+            get_colmap_camera(omni)
+        self.assertIn('OPENCV_OMNI', str(context.exception))
+
+    def test_import_camera_models(self):
+        camera = get_kapture_camera(15, 800, 600, [300, 310, 400, 300])
+        self.assertEqual(camera.camera_type, kapture.CameraType.FISHEYE)
+        self.assertEqual(camera.camera_params, [800, 600, 300, 310, 400, 300])
+        camera = get_kapture_camera('SKEWED_PINHOLE', '800', '600', ['300', '310', '400', '300', '0.5'])
+        self.assertEqual(camera.camera_type, kapture.CameraType.SKEWED_PINHOLE)
+        self.assertEqual(camera.camera_param('s'), 0.5)
+        # unknown colmap models fall back to UNKNOWN_CAMERA, keeping the image size
+        for unknown in [99, 'FUTURE_MODEL']:
+            camera = get_kapture_camera(unknown, 800, 600, [1, 2, 3])
+            self.assertEqual(camera.camera_type, kapture.CameraType.UNKNOWN_CAMERA)
+            self.assertEqual(camera.camera_params, [800, 600])
+
+    def test_database_round_trip(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            database = COLMAPDatabase.connect(path.join(tmpdir, 'colmap.db'))
+            database.create_tables()
+            sensors = kapture.Sensors()
+            sensors['cam0'] = kapture.Camera(kapture.CameraType.EUCM, [800, 600, 300, 310, 400, 300, 0.6, 1.1])
+            sensors['cam1'] = kapture.Camera(kapture.CameraType.SIMPLE_DIVISION, [800, 600, 300, 400, 300, -0.01])
+            for camera in sensors.values():
+                model_id, width, height, params, prior_focal_length = get_colmap_camera(camera)
+                database.add_camera(model_id, width, height, params, prior_focal_length=prior_focal_length)
+            database.commit()
+            cameras = get_cameras_from_database(database)
+            database.close()
+        self.assertEqual(len(cameras), 2)
+        self.assertEqual(cameras['cam_00001'].camera_type, kapture.CameraType.EUCM)
+        self.assertEqual(cameras['cam_00001'].camera_params, sensors['cam0'].camera_params)
+        self.assertEqual(cameras['cam_00002'].camera_type, kapture.CameraType.SIMPLE_DIVISION)
+        self.assertEqual(cameras['cam_00002'].camera_params, sensors['cam1'].camera_params)
 
 
 class TestColmapRig(unittest.TestCase):

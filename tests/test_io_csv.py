@@ -127,6 +127,28 @@ class TestCsvSensors(unittest.TestCase):
 
         self.assertEqual(formatted_actual, formatted_expected)
 
+    def test_sensors_new_models_round_trip(self):
+        sensors = kapture.Sensors()
+        sensors['omni'] = kapture.Camera('OPENCV_OMNI', [1920, 1080, 500, 500, 960, 540, 0, 1.2, -0.1, 0.01, 0, 0])
+        sensors['pano'] = kapture.Camera('EQUIRECTANGULAR', [4096, 2048])
+        sensors['fish'] = kapture.Camera('FISHEYE', [800, 600, 300, 300, 400, 300])
+        csv.sensors_to_file(self._temp_filepath, sensors)
+        with open(self._temp_filepath, 'rt') as f:
+            content = f.read()
+        self.assertIn('omni, , camera, OPENCV_OMNI, 1920, 1080, 500, 500, 960, 540, 0, 1.2, -0.1, 0.01, 0, 0',
+                      content)
+        self.assertIn('pano, , camera, EQUIRECTANGULAR, 4096, 2048', content)
+        sensors_read = csv.sensors_from_file(self._temp_filepath)
+        for sensor_id, sensor in sensors.items():
+            self.assertEqual(sensors_read[sensor_id].camera_type, sensor.camera_type)
+            self.assertEqual(sensors_read[sensor_id].camera_params, sensor.camera_params)
+
+    def test_sensors_read_unknown_model(self):
+        with open(self._temp_filepath, 'wt') as f:
+            f.write('cam0, cam0, camera, OPENCV_MEI, 640, 480, 100, 320, 240\n')
+        with self.assertRaises(ValueError):
+            csv.sensors_from_file(self._temp_filepath)
+
     def test_sensors_read(self):
         formatted_expected = kapture_linesep.join([
             '# sensor_id, name, sensor_type, [sensor_params]+',

@@ -127,6 +127,40 @@ class TestOpenMvg(unittest.TestCase):
                 img_path = get_image_fullpath(self._kapture_path, name)
                 self.assertTrue(path.islink(img_path), f"image link {img_path}")
 
+    def _make_kapture(self, camera: kapture.Camera) -> str:
+        """ writes a minimal kapture with the given camera, one image and one pose; returns its path """
+        kapture_path = path.join(self._tempdir.name, 'tiny')
+        sensors = kapture.Sensors()
+        sensors['cam0'] = camera
+        records_camera = kapture.RecordsCamera()
+        records_camera[0, 'cam0'] = 'cam0/0000.jpg'
+        trajectories = kapture.Trajectories()
+        trajectories[0, 'cam0'] = kapture.PoseTransform()
+        kcsv.kapture_to_dir(kapture_path, kapture.Kapture(sensors=sensors, records_camera=records_camera,
+                                                          trajectories=trajectories))
+        return kapture_path
+
+    def test_equirectangular_round_trip(self) -> None:
+        kapture_path = self._make_kapture(kapture.Camera(kapture.CameraType.EQUIRECTANGULAR, [4096, 2048]))
+        sfm_data_path = path.join(self._tempdir.name, 'sfm_data.json')
+        export_openmvg(kapture_path, sfm_data_path, image_action=TransferAction.skip)
+        with open(sfm_data_path) as f:
+            intrinsics = json.load(f)[JSON_KEY.INTRINSICS]
+        self.assertEqual(intrinsics[0][JSON_KEY.VALUE][JSON_KEY.POLYMORPHIC_NAME], CameraModel.spherical.name)
+        import_openmvg(sfm_data_path, None, None, self._kapture_path, TransferAction.skip,
+                       force_overwrite_existing=True)
+        imported = kcsv.kapture_from_dir(self._kapture_path)
+        camera = next(iter(imported.sensors.values()))
+        self.assertEqual(camera.camera_type, kapture.CameraType.EQUIRECTANGULAR)
+        self.assertEqual(camera.camera_params, [4096, 2048])
+
+    def test_unsupported_camera_model(self) -> None:
+        omni = kapture.Camera(kapture.CameraType.OPENCV_OMNI, [1920, 1080, 500, 500, 960, 540, 0, 1.2, 0, 0, 0, 0])
+        kapture_path = self._make_kapture(omni)
+        with self.assertRaises(ValueError) as context:
+            export_openmvg(kapture_path, path.join(self._tempdir.name, 'sfm_data.json'))
+        self.assertIn('OPENCV_OMNI', str(context.exception))
+
     def test_kapture_to_openmvg(self) -> None:
         """
         Test the kapture_to_openmvg export function on a small kapture dataset

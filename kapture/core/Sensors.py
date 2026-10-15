@@ -74,7 +74,9 @@ class SensorType(AutoEnum):
 
 class CameraType(AutoEnum):
     """
-    Enumeration that contains all the supported camera types
+    Enumeration that contains all the supported camera types.
+    Names and parameters follow COLMAP (https://github.com/colmap/colmap/tree/main/src/colmap/sensor/models),
+    except OPENCV_OMNI which follows the OpenCV omnidir module.
     """
     SIMPLE_PINHOLE = auto()
     PINHOLE = auto()
@@ -87,69 +89,78 @@ class CameraType(AutoEnum):
     SIMPLE_RADIAL_FISHEYE = auto()
     RADIAL_FISHEYE = auto()
     THIN_PRISM_FISHEYE = auto()
+    # added in kapture 2.0, COLMAP >= 3.12
+    RAD_TAN_THIN_PRISM_FISHEYE = auto()
+    SIMPLE_DIVISION = auto()
+    DIVISION = auto()
+    SIMPLE_FISHEYE = auto()
+    FISHEYE = auto()
+    EUCM = auto()
+    EQUIRECTANGULAR = auto()
+    SKEWED_PINHOLE = auto()
+    # added in kapture 2.0, not in COLMAP
+    OPENCV_OMNI = auto()
     UNKNOWN_CAMERA = auto()
 
 
-CAMERA_TYPE_PARAMS_COUNT = {
+CAMERA_TYPE_PARAMS_NAMES: Dict[CameraType, List[str]] = {
+    # The parameter names of every camera model, in order. Image size (w, h) always comes first.
     # https://en.wikipedia.org/wiki/Pinhole_camera_model
-    # w, h, f, cx, cy
-    CameraType.SIMPLE_PINHOLE: 5,
+    CameraType.SIMPLE_PINHOLE: ['w', 'h', 'f', 'cx', 'cy'],
+    CameraType.PINHOLE: ['w', 'h', 'fx', 'fy', 'cx', 'cy'],
+    # pinhole with a skew term s in the calibration matrix (COLMAP)
+    CameraType.SKEWED_PINHOLE: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 's'],
 
-    # https://en.wikipedia.org/wiki/Pinhole_camera_model
-    # w, h, fx, fy, cx, cy
-    CameraType.PINHOLE: 6,
+    # Simplified versions of the OPENCV model only modeling radial distortion:
+    # r^2 = u^2 + v^2; radial = k1 * r^2 + k2 * r^4; u_distorted = u + (u * radial)
+    # where u,v are normalized camera coordinates. SIMPLE_RADIAL is RADIAL with k2 = 0.
+    CameraType.SIMPLE_RADIAL: ['w', 'h', 'f', 'cx', 'cy', 'k'],
+    CameraType.RADIAL: ['w', 'h', 'f', 'cx', 'cy', 'k1', 'k2'],
 
-    # Simplified versions of the OPENCV model only modeling radial distortion.
-    # w, h, f, cx, cy, k
-    # equivalent to CameraType.RADIAL with k1=k, k2=0
-    # see: https://github.com/colmap/colmap/blob/master/src/base/camera_models.h#L715
-    CameraType.SIMPLE_RADIAL: 6,
+    # https://docs.opencv.org/master/d9/d0c/group__calib3d.html
+    CameraType.OPENCV: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'k1', 'k2', 'p1', 'p2'],
+    CameraType.FULL_OPENCV: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'k1', 'k2', 'p1', 'p2', 'k3', 'k4', 'k5', 'k6'],
 
-    # Simplified versions of the OPENCV model only modeling radial distortion
-    # w, h, f, cx, cy, k1, k2
-    # r^2 = u^2 + v^2;
-    # radial = k1 * r^2 + k2 * r^2 * r^2
-    # u_distorted = u + (u * radial)
-    # where u,v are normalized camera coordinates
-    # see: https://github.com/colmap/colmap/blob/master/src/base/camera_models.h#L784
-    CameraType.RADIAL: 7,
+    # https://docs.opencv.org/master/db/d58/group__calib3d__fisheye.html (Kannala-Brandt)
+    CameraType.OPENCV_FISHEYE: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'k1', 'k2', 'k3', 'k4'],
+    # OPENCV_FISHEYE with a single focal and one or two radial coefficients
+    CameraType.SIMPLE_RADIAL_FISHEYE: ['w', 'h', 'f', 'cx', 'cy', 'k'],
+    CameraType.RADIAL_FISHEYE: ['w', 'h', 'f', 'cx', 'cy', 'k1', 'k2'],
+    # equidistant fisheye without distortion (COLMAP)
+    CameraType.SIMPLE_FISHEYE: ['w', 'h', 'f', 'cx', 'cy'],
+    CameraType.FISHEYE: ['w', 'h', 'fx', 'fy', 'cx', 'cy'],
 
-    # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-    # w, h, fx, fy, cx, cy, k1, k2, p1, p2
-    CameraType.OPENCV: 10,
+    # Frederic Devernay, Olivier Faugeras. Straight lines have to be straight: Automatic calibration and removal
+    # of distortion from scenes of structured environments. Machine vision and applications, 2001.
+    CameraType.FOV: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'omega'],
 
-    # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-    # w, h, fx, fy, cx, cy, k1, k2, k3, k4
-    CameraType.OPENCV_FISHEYE: 10,
+    # Camera Calibration with Distortion Models and Accuracy Evaluation, J Weng et al., TPAMI, 1992.
+    CameraType.THIN_PRISM_FISHEYE: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'k1', 'k2', 'p1', 'p2', 'k3', 'k4', 'sx1', 'sy1'],
+    # Project Aria fisheye model (COLMAP)
+    CameraType.RAD_TAN_THIN_PRISM_FISHEYE: ['w', 'h', 'fx', 'fy', 'cx', 'cy',
+                                            'k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'p0', 'p1', 's0', 's1', 's2', 's3'],
 
-    # http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-    # w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
-    CameraType.FULL_OPENCV: 14,
+    # Fitzgibbon division model (COLMAP)
+    CameraType.SIMPLE_DIVISION: ['w', 'h', 'f', 'cx', 'cy', 'k'],
+    CameraType.DIVISION: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'k'],
 
-    # Frederic Devernay, Olivier Faugeras. Straight lines have to be straight:
-    # Automatic calibration and removal of distortion from scenes of structured
-    # environments. Machine vision and applications, 2001.
-    # w, h, fx, fy, cx, cy, omega
-    CameraType.FOV: 7,
+    # Extended unified camera model, Khomutenko et al., 2016 (COLMAP)
+    CameraType.EUCM: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 'alpha', 'beta'],
 
-    # equivalent to the OpenCVFisheyeCameraModel but has only one
-    # radial distortion coefficient.
-    # w, h, f, cx, cy, k
-    CameraType.SIMPLE_RADIAL_FISHEYE: 6,
+    # Unified / Mei omnidirectional model as in the OpenCV omnidir module
+    # (https://docs.opencv.org/master/dd/d12/tutorial_omnidir_calib_main.html):
+    # K = [fx, s, cx; 0, fy, cy; 0, 0, 1], xi the sphere shift, D = [k1, k2, p1, p2]
+    CameraType.OPENCV_OMNI: ['w', 'h', 'fx', 'fy', 'cx', 'cy', 's', 'xi', 'k1', 'k2', 'p1', 'p2'],
 
-    # equivalent to the OpenCVFisheyeCameraModel but has only two
-    # radial distortion coefficients.
-    # w, h, f, cx, cy, k1, k2
-    CameraType.RADIAL_FISHEYE: 7,
-
-    # Camera Calibration with Distortion Models and Accuracy Evaluation,
-    # J Weng et al., TPAMI, 1992.
-    # w, h, fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, sx1, sx2
-    CameraType.THIN_PRISM_FISHEYE: 14,
+    # 360 degrees panorama, equirectangular projection: the image size is the only parameter.
+    CameraType.EQUIRECTANGULAR: ['w', 'h'],
 
     # Non calibrated camera
-    # w, h
-    CameraType.UNKNOWN_CAMERA: 2
+    CameraType.UNKNOWN_CAMERA: ['w', 'h'],
+}
+
+CAMERA_TYPE_PARAMS_COUNT: Dict[CameraType, int] = {
+    camera_type: len(names) for camera_type, names in CAMERA_TYPE_PARAMS_NAMES.items()
 }
 
 CAMERA_TYPE_PARAMS_COUNT_FROM_NAME = {
@@ -171,17 +182,31 @@ class Camera(Sensor):
                  name: Optional[str] = None,
                  sensor_type: str = SensorType.camera.name):
         # type checking
-        assert name is None or isinstance(name, str)
+        if name is not None and not isinstance(name, str):
+            raise TypeError(f'camera name should be a string, got {type(name)}')
         if isinstance(camera_type, str):
-            camera_type = CameraType[camera_type]
-        assert isinstance(camera_type, CameraType)
-        # check params are consistent with model
-        assert isinstance(camera_params, list)
-        assert len(camera_params) == CAMERA_TYPE_PARAMS_COUNT[camera_type]
-        assert sensor_type in ALL_CAMERA_SENSOR_TYPES
+            try:
+                camera_type = CameraType[camera_type]
+            except KeyError:
+                raise ValueError(f'unknown camera model "{camera_type}", '
+                                 f'choose among: {", ".join(t.name for t in CameraType)}') from None
+        if not isinstance(camera_type, CameraType):
+            raise TypeError(f'camera_type should be a CameraType or a string, got {type(camera_type)}')
+        if not isinstance(camera_params, list):
+            raise TypeError(f'camera_params should be a list, got {type(camera_params)}')
+        expected = CAMERA_TYPE_PARAMS_NAMES[camera_type]
+        if len(camera_params) != len(expected):
+            raise ValueError(f'camera model {camera_type.name} expects {len(expected)} parameters '
+                             f'({", ".join(expected)}), got {len(camera_params)}: {camera_params}')
+        if sensor_type not in ALL_CAMERA_SENSOR_TYPES:
+            raise ValueError(f'sensor type of a camera should be one of {ALL_CAMERA_SENSOR_TYPES}, got {sensor_type}')
 
-        # make sure it crashes if camera_params cannot be cast to float, store as string in sensor_params
-        camera_params = [float(v) for v in camera_params]
+        # make sure camera_params are numbers, store them as strings in sensor_params
+        try:
+            camera_params = [float(v) for v in camera_params]
+        except (TypeError, ValueError):
+            raise ValueError(f'camera model {camera_type.name}: parameters should be numbers, '
+                             f'got {camera_params}') from None
         camera_params = [str(int(v)) if v.is_integer() else str(v) for v in camera_params]
         sensor_params = [camera_type.name] + camera_params
         super(Camera, self).__init__(sensor_type, sensor_params, name)
@@ -205,6 +230,25 @@ class Camera(Sensor):
         num_params = CAMERA_TYPE_PARAMS_COUNT[self.camera_type]
         return [float(c) for c in self.sensor_params[1:(1+num_params)]]
 
+    @property
+    def camera_params_names(self) -> List[str]:
+        """
+        :return: names of the camera parameters, in the same order as camera_params (eg. ['w', 'h', 'f', 'cx', 'cy'])
+        """
+        return CAMERA_TYPE_PARAMS_NAMES[self.camera_type]
+
+    def camera_param(self, name: str) -> float:
+        """
+        Get a camera parameter by its name, eg. camera.camera_param('fx').
+
+        :param name: parameter name, see CAMERA_TYPE_PARAMS_NAMES
+        :return: the parameter value
+        """
+        names = self.camera_params_names
+        if name not in names:
+            raise KeyError(f'camera model {self.camera_type.name} has no parameter "{name}" (has: {", ".join(names)})')
+        return self.camera_params[names.index(name)]
+
 
 def create_sensor(sensor_type: str, sensor_params: Optional[list] = None, name: Optional[str] = None):
     """
@@ -216,7 +260,8 @@ def create_sensor(sensor_type: str, sensor_params: Optional[list] = None, name: 
     :return: created instance
     """
     if sensor_type in ALL_CAMERA_SENSOR_TYPES:
-        assert sensor_params is not None
+        if not sensor_params:
+            raise ValueError(f'a {sensor_type} sensor needs parameters: camera model, then model parameters')
         return Camera(camera_type=sensor_params[0], camera_params=sensor_params[1:], name=name, sensor_type=sensor_type)
     else:
         return Sensor(sensor_type, sensor_params, name)

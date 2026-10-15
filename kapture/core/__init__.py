@@ -7,6 +7,7 @@ All kapture objects representing the data kapture manages.
 from .PoseTransform import PoseTransform  # noqa: F401
 from .Sensors import SensorType, Sensor, Sensors, create_sensor  # noqa: F401
 from .Sensors import Camera, CameraType, CAMERA_TYPE_PARAMS_COUNT, CAMERA_TYPE_PARAMS_COUNT_FROM_NAME  # noqa: F401
+from .Sensors import CAMERA_TYPE_PARAMS_NAMES  # noqa: F401
 from .Sensors import ALL_CAMERA_SENSOR_TYPES  # noqa: F401
 from .Rigs import Rigs  # noqa: F401
 from .Trajectories import Trajectories  # noqa: F401

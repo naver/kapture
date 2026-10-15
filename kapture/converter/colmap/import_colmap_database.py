@@ -16,7 +16,7 @@ import kapture.io.features
 # local
 from .database import COLMAPDatabase, blob_to_array, pair_id_to_image_ids
 from .database_extra import exists_table
-from .cameras import CAMERA_MODEL_NAMES, get_camera_kapture_id_from_colmap_id
+from .cameras import get_camera_kapture_id_from_colmap_id, get_kapture_camera
 
 logger = logging.getLogger('colmap')
 
@@ -33,21 +33,11 @@ def get_cameras_from_database(database: COLMAPDatabase) -> kapture.Sensors:
 
     for camera_id, model_id, width, height, params, prior_focal_length in database.execute(
             'SELECT camera_id, model, width, height, params, prior_focal_length FROM cameras;'):
-        if model_id not in CAMERA_MODEL_NAMES:
-            logger.warning(f'unable to convert colmap camera model ({model_id}) for camera {camera_id}.')
-            # use 0 as default
-            model_id = 0
-
-        camera_id = get_camera_kapture_id_from_colmap_id(camera_id)
-        model_name = CAMERA_MODEL_NAMES[model_id]
-
         #  By setting the prior_focal_length flag to 0 or 1,
         #  you can give a hint whether the reconstruction algorithm should trust the focal length value.
         params = blob_to_array(params, np.float64)
-        params = [width, height] + params.tolist()
-
-        kapture_camera = kapture.Camera(model_name, params)
-        kapture_cameras[camera_id] = kapture_camera
+        kapture_camera = get_kapture_camera(model_id, width, height, params.tolist(), camera_id)
+        kapture_cameras[get_camera_kapture_id_from_colmap_id(camera_id)] = kapture_camera
     return kapture_cameras
 
 

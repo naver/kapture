@@ -236,6 +236,12 @@ def _import_openmvg_cameras(intrinsics_data_json: List[Dict[str, Union[int, str,
                     value0[JSON_KEY.PRINCIPAL_POINT][0],
                     value0[JSON_KEY.PRINCIPAL_POINT][1],
                     0])
+            elif camera_model == CameraModel.spherical:
+                # w, h
+                value0 = camera_data[JSON_KEY.VALUE0] if JSON_KEY.VALUE0 in camera_data else camera_data
+                camera = kapture.Camera(kapture.CameraType.EQUIRECTANGULAR, [
+                    int(value0[JSON_KEY.WIDTH]),
+                    int(value0[JSON_KEY.HEIGHT])])
             else:
                 raise ValueError(f'Camera model {camera_model} not supported')
 

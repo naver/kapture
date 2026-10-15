@@ -266,6 +266,54 @@ class TestCameraModel(unittest.TestCase):
             kapture.CAMERA_TYPE_PARAMS_COUNT[model], kapture.CAMERA_TYPE_PARAMS_COUNT_FROM_NAME[model.value])
         self.assertEqual(kapture.CAMERA_TYPE_PARAMS_COUNT[model], 14)
 
+    def test_params_names(self):
+        for sensor_model in kapture.CameraType:
+            names = kapture.CAMERA_TYPE_PARAMS_NAMES[sensor_model]
+            self.assertEqual(names[:2], ['w', 'h'], f'{sensor_model.name} should start with image size')
+            self.assertEqual(len(names), len(set(names)), f'{sensor_model.name} has duplicated parameter names')
+            self.assertEqual(len(names), kapture.CAMERA_TYPE_PARAMS_COUNT[sensor_model])
+
+    def test_new_models_counts(self):
+        expected = {
+            kapture.CameraType.OPENCV_OMNI: 12,
+            kapture.CameraType.RAD_TAN_THIN_PRISM_FISHEYE: 18,
+            kapture.CameraType.SIMPLE_DIVISION: 6,
+            kapture.CameraType.DIVISION: 7,
+            kapture.CameraType.SIMPLE_FISHEYE: 5,
+            kapture.CameraType.FISHEYE: 6,
+            kapture.CameraType.EUCM: 8,
+            kapture.CameraType.EQUIRECTANGULAR: 2,
+            kapture.CameraType.SKEWED_PINHOLE: 7,
+        }
+        for sensor_model, count in expected.items():
+            self.assertEqual(kapture.CAMERA_TYPE_PARAMS_COUNT[sensor_model], count, sensor_model.name)
+
+    def test_omni_camera(self):
+        # w, h, fx, fy, cx, cy, s, xi, k1, k2, p1, p2
+        params = [1920, 1080, 500.5, 501.5, 960, 540, 0, 1.2, -0.1, 0.01, 0.001, -0.002]
+        camera = kapture.Camera('OPENCV_OMNI', params, name='omni')
+        self.assertEqual(camera.camera_type, kapture.CameraType.OPENCV_OMNI)
+        self.assertEqual(camera.camera_params, params)
+        self.assertEqual(camera.camera_param('xi'), 1.2)
+        self.assertEqual(camera.camera_param('fx'), 500.5)
+        self.assertEqual(camera.camera_params_names[7], 'xi')
+        self.assertEqual(camera.sensor_params[0], 'OPENCV_OMNI')
+        self.assertEqual(camera.sensor_params[1], '1920')  # integers are stored without decimals
+        with self.assertRaises(KeyError):
+            camera.camera_param('k3')
+
+    def test_invalid_camera(self):
+        with self.assertRaises(ValueError):  # unknown model
+            kapture.Camera('OPENCV_MEI', [1920, 1080])
+        with self.assertRaises(ValueError):  # wrong parameter count
+            kapture.Camera(kapture.CameraType.OPENCV_OMNI, [1920, 1080, 500, 500, 960, 540, 1.2, 0, 0, 0, 0])
+        with self.assertRaises(ValueError):  # not a number
+            kapture.Camera(kapture.CameraType.SIMPLE_PINHOLE, [640, 480, 'f', 320, 240])
+        with self.assertRaises(TypeError):  # not a list
+            kapture.Camera(kapture.CameraType.SIMPLE_PINHOLE, (640, 480, 100, 320, 240))
+        with self.assertRaises(ValueError):  # a camera sensor without parameters
+            kapture.create_sensor(kapture.SensorType.camera.name, [])
+
 
 # SENSORS ##############################################################################################################
 class TestSensors(unittest.TestCase):

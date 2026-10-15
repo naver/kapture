@@ -76,3 +76,4 @@ class CameraModel(AutoEnum):
     pinhole_radial_k3 = auto()
     pinhole_brown_t2 = auto()
     fisheye = auto()
+    spherical = auto()
