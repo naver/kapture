@@ -3,7 +3,7 @@
 from .Sensors import Sensors, Camera
 from .Rigs import Rigs
 from .Trajectories import Trajectories
-from .Records import RecordsCamera, RecordsDepth, RecordsLidar, RecordsWifi, RecordsBluetooth
+from .Records import RecordsCamera, RecordsDepth, RecordsRange, RecordsLidar, RecordsWifi, RecordsBluetooth
 from .Records import RecordsGnss, RecordsAccelerometer, RecordsGyroscope, RecordsMagnetic
 from .ImageFeatures import Keypoints, Descriptors, GlobalFeatures
 from .Matches import Matches
@@ -40,12 +40,14 @@ class Kapture:
             matches: Optional[Dict[str, Matches]] = None,
             observations: Optional[Observations] = None,
             points3d: Optional[Points3d] = None,
+            records_range: Optional[RecordsRange] = None,
     ):
         self.sensors = sensors
         self.rigs = rigs
         self.trajectories = trajectories
         self.records_camera = records_camera
         self.records_depth = records_depth
+        self.records_range = records_range
         self.records_lidar = records_lidar
         self.records_wifi = records_wifi
         self.records_bluetooth = records_bluetooth
@@ -141,6 +143,19 @@ class Kapture:
         if records_depth is not None and not isinstance(records_depth, RecordsDepth):
             raise TypeError('RecordsDepth expected')
         self._records_depth = records_depth
+
+    @property
+    def records_range(self) -> Optional[RecordsRange]:
+        """
+        :return: Range records
+        """
+        return self._records_range
+
+    @records_range.setter
+    def records_range(self, records_range: Optional[RecordsRange]):
+        if records_range is not None and not isinstance(records_range, RecordsRange):
+            raise TypeError('RecordsRange expected')
+        self._records_range = records_range
 
     @property
     def records_lidar(self) -> Optional[RecordsLidar]:
@@ -317,6 +332,7 @@ class Kapture:
         Trajectories,
         RecordsCamera,
         RecordsDepth,
+        RecordsRange,
         RecordsLidar,
         RecordsWifi,
         RecordsBluetooth,

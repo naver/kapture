@@ -316,6 +316,64 @@ class TestCsvGnss(unittest.TestCase):
 
 
 ########################################################################################################################
+# Range ################################################################################################################
+class TestCsvRange(unittest.TestCase):
+    def setUp(self):
+        self._tempdir = tempfile.TemporaryDirectory()
+        self._sensors = kapture.Sensors()
+        self._sensors['cam0'] = kapture.Camera(kapture.CameraType.PINHOLE, [640, 480, 500, 500, 320, 240])
+        self._sensors['cam0_depth'] = kapture.Camera(kapture.CameraType.PINHOLE, [640, 480, 500, 500, 320, 240],
+                                                     sensor_type='depth')
+        self._sensors['cam0_range'] = kapture.Camera(kapture.CameraType.EQUIRECTANGULAR, [1024, 512],
+                                                     sensor_type='range')
+        self._records_range = kapture.RecordsRange()
+        self._records_range[0, 'cam0_range'] = 'cam0_range/0.range'
+        self._records_range[1, 'cam0_range'] = 'cam0_range/1.range'
+        self._records_depth = kapture.RecordsDepth()
+        self._records_depth[0, 'cam0_depth'] = 'cam0_depth/0.depth'
+
+    def tearDown(self):
+        self._tempdir.cleanup()
+
+    def test_range_sensor_is_camera(self):
+        filepath = path.join(self._tempdir.name, 'sensors.txt')
+        csv.sensors_to_file(filepath, self._sensors)
+        sensors = csv.sensors_from_file(filepath)
+        self.assertIsInstance(sensors['cam0_range'], kapture.Camera)
+        self.assertEqual(kapture.SensorType.range.name, sensors['cam0_range'].sensor_type)
+        self.assertEqual(kapture.CameraType.EQUIRECTANGULAR, sensors['cam0_range'].camera_type)
+        self.assertIn(kapture.SensorType.range.name, kapture.ALL_CAMERA_SENSOR_TYPES)
+
+    def test_records_range_round_trip(self):
+        filepath = path.join(self._tempdir.name, 'records_range.txt')
+        csv.records_range_to_file(filepath, self._records_range)
+        with open(filepath) as f:
+            self.assertIn('# timestamp, device_id, range_map_path', f.read())
+        records_range = csv.records_range_from_file(filepath)
+        self.assertIsInstance(records_range, kapture.RecordsRange)
+        self.assertEqual(sorted(kapture.flatten(self._records_range)), sorted(kapture.flatten(records_range)))
+        self.assertEqual(0, len(csv.records_range_from_file(filepath, {'other'})))
+
+    def test_kapture_dir_round_trip(self):
+        kapture_data = kapture.Kapture(sensors=self._sensors, records_range=self._records_range,
+                                       records_depth=self._records_depth)
+        csv.kapture_to_dir(self._tempdir.name, kapture_data)
+        self.assertTrue(path.isfile(path.join(self._tempdir.name, 'sensors', 'records_range.txt')))
+        kapture_read = csv.kapture_from_dir(self._tempdir.name)
+        self.assertEqual(sorted(kapture.flatten(self._records_range)),
+                         sorted(kapture.flatten(kapture_read.records_range)))
+        # range and depth records stay separated
+        self.assertEqual(sorted(kapture.flatten(self._records_depth)),
+                         sorted(kapture.flatten(kapture_read.records_depth)))
+        kapture_skip = csv.kapture_from_dir(self._tempdir.name, skip_list=[kapture.RecordsRange])
+        self.assertIsNone(kapture_skip.records_range)
+
+    def test_kapture_records_range_type_check(self):
+        with self.assertRaises(TypeError):
+            kapture.Kapture(records_range=kapture.RecordsDepth())
+
+
+########################################################################################################################
 # Records ##############################################################################################################
 class TestCsvRecords(unittest.TestCase):
     def setUp(self):

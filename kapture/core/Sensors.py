@@ -62,6 +62,7 @@ class SensorType(AutoEnum):
     lidar = auto()
     camera = auto()
     depth = auto()
+    range = auto()
     odometry = auto()
     # Usual smart-phone sensors
     accelerometer = auto()
@@ -69,7 +70,7 @@ class SensorType(AutoEnum):
     gnss = auto()
     gyroscope = auto()
     magnetic = auto()
-    wifi = ()
+    wifi = auto()
 
 
 class CameraType(AutoEnum):
@@ -168,7 +169,7 @@ CAMERA_TYPE_PARAMS_COUNT_FROM_NAME = {
     for field, n in CAMERA_TYPE_PARAMS_COUNT.items()
 }
 
-ALL_CAMERA_SENSOR_TYPES = [SensorType.camera.name, SensorType.depth.name]
+ALL_CAMERA_SENSOR_TYPES = [SensorType.camera.name, SensorType.depth.name, SensorType.range.name]
 
 
 class Camera(Sensor):

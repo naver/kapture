@@ -19,6 +19,7 @@ my_dataset                          # Data root path
 │  ├─ trajectories.txt              # extrinsics (timestamp, sensor, pose)
 │  ├─ records_camera.txt            # recording of 'camera' (timestamp, sensor id and path to image)
 │  ├─ records_depth.txt             # recording of 'depth' (timestamp, sensor id and path to depth map)
+│  ├─ records_range.txt             # recording of 'range' (timestamp, sensor id and path to range map)
 │  ├─ records_gnss.txt              # recording of 'GNSS' (timestamp, sensor id, location and ...)
 │  ├─ records_lidar.txt             # recording of 'lidar' (timestamp, sensor id and path to lidar data)
 │  ├─ records_wifi.txt              # recording of 'wifi' (timestamp, sensor id and wifi measurements)
@@ -26,6 +27,7 @@ my_dataset                          # Data root path
 │  └─ records_data/                 # image and lidar data root path
 │     ├─ mapping/cam_01/00001.jpg   # example of image path used in records_camera.txt
 │     ├─ mapping/cam_01/00001.depth # example of depth map used in records_depth.txt
+│     ├─ mapping/cam_01/00001.range # example of range map used in records_range.txt
 │     ├─ mapping/cam_01/00002.jpg
 │     ├─ mapping/cam_01/00002.depth
 │     ├─ mapping/lidar_01/0001.pcd  # example of lidar data path used in records_lidar.txt
@@ -230,14 +232,14 @@ with:
 | sensor_device_id | string | The unique identifier of sensor.
 |             name | string | the name of the sensor (eg. Hero7). Can be empty.
 |      sensor_type | string | The type of sensor among :
-                              `camera`, `depth`, `gnss`, `lidar`, `wifi`, `magnetic` or `pressure`.
+                              `camera`, `depth`, `range`, `gnss`, `lidar`, `wifi`, `magnetic` or `pressure`.
 | [sensor_params]+ | list   | The sensor parameters. It depends on sensor_type.
                               See below for the different types of records and their parameters.
 |===
 
-==== camera / depth
+==== camera / depth / range
 
-In the case of `sensor_type` is `camera` (or `depth`), `[sensor_params]` contains :
+In the case of `sensor_type` is `camera` (or `depth`, or `range`), `[sensor_params]` contains :
 
 [cols=">1m,^1e,4",options="header"]
 |===
@@ -499,6 +501,42 @@ For example:
 # rig_device_id, sensor_device_id, qw, qx, qy, qz, tx, ty, tz
 RGBD_01, cam01, 1, 0, 0, 0, 0, 0, 0
 RGBD_01, depth01, 1, 0, 0, 0, 0, 0, 0
+----
+
+=== `│ ├─ records_range.txt`
+
+This file defines the range maps in the dataset, using one line per snapshot.
+It works like `records_depth.txt`, but the maps store distances to the sensor center instead of distances to its
+origin plane (see `records_data/*.range`).
+
+==== syntax
+
+each line of the file follow this syntax:
+
+[source,txt]
+----
+timestamp, device_id, range_map_path
+----
+
+with:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            field | type   | description
+|        timestamp | uint32 | The timestamp as an integer. Can be POSIX timestamp, a sequence number, or any other ID to designate the record.
+|        device_id | string | Unique identifier of the sensor. This `device_id` *must* be in `sensors.txt`, with the `range` type.
+|   range_map_path | path   | Path to the range map file. The path is relative to `sensors/records_data/`.
+|===
+
+==== example
+
+.sensors/records_range.txt
+[source,txt]
+----
+# kapture format: 1.1
+# timestamp, device_id, range_map_path
+0000, fisheye01_range, fisheye01_range/00001.range
+0001, fisheye01_range, fisheye01_range/00002.range
 ----
 
 === `│ ├─ records_gnss.txt`
@@ -773,6 +811,20 @@ A single depth file contains a single depth map.
 A `.depth` file is an array of float formatted as binary.
 The data type of the array is signed float on 32 bits.
 Each float value represent a distance in meters from the sensor origin plane.
+The size of the array is specified in the sensor parameters (sensors.txt).
+The first pixel of the array correspond to the upper left corner.
+The second pixel is the next on the row, and so on.
+
+=== `│ ├─ records_data/*.range`
+
+A single range file contains a single range map.
+
+==== syntax
+
+A `.range` file has the same layout as a `.depth` file: an array of float formatted as binary.
+The data type of the array is signed float on 32 bits.
+Each float value represent a distance in meters from the sensor center (not from its origin plane, unlike depth).
+It is valid for any field of view, e.g. fisheye or equirectangular cameras.
 The size of the array is specified in the sensor parameters (sensors.txt).
 The first pixel of the array correspond to the upper left corner.
 The second pixel is the next on the row, and so on.

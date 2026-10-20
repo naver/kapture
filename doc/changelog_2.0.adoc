@@ -124,6 +124,21 @@ OpenCV `omnidir` module: `w, h, fx, fy, cx, cy, s, xi, k1, k2, p1, p2`) and the 
 * `kapture.utils.open_cv.import_opencv_camera_calibration` (used by `kapture_import_utbm --camera_info`) returns an
   `OPENCV_OMNI` camera when the yaml has a `xi` entry.
 
+== New `range` record type
+
+`range` maps work like `depth` maps (camera-like sensor in `sensors.txt`, `records_range.txt`, float32
+`records_data/*.range` files), but each value is the distance in meters to the sensor center instead of the distance
+to its origin plane, so they are valid for any field of view (fisheye, equirectangular). Existing depth data keeps its
+meaning. The format version stays 1.1. kapture < 2.0 reads a `range` sensor as a generic sensor and ignores
+`records_range.txt`.
+
+* `kapture.SensorType.range`, `kapture.RecordsRange`, `Kapture.records_range`.
+* `kapture.io.csv.records_range_to_file` / `records_range_from_file`, loaded and saved by `kapture_from_dir` /
+  `kapture_to_dir`.
+* `kapture.io.records.get_range_map_fullpath`, `range_maps_to_filepaths`, `range_map_from_file`, `range_map_to_file`.
+* `kapture_merge` merges range records and their files (`--skip records_range` to skip them).
+* `kapture.SensorType.wifi` is now a regular enum value (it was `()`).
+
 == Python API changes
 
 Tool functions in `kapture.tools.*` take the canonical parameter names and two new keyword parameters

@@ -8,7 +8,7 @@ from kapture.io.tar import TarCollection
 from typing import List, Optional, Type
 
 import kapture
-from kapture.io.records import TransferAction, get_image_fullpath, get_depth_map_fullpath
+from kapture.io.records import TransferAction, get_image_fullpath, get_depth_map_fullpath, get_range_map_fullpath
 from kapture.utils.Collections import get_new_if_not_empty
 
 from .merge_reconstruction import merge_keypoints_collections, merge_descriptors_collections
@@ -172,6 +172,22 @@ def merge_records_depth(
     return merge_table_key2(
         table_list=records_depth_list,
         table_constructor=kapture.RecordsDepth
+    )
+
+
+def merge_records_range(
+        records_range_list: List[Optional[kapture.RecordsRange]]
+) -> kapture.RecordsRange:
+    """
+    Merge several range records lists. For range record with the same timestamp and sensor identifier,
+     keep only the first one.
+
+    :param records_range_list: list of range records
+    :return: merged range records
+    """
+    return merge_table_key2(
+        table_list=records_range_list,
+        table_constructor=kapture.RecordsRange
     )
 
 
@@ -349,6 +365,17 @@ def merge_keep_ids(kapture_list: List[kapture.Kapture],  # noqa: C901: function 
                             if every_kapture.records_depth is not None else []
                             for every_kapture in kapture_list],
                            [get_depth_map_fullpath(data_path, depth_map_filename=None) for data_path in data_paths],
+                           kapture_path,
+                           images_import_method)
+    if kapture.RecordsRange not in skip_list:
+        new_records_range = merge_records_range([every_kapture.records_range for every_kapture in kapture_list])
+        merged_kapture.records_range = get_new_if_not_empty(new_records_range, merged_kapture.records_range)
+
+        merge_records_data([[range_name
+                             for _, _, range_name in kapture.flatten(every_kapture.records_range)]
+                            if every_kapture.records_range is not None else []
+                            for every_kapture in kapture_list],
+                           [get_range_map_fullpath(data_path, range_map_filename=None) for data_path in data_paths],
                            kapture_path,
                            images_import_method)
     if kapture.RecordsLidar not in skip_list:

@@ -31,6 +31,7 @@ CSV_FILENAMES = {
     kapture.Rigs: path.join('sensors', 'rigs.txt'),
     kapture.RecordsCamera: path.join('sensors', 'records_camera.txt'),
     kapture.RecordsDepth: path.join('sensors', 'records_depth.txt'),
+    kapture.RecordsRange: path.join('sensors', 'records_range.txt'),
     kapture.RecordsLidar: path.join('sensors', 'records_lidar.txt'),
     kapture.RecordsWifi: path.join('sensors', 'records_wifi.txt'),
     kapture.RecordsBluetooth: path.join('sensors', 'records_bluetooth.txt'),
@@ -528,6 +529,57 @@ def records_depth_from_file(filepath: str, camera_ids: Optional[Set[str]] = None
     logger.debug(f'{nb_records:12,d} {kapture.RecordsDepth} in {loading_elapsed.total_seconds():.3f} seconds'
                  .replace(',', ' '))
     return records_depth
+
+
+########################################################################################################################
+# Records Range #######################################################################################################
+def records_range_to_file(filepath: str, records_range: kapture.RecordsRange) -> None:
+    """
+    Writes records_range to CSV file.
+
+    :param filepath:
+    :param records_range:
+    """
+    assert (isinstance(records_range, kapture.RecordsRange))
+    saving_start = datetime.datetime.now()
+    header = '# timestamp, device_id, range_map_path'
+    table = (
+        [timestamp, sensor_id] + [records_range[(timestamp, sensor_id)]]
+        for timestamp, sensor_id in sorted(records_range.key_pairs())
+    )
+    with open(filepath, 'w') as file:
+        nb_records = table_to_file(file, table, header=header)
+        saving_elapsed = datetime.datetime.now() - saving_start
+        logger.debug(f'wrote {nb_records:12,d} {type(records_range)} in {saving_elapsed.total_seconds():.3f} seconds'
+                     .replace(',', ' '))
+
+
+def records_range_from_file(filepath: str, camera_ids: Optional[Set[str]] = None) -> kapture.RecordsRange:
+    """
+    Reads records_range from CSV file.
+
+    :param filepath: input file path
+    :param camera_ids: input set of valid camera device ids.
+                        If the records_camera contains unknown devices, they will be ignored.
+                        If not given, all cameras are loaded.
+    :return: range records
+    """
+    records_range = kapture.RecordsRange()
+    loading_start = datetime.datetime.now()
+    with open(filepath) as file:
+        table = table_from_file(file)
+        nb_records = 0
+        # timestamp, device_id, image_path
+        for timestamp, device_id, range_map_path in table:
+            if camera_ids is not None and device_id not in camera_ids:
+                # just ignore
+                continue
+            records_range[(int(timestamp), str(device_id))] = range_map_path
+            nb_records += 1
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{nb_records:12,d} {kapture.RecordsRange} in {loading_elapsed.total_seconds():.3f} seconds'
+                 .replace(',', ' '))
+    return records_range
 
 
 ########################################################################################################################
@@ -1388,6 +1440,7 @@ KAPTURE_ATTRIBUTE_WRITERS = {
     kapture.Trajectories: trajectories_to_file,
     kapture.RecordsCamera: records_camera_to_file,
     kapture.RecordsDepth: records_depth_to_file,
+    kapture.RecordsRange: records_range_to_file,
     kapture.RecordsLidar: records_lidar_to_file,
     kapture.RecordsWifi: records_wifi_to_file,
     kapture.RecordsBluetooth: records_bluetooth_to_file,
@@ -1408,6 +1461,7 @@ KAPTURE_ATTRIBUTE_NAMES = {  # used to list attributes to be saved
     kapture.Trajectories: 'trajectories',
     kapture.RecordsCamera: 'records_camera',
     kapture.RecordsDepth: 'records_depth',
+    kapture.RecordsRange: 'records_range',
     kapture.RecordsLidar: 'records_lidar',
     kapture.RecordsWifi: 'records_wifi',
     kapture.RecordsBluetooth: 'records_bluetooth',
@@ -1460,6 +1514,7 @@ KAPTURE_LOADABLE_TYPES = {
     kapture.Trajectories,
     kapture.RecordsCamera,
     kapture.RecordsDepth,
+    kapture.RecordsRange,
     kapture.RecordsLidar,
     kapture.RecordsWifi,
     kapture.RecordsBluetooth,
@@ -1483,6 +1538,7 @@ def kapture_from_dir(
                                    kapture.Trajectories,
                                    kapture.RecordsCamera,
                                    kapture.RecordsDepth,
+                                   kapture.RecordsRange,
                                    kapture.RecordsLidar,
                                    kapture.RecordsWifi,
                                    kapture.RecordsBluetooth,
@@ -1613,6 +1669,14 @@ def _load_all_records(csv_file_paths, kapture_loadable_data, kapture_data) -> No
         sensor_ids = get_sensor_ids_of_type(kapture.SensorType.depth.name, kapture_data.sensors)
         assert sensor_ids is not None
         kapture_data.records_depth = records_depth_from_file(csv_file_paths[kapture.RecordsDepth], sensor_ids)
+    # records range
+    if kapture.RecordsRange in kapture_loadable_data:
+        records_range_file_path = csv_file_paths[kapture.RecordsRange]
+        logger.debug(f'loading range {records_range_file_path} ...')
+        assert kapture_data.sensors is not None
+        sensor_ids = get_sensor_ids_of_type(kapture.SensorType.range.name, kapture_data.sensors)
+        assert sensor_ids is not None
+        kapture_data.records_range = records_range_from_file(csv_file_paths[kapture.RecordsRange], sensor_ids)
     # records lidar
     if kapture.RecordsLidar in kapture_loadable_data:
         records_lidar_file_path = csv_file_paths[kapture.RecordsLidar]

@@ -9,7 +9,7 @@ import os.path as path
 from typing import Dict, Optional, Union, Iterable, Tuple
 import numpy as np
 import kapture
-from kapture.core.Records import RecordsDepth
+from kapture.core.Records import RecordsDepth, RecordsRange
 from kapture.utils.paths import path_secure
 from kapture.utils.logging import getLogger
 from kapture.io.binary import TransferAction, transfer_files_from_dir, array_from_file, array_to_file
@@ -38,6 +38,7 @@ def get_record_fullpath(
 def records_to_filepaths(
         records: Union[kapture.RecordsCamera,
                        kapture.RecordsDepth,
+                       kapture.RecordsRange,
                        kapture.RecordsWifi,
                        kapture.RecordsLidar,
                        kapture.RecordsGnss],
@@ -176,7 +177,47 @@ def depth_maps_to_filepaths(depth_records: kapture.RecordsDepth, kapture_dirpath
     return records_to_filepaths(depth_records, kapture_dirpath)
 
 
-# depth maps IO ########################################################################################################
+# range maps file paths ################################################################################################
+def get_range_map_fullpath(kapture_dir_path: str, range_map_filename: Optional[str] = None) -> str:
+    """
+    Get the full path of the range map file in the kapture.
+     If range_map_filename is missing, this gives the top directory (records_data).
+
+    :param kapture_dir_path: the kapture top directory
+    :param range_map_filename: optional range map file name
+    :return: Range map file full path
+    """
+    return get_record_fullpath(kapture_dir_path, range_map_filename)
+
+
+def range_maps_to_filepaths(range_records: kapture.RecordsRange, kapture_dirpath: str) -> Dict[str, str]:
+    """
+    Computes filepaths for range maps records.
+
+    :param range_records: range records
+    :param kapture_dirpath: top kapture directory path
+    :return: range maps name to range maps file path dictionary
+    """
+    return records_to_filepaths(range_records, kapture_dirpath)
+
+
+# depth and range maps IO ##############################################################################################
+def _distance_map_from_file(filepath: str, size: Tuple[int, int], dtype: type) -> np.array:
+    assert isinstance(size, tuple) and len(size) == 2
+    dsize = int(size[0] * size[1])
+    bitmap = array_from_file(filepath, dtype, dsize)
+    bitmap = bitmap.reshape((size[1], size[0]))
+    return bitmap
+
+
+def _distance_map_to_file(filepath: str, distance_map: np.array, dtype: type, map_type_name: str) -> None:
+    # ensure maps are expected type (aka float32)
+    if not distance_map.dtype == dtype:
+        logger.warning(f'{map_type_name} maps are converted to float')
+        distance_map = distance_map.astype(dtype)
+    array_to_file(filepath, distance_map)
+
+
 def depth_map_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
     """
     Load the depth map from binary file to a numpy array.
@@ -185,12 +226,7 @@ def depth_map_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
     :param size: [width, height]
     :return: the depth map as a numpy array
     """
-    assert isinstance(size, tuple) and len(size) == 2
-    dtype = kapture.RecordsDepth.dtype
-    dsize = int(size[0] * size[1])
-    bitmap = array_from_file(filepath, dtype, dsize)
-    bitmap = bitmap.reshape((size[1], size[0]))
-    return bitmap
+    return _distance_map_from_file(filepath, size, RecordsDepth.dtype)
 
 
 def depth_map_to_file(filepath: str, depth_map: np.array) -> None:
@@ -200,8 +236,25 @@ def depth_map_to_file(filepath: str, depth_map: np.array) -> None:
     :param filepath: file path
     :param depth_map: depth map as a numpy array
     """
-    # ensure depth maps are expected type RecordsDepth.dtype (aka float32)
-    if not depth_map.dtype == RecordsDepth.dtype:
-        logger.warning('depth maps are converted to float')
-        depth_map = depth_map.astype(RecordsDepth.dtype)
-    array_to_file(filepath, depth_map)
+    _distance_map_to_file(filepath, depth_map, RecordsDepth.dtype, 'depth')
+
+
+def range_map_from_file(filepath: str, size: Tuple[int, int]) -> np.array:
+    """
+    Load the range map from binary file to a numpy array.
+
+    :param filepath: path to the file
+    :param size: [width, height]
+    :return: the range map as a numpy array
+    """
+    return _distance_map_from_file(filepath, size, RecordsRange.dtype)
+
+
+def range_map_to_file(filepath: str, range_map: np.array) -> None:
+    """
+    Writes the range map from numpy array to binary file.
+
+    :param filepath: file path
+    :param range_map: range map as a numpy array
+    """
+    _distance_map_to_file(filepath, range_map, RecordsRange.dtype, 'range')

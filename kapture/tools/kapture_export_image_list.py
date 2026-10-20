@@ -41,7 +41,7 @@ def export_image_list(input: str,
                           kapture.RecordsLidar, kapture.RecordsWifi,
                           kapture.RecordsAccelerometer, kapture.RecordBluetooth,
                           kapture.RecordGnss, kapture.RecordGyroscope,
-                          kapture.RecordsDepth, kapture.RecordsMagnetic,
+                          kapture.RecordsDepth, kapture.RecordsRange, kapture.RecordsMagnetic,
                           kapture.Keypoints, kapture.Descriptors, kapture.GlobalFeatures,
                           kapture.Matches, kapture.Points3d, kapture.Observations]
     kapture_to_export = kapture_from_dir(input, skip_list=skip_heavy_useless)

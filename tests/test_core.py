@@ -974,7 +974,7 @@ class TestKapture(unittest.TestCase):
         members = kapture_data.as_dict()
         self.assertEqual(members, {})
         members = kapture_data.as_dict(keep_none=True)
-        self.assertEqual(len(members), 18)
+        self.assertEqual(len(members), 19)
         self.assertTrue(all(member is None for member in members.values()))
 
         # test sensors only
@@ -983,7 +983,7 @@ class TestKapture(unittest.TestCase):
         self.assertEqual(len(members), 1)
         self.assertEqual(members, {'sensors': kapture_data.sensors})
         members = kapture_data.as_dict(keep_none=True)
-        self.assertEqual(len(members), 18)
+        self.assertEqual(len(members), 19)
         self.assertEqual(members['sensors'], kapture_data.sensors)
         self.assertTrue(all(member is None for name, member in members.items() if name != 'sensors'))
 

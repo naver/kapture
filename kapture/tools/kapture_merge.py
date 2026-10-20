@@ -20,7 +20,7 @@ from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSI
 
 logger = logging.getLogger('merge')
 
-SkipType = Literal['trajectories', 'records_camera', 'records_depth', 'records_lidar', 'records_wifi',
+SkipType = Literal['trajectories', 'records_camera', 'records_depth', 'records_range', 'records_lidar', 'records_wifi',
                    'records_bluetooth', 'records_gnss', 'records_accelerometer', 'records_gyroscope',
                    'records_magnetic', 'keypoints', 'descriptors', 'global_features',
                    'matches', 'points3d', 'observations']
@@ -58,6 +58,8 @@ def merge_kaptures(inputs: List[str],  # noqa: C901: function really not complex
         skip_list.append(kapture.RecordsCamera)
     if 'records_depth' in skip:
         skip_list.append(kapture.RecordsDepth)
+    if 'records_range' in skip:
+        skip_list.append(kapture.RecordsRange)
     if 'records_lidar' in skip:
         skip_list.append(kapture.RecordsLidar)
     if 'records_wifi' in skip:

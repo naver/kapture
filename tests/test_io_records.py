@@ -6,6 +6,7 @@ import os
 import os.path as path
 import sys
 import tempfile
+import numpy as np
 # kapture
 import kapture
 import kapture.io.records
@@ -143,6 +144,40 @@ class TestPathComputation(unittest.TestCase):
         image_path = kapture.io.records.get_image_fullpath(self._kapture_path, image_name)
         self.assertTrue(image_path.startswith(path_secure(self._kapture_path)), "Image path is under the kapture path")
         self.assertTrue(image_path.endswith(image_name), "Image path end with the image name")
+
+
+class TestDistanceMaps(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tempdir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self._tempdir.cleanup()
+
+    def test_range_map_round_trip(self):
+        range_map = np.arange(12, dtype=np.float32).reshape(3, 4)  # h = 3, w = 4
+        filepath = path.join(self._tempdir.name, 'map.range')
+        kapture.io.records.range_map_to_file(filepath, range_map)
+        self.assertEqual(range_map.size * 4, path.getsize(filepath))
+        read = kapture.io.records.range_map_from_file(filepath, (4, 3))
+        self.assertEqual(np.float32, read.dtype)
+        np.testing.assert_array_equal(range_map, read)
+
+    def test_range_map_converted_to_float(self):
+        filepath = path.join(self._tempdir.name, 'map.range')
+        kapture.io.records.range_map_to_file(filepath, np.ones((2, 2), dtype=np.float64))
+        np.testing.assert_array_equal(np.ones((2, 2), dtype=np.float32),
+                                      kapture.io.records.range_map_from_file(filepath, (2, 2)))
+
+    def test_depth_map_round_trip(self):
+        depth_map = np.arange(6, dtype=np.float32).reshape(2, 3)
+        filepath = path.join(self._tempdir.name, 'map.depth')
+        kapture.io.records.depth_map_to_file(filepath, depth_map)
+        np.testing.assert_array_equal(depth_map, kapture.io.records.depth_map_from_file(filepath, (3, 2)))
+
+    def test_get_range_map_fullpath(self):
+        range_path = kapture.io.records.get_range_map_fullpath(self._tempdir.name, 'cam_range/0001.range')
+        self.assertTrue(range_path.endswith('cam_range/0001.range'))
+        self.assertEqual(kapture.io.records.RECORD_DATA_DIRNAME, kapture.io.records.get_range_map_fullpath(''))
 
 
 if __name__ == '__main__':

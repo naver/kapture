@@ -199,6 +199,13 @@ class RecordsDepth(RecordsFilePath):
     dtype = np.float32
 
 
+class RecordsRange(RecordsFilePath):
+    """
+    Range map records: like depth maps, but the distance is to the sensor center, not to its origin plane.
+    """
+    dtype = np.float32
+
+
 class RecordsLidar(RecordsFilePath):
     """
     Lidar records
