@@ -1,10 +1,11 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+import io
 import logging
 from tqdm import tqdm
 import os
 import os.path as path
 from random import randint
-from typing import Dict
+from typing import Dict, Iterable
 import numpy as np
 
 import kapture
@@ -262,3 +263,129 @@ def image_keypoints_to_ply(ply_filepath: str, image_keypoints_filepath: str, key
     image_keypoints = image_keypoints_from_file(image_keypoints_filepath, keypoint_dtype, keypoint_dsize)
     with open(ply_filepath, 'w') as f:
         image_keypoints_to_stream(f, image_keypoints)
+
+
+########################################################################################################################
+# PLY reading (point clouds, eg. lidar records) ########################################################################
+PLY_TYPE_TO_NUMPY = {
+    'char': 'i1', 'int8': 'i1',
+    'uchar': 'u1', 'uint8': 'u1',
+    'short': 'i2', 'int16': 'i2',
+    'ushort': 'u2', 'uint16': 'u2',
+    'int': 'i4', 'int32': 'i4',
+    'uint': 'u4', 'uint32': 'u4',
+    'float': 'f4', 'float32': 'f4',
+    'double': 'f8', 'float64': 'f8',
+}
+
+
+def read_ply(filepath: str, element: str = 'vertex') -> np.ndarray:
+    """
+    Reads one element of a PLY file (ascii, binary little or big endian) as a numpy structured array, one field per
+    property, in file order. Properties are accessed by name, eg. ``vertices['x']``, ``vertices['timestamps_0']``.
+    Only scalar properties are supported for the requested element (no list properties).
+
+    :param filepath: path to the PLY file.
+    :param element: name of the element to read (default: vertex).
+    :return: structured array of the element, with the PLY property names as fields.
+    """
+    with open(filepath, 'rb') as f:
+        header_lines = []
+        while True:
+            line = f.readline()
+            if not line:
+                raise ValueError(f'{filepath}: end of file before end_header')
+            header_lines.append(line.decode('ascii', errors='replace').strip())
+            if header_lines[-1] == 'end_header':
+                break
+        if not header_lines or header_lines[0] != 'ply':
+            raise ValueError(f'{filepath}: not a PLY file')
+        # parse the header: format and elements with their properties
+        ply_format = None
+        elements = []  # (name, count, [(property name, numpy type)])
+        for header_line in header_lines[1:-1]:
+            words = header_line.split()
+            if not words or words[0] in ('comment', 'obj_info'):
+                continue
+            if words[0] == 'format':
+                ply_format = words[1]
+            elif words[0] == 'element':
+                elements.append((words[1], int(words[2]), []))
+            elif words[0] == 'property':
+                if not elements:
+                    raise ValueError(f'{filepath}: property before any element')
+                if words[1] == 'list':
+                    elements[-1][2].append((words[4], None))  # list property: (name, None)
+                else:
+                    if words[1] not in PLY_TYPE_TO_NUMPY:
+                        raise ValueError(f'{filepath}: unsupported PLY property type {words[1]}')
+                    elements[-1][2].append((words[2], PLY_TYPE_TO_NUMPY[words[1]]))
+        if ply_format not in ('ascii', 'binary_little_endian', 'binary_big_endian'):
+            raise ValueError(f'{filepath}: unsupported PLY format {ply_format}')
+        element_names = [name for name, _, _ in elements]
+        if element not in element_names:
+            raise ValueError(f'{filepath}: no element {element} in {element_names}')
+        element_index = element_names.index(element)
+        byte_order = '>' if ply_format == 'binary_big_endian' else '<'
+
+        def element_dtype(properties):
+            if any(numpy_type is None for _, numpy_type in properties):
+                return None
+            return np.dtype([(name, byte_order + numpy_type) for name, numpy_type in properties])
+
+        requested_dtype = element_dtype(elements[element_index][2])
+        if requested_dtype is None:
+            raise ValueError(f'{filepath}: list properties are not supported (element {element})')
+
+        if ply_format == 'ascii':
+            if element_index > 0:
+                raise ValueError(f'{filepath}: ascii PLY, only the first element can be read')
+            count = elements[element_index][1]
+            text = b''.join(f.readline() for _ in range(count))
+            if not count:
+                return np.empty(0, requested_dtype)
+            return np.loadtxt(io.BytesIO(text), dtype=requested_dtype, ndmin=1)
+
+        # binary: skip the preceding elements
+        for name, count, properties in elements[:element_index]:
+            dtype = element_dtype(properties)
+            if dtype is None:
+                raise ValueError(f'{filepath}: cannot skip element {name} with list properties')
+            f.seek(count * dtype.itemsize, os.SEEK_CUR)
+        count = elements[element_index][1]
+        data = f.read(count * requested_dtype.itemsize)
+        if len(data) != count * requested_dtype.itemsize:
+            raise ValueError(f'{filepath}: truncated file, expected {count} {element} elements')
+        return np.frombuffer(data, dtype=requested_dtype).copy()
+
+
+NUMPY_TO_PLY_TYPE = {'i1': 'char', 'u1': 'uchar', 'i2': 'short', 'u2': 'ushort', 'i4': 'int', 'u4': 'uint',
+                     'f4': 'float', 'f8': 'double'}
+
+
+def write_ply(filepath: str, vertices: np.ndarray, comments: Iterable[str] = ()) -> None:
+    """
+    Writes a structured array as a binary little-endian PLY with a single vertex element, one property per field
+    (counterpart of read_ply).
+
+    :param filepath: output PLY file.
+    :param vertices: structured array (scalar fields only).
+    :param comments: optional header comment lines.
+    """
+    if vertices.dtype.names is None:
+        raise ValueError('vertices must be a structured array')
+    properties = []
+    little_endian = []
+    for name in vertices.dtype.names:
+        dtype = vertices.dtype.fields[name][0]
+        key = dtype.kind + str(dtype.itemsize)
+        if key not in NUMPY_TO_PLY_TYPE:
+            raise ValueError(f'unsupported field type {dtype} for PLY property {name}')
+        properties.append(f'property {NUMPY_TO_PLY_TYPE[key]} {name}')
+        little_endian.append((name, '<' + key))
+    header = ['ply', 'format binary_little_endian 1.0'] + [f'comment {c}' for c in comments]
+    header += [f'element vertex {len(vertices)}'] + properties + ['end_header']
+    os.makedirs(path.dirname(path.abspath(filepath)), exist_ok=True)
+    with open(filepath, 'wb') as f:
+        f.write(('\n'.join(header) + '\n').encode('ascii'))
+        f.write(np.ascontiguousarray(vertices.astype(np.dtype(little_endian), copy=False)).tobytes())

@@ -111,6 +111,7 @@ The kapture format is provided with a Python library, as well as several convers
 pip install kapture
 
 or see link:doc/installation.adoc[installation] for more detailed instructions.
+The ROS2 bag export needs the `rosbags` package (`pip install kapture[ros2bag]`), no ROS install.
 
 === Using docker
 
@@ -169,6 +170,8 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 | IDL_dataset_cvpr17        | import |  ✓   |  —   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | RobotCar_Seasons          | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  ✓   |  —   |  —   |  ✓   |  ✓   |  —
 | ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
+| ROS2 bag lidar+IMU+cameras| export | (✓)  |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
+| TUM trajectory            | import |  —   |  ✓   |  —   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
 | virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
 | stereolabs zed2           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —

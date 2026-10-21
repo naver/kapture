@@ -28,6 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 zed = ['pyzed']
+ros2bag = ['rosbags>=0.10.9']
 dev = ['pytest', 'build', 'flake8']
 
 [tool.setuptools.packages.find]
@@ -47,6 +48,7 @@ kapture_export_opensfm="kapture.tools.kapture_export_opensfm:main"
 kapture_export_ETH_MS_LTVL="kapture.tools.kapture_export_ETH_MS_LTVL:main"
 kapture_export_depth_images="kapture.tools.kapture_export_depth_images:main"
 kapture_export_4seasons_pairs="kapture.tools.kapture_export_4seasons_pairs:main"
+kapture_export_ros2bag="kapture.tools.kapture_export_ros2bag:main"
 kapture_import_nvm="kapture.tools.kapture_import_nvm:main"
 kapture_import_utbm="kapture.tools.kapture_import_utbm:main"
 kapture_import_RIO10="kapture.tools.kapture_import_RIO10:main"
@@ -65,6 +67,7 @@ kapture_import_image_folder="kapture.tools.kapture_import_image_folder:main"
 kapture_import_virtual_gallery="kapture.tools.kapture_import_virtual_gallery:main"
 kapture_import_RobotCar_Seasons="kapture.tools.kapture_import_RobotCar_Seasons:main"
 kapture_import_symphony_seasons="kapture.tools.kapture_import_symphony_seasons:main"
+kapture_import_tum_trajectory="kapture.tools.kapture_import_tum_trajectory:main"
 kapture_import_IDL_dataset_cvpr17="kapture.tools.kapture_import_IDL_dataset_cvpr17:main"
 kapture_import_Extended_CMU_Seasons="kapture.tools.kapture_import_Extended_CMU_Seasons:main"
 kapture_import_image_list_with_poses="kapture.tools.kapture_import_image_list_with_poses:main"
