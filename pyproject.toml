@@ -68,6 +68,7 @@ kapture_import_virtual_gallery="kapture.tools.kapture_import_virtual_gallery:mai
 kapture_import_RobotCar_Seasons="kapture.tools.kapture_import_RobotCar_Seasons:main"
 kapture_import_symphony_seasons="kapture.tools.kapture_import_symphony_seasons:main"
 kapture_import_tum_trajectory="kapture.tools.kapture_import_tum_trajectory:main"
+kapture_import_glim="kapture.tools.kapture_import_glim:main"
 kapture_import_IDL_dataset_cvpr17="kapture.tools.kapture_import_IDL_dataset_cvpr17:main"
 kapture_import_Extended_CMU_Seasons="kapture.tools.kapture_import_Extended_CMU_Seasons:main"
 kapture_import_image_list_with_poses="kapture.tools.kapture_import_image_list_with_poses:main"
