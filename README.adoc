@@ -172,7 +172,6 @@ or because its was not implemented (`⨉`). Here is a table summarizing the conv
 | ROSbag cameras+trajectory | import | (✓)  | (✓)  |  ✓   |  ✓   |  ⨉   |  —   |  —   |  —   |  —   |  —   |  — 
 | ROS2 bag lidar+IMU+cameras| export | (✓)  |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
 | TUM trajectory            | import |  —   |  ✓   |  —   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  — 
-| GLIM dump (lidar SLAM)    | import |  —   |  ✓   |  —   |  ✓   |  —   |  —   |  —   |  —   |  ✓   |  —   |  — 
 | SILDa                     | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
 | virtual_gallery           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
 | stereolabs zed2           | import |  ✓   |  ✓   |  ✓   |  ✓   |  —   |  —   |  —   |  —   |  —   |  —   |  —
