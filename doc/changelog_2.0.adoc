@@ -139,6 +139,26 @@ meaning. The format version stays 1.1. kapture < 2.0 reads a `range` sensor as a
 * `kapture_merge` merges range records and their files (`--skip records_range` to skip them).
 * `kapture.SensorType.wifi` is now a regular enum value (it was `()`).
 
+== New tool `kapture_extract_period`
+
+Extracts some periods of time of a recording to a new kapture (sub-scenes of a long recording):
+
+[source,bash]
+----
+$> kapture_extract_period -i full -o part --windows 1792656648559471 1792656685860184 --transfer link_relative
+$> kapture_extract_period -i full -o part --relative --windows 120 157.5 300 340 -s lidar0_clean
+----
+
+* `--windows T0 T1 [T0 T1 ...]`: pairs of kapture timestamps, both included, or seconds since the first timestamp of
+  the recording with `--relative` (`--time_unit`, default 1e6: microseconds); overlapping periods are merged.
+* Keeps the sensors, rigs, trajectories and all the `records_*` of the periods, minus `--skip_sensors`. The
+  reconstruction data (features, matches, points3d, observations) are not extracted.
+* `--transfer` (default `skip`) brings the data files of the kept records and `sensors/raw`. Links point to the
+  actual files, so an extraction of an extraction links to the original recording; a record whose data file is missing
+  in the input is dropped with a warning.
+* `<output>/subset.json` keeps the source, the periods and the number of records kept.
+* Library: `kapture.algo.extract` (`normalize_windows`, `extract_period` in memory, `kapture_extract_period`).
+
 == Python API changes
 
 Tool functions in `kapture.tools.*` take the canonical parameter names and two new keyword parameters

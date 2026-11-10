@@ -39,6 +39,7 @@ include = ["kapture*"]
 kapture_data_date_ranges="kapture.tools.kapture_data_date_ranges:main"
 kapture_download_dataset="kapture.tools.kapture_download_dataset:main"
 kapture_extract_exif="kapture.tools.kapture_extract_exif:main"
+kapture_extract_period="kapture.tools.kapture_extract_period:main"
 kapture_export_colmap="kapture.tools.kapture_export_colmap:main"
 kapture_export_image_list="kapture.tools.kapture_export_image_list:main"
 kapture_export_ply="kapture.tools.kapture_export_ply:main"
