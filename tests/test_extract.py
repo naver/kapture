@@ -11,8 +11,13 @@ import os.path as path
 import tempfile
 import unittest
 
+import numpy as np
+
 import kapture
+
 from kapture.algo.extract import extract_period, kapture_extract_period, normalize_windows, time_range
+from kapture.algo.extract import box_area, box_bounds, kapture_extract_area, points_in_box, points_in_sphere
+from kapture.algo.extract import sphere_area, trajectory_positions, windows_in_area
 from kapture.io.csv import kapture_from_dir, kapture_to_dir
 from kapture.io.records import TransferAction, get_record_fullpath
 
@@ -246,6 +251,181 @@ class TestKaptureExtractPeriod(unittest.TestCase):
         with self.assertRaises(ValueError):
             kapture_extract_period(self.input_path, self.input_path, [self.window], force=True)
         self.assertEqual(len(kapture_from_dir(self.input_path).records_camera), NB_FRAMES)
+
+
+def make_walk() -> kapture.Kapture:
+    """ make_kapture with a rotated rig walking along x (frame i at x = i, poses for all frames) and 3-D points """
+    kapture_data = make_kapture()
+    rotation = [0., 0., 0., 1.]  # half turn around z: the pose translation is not the position
+    for frame in range(NB_FRAMES):
+        pose_world_from_rig = kapture.PoseTransform(r=rotation, t=[frame, 0.5 * (frame % 2), 1.])
+        kapture_data.trajectories[T_START + frame * STEP, 'rig'] = pose_world_from_rig.inverse()
+    kapture_data.points3d = kapture.Points3d([[x + 0.25, 0.2, z, 255, 0, x] for x in range(-5, 25) for z in [0, 3]])
+    return kapture_data
+
+
+class TestArea(unittest.TestCase):
+    def test_points_in_box(self):
+        points = np.array([[0.5, 0.5, 0.5], [0, 1, 3], [2, 0.5, 0.5], [2.01, 0.5, 0.5], [0.5, -0.1, 0.5],
+                           [0.5, 0.5, 3.5], [0.5, 0.5, -1]])
+        box = [0, 2, 0, 1, 0, 3]
+        expected = [True, True, True, False, False, False, False]
+        self.assertEqual(points_in_box(points, box).tolist(), expected)
+        self.assertEqual(box_area(box)(np.hstack([points, np.zeros((len(points), 3))])).tolist(), expected)
+        self.assertEqual(points_in_box(np.zeros((0, 3)), box).tolist(), [])
+        with self.assertRaises(ValueError):
+            box_area([0, 2, 0, 1])
+        with self.assertRaises(ValueError):
+            box_area([0, 2, 0, 0, 0, 3])
+        with self.assertRaises(ValueError):
+            box_area([0, 2, 0, 1, 0, -3])
+
+    def test_points_in_box_without_bounds(self):
+        points = np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 1e6], [0.5, 0.5, -1e6], [-7, 0.5, 0.5], [0.5, 9, 0.5],
+                           [3, 0.5, 0.5]])
+        # no filter on z
+        self.assertEqual(points_in_box(points, [0, 2, 0, 1, None, None]).tolist(),
+                         [True, True, True, False, False, False])
+        # one side only: z >= 0, x <= 2
+        self.assertEqual(points_in_box(points, [None, 2, 0, 1, 0, None]).tolist(),
+                         [True, True, False, True, False, False])
+        self.assertEqual(points_in_box(points, [None] * 6).tolist(), [True] * 6)
+        lower, upper = box_bounds([None, 2, 0, 1, 0, None])
+        self.assertEqual((lower.tolist(), upper.tolist()), ([-np.inf, 0, 0], [2, 1, np.inf]))
+        with self.assertRaises(ValueError):
+            box_area([0, 2, 1, 0, None, None])
+        with self.assertRaises(ValueError):
+            box_area([None] * 4)
+
+    def test_points_in_sphere(self):
+        points = np.array([[0, 0, 0], [1, 2, 3], [1, 2, 5], [1, 2, 5.01], [2.5, 3.5, 3], [1, 2, 3, 255, 0, 0][:3]])
+        self.assertEqual(points_in_sphere(points, [1, 2, 3], 2).tolist(), [False, True, True, False, False, True])
+        self.assertEqual(sphere_area([1, 2, 3], 2)(points).tolist(), [False, True, True, False, False, True])
+        self.assertEqual(points_in_sphere(np.zeros((0, 6)), [1, 2, 3], 2).tolist(), [])
+        with self.assertRaises(ValueError):
+            sphere_area([1, 2], 2)
+        with self.assertRaises(ValueError):
+            sphere_area([1, 2, 3], 0)
+
+    def test_windows_in_sphere(self):
+        kapture_data = make_walk()  # frame i at (i, 0 or 0.5, 1)
+        self.assertEqual(windows_in_area(kapture_data, sphere_area([5, 0, 1], 1.2), gap=0.15, pad=0),
+                         [(frames(4)[0], frames(6)[0])])
+        # the height counts: same center 3 m higher, out of reach
+        self.assertEqual(windows_in_area(kapture_data, sphere_area([5, 0, 4], 1.2), gap=0.15, pad=0), [])
+        self.assertEqual(windows_in_area(kapture_data, sphere_area([5, 0, 4], 3.2), gap=0.15, pad=0),
+                         [(frames(4)[0], frames(6)[0])])
+
+    def test_trajectory_positions(self):
+        kapture_data = make_walk()
+        timestamps, positions = trajectory_positions(kapture_data.trajectories)
+        self.assertEqual(timestamps.tolist(), frames(*range(NB_FRAMES)))
+        np.testing.assert_allclose(positions[3], [3, 0.5, 1], atol=1e-9)
+        np.testing.assert_allclose(positions[:, 0], np.arange(NB_FRAMES), atol=1e-9)
+        timestamps, positions = trajectory_positions(kapture_data.trajectories, ['rig'])
+        self.assertEqual((len(timestamps), positions.shape), (0, (0, 3)))
+
+    def test_windows_in_area(self):
+        kapture_data = make_walk()
+        box = box_area([2.5, 6.5, -1, 1, 0, 2])  # frames 3 .. 6, the rig is at z = 1
+        self.assertEqual(windows_in_area(kapture_data, box, gap=0.15, pad=0), [(frames(3)[0], frames(6)[0])])
+        self.assertEqual(windows_in_area(kapture_data, box, gap=0.15, pad=0.1), [(frames(2)[0], frames(7)[0])])
+        # the odd frames only (y = 0.5): 0.2 s apart, one period when the gap allows it
+        odd = box_area([2.5, 8.5, 0.4, 1, 0, 2])
+        self.assertEqual(windows_in_area(kapture_data, odd, gap=0.15, pad=0),
+                         [(t, t) for t in frames(3, 5, 7)])
+        self.assertEqual(windows_in_area(kapture_data, odd, gap=0.25, pad=0), [(frames(3)[0], frames(7)[0])])
+        # every axis counts: same box above the rig, or beside
+        self.assertEqual(windows_in_area(kapture_data, box_area([2.5, 6.5, -1, 1, 2, 3]), gap=0.15, pad=0), [])
+        self.assertEqual(windows_in_area(kapture_data, box_area([2.5, 6.5, None, None, None, None]), gap=0.15, pad=0),
+                         [(frames(3)[0], frames(6)[0])])
+        self.assertEqual(windows_in_area(kapture_data, box_area([None, 6.5, None, None, None, None]), gap=0.15, pad=0),
+                         [(frames(0)[0], frames(6)[0])])
+        self.assertEqual(windows_in_area(kapture_data, box_area([100, 101, 100, 101, 0, 2])), [])
+        self.assertEqual(windows_in_area(kapture_data, box, skip_sensor_ids=['rig']), [])
+        with self.assertRaises(ValueError):
+            windows_in_area(kapture.Kapture(), box)
+
+
+class TestKaptureExtractArea(unittest.TestCase):
+    def setUp(self):
+        self._tempdir = tempfile.TemporaryDirectory()
+        self.input_path = path.join(self._tempdir.name, 'full')
+        self.output_path = path.join(self._tempdir.name, 'area')
+        write_kapture(self.input_path, make_walk())
+        self.box = [2.5, 6.5, -1, 1, 0, 2]
+
+    def tearDown(self):
+        self._tempdir.cleanup()
+
+    def test_extract_area(self):
+        kapture_extract_area(self.input_path, self.output_path, self.box, gap=0.15, pad=0.05,
+                             skip_sensor_ids=['lidar0_clean'], transfer=TransferAction.link_relative)
+        reloaded = kapture_from_dir(self.output_path)
+        self.assertEqual(sorted(reloaded.records_camera), frames(3, 4, 5, 6))
+        self.assertEqual(sorted(reloaded.trajectories), frames(3, 4, 5, 6))
+        self.assertEqual(reloaded.records_lidar.sensors_ids, {'lidar0'})
+        self.assertEqual(len(reloaded.records_gyroscope), 2 + 3 * 4 + 1 + 2)  # 0.05 s before and after
+        self.assertIsNone(reloaded.points3d)
+        link = get_record_fullpath(self.output_path, f'cam0/{frames(3)[0]}.jpg')
+        self.assertTrue(path.islink(link) and path.isfile(link))
+        with open(path.join(self.output_path, 'subset.json')) as file:
+            subset = json.load(file)
+        self.assertEqual(subset['box'], self.box)
+        self.assertNotIn('sphere', subset)
+        self.assertEqual(subset['windows'], [[frames(3)[0] - 50_000, frames(6)[0] + 50_000]])
+        self.assertEqual((subset['gap'], subset['pad']), (0.15, 0.05))
+        self.assertEqual(subset['records']['records_camera'], 8)
+
+    def test_crop_points3d(self):
+        kapture_extract_area(self.input_path, self.output_path, self.box, gap=0.15, pad=0, crop_points3d=True)
+        reloaded = kapture_from_dir(self.output_path)
+        self.assertEqual(reloaded.points3d.shape, (4, 6))  # x = 3.25 .. 6.25, z = 0 (not z = 3)
+        self.assertEqual(set(reloaded.points3d[:, 2]), {0})
+        self.assertEqual(sorted(set(reloaded.points3d[:, 0])), [3.25, 4.25, 5.25, 6.25])
+        self.assertEqual(sorted(set(reloaded.points3d[:, 5])), [3, 4, 5, 6])
+
+    def test_box_without_bounds(self):
+        kapture_extract_area(self.input_path, self.output_path, [2.5, 6.5, -1, 1, None, None], gap=0.15, pad=0,
+                             crop_points3d=True)
+        reloaded = kapture_from_dir(self.output_path)
+        self.assertEqual(sorted(reloaded.trajectories), frames(3, 4, 5, 6))
+        self.assertEqual(reloaded.points3d.shape, (8, 6))  # both heights
+        self.assertEqual(set(reloaded.points3d[:, 2]), {0, 3})
+        with open(path.join(self.output_path, 'subset.json')) as file:
+            self.assertEqual(json.load(file)['box'], [2.5, 6.5, -1, 1, None, None])
+
+    def test_extract_sphere(self):
+        kapture_extract_area(self.input_path, self.output_path, sphere=[5, 0, 1, 1.3], gap=0.15, pad=0,
+                             crop_points3d=True)
+        reloaded = kapture_from_dir(self.output_path)
+        self.assertEqual(sorted(reloaded.records_camera), frames(4, 5, 6))
+        self.assertEqual(sorted(reloaded.trajectories), frames(4, 5, 6))
+        # points at (x + 0.25, 0.2, 0 or 3): within 1.3 m of (5, 0, 1) at z = 0 for x = 4, 5 only
+        self.assertEqual(sorted(reloaded.points3d[:, 0]), [4.25, 5.25])
+        self.assertEqual(set(reloaded.points3d[:, 2]), {0})
+        with open(path.join(self.output_path, 'subset.json')) as file:
+            subset = json.load(file)
+        self.assertEqual(subset['sphere'], [5, 0, 1, 1.3])
+        self.assertNotIn('box', subset)
+
+    def test_one_area_only(self):
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path)
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path, self.box, sphere=[5, 0, 1, 1.2])
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path, sphere=[5, 0, 1])
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path, [2.5, 6.5, -1, 1])
+        self.assertFalse(path.exists(self.output_path))
+
+    def test_nothing_in_the_area(self):
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path, [100, 101, 100, 101, 0, 2])
+        with self.assertRaises(ValueError):
+            kapture_extract_area(self.input_path, self.output_path, sphere=[100, 100, 0, 1])
+        self.assertFalse(path.exists(self.output_path))
 
 
 if __name__ == '__main__':

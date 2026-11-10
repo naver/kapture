@@ -159,6 +159,31 @@ $> kapture_extract_period -i full -o part --relative --windows 120 157.5 300 340
 * `<output>/subset.json` keeps the source, the periods and the number of records kept.
 * Library: `kapture.algo.extract` (`normalize_windows`, `extract_period` in memory, `kapture_extract_period`).
 
+== New tool `kapture_extract_area`
+
+Extracts the part of a recording made in an area (a box aligned with the axes of the world frame, or a sphere) to a
+new kapture: the periods are those the trajectory spends in the area, then everything works as `kapture_extract_period`
+(same `--skip_sensors`, `--transfer`, `subset.json` with the area and the periods found).
+
+[source,bash]
+----
+$> kapture_extract_area -i full -o part --box -15 45 25 80 -5 5 --transfer link_relative   # xmin xmax ymin ymax zmin zmax
+$> kapture_extract_area -i full -o part --box -15 45 25 80 NONE NONE                       # no filter on z
+$> kapture_extract_area -i full -o part --sphere -5.6 56.2 -2.5 6 -s lidar0_clean          # x y z radius
+----
+
+* The records are selected by the position of the device (rig or sensor of `trajectories.txt`), not by what they
+  see: a scan or an image taken from inside the area is kept whole. Needs trajectories.
+* `--gap` (default 5 s): two poses inside the area less than `gap` apart are in the same period, so a short way out
+  does not cut it; `--pad` (default 0.2 s) is kept before and after every period; `--time_unit` as above.
+* Both shapes are 3-D and make no assumption on the axes of the world frame (which one is vertical); their borders
+  are included.
+* `NONE` instead of a value of `--box` means no bound on that side (`--box NONE 45 NONE NONE NONE NONE`: x <= 45).
+* `--crop_points3d` also extracts the points3d inside the area (off by default: the whole `points3d.txt` is loaded);
+  the other reconstruction data are not extracted.
+* Library: `kapture.algo.extract` (`trajectory_positions`, `box_bounds`, `points_in_box`, `points_in_sphere`, `box_area`,
+  `sphere_area`, `windows_in_area`, `kapture_extract_area`).
+
 == Python API changes
 
 Tool functions in `kapture.tools.*` take the canonical parameter names and two new keyword parameters
