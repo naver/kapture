@@ -93,6 +93,20 @@ class TestLegacyFlags(unittest.TestCase):
         with self.assertRaises(ArgumentError):
             parser.parse_args(['-i', 'a', '-o', 'out', '-s', 'bogus'])
 
+    def test_extract_period_windows(self):
+        parser = _parser('kapture_extract_period')
+        args = parser.parse_args(['-i', 'k', '-o', 'out', '--windows', '1792656648559471', '1792656685860184',
+                                  '10', '20.5', '-s', 'lidar0_clean', 'lidar0_world', '--transfer', 'link_relative'])
+        self.assertEqual(args.windows, [1792656648559471, 1792656685860184, 10, 20.5])
+        self.assertEqual(args.skip_sensors, ['lidar0_clean', 'lidar0_world'])
+        self.assertEqual(args.transfer, TransferAction.link_relative)
+        self.assertFalse(args.relative)
+        args = parser.parse_args(['-i', 'k', '-o', 'out', '-w', '0', '37.5', '--relative', '-f'])
+        self.assertEqual((args.windows, args.relative, args.force, args.skip_sensors, args.transfer),
+                         ([0, 37.5], True, True, [], TransferAction.skip))
+        with self.assertRaises(ArgumentError):
+            parser.parse_args(['-i', 'k', '-o', 'out'])
+
     def test_colmap_import_legacy_aliases(self):
         parser = _parser('kapture_import_colmap')
         args = parser.parse_args(['-v', '-f', '-db', 'x.db', '-txt', 'rec', '-im', 'imgs', '-rig', 'r.json',
