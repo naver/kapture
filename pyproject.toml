@@ -38,6 +38,7 @@ include = ["kapture*"]
 [project.scripts]
 kapture_data_date_ranges="kapture.tools.kapture_data_date_ranges:main"
 kapture_download_dataset="kapture.tools.kapture_download_dataset:main"
+kapture_extract_area="kapture.tools.kapture_extract_area:main"
 kapture_extract_exif="kapture.tools.kapture_extract_exif:main"
 kapture_extract_period="kapture.tools.kapture_extract_period:main"
 kapture_export_colmap="kapture.tools.kapture_export_colmap:main"

@@ -1,7 +1,8 @@
 # Copyright 2026-present NAVER Corp. Under BSD 3-clause license
 
 """
-Extraction of a part of a kapture: the records and poses of some periods of time.
+Extraction of a part of a kapture: the records and poses of some periods of time,
+or of the periods the trajectory spends in an area.
 """
 
 import json
@@ -10,7 +11,9 @@ import os
 import os.path as path
 import shutil
 from bisect import bisect_right
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+
+import numpy as np
 
 import kapture
 from kapture.io.binary import TransferAction, transfer_files_from_dir
@@ -36,6 +39,8 @@ RAW_DIRNAME = path.join('sensors', 'raw')
 EXTRACT_FILENAME = 'subset.json'
 
 Window = Tuple[int, int]
+Area = Callable[[np.ndarray], np.ndarray]
+""" N x 3 points of the world frame -> N booleans, True inside the area """
 
 
 def _timed_data(kapture_data: kapture.Kapture) -> Dict[str, dict]:
@@ -135,6 +140,111 @@ def extract_period(kapture_data: kapture.Kapture,
     return extracted
 
 
+def trajectory_positions(trajectories: kapture.Trajectories,
+                         skip_sensor_ids: Iterable[str] = ()) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Positions of the devices (rigs or sensors) of a trajectory, in the world frame.
+
+    :param trajectories: poses, device from world as kapture stores them.
+    :param skip_sensor_ids: devices to ignore.
+    :return: timestamps (N, int64, sorted) and positions (N x 3), one per pose.
+    """
+    skip_sensor_ids = set(skip_sensor_ids)
+    timestamps, positions = [], []
+    for timestamp in sorted(trajectories):
+        for device_id, pose in trajectories[timestamp].items():
+            if device_id in skip_sensor_ids or pose.r is None or pose.t is None:
+                continue
+            timestamps.append(timestamp)
+            positions.append(pose.inverse().t.flatten())
+    return np.array(timestamps, dtype=np.int64), np.array(positions, dtype=float).reshape(-1, 3)
+
+
+def box_bounds(box: Sequence[Optional[float]]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    :param box: (xmin, xmax, ymin, ymax, zmin, zmax), box aligned with the axes; None for no bound on that side.
+    :return: lower and upper corners (3 values each), -inf / +inf where there is no bound.
+    """
+    if len(box) != 6:
+        raise ValueError('a box is (xmin, xmax, ymin, ymax, zmin, zmax)')
+    lower = np.array([-np.inf if value is None else float(value) for value in box[0::2]])
+    upper = np.array([np.inf if value is None else float(value) for value in box[1::2]])
+    if np.any(np.isnan(lower)) or np.any(np.isnan(upper)) or not np.all(lower < upper):
+        raise ValueError(f'empty box: min {lower.tolist()}, max {upper.tolist()}')
+    return lower, upper
+
+
+def points_in_box(points: np.ndarray, box: Sequence[Optional[float]]) -> np.ndarray:
+    """
+    :param points: N x 3 points.
+    :param box: (xmin, xmax, ymin, ymax, zmin, zmax), box aligned with the axes; None for no bound on that side.
+    :return: N booleans, True for the points inside (border included).
+    """
+    lower, upper = box_bounds(box)
+    points = np.asarray(points, dtype=float)[:, :3]
+    return np.all((lower <= points) & (points <= upper), axis=1)
+
+
+def points_in_sphere(points: np.ndarray, center: Sequence[float], radius: float) -> np.ndarray:
+    """
+    :param points: N x 3 points.
+    :param center: center (x, y, z) of the sphere.
+    :param radius: radius of the sphere.
+    :return: N booleans, True for the points inside (border included).
+    """
+    center = np.asarray(center, dtype=float)
+    if center.shape != (3,):
+        raise ValueError('the center of a sphere is (x, y, z)')
+    if not radius > 0:
+        raise ValueError(f'the radius of a sphere is positive, got {radius}')
+    points = np.asarray(points, dtype=float)[:, :3]
+    return np.sum((points - center) ** 2, axis=1) <= radius ** 2
+
+
+def box_area(box: Sequence[Optional[float]]) -> Area:
+    """ area = the points inside the box (xmin, xmax, ymin, ymax, zmin, zmax), None for no bound on that side """
+    box_bounds(box)  # checks the box right now
+    return lambda points: points_in_box(points, box)
+
+
+def sphere_area(center: Sequence[float], radius: float) -> Area:
+    """ area = the points at most radius away from the center """
+    points_in_sphere(np.zeros((0, 3)), center, radius)  # checks the sphere right now
+    return lambda points: points_in_sphere(points, center, radius)
+
+
+def windows_in_area(kapture_data: kapture.Kapture,
+                    area: Area,
+                    gap: float = 5.,
+                    pad: float = 0.2,
+                    time_unit: float = 1e6,
+                    skip_sensor_ids: Iterable[str] = ()) -> List[Window]:
+    """
+    Periods of time the trajectory spends in an area: the poses whose position is inside the area,
+    grouped in periods.
+
+    :param kapture_data: kapture with trajectories.
+    :param area: tells which points of the world frame are in the area, see box_area and sphere_area.
+    :param gap: two poses inside the area less than gap seconds apart are in the same period
+                (a short way out of the area does not cut the period).
+    :param pad: seconds added before and after every period.
+    :param time_unit: number of kapture timestamp units per second.
+    :param skip_sensor_ids: trajectory devices to ignore.
+    :return: sorted disjoint windows (start, end) of kapture timestamps, empty if no pose is in the area.
+    """
+    if not kapture_data.trajectories:
+        raise ValueError('the extraction of an area needs trajectories')
+    timestamps, positions = trajectory_positions(kapture_data.trajectories, skip_sensor_ids)
+    inside = timestamps[area(positions)] if len(timestamps) else timestamps
+    if len(inside) == 0:
+        return []
+    cuts = np.flatnonzero(np.diff(inside) > gap * time_unit)
+    starts = inside[np.concatenate([[0], cuts + 1])]
+    ends = inside[np.concatenate([cuts, [len(inside) - 1]])]
+    pad = int(round(pad * time_unit))
+    return normalize_windows([(int(t0) - pad, int(t1) + pad) for t0, t1 in zip(starts, ends)])
+
+
 def _drop_records_without_file(kapture_data: kapture.Kapture, source_record_dirpath: str) -> Dict[str, int]:
     """ removes the records whose data file is missing in the source, returns their number per sensor """
     missing = {}
@@ -176,6 +286,97 @@ def _transfer_raw(source_dirpath: str, destination_dirpath: str, transfer: Trans
             os.symlink(source, destination)
 
 
+def _check_paths(input_path: str, output_path: str, transfer: TransferAction) -> None:
+    if transfer == TransferAction.move:
+        raise ValueError('transfer "move" would remove the data files from the input kapture')
+    if path.exists(output_path) and path.samefile(input_path, output_path):
+        raise ValueError('input and output are the same directory')
+
+
+def _load(input_path: str, skip_sensor_ids: List[str], with_points3d: bool = False) -> kapture.Kapture:
+    """ loads the input without the reconstruction data (but points3d on request), warns about what is left out """
+    logger.info(f'loading {input_path}')
+    skip_list = [data_type for data_type in NOT_EXTRACTED_TYPES
+                 if not (with_points3d and data_type is kapture.Points3d)]
+    kapture_data = kapture_from_dir(input_path, skip_list=skip_list)
+    left_out = [name for name in ['points3d.txt', 'observations.txt', 'keypoints', 'descriptors', 'global_features',
+                                  'matches']
+                if path.exists(path.join(input_path, 'reconstruction', name))
+                and not (with_points3d and name == 'points3d.txt')]
+    if left_out:
+        logger.warning(f'reconstruction data of the input that are not extracted: {left_out}')
+    unknown = [sensor_id for sensor_id in skip_sensor_ids
+               if sensor_id not in (kapture_data.sensors or {}) and sensor_id not in (kapture_data.rigs or {})]
+    if unknown:
+        logger.warning(f'sensors to skip that are not in the input: {unknown}')
+    return kapture_data
+
+
+def _extract_to_dir(input_path: str,
+                    output_path: str,
+                    kapture_data: kapture.Kapture,
+                    windows: List[Window],
+                    time_unit: float,
+                    skip_sensor_ids: List[str],
+                    transfer: TransferAction,
+                    force: bool,
+                    points3d: Optional[kapture.Points3d] = None,
+                    info: Optional[dict] = None) -> kapture.Kapture:
+    """ extracts the windows of kapture_data (loaded from input_path), writes the result and its data files """
+    extracted = extract_period(kapture_data, windows, skip_sensor_ids)
+    extracted.points3d = points3d
+
+    source_record_dirpath = path.join(input_path, RECORD_DATA_DIRNAME)
+    transfer_files = transfer not in (TransferAction.skip, TransferAction.root_link)
+    if transfer_files:
+        missing = _drop_records_without_file(extracted, source_record_dirpath)
+        if missing:
+            logger.warning(f'records dropped, their data file is missing in the input: {missing}')
+
+    total = time_range(kapture_data)
+    for t0, t1 in windows:
+        counts = {name: sum(len(data[t]) for t in data if t0 <= t <= t1)
+                  for name, data in _timed_data(extracted).items()}
+        counts = ', '.join(f'{n} {name}' for name, n in counts.items() if n)
+        from_start = f' (+{(t0 - total[0]) / time_unit:.1f} s)' if total else ''
+        logger.info(f'period {t0} .. {t1}{from_start}, {(t1 - t0) / time_unit:.1f} s: {counts or "nothing"}')
+    record_counts = {}
+    for name, data in _timed_data(kapture_data).items():
+        kept = sum(len(of_sensors) for of_sensors in getattr(extracted, name).values())
+        record_counts[name] = kept
+        logger.info(f'{name}: {kept} / {sum(len(of_sensors) for of_sensors in data.values())}')
+    if not any(record_counts.values()):
+        logger.warning('nothing in the given periods: the extracted kapture is empty')
+    if points3d is not None:
+        record_counts['points3d'] = len(points3d)
+
+    os.makedirs(output_path, exist_ok=True)
+    delete_existing_kapture_files(output_path, force_erase=force)
+    logger.info(f'writing {output_path}')
+    kapture_to_dir(output_path, extracted)
+
+    if transfer == TransferAction.root_link:
+        if path.isdir(source_record_dirpath):
+            import_record_data_from_dir_link_dir(path.realpath(source_record_dirpath), output_path)
+    elif transfer_files:
+        filenames = sorted({filename for name in FILE_RECORDS_NAMES if getattr(extracted, name) is not None
+                            for _, _, filename in kapture.flatten(getattr(extracted, name))})
+        transfer_files_from_dir(
+            [path.realpath(path.join(source_record_dirpath, filename)) for filename in filenames],
+            [get_record_fullpath(output_path, filename) for filename in filenames],
+            transfer, force_overwrite=True)
+    _transfer_raw(path.join(input_path, RAW_DIRNAME), path.join(output_path, RAW_DIRNAME), transfer)
+
+    with open(path.join(output_path, EXTRACT_FILENAME), 'w') as file:
+        json.dump({'src': path.abspath(input_path),
+                   'windows': windows,
+                   **(info or {}),
+                   'skip_sensors': skip_sensor_ids,
+                   'transfer': transfer.name,
+                   'records': record_counts}, file, indent=1)
+    return extracted
+
+
 def kapture_extract_period(input_path: str,
                            output_path: str,
                            windows: Iterable[Sequence[float]],
@@ -199,69 +400,65 @@ def kapture_extract_period(input_path: str,
     :param force: silently overwrite the kapture files of the output directory.
     :return: the extracted kapture.
     """
-    if transfer == TransferAction.move:
-        raise ValueError('transfer "move" would remove the data files from the input kapture')
-    if path.exists(output_path) and path.samefile(input_path, output_path):
-        raise ValueError('input and output are the same directory')
+    _check_paths(input_path, output_path, transfer)
     skip_sensor_ids = sorted(set(skip_sensor_ids))
-
-    logger.info(f'loading {input_path}')
-    kapture_data = kapture_from_dir(input_path, skip_list=NOT_EXTRACTED_TYPES)
-    if any(path.exists(path.join(input_path, 'reconstruction', name))
-           for name in ['points3d.txt', 'observations.txt', 'keypoints', 'descriptors', 'global_features', 'matches']):
-        logger.warning('the reconstruction data of the input (features, matches, points3d, observations) '
-                       'are not extracted')
-    unknown = [sensor_id for sensor_id in skip_sensor_ids
-               if sensor_id not in (kapture_data.sensors or {}) and sensor_id not in (kapture_data.rigs or {})]
-    if unknown:
-        logger.warning(f'sensors to skip that are not in the input: {unknown}')
-
+    kapture_data = _load(input_path, skip_sensor_ids)
     windows = normalize_windows(windows, relative, time_unit, kapture_data)
-    extracted = extract_period(kapture_data, windows, skip_sensor_ids)
+    return _extract_to_dir(input_path, output_path, kapture_data, windows, time_unit, skip_sensor_ids, transfer, force)
 
-    source_record_dirpath = path.join(input_path, RECORD_DATA_DIRNAME)
-    transfer_files = transfer not in (TransferAction.skip, TransferAction.root_link)
-    if transfer_files:
-        missing = _drop_records_without_file(extracted, source_record_dirpath)
-        if missing:
-            logger.warning(f'records dropped, their data file is missing in the input: {missing}')
 
-    total = time_range(kapture_data)
-    for t0, t1 in windows:
-        counts = {name: sum(len(data[t]) for t in data if t0 <= t <= t1)
-                  for name, data in _timed_data(extracted).items()}
-        counts = ', '.join(f'{n} {name}' for name, n in counts.items() if n)
-        from_start = f' (+{(t0 - total[0]) / time_unit:.1f} s)' if total else ''
-        logger.info(f'period {t0} .. {t1}{from_start}, {(t1 - t0) / time_unit:.1f} s: {counts or "nothing"}')
-    record_counts = {}
-    for name, data in _timed_data(kapture_data).items():
-        kept = sum(len(of_sensors) for of_sensors in getattr(extracted, name).values())
-        record_counts[name] = kept
-        logger.info(f'{name}: {kept} / {sum(len(of_sensors) for of_sensors in data.values())}')
-    if not any(record_counts.values()):
-        logger.warning('nothing in the given periods: the extracted kapture is empty')
+def kapture_extract_area(input_path: str,
+                         output_path: str,
+                         box: Optional[Sequence[Optional[float]]] = None,
+                         sphere: Optional[Sequence[float]] = None,
+                         gap: float = 5.,
+                         pad: float = 0.2,
+                         time_unit: float = 1e6,
+                         crop_points3d: bool = False,
+                         skip_sensor_ids: Iterable[str] = (),
+                         transfer: TransferAction = TransferAction.skip,
+                         force: bool = False) -> kapture.Kapture:
+    """
+    Writes a new kapture with the poses and the records of the periods the trajectory spends in an area:
+    a box aligned with the axes of the world frame, or a sphere. No assumption is made on the axes of the world
+    frame (which one is vertical). The records are selected by the position of the device, not by what they see:
+    the scans and images taken from inside the area are kept whole.
 
-    os.makedirs(output_path, exist_ok=True)
-    delete_existing_kapture_files(output_path, force_erase=force)
-    logger.info(f'writing {output_path}')
-    kapture_to_dir(output_path, extracted)
-
-    if transfer == TransferAction.root_link:
-        if path.isdir(source_record_dirpath):
-            import_record_data_from_dir_link_dir(path.realpath(source_record_dirpath), output_path)
-    elif transfer_files:
-        filenames = sorted({filename for name in FILE_RECORDS_NAMES if getattr(extracted, name) is not None
-                            for _, _, filename in kapture.flatten(getattr(extracted, name))})
-        transfer_files_from_dir(
-            [path.realpath(path.join(source_record_dirpath, filename)) for filename in filenames],
-            [get_record_fullpath(output_path, filename) for filename in filenames],
-            transfer, force_overwrite=True)
-    _transfer_raw(path.join(input_path, RAW_DIRNAME), path.join(output_path, RAW_DIRNAME), transfer)
-
-    with open(path.join(output_path, EXTRACT_FILENAME), 'w') as file:
-        json.dump({'src': path.abspath(input_path),
-                   'windows': windows,
-                   'skip_sensors': skip_sensor_ids,
-                   'transfer': transfer.name,
-                   'records': record_counts}, file, indent=1)
-    return extracted
+    :param input_path: input kapture directory, with trajectories.
+    :param output_path: output kapture directory.
+    :param box: (xmin, xmax, ymin, ymax, zmin, zmax) of the area, in the world frame; None for no bound on
+                that side (eg. (-10, 10, -10, 10, None, None) does not filter on z).
+    :param sphere: (x, y, z, radius) of the area, in the world frame.
+    :param gap: two poses inside the area less than gap seconds apart are in the same period.
+    :param pad: seconds added before and after every period.
+    :param time_unit: number of kapture timestamp units per second.
+    :param crop_points3d: also extract the points3d that are inside the area (observations are not extracted).
+    :param skip_sensor_ids: sensors (or rigs) left out; a skipped trajectory device does not select periods.
+    :param transfer: how to bring the data files and sensors/raw, see kapture_extract_period.
+    :param force: silently overwrite the kapture files of the output directory.
+    :return: the extracted kapture.
+    """
+    _check_paths(input_path, output_path, transfer)
+    skip_sensor_ids = sorted(set(skip_sensor_ids))
+    if (box is None) == (sphere is None):
+        raise ValueError('the area is either a box or a sphere')
+    if box is not None:
+        box = [None if value is None else float(value) for value in box]
+        area, info = box_area(box), {'box': box}
+    else:
+        if len(sphere) != 4:
+            raise ValueError('a sphere is (x, y, z, radius)')
+        sphere = [float(value) for value in sphere]
+        area, info = sphere_area(sphere[:3], sphere[3]), {'sphere': sphere}
+    kapture_data = _load(input_path, skip_sensor_ids, with_points3d=crop_points3d)
+    windows = windows_in_area(kapture_data, area, gap, pad, time_unit, skip_sensor_ids)
+    if not windows:
+        raise ValueError('no pose of the trajectory is inside the area')
+    nb_poses = len(trajectory_positions(kapture_data.trajectories, skip_sensor_ids)[0])
+    logger.info(f'{len(windows)} periods in the area ({nb_poses} poses in the trajectory)')
+    points3d = None
+    if crop_points3d and kapture_data.points3d is not None:
+        points3d = kapture.Points3d(np.asarray(kapture_data.points3d)[area(np.asarray(kapture_data.points3d))])
+        logger.info(f'points3d: {len(points3d)} / {len(kapture_data.points3d)}')
+    return _extract_to_dir(input_path, output_path, kapture_data, windows, time_unit, skip_sensor_ids, transfer, force,
+                           points3d=points3d, info={**info, 'gap': gap, 'pad': pad})

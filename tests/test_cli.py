@@ -107,6 +107,21 @@ class TestLegacyFlags(unittest.TestCase):
         with self.assertRaises(ArgumentError):
             parser.parse_args(['-i', 'k', '-o', 'out'])
 
+    def test_extract_area_box_and_sphere(self):
+        parser = _parser('kapture_extract_area')
+        args = parser.parse_args(['-i', 'k', '-o', 'out', '--box', '-15', '45', '25', '80', '-5', '2.5', '--gap', '2',
+                                  '--crop_points3d', '--transfer', 'copy'])
+        self.assertEqual((args.box, args.sphere, args.gap, args.pad), ([-15, 45, 25, 80, -5, 2.5], None, 2, 0.2))
+        self.assertTrue(args.crop_points3d)
+        self.assertEqual(args.transfer, TransferAction.copy)
+        args = parser.parse_args(['-i', 'k', '-o', 'out', '--sphere', '-5.6', '56.2', '-2.5', '4'])
+        self.assertEqual((args.sphere, args.box), ([-5.6, 56.2, -2.5, 4], None))
+        self.assertFalse(args.crop_points3d)
+        args = parser.parse_args(['-i', 'k', '-o', 'out', '--box', '-10', '10', '-10', '10', 'NONE', 'none'])
+        self.assertEqual(args.box, [-10, 10, -10, 10, 'NONE', 'none'])
+        with self.assertRaises(ArgumentError):
+            parser.parse_args(['-i', 'k', '-o', 'out', '--polygon', '0', '0', '1', '0', '1', '1'])
+
     def test_colmap_import_legacy_aliases(self):
         parser = _parser('kapture_import_colmap')
         args = parser.parse_args(['-v', '-f', '-db', 'x.db', '-txt', 'rec', '-im', 'imgs', '-rig', 'r.json',
