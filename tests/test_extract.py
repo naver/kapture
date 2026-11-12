@@ -18,7 +18,9 @@ import kapture
 from kapture.algo.extract import extract_period, kapture_extract_period, normalize_windows, time_range
 from kapture.algo.extract import box_area, box_bounds, kapture_extract_area, points_in_box, points_in_sphere
 from kapture.algo.extract import sphere_area, trajectory_positions, windows_in_area
-from kapture.io.csv import kapture_from_dir, kapture_to_dir
+from kapture.algo.convert_points3d import kapture_convert_points3d
+from kapture.io.csv import get_points3d_format, get_points3d_fullpath, kapture_from_dir, kapture_to_dir
+from kapture.io.csv import points3d_to_file
 from kapture.io.records import TransferAction, get_record_fullpath
 
 T_START = 1_000_000_000  # microseconds
@@ -384,6 +386,27 @@ class TestKaptureExtractArea(unittest.TestCase):
         self.assertEqual(set(reloaded.points3d[:, 2]), {0})
         self.assertEqual(sorted(set(reloaded.points3d[:, 0])), [3.25, 4.25, 5.25, 6.25])
         self.assertEqual(sorted(set(reloaded.points3d[:, 5])), [3, 4, 5, 6])
+
+    def test_crop_points3d_ply(self):
+        # the input points3d as ply, with timestamps: the extracted points3d keep the format and their timestamps
+        points3d = kapture_from_dir(self.input_path).points3d
+        points3d = kapture.Points3d(points3d, timestamps=np.arange(len(points3d)) + 10 ** 18)
+        points3d_to_file(get_points3d_fullpath(self.input_path, 'ply'), points3d)
+        os.remove(get_points3d_fullpath(self.input_path, 'txt'))
+        kapture_extract_area(self.input_path, self.output_path, self.box, gap=0.15, pad=0, crop_points3d=True)
+        self.assertEqual(get_points3d_format(self.output_path), 'ply')
+        reloaded = kapture_from_dir(self.output_path).points3d
+        self.assertEqual(reloaded.shape, (4, 6))
+        inside = [index for index, point in enumerate(points3d.as_array())
+                  if 2.5 <= point[0] <= 6.5 and -1 <= point[1] <= 1 and 0 <= point[2] <= 2]
+        self.assertEqual(list(reloaded.timestamps), [10 ** 18 + index for index in inside])
+
+    def test_points3d_ply_left_out(self):
+        kapture_convert_points3d(self.input_path, 'ply')
+        with self.assertLogs('extract', level='WARNING') as logs:
+            kapture_extract_area(self.input_path, self.output_path, self.box, gap=0.15, pad=0)
+        self.assertTrue(any('points3d.ply' in line for line in logs.output))
+        self.assertIsNone(get_points3d_format(self.output_path))
 
     def test_box_without_bounds(self):
         kapture_extract_area(self.input_path, self.output_path, [2.5, 6.5, -1, 1, None, None], gap=0.15, pad=0,

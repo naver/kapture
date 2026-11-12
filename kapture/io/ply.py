@@ -1,4 +1,5 @@
 # Copyright 2020-present NAVER Corp. Under BSD 3-clause license
+import datetime
 import io
 import logging
 from tqdm import tqdm
@@ -9,7 +10,7 @@ from typing import Dict, Iterable
 import numpy as np
 
 import kapture
-from .csv import kapture_linesep
+from .csv import kapture_linesep, KAPTURE_FORMAT_1
 from .features import image_keypoints_from_file
 
 
@@ -389,3 +390,156 @@ def write_ply(filepath: str, vertices: np.ndarray, comments: Iterable[str] = ())
     with open(filepath, 'wb') as f:
         f.write(('\n'.join(header) + '\n').encode('ascii'))
         f.write(np.ascontiguousarray(vertices.astype(np.dtype(little_endian), copy=False)).tobytes())
+
+
+def read_ply_header(filepath: str) -> Dict[str, object]:
+    """
+    Reads only the header of a PLY file.
+
+    :param filepath: path to the PLY file.
+    :return: dict with 'format' (str), 'comments' (list of str), 'elements' (list of (name, count, [property names])).
+    """
+    header = {'format': None, 'comments': [], 'elements': []}
+    with open(filepath, 'rb') as f:
+        if f.readline().strip() != b'ply':
+            raise ValueError(f'{filepath}: not a PLY file')
+        while True:
+            line = f.readline()
+            if not line:
+                raise ValueError(f'{filepath}: end of file before end_header')
+            words = line.decode('ascii', errors='replace').strip().split(maxsplit=1)
+            if not words:
+                continue
+            keyword, rest = words[0], words[1] if len(words) > 1 else ''
+            if keyword == 'end_header':
+                break
+            if keyword == 'format':
+                header['format'] = rest.split()[0]
+            elif keyword == 'comment':
+                header['comments'].append(rest)
+            elif keyword == 'element':
+                name, count = rest.split()[:2]
+                header['elements'].append((name, int(count), []))
+            elif keyword == 'property' and header['elements']:
+                header['elements'][-1][2].append(rest.split()[-1])
+    return header
+
+
+def ply_vertex_count(filepath: str) -> int:
+    """
+    :param filepath: path to the PLY file.
+    :return: the number of vertices declared in the header (0 if no vertex element).
+    """
+    for name, count, _ in read_ply_header(filepath)['elements']:
+        if name == 'vertex':
+            return count
+    return 0
+
+
+########################################################################################################################
+# points3d stored as PLY (reconstruction/points3d.ply) #################################################################
+POINTS3D_COLOR_PROPERTIES = ('red', 'green', 'blue')
+POINTS3D_TIMESTAMP_PROPERTY = 'timestamp'
+POINTS3D_TIMESTAMP_OFFSET_COMMENT = 'timestamp_offset'
+POINTS3D_TIMESTAMP_ENCODINGS = ('relative', 'absolute')
+FLOAT64_EXACT_INTEGER_MAX = 2 ** 53
+
+
+def _timestamp_offset_from_comments(filepath: str, comments: Iterable[str]) -> int:
+    offset = 0
+    for comment in comments:
+        words = comment.split()
+        if len(words) == 2 and words[0] == POINTS3D_TIMESTAMP_OFFSET_COMMENT:
+            try:
+                offset = int(words[1])
+            except ValueError:
+                raise ValueError(f'{filepath}: invalid {POINTS3D_TIMESTAMP_OFFSET_COMMENT} comment "{comment}"')
+    return offset
+
+
+def points3d_from_ply_file(filepath: str) -> kapture.Points3d:
+    """
+    Reads 3d points from a PLY file: vertex properties x, y, z, optionally red, green, blue (colors) and timestamp.
+    Other properties are ignored. The vertex order is the 3d point id (as the line number in points3d.txt).
+    Timestamps are stored as double, either relative to the integer given in the header comment
+    'timestamp_offset <t0>' (exact), or absolute (no such comment, possibly truncated).
+
+    :param filepath: path to the PLY file
+    :return: the 3d points, with their timestamps if any.
+    """
+    loading_start = datetime.datetime.now()
+    vertices = read_ply(filepath)
+    names = vertices.dtype.names or ()
+    if any(axis not in names for axis in 'xyz'):
+        raise ValueError(f'{filepath}: x, y, z vertex properties expected, got {names}')
+    columns = ['x', 'y', 'z']
+    if all(color in names for color in POINTS3D_COLOR_PROPERTIES):
+        columns += list(POINTS3D_COLOR_PROPERTIES)
+    data = np.empty((len(vertices), len(columns)), dtype=kapture.Points3d.COLUMN_TYPE)
+    for column_index, name in enumerate(columns):
+        data[:, column_index] = vertices[name]
+    timestamps = None
+    if POINTS3D_TIMESTAMP_PROPERTY in names:
+        offset = _timestamp_offset_from_comments(filepath, read_ply_header(filepath)['comments'])
+        timestamps = np.round(vertices[POINTS3D_TIMESTAMP_PROPERTY].astype(np.float64)).astype(np.int64) + offset
+    loading_elapsed = datetime.datetime.now() - loading_start
+    logger.debug(f'{len(data):12,d} {kapture.Points3d} in {loading_elapsed.total_seconds():.3f} seconds'
+                 .replace(',', ' '))
+    return kapture.Points3d(data, timestamps=timestamps)
+
+
+def points3d_to_ply_file(filepath: str,
+                         points3d: kapture.Points3d,
+                         xyz_dtype: type = np.float64,
+                         timestamp_encoding: str = 'relative') -> None:
+    """
+    Writes 3d points to a binary little endian PLY file: x, y, z (float or double), red, green, blue (uchar) if
+    the points have colors, timestamp (double) if they have timestamps. The file is written atomically (.tmp file
+    then renamed).
+
+    :param filepath: path to the PLY file
+    :param points3d: the 3d points
+    :param xyz_dtype: np.float64 (default, no loss), or np.float32 (half the size, ~0.1 mm at 1 km)
+    :param timestamp_encoding: how the timestamps (int64) are stored in the double property (53 bits mantissa):
+        'relative' (default): relative to the smallest one, written as an exact integer in a header comment;
+                              exact as long as the time span is below 2^53 time units (104 days in nanoseconds).
+        'absolute': absolute value, truncated to the double precision (eg. ~256 ns for epoch time in nanoseconds).
+    """
+    assert isinstance(points3d, kapture.Points3d)
+    if timestamp_encoding not in POINTS3D_TIMESTAMP_ENCODINGS:
+        raise ValueError(f'unknown timestamp encoding {timestamp_encoding}, expected {POINTS3D_TIMESTAMP_ENCODINGS}')
+    xyz_dtype = np.dtype(xyz_dtype)
+    if xyz_dtype not in (np.dtype(np.float32), np.dtype(np.float64)):
+        raise ValueError(f'xyz_dtype must be float32 or float64, got {xyz_dtype}')
+    saving_start = datetime.datetime.now()
+    data = points3d.as_array().reshape(-1, points3d.shape[-1])
+    fields = [(axis, xyz_dtype) for axis in 'xyz']
+    if points3d.has_colors():
+        fields += [(color, np.uint8) for color in POINTS3D_COLOR_PROPERTIES]
+    timestamps = points3d.timestamps
+    if timestamps is not None:
+        fields += [(POINTS3D_TIMESTAMP_PROPERTY, np.float64)]
+    vertices = np.empty(len(data), dtype=fields)
+    for column_index, axis in enumerate('xyz'):
+        vertices[axis] = data[:, column_index]
+    if points3d.has_colors():
+        for column_index, color in enumerate(POINTS3D_COLOR_PROPERTIES, start=3):
+            vertices[color] = np.clip(np.round(data[:, column_index]), 0, 255)
+    comments = [KAPTURE_FORMAT_1[2:]]
+    if timestamps is not None:
+        offset = 0
+        if timestamp_encoding == 'relative' and len(timestamps):
+            offset = int(timestamps.min())
+            comments.append(f'{POINTS3D_TIMESTAMP_OFFSET_COMMENT} {offset}')
+        values = timestamps - offset
+        vertices[POINTS3D_TIMESTAMP_PROPERTY] = values
+        if len(values) and np.abs(values).max() >= FLOAT64_EXACT_INTEGER_MAX:
+            logger.warning(f'{filepath}: {timestamp_encoding} timestamps exceed 2^53, their precision is truncated '
+                           f'(max error {np.abs(vertices[POINTS3D_TIMESTAMP_PROPERTY].astype(np.int64) - values).max()}'
+                           f' time units)')
+    tmp_filepath = filepath + '.tmp'
+    write_ply(tmp_filepath, vertices, comments=comments)
+    os.replace(tmp_filepath, filepath)
+    saving_elapsed = datetime.datetime.now() - saving_start
+    logger.debug(f'wrote {len(vertices):12,d} {type(points3d)} in {saving_elapsed.total_seconds():.3f} seconds'
+                 .replace(',', ' '))

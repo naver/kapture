@@ -75,7 +75,7 @@ my_dataset                 # Dataset root path
    │  │  │  ├─ query/query001.jpg.desc    # descriptors for corresponding image (example)
    │  │  │  ├─ ...
    │  ├─ ...
-   ├─ points3d.txt                  # 3D points of the reconstruction
+   ├─ points3d.txt                  # 3D points of the reconstruction (or points3d.ply)
    ├─ observations.txt              # 2D/3D points corespondences
    ├─ matches/                      # matches files.
    │  ├─ r2d2_WASF-N8_20k           # identify the type of keypoints that are matched

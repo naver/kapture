@@ -10,7 +10,8 @@ from shutil import rmtree
 from typing import List, Optional
 from .features import FEATURES_DATA_DIRNAMES
 from .records import get_record_fullpath
-from .csv import CSV_FILENAMES
+from .csv import CSV_FILENAMES, POINTS3D_FILENAMES
+import kapture
 from kapture.core.Records import RecordsFilePath
 from kapture.utils.logging import getLogger
 from kapture.utils.paths import path_secure
@@ -50,6 +51,8 @@ def delete_existing_kapture_files(
         path.join(dirpath, filename)
         for dtype, filename in CSV_FILENAMES.items()
         if dtype not in to_keep_csv_list]
+    if kapture.Points3d not in to_keep_csv_list:  # the points3d file may also be a ply
+        csv_filepaths += [path.join(dirpath, filename) for filename in POINTS3D_FILENAMES.values()]
     features_dirpaths = [
         path.join(dirpath, dirname)
         for dtype, dirname in FEATURES_DATA_DIRNAMES.items()

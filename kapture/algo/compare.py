@@ -615,6 +615,11 @@ def equal_points3d(
                           f' {points3d_a.shape} != {points3d_b.shape}')
         return False
 
+    if points3d_a.has_timestamps() != points3d_b.has_timestamps() or (
+            points3d_a.has_timestamps() and not np.array_equal(points3d_a.timestamps, points3d_b.timestamps)):
+        getLogger().debug('equal_points3d: a and b do not have the same timestamps')
+        return False
+
     # internally converted to array of bool which cannot be a point3d
     bool_array = np.isclose(points3d_a.as_array(), points3d_b.as_array())
     are_equal = bool_array.all()

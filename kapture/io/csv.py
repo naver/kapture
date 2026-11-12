@@ -64,6 +64,47 @@ def get_csv_fullpath(kapture_type: Any, kapture_dirpath: str = '') -> str:
     return path.join(kapture_dirpath, filename)
 
 
+# points3d can be stored either as text (CSV_FILENAMES, the historical format) or as PLY (faster, smaller).
+POINTS3D_FORMATS = ('txt', 'ply')
+POINTS3D_FILENAMES = {
+    'txt': CSV_FILENAMES[kapture.Points3d],
+    'ply': path.join('reconstruction', 'points3d.ply'),
+}
+
+
+def get_points3d_fullpath(kapture_dirpath: str = '', points3d_format: Optional[str] = None) -> Optional[str]:
+    """
+    Returns the full path to the points3d file of the kapture.
+
+    :param kapture_dirpath: root kapture path
+    :param points3d_format: 'txt' or 'ply' to get the path of that format (whether the file exists or not),
+                            or None to get the path of the existing one (ply first if both exist), None if none exists.
+    :return: full path of the points3d file
+    """
+    if points3d_format is not None:
+        if points3d_format not in POINTS3D_FILENAMES:
+            raise ValueError(f'unknown points3d format {points3d_format}, expected one of {POINTS3D_FORMATS}')
+        return path.join(kapture_dirpath, POINTS3D_FILENAMES[points3d_format])
+    for points3d_format in ('ply', 'txt'):
+        filepath = path.join(kapture_dirpath, POINTS3D_FILENAMES[points3d_format])
+        if path.isfile(filepath):
+            return filepath
+    return None
+
+
+def get_points3d_format(kapture_dirpath: str) -> Optional[str]:
+    """
+    :param kapture_dirpath: root kapture path
+    :return: the format ('ply' or 'txt') of the existing points3d file (ply first if both exist), or None.
+    """
+    filepath = get_points3d_fullpath(kapture_dirpath)
+    return None if filepath is None else _points3d_format_of_filepath(filepath)
+
+
+def _points3d_format_of_filepath(filepath: str) -> str:
+    return 'ply' if filepath.lower().endswith('.ply') else 'txt'
+
+
 def get_feature_csv_fullpath(kapture_type: Any, feature_name: str, kapture_dirpath: str = '') -> str:
     """
     Returns the full path to csv kapture file for a given datastructure and root directory.
@@ -1269,14 +1310,26 @@ XYZ_COLUMNS = 'X, Y, Z'
 RGB_COLUMNS = 'R, G, B'
 
 
-def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
+def points3d_to_file(filepath: str,
+                     points3d: kapture.Points3d,
+                     xyz_dtype: type = np.float64,
+                     timestamp_encoding: str = 'relative') -> None:
     """
-    Writes 3d points to CSV file.
+    Writes 3d points to file: PLY if filepath ends with .ply (see kapture.io.ply.points3d_to_ply_file), CSV otherwise.
 
-    :param filepath: path to CSV file
+    :param filepath: path to CSV or PLY file
     :param points3d: the 3d points
+    :param xyz_dtype: PLY only: np.float64 (default) or np.float32
+    :param timestamp_encoding: PLY only: 'relative' (default, exact) or 'absolute' (truncated to double precision)
     """
     assert isinstance(points3d, kapture.Points3d)
+    if _points3d_format_of_filepath(filepath) == 'ply':
+        from kapture.io.ply import points3d_to_ply_file  # ply imports csv
+        points3d_to_ply_file(filepath, points3d, xyz_dtype=xyz_dtype, timestamp_encoding=timestamp_encoding)
+        return
+    if points3d.has_timestamps():
+        logger.warning(f'{filepath}: the text format has no timestamps, the 3D points timestamps are lost '
+                       f'(use points3d.ply to keep them)')
     os.makedirs(path.dirname(filepath), exist_ok=True)
     saving_start = datetime.datetime.now()
     columns = XYZ_COLUMNS
@@ -1291,11 +1344,15 @@ def points3d_to_file(filepath: str, points3d: kapture.Points3d) -> None:
 
 def points3d_from_file(filepath: str) -> kapture.Points3d:
     """
-    Reads 3d points from CSV file.
+    Reads 3d points from file: PLY if filepath ends with .ply (see kapture.io.ply.points3d_from_ply_file), CSV
+    otherwise.
 
-    :param filepath: path to CSV file
+    :param filepath: path to CSV or PLY file
     :return: the 3d points
     """
+    if _points3d_format_of_filepath(filepath) == 'ply':
+        from kapture.io.ply import points3d_from_ply_file  # ply imports csv
+        return points3d_from_ply_file(filepath)
 
     loading_start = datetime.datetime.now()
     # Read format
@@ -1310,7 +1367,7 @@ def points3d_from_file(filepath: str) -> kapture.Points3d:
                 expected_nb_columns = kapture.Points3d.XYZ_ONLY
         else:
             format_line = f.readline()
-            if XYZ_COLUMNS in header_line:
+            if XYZ_COLUMNS in format_line:
                 if RGB_COLUMNS in format_line:
                     expected_nb_columns = kapture.Points3d.XYZ_RGB
                 else:
@@ -1344,8 +1401,11 @@ def get_stored_points3d_number(kapture_path: str) -> int:
     :return: number of 3D points stored in the 3D points file
     """
     nb = 0
-    points3d_file_path = path.join(kapture_path, CSV_FILENAMES[kapture.Points3d])
-    if path.isfile(points3d_file_path):
+    points3d_file_path = get_points3d_fullpath(kapture_path)
+    if points3d_file_path is not None and _points3d_format_of_filepath(points3d_file_path) == 'ply':
+        from kapture.io.ply import ply_vertex_count  # ply imports csv
+        return ply_vertex_count(points3d_file_path)
+    if points3d_file_path is not None:
         logger.debug(f'Start counting 3d points in {points3d_file_path} ...')
         counting_start = datetime.datetime.now()
         # Count number of lines minus the header
@@ -1353,7 +1413,7 @@ def get_stored_points3d_number(kapture_path: str) -> int:
             line = f.readline()
             while line:
                 # Skip comments
-                if line.rstrip()[0] != '#':
+                if line.strip() and line.lstrip()[0] != '#':
                     nb += 1
                 line = f.readline()
         counting_elapsed = datetime.datetime.now() - counting_start
@@ -1477,15 +1537,25 @@ KAPTURE_ATTRIBUTE_NAMES = {  # used to list attributes to be saved
 }
 
 
-def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
+def kapture_to_dir(kapture_dirpath: str,
+                   kapture_data: kapture.Kapture,
+                   points3d_format: Optional[str] = None) -> None:
     """
     Saves kapture data to given directory.
 
     :param kapture_dirpath: kapture directory root path
     :param kapture_data: input kapture data
+    :param points3d_format: 'txt' or 'ply' format of the points3d file. None (default): the format of the points3d
+                            file already in kapture_dirpath, if any, else 'txt'.
+                            The points3d file of the other format, if any, is removed.
     """
+    if points3d_format is None:
+        points3d_format = get_points3d_format(kapture_dirpath) or 'txt'
     kapture_subtype_to_filepaths = {kapture_class: path.join(kapture_dirpath, filename)
                                     for kapture_class, filename in CSV_FILENAMES.items()}
+    kapture_subtype_to_filepaths[kapture.Points3d] = get_points3d_fullpath(kapture_dirpath, points3d_format)
+    if kapture_data.points3d is not None:
+        remove_points3d_files(kapture_dirpath, keep_format=points3d_format)
     saving_start = datetime.datetime.now()
     # save each member of kapture data
     for kapture_class, kapture_member_name in KAPTURE_ATTRIBUTE_NAMES.items():
@@ -1504,6 +1574,20 @@ def kapture_to_dir(kapture_dirpath: str, kapture_data: kapture.Kapture) -> None:
                 write_function(filepath, features)
     saving_elapsed = datetime.datetime.now() - saving_start
     logger.info(f'Saved in {saving_elapsed.total_seconds():.3f} seconds in "{kapture_dirpath}"')
+
+
+def remove_points3d_files(kapture_dirpath: str, keep_format: Optional[str] = None) -> None:
+    """
+    Removes the points3d files of the kapture, so that only one format remains.
+
+    :param kapture_dirpath: kapture directory root path
+    :param keep_format: format not to remove ('txt' or 'ply'), None to remove all.
+    """
+    for points3d_format in POINTS3D_FORMATS:
+        filepath = get_points3d_fullpath(kapture_dirpath, points3d_format)
+        if points3d_format != keep_format and path.isfile(filepath):
+            logger.debug(f'removing {filepath}')
+            os.remove(filepath)
 
 
 # Kapture Read #########################################################################################################
@@ -1568,6 +1652,12 @@ def kapture_from_dir(
         raise FileNotFoundError(f'No kapture directory {kapture_dir_path}')
     csv_file_paths = {dtype: path.join(kapture_dir_path, filename)
                       for dtype, filename in CSV_FILENAMES.items()}
+    # points3d: txt or ply
+    csv_file_paths[kapture.Points3d] = (get_points3d_fullpath(kapture_dir_path)
+                                        or get_points3d_fullpath(kapture_dir_path, 'txt'))
+    if kapture.Points3d not in skip_list and all(path.isfile(get_points3d_fullpath(kapture_dir_path, points3d_format))
+                                                 for points3d_format in POINTS3D_FORMATS):
+        logger.warning(f'both points3d.txt and points3d.ply in {kapture_dir_path}: loading points3d.ply')
     data_dir_paths = {dtype: path.join(kapture_dir_path, dir_name)
                       for dtype, dir_name in kapture.io.features.FEATURES_DATA_DIRNAMES.items()}
 

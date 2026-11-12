@@ -13,7 +13,7 @@ from typing import List, Literal
 
 from kapture.algo.merge_keep_ids import merge_keep_ids
 from kapture.algo.merge_remap import merge_remap
-from kapture.io.csv import get_all_tar_handlers, kapture_from_dir, kapture_to_dir
+from kapture.io.csv import get_all_tar_handlers, get_points3d_format, kapture_from_dir, kapture_to_dir
 from kapture.io.structure import delete_existing_kapture_files
 from kapture.io.records import TransferAction
 from kapture.utils.cli import run_cli, setup_logging, Verbosity, DEFAULT_VERBOSITY
@@ -110,7 +110,9 @@ def merge_kaptures(inputs: List[str],  # noqa: C901: function really not complex
             tar_handlers.close()
 
     logger.info('Writing merged kapture data...')
-    kapture_to_dir(output, merged_kapture)
+    # the merged points3d keep the format of the first input that has some
+    points3d_formats = [get_points3d_format(kapture_path) for kapture_path in inputs]
+    kapture_to_dir(output, merged_kapture, points3d_format=next(filter(None, points3d_formats), None))
 
 
 def main():
