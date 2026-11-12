@@ -122,6 +122,18 @@ class TestLegacyFlags(unittest.TestCase):
         with self.assertRaises(ArgumentError):
             parser.parse_args(['-i', 'k', '-o', 'out', '--polygon', '0', '0', '1', '0', '1', '1'])
 
+    def test_convert_points3d(self):
+        parser = _parser('kapture_convert_points3d')
+        args = parser.parse_args(['-i', 'k'])
+        self.assertEqual((args.format, args.keep_source, args.float32, args.timestamp_encoding, args.force),
+                         ('ply', False, False, 'relative', False))
+        args = parser.parse_args(['-i', 'k', '--format', 'txt', '--keep_source', '--float32',
+                                  '--timestamp_encoding', 'absolute', '-f'])
+        self.assertEqual((args.format, args.keep_source, args.float32, args.timestamp_encoding, args.force),
+                         ('txt', True, True, 'absolute', True))
+        with self.assertRaises(ArgumentError):
+            parser.parse_args(['-i', 'k', '--format', 'pcd'])
+
     def test_colmap_import_legacy_aliases(self):
         parser = _parser('kapture_import_colmap')
         args = parser.parse_args(['-v', '-f', '-db', 'x.db', '-txt', 'rec', '-im', 'imgs', '-rig', 'r.json',

@@ -17,7 +17,7 @@ import numpy as np
 
 import kapture
 from kapture.io.binary import TransferAction, transfer_files_from_dir
-from kapture.io.csv import kapture_from_dir, kapture_to_dir
+from kapture.io.csv import get_points3d_format, kapture_from_dir, kapture_to_dir
 from kapture.io.records import RECORD_DATA_DIRNAME, get_record_fullpath, import_record_data_from_dir_link_dir
 from kapture.io.structure import delete_existing_kapture_files
 
@@ -299,10 +299,10 @@ def _load(input_path: str, skip_sensor_ids: List[str], with_points3d: bool = Fal
     skip_list = [data_type for data_type in NOT_EXTRACTED_TYPES
                  if not (with_points3d and data_type is kapture.Points3d)]
     kapture_data = kapture_from_dir(input_path, skip_list=skip_list)
-    left_out = [name for name in ['points3d.txt', 'observations.txt', 'keypoints', 'descriptors', 'global_features',
-                                  'matches']
+    left_out = [name for name in ['points3d.txt', 'points3d.ply', 'observations.txt', 'keypoints', 'descriptors',
+                                  'global_features', 'matches']
                 if path.exists(path.join(input_path, 'reconstruction', name))
-                and not (with_points3d and name == 'points3d.txt')]
+                and not (with_points3d and name.startswith('points3d.'))]
     if left_out:
         logger.warning(f'reconstruction data of the input that are not extracted: {left_out}')
     unknown = [sensor_id for sensor_id in skip_sensor_ids
@@ -353,7 +353,7 @@ def _extract_to_dir(input_path: str,
     os.makedirs(output_path, exist_ok=True)
     delete_existing_kapture_files(output_path, force_erase=force)
     logger.info(f'writing {output_path}')
-    kapture_to_dir(output_path, extracted)
+    kapture_to_dir(output_path, extracted, points3d_format=get_points3d_format(input_path))
 
     if transfer == TransferAction.root_link:
         if path.isdir(source_record_dirpath):
@@ -458,7 +458,10 @@ def kapture_extract_area(input_path: str,
     logger.info(f'{len(windows)} periods in the area ({nb_poses} poses in the trajectory)')
     points3d = None
     if crop_points3d and kapture_data.points3d is not None:
-        points3d = kapture.Points3d(np.asarray(kapture_data.points3d)[area(np.asarray(kapture_data.points3d))])
+        inside = area(np.asarray(kapture_data.points3d))
+        timestamps = kapture_data.points3d.timestamps
+        points3d = kapture.Points3d(np.asarray(kapture_data.points3d)[inside],
+                                    timestamps=None if timestamps is None else timestamps[inside])
         logger.info(f'points3d: {len(points3d)} / {len(kapture_data.points3d)}')
     return _extract_to_dir(input_path, output_path, kapture_data, windows, time_unit, skip_sensor_ids, transfer, force,
                            points3d=points3d, info={**info, 'gap': gap, 'pad': pad})

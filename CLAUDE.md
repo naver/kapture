@@ -51,7 +51,7 @@ Layers, dependencies go downward only (`tools` -> `algo`/`converter` -> `io` -> 
 
 **Tools and modules**
 - Tool file and console script: `kapture_<verb>_<object>`. Verbs in use: `import`, `export`, `extract`, `merge`,
-  `print`, `upgrade`, `download`, `rename`. Dataset/format names keep their usual case
+  `convert`, `print`, `upgrade`, `download`, `rename`. Dataset/format names keep their usual case
   (`kapture_import_RobotCar_Seasons`, `kapture_export_LTVL2020`).
 - The tool function is named without the `kapture_` prefix (`extract_period`); the library function it calls
   keeps it (`kapture.algo.extract.kapture_extract_period`).

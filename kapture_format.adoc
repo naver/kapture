@@ -60,7 +60,8 @@ my_dataset                          # Data root path
    │  │  │  ├─ query/query001.jpg.desc      # descriptors for corresponding image (example)
    │  │  │  ├─ ...
    │  ├─ ...
-   ├─ points3d.txt                          # 3D points of the reconstruction
+   ├─ points3d.txt                          # 3D points of the reconstruction (text)
+   ├─ points3d.ply                          # or the same as binary PLY (one of the two)
    ├─ observations.txt                      # 2D/3D points corespondences
    ├─ matches/                              # matches files.
    │  ├─ r2d2_WASF-N8_20k                   # identify the type of keypoints that are matched
@@ -1170,6 +1171,56 @@ Where:
 ----
 
 
+=== `│ ├─ points3d.ply`
+
+The same 3D points as `points3d.txt`, stored as a PLY file instead: much smaller and faster to read and write for big
+point clouds (eg. lidar maps). A kapture has either `points3d.txt` or `points3d.ply`; if both are present,
+`points3d.ply` is read. The format version stays 1.1: readers that do not know `points3d.ply` just see no 3D points.
+
+The file has one `vertex` element, whose index (0-based) is the `point3d_id` of the observations, with the properties:
+
+[cols=">1m,^1e,4",options="header"]
+|===
+|            property | type             | description
+|             x, y, z | float or double  | 3-D coordinates of the point.
+|     red, green, blue | uchar            | The RGB color of the point (optional, all three or none).
+|           timestamp | double           | Timestamp of the point (optional), in the time unit of the records.
+|===
+
+Other properties are ignored. The file may be ascii or binary (kapture writes binary little endian, x, y, z as double
+by default).
+
+PLY has no 64 bits integer: a double holds integers exactly up to 2^53 only, so an epoch timestamp in nanoseconds
+(~1.7e18) loses up to 256 ns. Two encodings of the timestamps are possible:
+
+* relative (default when writing): the timestamp of the point is `timestamp_offset + timestamp`, where the integer
+  `timestamp_offset` is given in a header comment `comment timestamp_offset <integer>` (the smallest timestamp).
+  This is exact as long as the time span of the points is below 2^53 time units (104 days in nanoseconds).
+* absolute: no `timestamp_offset` comment, the timestamp is the value itself, truncated to the double precision.
+
+==== example
+
+.reconstruction/points3d.ply (header)
+[source,txt]
+----
+ply
+format binary_little_endian 1.0
+comment kapture format: 1.1
+comment timestamp_offset 1762950000123456
+element vertex 168257488
+property double x
+property double y
+property double z
+property uchar red
+property uchar green
+property uchar blue
+property double timestamp
+end_header
+----
+
+`kapture_convert_points3d -i <kapture> --format ply|txt` converts one into the other in place (see `--help`).
+
+
 === `│ ├─ observations.txt`
 
 This file contains all 3D points observations, using one line per pair (3D-point, keypoints_type).
@@ -1184,7 +1235,7 @@ point3d_id, keypoints_type, [image_path, feature_id]*
 [cols=">1m,^1e,4",options="header"]
 |===
 |            field | type   | description
-|       point3d_id | uint32 | Line number (0-based index) of the 3D point in the `points3d.txt` file.
+|       point3d_id | uint32 | Line number (0-based index) of the 3D point in the `points3d.txt` file (vertex index in `points3d.ply`).
 |   keypoints_type | string | The name of the directory that contains the keypoints that the feature_id refers to
 |       image_path | path   | Path to the image file. The path is relative to `sensors/records_data/`.
 |       feature_id | uint32 | Index (0-based) of the feature in the corresponding keypoints (.kpt) file.

@@ -179,10 +179,34 @@ $> kapture_extract_area -i full -o part --sphere -5.6 56.2 -2.5 6 -s lidar0_clea
 * Both shapes are 3-D and make no assumption on the axes of the world frame (which one is vertical); their borders
   are included.
 * `NONE` instead of a value of `--box` means no bound on that side (`--box NONE 45 NONE NONE NONE NONE`: x <= 45).
-* `--crop_points3d` also extracts the points3d inside the area (off by default: the whole `points3d.txt` is loaded);
-  the other reconstruction data are not extracted.
+* `--crop_points3d` also extracts the points3d inside the area (off by default: the whole points3d file is loaded);
+  the other reconstruction data are not extracted. The extracted points3d keep the format of the input (txt or ply).
 * Library: `kapture.algo.extract` (`trajectory_positions`, `box_bounds`, `points_in_box`, `points_in_sphere`, `box_area`,
   `sphere_area`, `windows_in_area`, `kapture_extract_area`).
+
+== 3D points as PLY: `reconstruction/points3d.ply`
+
+The 3D points of the reconstruction can be stored as a binary PLY `reconstruction/points3d.ply` instead of
+`points3d.txt` (see `kapture_format.adoc`), with optional per point timestamps. The format version stays 1.1.
+
+[source,bash]
+----
+$> kapture_convert_points3d -i kapture --format ply             # points3d.txt -> points3d.ply (txt removed)
+$> kapture_convert_points3d -i kapture --format ply --float32   # x, y, z as float32 (half the size)
+$> kapture_convert_points3d -i kapture --format txt --keep_source
+----
+
+* `kapture_from_dir` reads either (ply first if both); `kapture_to_dir(..., points3d_format=None)` writes the format
+  already in the destination, else txt, and removes the file of the other format. `kapture_extract_area` and
+  `kapture_merge` keep the format of their input.
+* `points3d_to_file` / `points3d_from_file` choose the format from the file extension.
+* `kapture.Points3d(data, timestamps=...)`: optional per point timestamps (int64), kept by the PLY only (a warning
+  tells they are lost when writing text). They are not carried over by numpy operations: pass them explicitly.
+* `--timestamp_encoding relative` (default, exact: relative to an integer offset written in the header) or `absolute`
+  (truncated to the 53 bits of a double).
+* Library: `kapture.io.csv` (`POINTS3D_FILENAMES`, `get_points3d_fullpath`, `get_points3d_format`,
+  `remove_points3d_files`), `kapture.io.ply` (`points3d_from_ply_file`, `points3d_to_ply_file`, `read_ply_header`,
+  `ply_vertex_count`), `kapture.algo.convert_points3d.kapture_convert_points3d`.
 
 == Python API changes
 

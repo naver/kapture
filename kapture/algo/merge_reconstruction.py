@@ -316,16 +316,16 @@ def merge_points3d_and_observations(pts3d_obs: List[Tuple[Optional[kapture.Point
     :return: merged points3d associated to observations
     """
     assert len(pts3d_obs) > 0
-    merged_points3d = kapture.Points3d()
     merged_observations = kapture.Observations()
+    point3d_offset = 0  # number of points before merge
     for points3d, observations in pts3d_obs:
         if points3d is None:
             continue
-        point3d_offset = merged_points3d.shape[0]  # number of points before merge
-        merged_points3d = kapture.Points3d(np.vstack([merged_points3d, points3d]))
         if observations is not None:
             for point3d_idx, keypoints_type, (image_path, keypoint_idx) in kapture.flatten(observations):
                 merged_observations.add(point3d_idx + point3d_offset, keypoints_type, image_path, keypoint_idx)
+        point3d_offset += points3d.shape[0]
+    merged_points3d = merge_points3d([points3d for points3d, _ in pts3d_obs])
     return merged_points3d, merged_observations
 
 
@@ -337,9 +337,13 @@ def merge_points3d(points3d_list: List[Optional[kapture.Points3d]]) -> kapture.P
     :return: merged points3d
     """
     assert len(points3d_list) > 0
-    merged_points3d = kapture.Points3d()
-    for points3d in points3d_list:
-        if points3d is None:
-            continue
-        merged_points3d = kapture.Points3d(np.vstack([merged_points3d, points3d]))
-    return merged_points3d
+    points3d_list = [points3d for points3d in points3d_list if points3d is not None]
+    if not points3d_list:
+        return kapture.Points3d()
+    # per point timestamps are kept only if all the merged points have some
+    timestamps = None
+    if all(points3d.has_timestamps() for points3d in points3d_list):
+        timestamps = np.concatenate([points3d.timestamps for points3d in points3d_list])
+    elif any(points3d.has_timestamps() for points3d in points3d_list):
+        getLogger().warning('some of the merged 3D points have no timestamps: the timestamps are dropped')
+    return kapture.Points3d(np.vstack([points3d.as_array() for points3d in points3d_list]), timestamps=timestamps)

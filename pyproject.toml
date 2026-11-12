@@ -36,6 +36,7 @@ include = ["kapture*"]
 
 
 [project.scripts]
+kapture_convert_points3d="kapture.tools.kapture_convert_points3d:main"
 kapture_data_date_ranges="kapture.tools.kapture_data_date_ranges:main"
 kapture_download_dataset="kapture.tools.kapture_download_dataset:main"
 kapture_extract_area="kapture.tools.kapture_extract_area:main"

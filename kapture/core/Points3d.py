@@ -10,18 +10,23 @@ class Points3d(np.ndarray):
     - 3-D points is a Nx6 numpy array: 1 point per row x 6 cols (x,y,z,r,g,b) with color
                  or a NX3 numpy array: 1 point per row X 3 cols (x,y,z)    without color
     - color (rgb) is coded from 0 to 255
+    - optional per point timestamps (int64, one per row, in the time unit of the kapture records, usually
+      microseconds) are stored in the attribute `timestamps` (None when absent). They are not carried over by numpy
+      operations (slices, masks, stacks...): pass them explicitly to the new Points3d.
     """
     XYZ_ONLY = 3
     XYZ_RGB = 6
     COLUMN_TYPE = np.float64
 
-    def __new__(cls, input_array=None, size=XYZ_RGB):
+    def __new__(cls, input_array=None, size=XYZ_RGB, timestamps=None):
         """
         Creates the ndarray instance of our type, given the usual ndarray input arguments.
         This will call the standard ndarray constructor, but return an object of our type.
 
         :param input_array: array of values
         :param size: size of default constructor
+        :param timestamps: optional per point timestamps (N integers, same order as the points).
+                           Defaults to the ones of input_array if it is a Points3d.
         """
         if input_array is None:
             # default constructor, empty shape
@@ -37,10 +42,17 @@ class Points3d(np.ndarray):
         else:
             raise TypeError('Unknown type to convert 3-D points from')
 
+        if timestamps is None and isinstance(input_array, Points3d):
+            timestamps = input_array.timestamps  # Points3d(points3d) keeps the timestamps
+        if obj is input_array:  # asarray(...).view() may return the input itself: do not alter it
+            obj = obj.view(cls)
+        obj.timestamps = timestamps
         # Finally, we must return the newly created object:
         return obj
 
     def __array_finalize__(self, obj):
+        # timestamps are never inherited: a view, slice or mask may not have the same points
+        self._timestamps = None
         if (obj is None
                 or (self.shape and len(self.shape) == 2
                     and (self.shape[1] == Points3d.XYZ_ONLY or self.shape[1] == Points3d.XYZ_RGB))
@@ -78,3 +90,26 @@ class Points3d(np.ndarray):
     def as_array(self):
         """ cast the Points3d to numpy array. """
         return self.view(dtype=Points3d.COLUMN_TYPE, type=np.ndarray)
+
+    @property
+    def timestamps(self):
+        """ per point timestamps (int64 array of N values) or None """
+        return getattr(self, '_timestamps', None)
+
+    @timestamps.setter
+    def timestamps(self, timestamps):
+        if timestamps is not None:
+            timestamps = np.asarray(timestamps)
+            if timestamps.dtype.kind not in 'iu':
+                raise TypeError(f'3D points timestamps are expected to be integers ({timestamps.dtype})')
+            timestamps = timestamps.astype(np.int64, copy=False).reshape(-1)
+            nb_points = self.shape[0] if len(self.shape) == 2 else 1
+            if len(timestamps) != nb_points:
+                raise ValueError(f'3D points timestamps: {len(timestamps)} values for {nb_points} points')
+        self._timestamps = timestamps
+
+    def has_timestamps(self) -> bool:
+        """
+        Check for the presence of per point timestamps
+        """
+        return self.timestamps is not None
