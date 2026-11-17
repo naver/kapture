@@ -6,6 +6,7 @@ Tests of the points3d stored as PLY (reconstruction/points3d.ply), with optional
 and of the conversion between points3d.txt and points3d.ply.
 """
 
+import os
 import os.path as path
 import tempfile
 import unittest
@@ -90,6 +91,28 @@ class TestPoints3dPly(unittest.TestCase):
     def test_empty(self):
         points3d_to_ply_file(self.filepath, kapture.Points3d())
         self.assertEqual(points3d_from_ply_file(self.filepath).shape, (0, 6))
+
+    def test_comments_and_atomic_write(self):
+        from kapture.io.ply import write_ply
+        from kapture.utils.paths import atomic_write
+        points3d = kapture.Points3d(np.arange(12, dtype=float).reshape(2, 6))
+        points3d_to_ply_file(self.filepath, points3d, comments=['made by a test', 'voxel_size=0.05'])
+        comments = read_ply_header(self.filepath)['comments']
+        self.assertIn('made by a test', comments)
+        self.assertIn('voxel_size=0.05', comments)
+        np.testing.assert_array_equal(points3d_from_ply_file(self.filepath).as_array(), points3d.as_array())
+        self.assertFalse(os.path.exists(self.filepath + '.tmp'))  # written next to the file, then renamed
+        with self.assertRaises(ValueError):
+            write_ply(self.filepath, np.zeros(1, dtype=[('x', 'f4')]), comments=['two\nlines'])
+        # an interrupted write keeps the previous file and leaves no temporary file
+        before = open(self.filepath, 'rb').read()
+        with self.assertRaises(RuntimeError):
+            with atomic_write(self.filepath) as tmp_filepath:
+                with open(tmp_filepath, 'wb') as f:
+                    f.write(b'half')
+                raise RuntimeError('interrupted')
+        self.assertEqual(open(self.filepath, 'rb').read(), before)
+        self.assertFalse(os.path.exists(self.filepath + '.tmp'))
 
     def test_extra_properties_ignored(self):
         from kapture.io.ply import write_ply

@@ -8,7 +8,8 @@ import os
 import os.path as path
 import shutil
 import tempfile
-from typing import AnyStr, Iterable, Optional, Union, List
+from contextlib import contextmanager
+from typing import AnyStr, Iterable, Iterator, Optional, Union, List
 
 from kapture.utils.logging import getLogger
 
@@ -131,3 +132,30 @@ def prepend_to_file(file_path: str, text_to_prepend: str) -> None:
         os.remove(file_path)
         # In case the copy went wrong, restore initial file
         shutil.move(temp_copy, file_path)
+
+
+ATOMIC_WRITE_SUFFIX = '.tmp'
+
+
+@contextmanager
+def atomic_write(filepath: str) -> Iterator[str]:
+    """
+    Writes a file atomically: gives the path of a temporary file next to filepath (filepath + '.tmp', created
+    directories included) to write to, and renames it to filepath when the block ends without error. A file that
+    bears its final name is therefore complete; an interrupted write only leaves the temporary file.
+
+        with atomic_write(filepath) as tmp_filepath:
+            with open(tmp_filepath, 'wb') as f:
+                ...
+
+    :param filepath: the file to write.
+    """
+    os.makedirs(path.dirname(path.abspath(filepath)), exist_ok=True)
+    tmp_filepath = filepath + ATOMIC_WRITE_SUFFIX
+    try:
+        yield tmp_filepath
+    except BaseException:
+        if path.lexists(tmp_filepath):
+            os.remove(tmp_filepath)
+        raise
+    os.replace(tmp_filepath, filepath)
