@@ -11,7 +11,7 @@ from typing import Type, Iterable
 from tqdm import tqdm
 import logging
 from kapture.utils.logging import getLogger
-from kapture.utils.paths import path_secure
+from kapture.utils.paths import atomic_write, path_secure
 from enum import auto
 from kapture.utils.Collections import AutoEnum
 
@@ -41,14 +41,15 @@ def array_from_file(filepath: str, dtype: Type, dsize: int) -> np.ndarray:
 
 def array_to_file(filepath: str, data_array: np.ndarray) -> None:
     """
-    Writes the numpy array into a binary file.
+    Writes the numpy array into a binary file, atomically (temporary file, then renamed): an interrupted write
+    leaves no truncated file.
 
     :param filepath:
     :param data_array:
     """
-    os.makedirs(path.dirname(filepath), exist_ok=True)
-    with open(filepath, 'wb') as f:
-        data_array.tofile(f, sep='')
+    with atomic_write(filepath) as tmp_filepath:
+        with open(tmp_filepath, 'wb') as f:
+            data_array.tofile(f, sep='')
 
 
 ########################################################################################################################

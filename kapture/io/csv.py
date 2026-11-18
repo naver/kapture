@@ -12,7 +12,7 @@ import quaternion
 import os
 import os.path as path
 import re
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Type, Union
 
 
 import kapture
@@ -1313,7 +1313,8 @@ RGB_COLUMNS = 'R, G, B'
 def points3d_to_file(filepath: str,
                      points3d: kapture.Points3d,
                      xyz_dtype: type = np.float64,
-                     timestamp_encoding: str = 'relative') -> None:
+                     timestamp_encoding: str = 'relative',
+                     comments: Iterable[str] = ()) -> None:
     """
     Writes 3d points to file: PLY if filepath ends with .ply (see kapture.io.ply.points3d_to_ply_file), CSV otherwise.
 
@@ -1321,11 +1322,13 @@ def points3d_to_file(filepath: str,
     :param points3d: the 3d points
     :param xyz_dtype: PLY only: np.float64 (default) or np.float32
     :param timestamp_encoding: PLY only: 'relative' (default, exact) or 'absolute' (truncated to double precision)
+    :param comments: PLY only: more header comment lines, eg. how the points were made
     """
     assert isinstance(points3d, kapture.Points3d)
     if _points3d_format_of_filepath(filepath) == 'ply':
         from kapture.io.ply import points3d_to_ply_file  # ply imports csv
-        points3d_to_ply_file(filepath, points3d, xyz_dtype=xyz_dtype, timestamp_encoding=timestamp_encoding)
+        points3d_to_ply_file(filepath, points3d, xyz_dtype=xyz_dtype, timestamp_encoding=timestamp_encoding,
+                             comments=comments)
         return
     if points3d.has_timestamps():
         logger.warning(f'{filepath}: the text format has no timestamps, the 3D points timestamps are lost '

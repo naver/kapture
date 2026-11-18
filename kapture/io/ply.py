@@ -12,6 +12,7 @@ import numpy as np
 import kapture
 from .csv import kapture_linesep, KAPTURE_FORMAT_1
 from .features import image_keypoints_from_file
+from kapture.utils.paths import atomic_write
 
 
 logger = logging.getLogger('ply')
@@ -367,7 +368,9 @@ NUMPY_TO_PLY_TYPE = {'i1': 'char', 'u1': 'uchar', 'i2': 'short', 'u2': 'ushort',
 def write_ply(filepath: str, vertices: np.ndarray, comments: Iterable[str] = ()) -> None:
     """
     Writes a structured array as a binary little-endian PLY with a single vertex element, one property per field
-    (counterpart of read_ply).
+    (counterpart of read_ply). The file is written atomically (temporary file, then renamed): an interrupted write
+    leaves no truncated file. The comments come back with read_ply_header: a place for a note on how the file
+    was made.
 
     :param filepath: output PLY file.
     :param vertices: structured array (scalar fields only).
@@ -386,10 +389,13 @@ def write_ply(filepath: str, vertices: np.ndarray, comments: Iterable[str] = ())
         little_endian.append((name, '<' + key))
     header = ['ply', 'format binary_little_endian 1.0'] + [f'comment {c}' for c in comments]
     header += [f'element vertex {len(vertices)}'] + properties + ['end_header']
-    os.makedirs(path.dirname(path.abspath(filepath)), exist_ok=True)
-    with open(filepath, 'wb') as f:
-        f.write(('\n'.join(header) + '\n').encode('ascii'))
-        f.write(np.ascontiguousarray(vertices.astype(np.dtype(little_endian), copy=False)).tobytes())
+    for comment in comments:
+        if '\n' in comment or '\r' in comment:
+            raise ValueError(f'a PLY comment is a single line, got {comment!r}')
+    with atomic_write(filepath) as tmp_filepath:
+        with open(tmp_filepath, 'wb') as f:
+            f.write(('\n'.join(header) + '\n').encode('ascii'))
+            f.write(np.ascontiguousarray(vertices.astype(np.dtype(little_endian), copy=False)).tobytes())
 
 
 def read_ply_header(filepath: str) -> Dict[str, object]:
@@ -491,7 +497,8 @@ def points3d_from_ply_file(filepath: str) -> kapture.Points3d:
 def points3d_to_ply_file(filepath: str,
                          points3d: kapture.Points3d,
                          xyz_dtype: type = np.float64,
-                         timestamp_encoding: str = 'relative') -> None:
+                         timestamp_encoding: str = 'relative',
+                         comments: Iterable[str] = ()) -> None:
     """
     Writes 3d points to a binary little endian PLY file: x, y, z (float or double), red, green, blue (uchar) if
     the points have colors, timestamp (double) if they have timestamps. The file is written atomically (.tmp file
@@ -504,6 +511,7 @@ def points3d_to_ply_file(filepath: str,
         'relative' (default): relative to the smallest one, written as an exact integer in a header comment;
                               exact as long as the time span is below 2^53 time units (104 days in nanoseconds).
         'absolute': absolute value, truncated to the double precision (eg. ~256 ns for epoch time in nanoseconds).
+    :param comments: more header comment lines (see read_ply_header), eg. how the points were made.
     """
     assert isinstance(points3d, kapture.Points3d)
     if timestamp_encoding not in POINTS3D_TIMESTAMP_ENCODINGS:
@@ -525,6 +533,7 @@ def points3d_to_ply_file(filepath: str,
     if points3d.has_colors():
         for column_index, color in enumerate(POINTS3D_COLOR_PROPERTIES, start=3):
             vertices[color] = np.clip(np.round(data[:, column_index]), 0, 255)
+    extra_comments = list(comments)
     comments = [KAPTURE_FORMAT_1[2:]]
     if timestamps is not None:
         offset = 0
@@ -537,9 +546,7 @@ def points3d_to_ply_file(filepath: str,
             logger.warning(f'{filepath}: {timestamp_encoding} timestamps exceed 2^53, their precision is truncated '
                            f'(max error {np.abs(vertices[POINTS3D_TIMESTAMP_PROPERTY].astype(np.int64) - values).max()}'
                            f' time units)')
-    tmp_filepath = filepath + '.tmp'
-    write_ply(tmp_filepath, vertices, comments=comments)
-    os.replace(tmp_filepath, filepath)
+    write_ply(filepath, vertices, comments=comments + extra_comments)
     saving_elapsed = datetime.datetime.now() - saving_start
     logger.debug(f'wrote {len(vertices):12,d} {type(points3d)} in {saving_elapsed.total_seconds():.3f} seconds'
                  .replace(',', ' '))
